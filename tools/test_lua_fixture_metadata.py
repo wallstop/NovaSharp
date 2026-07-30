@@ -3,12 +3,14 @@
 
 from __future__ import annotations
 
+import sys
 import unittest
 import json
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools" / "LuaCorpusExtractor"))
 FIXTURES_DIR = (
     ROOT
     / "src"
@@ -72,6 +74,40 @@ class LuaFixtureMetadataTests(unittest.TestCase):
 
                 self.assertTrue(entry["novasharp_only"])
                 self.assertFalse(entry["expects_error"])
+
+    def test_manifest_agrees_with_every_fixture_header(self) -> None:
+        """The manifest is generated from the headers, so it must match them.
+
+        It silently drifted instead: the extractor recomputed metadata for the
+        manifest while leaving curated headers on disk, so entries such as
+        `MyObject/IndexSetDoesNotWrackStack.lua` reported `novasharp_only: false`
+        against a header that says `true`.
+        """
+        import lua_corpus_extractor_v2 as extractor
+
+        mismatches = []
+        for relative_path, entry in sorted(read_manifest_by_path().items()):
+            fixture = FIXTURES_DIR / relative_path
+            if not fixture.exists():
+                mismatches.append(f"{relative_path}: listed in manifest but missing")
+                continue
+
+            metadata, _ = read_header(relative_path)
+            compatibility = extractor.compatibility_from_metadata(metadata)
+            if compatibility is None:
+                mismatches.append(f"{relative_path}: header has no version metadata")
+                continue
+
+            expected = {
+                "lua_versions": compatibility.compatible_versions,
+                "novasharp_only": compatibility.novasharp_only,
+                "expects_error": metadata.get("@expects-error", "").lower() == "true",
+            }
+            actual = {key: entry[key] for key in expected}
+            if actual != expected:
+                mismatches.append(f"{relative_path}: header {expected} != manifest {actual}")
+
+        self.assertEqual([], mismatches[:20], f"{len(mismatches)} fixture(s) drifted")
 
 
 if __name__ == "__main__":

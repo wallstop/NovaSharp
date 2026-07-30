@@ -1,21 +1,17 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "data structure"
-- "collection"
-- "dictionary"
-- "list vs array"
-- "complexity"
-- "big O"
-  category: performance
-  related:
-- high-performance-csharp
-- allocation-traps
-  priority: recommended
-
-______________________________________________________________________
-
+  - "data structure"
+  - "collection"
+  - "dictionary"
+  - "list vs array"
+  - "complexity"
+  - "big O"
+category: performance
+related:
+  - high-performance-csharp
+  - allocation-traps
+priority: recommended
+---
 # Skill: Data Structures — When to Use What
 
 **When to use**: Choosing the right data structure for performance-critical code, or understanding complexity trade-offs.

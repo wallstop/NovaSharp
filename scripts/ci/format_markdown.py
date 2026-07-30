@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 from typing import Iterable, List, Sequence
@@ -36,6 +37,7 @@ SKIP_FILES = {
     "docs/testing/spec-audit.md",
 }
 MD_EXTENSIONS = {"gfm"}
+YAML_FRONT_MATTER = re.compile(r"\A(---\r?\n.*?\r?\n---\r?\n)", re.DOTALL)
 
 
 def parse_args() -> argparse.Namespace:
@@ -119,7 +121,13 @@ def iter_markdown_files(targets: Sequence[str] | None, include_skipped: bool) ->
 
 def format_file(path: Path, write_back: bool) -> bool:
     original = path.read_text(encoding="utf-8")
-    formatted = mdformat.text(original, extensions=MD_EXTENSIONS)
+    front_matter_match = YAML_FRONT_MATTER.match(original)
+    if front_matter_match:
+        front_matter = front_matter_match.group(1).replace("\r\n", "\n")
+        body = original[front_matter_match.end() :]
+        formatted = front_matter + mdformat.text(body, extensions=MD_EXTENSIONS)
+    else:
+        formatted = mdformat.text(original, extensions=MD_EXTENSIONS)
     if original == formatted:
         return False
 

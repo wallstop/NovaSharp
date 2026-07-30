@@ -8,7 +8,7 @@ Scans `.llm/skills/*.md` for YAML front-matter metadata and generates a categori
 # Generate index (writes to .llm/skills-index.json)
 python3 tools/LlmSkillIndexer/llm_skill_indexer.py
 
-# Check mode (exits non-zero on validation errors)
+# Check mode (read-only; rejects warnings, errors, and a stale index)
 python3 tools/LlmSkillIndexer/llm_skill_indexer.py --check
 
 # Verbose output
@@ -17,18 +17,18 @@ python3 tools/LlmSkillIndexer/llm_skill_indexer.py --verbose
 
 ## Integration with pre-commit.sh
 
-Add to `scripts/dev/pre-commit.sh` for validation (warning mode):
+Generate the index explicitly after changing a skill, then stage both the skill
+and index:
 
 ```bash
-# Validate LLM skills metadata (warning mode)
-echo "Checking LLM skills metadata..."
-python3 tools/LlmSkillIndexer/llm_skill_indexer.py || true
+python3 tools/LlmSkillIndexer/llm_skill_indexer.py
+git add .llm/skills/changed-skill.md .llm/skills-index.json
 ```
 
-For strict enforcement:
+Pre-commit and CI use the read-only strict check:
 
 ```bash
-# Validate LLM skills metadata (strict mode)
+# Validate metadata and prove the committed index is current without modifying it
 python3 tools/LlmSkillIndexer/llm_skill_indexer.py --check
 ```
 

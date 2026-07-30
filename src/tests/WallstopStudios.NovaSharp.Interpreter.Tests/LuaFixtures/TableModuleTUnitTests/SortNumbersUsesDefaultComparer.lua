@@ -1,7 +1,7 @@
 -- @lua-versions: 5.2+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\TableModuleTUnitTests.cs:55
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:85
 -- @test: TableModuleTUnitTests.SortNumbersUsesDefaultComparer
 -- Test targets Lua 5.2+
 local values = { 4, 1, 3 }

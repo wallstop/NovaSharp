@@ -38,6 +38,8 @@ ______________________________________________________________________
 1. **Lua Fixture Metadata** — Use ONLY `@lua-versions`, `@novasharp-only`, `@expects-error` **at TOP of file**
 1. **Pre-Commit Validation Allowed** — Run `./scripts/dev/pre-commit.sh` after changes; it may restage files it auto-formats or regenerates.
 1. **No False Green-Light** — Only say `green`, `verified`, `passes`, or `complete` after the exact local checks and PR CI were observed passing; otherwise report `not run` or residual risk.
+1. **Evidence-Driven Material Changes** — Use the [evidence-driven change workflow](workflows/evidence-driven-change.md) for material behavior, architecture, performance, reliability, CI, or LLM-system work. Require observed red→green evidence and risk-selected gates.
+1. **Mandatory Post-Work Improvement Gate** — After every large change or investigation, complete [post-work-reflection](skills/post-work-reflection.md) before reporting completion. Resolve findings at their root, update the appropriate LLM guidance or knowledge when evidence supports a durable lesson, and independently review the result when agents are available.
 
 See individual skills for detailed guidance.
 
@@ -72,6 +74,10 @@ ______________________________________________________________________
 | Check/add performance patterns  | `.llm/skills/high-performance-csharp.md`            |
 | Investigate comparison failures | `.llm/skills/lua-comparison-harness.md`             |
 | Debug cross-platform issues     | `.llm/skills/test-failure-investigation.md`         |
+| Plan or review architecture     | `.llm/skills/architecture-review.md`                |
+| Verify a behavior change        | `.llm/skills/change-path-verification.md`           |
+| Run an independent hardening    | `.llm/skills/adversarial-handoff.md`                |
+| Capture durable repository fact | `.llm/knowledge/`                                   |
 
 ### Key Files
 
@@ -152,14 +158,16 @@ Skills are in `.llm/skills/`. Run `python3 tools/LlmSkillIndexer/llm_skill_index
 
 ### Core Skills
 
-| Category        | Key Skills                                                                                                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Priority**    | [correctness-then-performance](skills/correctness-then-performance.md), [lua-spec-verification](skills/lua-spec-verification.md)                                               |
-| **Performance** | [high-performance-csharp](skills/high-performance-csharp.md), [zstring-migration](skills/zstring-migration.md), [data-structures](skills/data-structures.md)                   |
-| **Testing**     | [tunit-test-writing](skills/tunit-test-writing.md), [lua-fixture-creation](skills/lua-fixture-creation.md), [test-failure-investigation](skills/test-failure-investigation.md) |
-| **Unity**       | [unity-gc-patterns](skills/unity-gc-patterns.md), [aggressive-inlining](skills/aggressive-inlining.md)                                                                         |
-| **Lua**         | [lua-comparison-harness](skills/lua-comparison-harness.md), [adding-opcodes](skills/adding-opcodes.md)                                                                         |
-| **Quality**     | [defensive-programming](skills/defensive-programming.md), [documentation-and-changelog](skills/documentation-and-changelog.md)                                                 |
+| Category         | Key Skills                                                                                                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Priority**     | [correctness-then-performance](skills/correctness-then-performance.md), [lua-spec-verification](skills/lua-spec-verification.md)                                                 |
+| **Performance**  | [high-performance-csharp](skills/high-performance-csharp.md), [zstring-migration](skills/zstring-migration.md), [data-structures](skills/data-structures.md)                     |
+| **Testing**      | [tunit-test-writing](skills/tunit-test-writing.md), [lua-fixture-creation](skills/lua-fixture-creation.md), [test-failure-investigation](skills/test-failure-investigation.md)   |
+| **Workflow**     | [systematic-investigation](skills/systematic-investigation.md), [architecture-review](skills/architecture-review.md), [adversarial-handoff](skills/adversarial-handoff.md)       |
+| **Verification** | [change-path-verification](skills/change-path-verification.md), [deterministic-testing](skills/deterministic-testing.md), [post-work-reflection](skills/post-work-reflection.md) |
+| **Unity**        | [unity-gc-patterns](skills/unity-gc-patterns.md), [aggressive-inlining](skills/aggressive-inlining.md)                                                                           |
+| **Lua**          | [lua-comparison-harness](skills/lua-comparison-harness.md), [adding-opcodes](skills/adding-opcodes.md)                                                                           |
+| **Quality**      | [defensive-programming](skills/defensive-programming.md), [documentation-and-changelog](skills/documentation-and-changelog.md)                                                   |
 
 ______________________________________________________________________
 

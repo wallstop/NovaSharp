@@ -962,7 +962,7 @@ Sorts table in place. Uses `<` by default, or custom comparator.
 local t = {3, 1, 2}
 table.sort(t)  -- t = {1, 2, 3}
 
-local t = {{n=2}, {n=1}, {n=3}}
+local t = { {n=2}, {n=1}, {n=3} }
 table.sort(t, function(a, b) return a.n < b.n end)
 ```
 

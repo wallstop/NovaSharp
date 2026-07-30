@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StringModuleTUnitTests.cs:768
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:768
 -- @test: StringModuleTUnitTests.GMatchIgnoresInitParameterInLuaBelow54
 -- Test targets Lua 5.3+
 local results = {}

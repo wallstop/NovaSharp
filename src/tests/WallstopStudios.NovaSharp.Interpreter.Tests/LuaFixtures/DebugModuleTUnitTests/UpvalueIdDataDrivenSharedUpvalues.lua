@@ -1,7 +1,7 @@
 -- @lua-versions: 5.2+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:2421
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:2421
 -- @test: DebugModuleTUnitTests.UpvalueIdDataDrivenSharedUpvalues
 -- Lua 5.2+: debug.upvalueid (5.2+)
 local shared = 42

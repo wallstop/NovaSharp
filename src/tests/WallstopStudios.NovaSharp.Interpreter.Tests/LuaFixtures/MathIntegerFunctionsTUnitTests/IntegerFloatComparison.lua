@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathIntegerFunctionsTUnitTests.cs:568
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathIntegerFunctionsTUnitTests.cs:568
 -- @test: MathIntegerFunctionsTUnitTests.IntegerFloatComparison
 -- NovaSharp: unresolved C# interpolation placeholder
 return {expression}

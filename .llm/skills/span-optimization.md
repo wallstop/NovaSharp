@@ -1,21 +1,17 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "Span"
-- "ReadOnlySpan"
-- "stackalloc"
-- "slice"
-- "no allocation string"
-- "substring"
-  category: performance
-  related:
-- high-performance-csharp
-- zstring-migration
-  priority: recommended
-
-______________________________________________________________________
-
+  - "Span"
+  - "ReadOnlySpan"
+  - "stackalloc"
+  - "slice"
+  - "no allocation string"
+  - "substring"
+category: performance
+related:
+  - high-performance-csharp
+  - zstring-migration
+priority: recommended
+---
 # Span Optimization Guidelines
 
 This document provides guidance for using `Span<T>` and `ReadOnlySpan<T>` to eliminate unnecessary array allocations in NovaSharp.

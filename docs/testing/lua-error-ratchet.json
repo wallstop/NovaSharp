@@ -113,6 +113,28 @@
       "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlag.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.1]"
     },
     {
+      "file": "ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "3acfc9c1643300751896f51cc904c9d7fef3e5487ca03847730da4d744d75c9d",
+      "nova_error_sha256": "1983fd61886648926bcbd248b377287eddc49fd5ce9ddf100bd4dfbf467c4d28",
+      "lua_error_excerpt": "lua: ...eatAsColonDisablesMethodCallFlagForCallbackViews.lua:<line>: attempt to index global 'target' (a nil value) | stack traceback: | \t...eatAsColonDisablesMethodCallFlagForC...",
+      "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "0b9c345fa4883b6fc103aa407e6a8ad534438bfe5abedc68b8425a4d79fd2891",
+      "nova_error_sha256": "9e118a141df9a066334cc303845eef37ffefbc587a01c2bd59ba3036eddbbe25",
+      "lua_error_excerpt": "lua: ...tTests/TreatAsDotKeepsMethodCallForCallbackViews.lua:<line>: attempt to index global 'target' (a nil value) | stack traceback: | \t...tTests/TreatAsDotKeepsMethodCallForC...",
+      "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.1]"
+    },
+    {
       "file": "ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbacks.lua",
       "lua_version": "5.1",
       "classification": "unclassified",
@@ -276,6 +298,28 @@
       "nova_error_sha256": "4919e97c16d344472e3c7c6465d05f4ef9952dbe2f4b999a79bce01db1f579bf",
       "lua_error_excerpt": "lua: ...TapParityTUnitTests/GetInfoInvalidArgumentThrows.lua:<line>: bad argument #1 to 'getinfo' (function or level expected) | stack traceback: | \t[C]: in function 'getinfo' |...",
       "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/GetInfoInvalidArgumentThrows.lua:(6,13-24): bad argument #1 to 'getinfo' (function or level expected) [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "a878da3614376ae347546a40f90edb85a60669616c39e2451a11ed0225441aae",
+      "nova_error_sha256": "16b726793c91fc878b06694972a91da723cfbe1c1999ee614a6325fa3b91c86f",
+      "lua_error_excerpt": "lua: ...ModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua:<line>: bad argument #2 to 'getupvalue' (number expected, got table) | stack traceback: | \t[C]: in function 'getupva...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua:(14,16-60): bad argument #2 to 'getupvalue' (number expected, got table) [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "2a9a8478381ae183ee5f90a91b8a5278eae60fabaadb3fa4082aa84042f83652",
+      "nova_error_sha256": "64d13f15eae3c68d0ad49c9be057ca3a490b960c819432644123c65649d577f3",
+      "lua_error_excerpt": "lua: ...duleTapParityTUnitTests/SetupValueUpdatesClosure.lua:<line>: bad argument #2 to 'setupvalue' (number expected, got table) | stack traceback: | \t[C]: in function 'setupva...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua:(14,32-57): bad argument #2 to 'setupvalue' (number expected, got table) [compatibility: Lua 5.1]"
     },
     {
       "file": "DispatchingUserDataDescriptorTUnitTests/ArithmeticOperatorsDispatchToClrOverloads.lua",
@@ -1026,15 +1070,48 @@
       "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/PairsMetamethodControlsIteration_1.lua:(6,0-35): bad argument #1 to 'concat' (table expected, got nil) [compatibility: Lua 5.1]"
     },
     {
+      "file": "MetatableTUnitTests/TableValuedCallMetamethodChainsInLatestDefault.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "3944f621dba4030c563d7624960980b067c858d99f1ca981f80dcfcf8ffc5356",
+      "nova_error_sha256": "80dd97aa949774f3bcc892424906d46b758629b375c46454fb75e3b8eb35e1f3",
+      "lua_error_excerpt": "lua: ...s/TableValuedCallMetamethodChainsInLatestDefault.lua:<line>: attempt to call local 'target' (a table value) | stack traceback: | \t...s/TableValuedCallMetamethodChainsInL...",
+      "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/TableValuedCallMetamethodChainsInLatestDefault.lua:(15,16-31): attempt to call a table value [compatibility: Lua 5.1]"
+    },
+    {
       "file": "MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua",
       "lua_version": "5.1",
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "d0f777fb1fcec4ed38457747297c7685b95ba7b1aeb01fa63640d2564ac74c51",
-      "nova_error_sha256": "fda60a501c031fa8abf58abafe4d5fff5fc1a63168cfbe7276e105de4bdb22a6",
+      "nova_error_sha256": "f9b83440d97da88eb446c6b6143f8e8e3e3dfd9cd4e9419c15a04e7be4e8a5d9",
       "lua_error_excerpt": "lua: ...TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:<line>: attempt to call local 'target' (a table value) | stack traceback: | \t...TableValuedCallMetamethodDoesNotChai...",
-      "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:(17,0-15): attempt to call a table value [compatibility: Lua 5.1]"
+      "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:(14,20-35): attempt to call a table value [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "3ff1d7e722cc50570dbef349625eddda5a36a6b85e6663600577e026d5440d3a",
+      "nova_error_sha256": "3b9dd9b27e7f42eba8d012849e18b4bc06518e38eee9a3ac8f7a2928bdb13230",
+      "lua_error_excerpt": "lua: ...s/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:<line>: attempt to index global 'argument_view_probe' (a nil value) | stack traceback: | \t...s/RegisterModuleTypeAcc...",
+      "nova_error_excerpt": "LuaFixtures/ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:(6,0-41): attempt to index a nil value [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsNoContextArgumentViewCallbacks.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "951581f46b7ac3049905b1198e127d95199c4921298f514aaf504169df0377ab",
+      "nova_error_sha256": "a7f8130b74a5e17bb9f81b3c8f197309ea7ac2079566c95f2abf32350cc12ae8",
+      "lua_error_excerpt": "lua: ...rModuleTypeAcceptsNoContextArgumentViewCallbacks.lua:<line>: attempt to index global 'argument_view_no_context_probe' (a nil value) | stack traceback: | \t...rModuleTypeA...",
+      "nova_error_excerpt": "LuaFixtures/ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsNoContextArgumentViewCallbacks.lua:(7,0-55): attempt to index a nil value [compatibility: Lua 5.1]"
     },
     {
       "file": "MyObject/MetatableExtensibleObjectSample.lua",
@@ -1444,6 +1521,28 @@
       "nova_error_excerpt": "LuaFixtures/ProcessorDebuggerRuntimeTUnitTests/RuntimeExceptionRefreshesDebuggerWhenSignalRequestsPause.lua:(7,25-33): boom [compatibility: Lua 5.1]"
     },
     {
+      "file": "ScriptCompilationCacheTUnitTests/CachedLoadFunctionSetFenvKeepsIndependentEnvironmentSlots.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "b65601d186e4727595cb4225bbca211757a10a33e875815bef1a243b912eecb6",
+      "nova_error_sha256": "c6fad2f4d666628453cececbf0123d2a219b53b5b21c285e1653b6abe8f0d03c",
+      "lua_error_excerpt": "lua: ...dFunctionSetFenvKeepsIndependentEnvironmentSlots.lua:<line>: bad argument #1 to 'setfenv' (number expected, got nil) | stack traceback: | \t[C]: in function 'setfenv' | \t...",
+      "nova_error_excerpt": "LuaFixtures/ScriptCompilationCacheTUnitTests/CachedLoadFunctionSetFenvKeepsIndependentEnvironmentSlots.lua:(9,23-40): bad argument #1 to 'setfenv' (function or number expected, ..."
+    },
+    {
+      "file": "ScriptCompilationCacheTUnitTests/CachedLoadStringSetFenvKeepsIndependentEnvironmentSlots.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "f06f03f8e4fed393bce7728ece7e22282ad95c45b3bab3fe094ed6190c845ab7",
+      "nova_error_sha256": "6b1c82b735a761f7f6c274d836adb56735be1cb33ebe4e41921c2285fcec050c",
+      "lua_error_excerpt": "lua: ...oadStringSetFenvKeepsIndependentEnvironmentSlots.lua:<line>: bad argument #1 to 'setfenv' (number expected, got nil) | stack traceback: | \t[C]: in function 'setfenv' | \t...",
+      "nova_error_excerpt": "LuaFixtures/ScriptCompilationCacheTUnitTests/CachedLoadStringSetFenvKeepsIndependentEnvironmentSlots.lua:(9,23-40): bad argument #1 to 'setfenv' (function or number expected, go..."
+    },
+    {
       "file": "ScriptExecutionContextTUnitTests/CurrentGlobalEnvExposesGlobals.lua",
       "lua_version": "5.1",
       "classification": "unclassified",
@@ -1464,6 +1563,39 @@
       "nova_error_sha256": "b135b67afc5e7fd4d0ac0274fbe1b71196754fd213be12f754389219b21e3836",
       "lua_error_excerpt": "lua: ...extTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:<line>: attempt to call global 'assertLocal' (a nil value) | stack traceback: | \t...extTUnitTests/EvaluateSymbolByNa...",
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:(8,20-40): attempt to call a nil value [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "d1a5b786406511412d6615b7f471b48cfbb1c9e218dc4ef423a2583f7ae34f75",
+      "nova_error_sha256": "44f020dbdcd4a73788b008e7c22f942dd834d33d241c3041772bd5db11527421",
+      "lua_error_excerpt": "lua: ...TUnitTests/FixedCallOverloadsInvokeCallbackViews.lua:<line>: attempt to call global 'callInner' (a nil value) | stack traceback: | \t...TUnitTests/FixedCallOverloadsInvok...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua:(6,0-18): attempt to call a nil value [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "8f3cfc34e9076dd8d2ba1a3f772dacb2403217f3e56118f21abeaafc16d2ff16",
+      "nova_error_sha256": "c9902ab859f085273393c49af49e6f463dc4a41776b34858d7b6e4b4bb885841",
+      "lua_error_excerpt": "lua: ...UnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua:<line>: attempt to call global 'callSum' (a nil value) | stack traceback: | \t...UnitTests/FixedCallOverloadsInvokeLu...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua:(6,0-16): attempt to call a nil value [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "e9a688d6699351b4a59a2a39f96b8a7a18f7060f0f6dc49df73f8441f543a1a0",
+      "nova_error_sha256": "7967b993f9a119785b55068748c70ac3c37c98420063059687f224e561435586",
+      "lua_error_excerpt": "lua: ...serveLegacyCallbackArgumentsWithFixedStorageSpan.lua:<line>: attempt to call global 'callInner' (a nil value) | stack traceback: | \t...serveLegacyCallbackArgumentsWithFi...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua:(6,0-18): attempt to call a nil value [compatibility: Lua ..."
     },
     {
       "file": "ScriptExecutionContextTUnitTests/GetMetamethodTailCallReturnsTailCallRequest.lua",
@@ -1508,6 +1640,28 @@
       "nova_error_sha256": "27752eadc8bb28ecd275689626cd015857dd716ac0bd08a4d057c5abd4d2beb7",
       "lua_error_excerpt": "lua: ...sts/PerformMessageDecorationDecoratesException_1.lua:<line>: attempt to call global 'decorateMessage' (a nil value) | stack traceback: | \t...sts/PerformMessageDecoration...",
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/PerformMessageDecorationDecoratesException_1.lua:(6,0-24): attempt to call a nil value [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "82e25e944b5cc915fb33e933d15a4fff451f33ea1d30bb8e5569d4263b06c522",
+      "nova_error_sha256": "11399a459a0552626a0e5fb547c676f200090b17be99c66b2799a6c87f6a621f",
+      "lua_error_excerpt": "lua: .../CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua:<line>: attempt to call local 'f' (a nil value) | stack traceback: | \t.../CachedNamedDoStringRuntimeErrorUsesFriendl...",
+      "nova_error_excerpt": "LuaFixtures/ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua:(6,15-25): attempt to call a nil value [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "9cb4981bd418058bdc7474ff7ae0644c077c0ecea3e09a8dbee7a7652abc81cc",
+      "nova_error_sha256": "7c893f638e8887a479c68ceaa24a8621addeb124db7b341c9ce90337698c7fe5",
+      "lua_error_excerpt": "lua: ...achedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua:<line>: attempt to call local 'f' (a nil value) | stack traceback: | \t...achedNamedDoStringRuntimeErrorUsesFriendlyN...",
+      "nova_error_excerpt": "LuaFixtures/ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua:(6,15-25): attempt to call a nil value [compatibility: Lua 5.1]"
     },
     {
       "file": "ScriptOptionsTUnitTests/IndexNilWithLuaCompatibleErrorsReturnsGlobalVariableName.lua",
@@ -2115,6 +2269,17 @@
       "nova_error_excerpt": "LuaFixtures/TableModuleTUnitTests/UnpackIntegerRepresentation_52plus.lua:(12,12-23): attempt to call a nil value [compatibility: Lua 5.1]"
     },
     {
+      "file": "TableStorageTUnitTests/NonPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "54e8287acb9fb2e0e34c5272d99b21e4507e4d57268f120a09063272fd10b415",
+      "nova_error_sha256": "ea6f006679dba39874ce556fd384ef7e32d972460146179c1b46a3d2cb775282",
+      "lua_error_excerpt": "lua: ...sitiveHostIntegerKeysAddressTheSameEntryAsScript.lua:<line>: attempt to index global 't' (a nil value) | stack traceback: | \t...sitiveHostIntegerKeysAddressTheSameEntryA...",
+      "nova_error_excerpt": "LuaFixtures/TableStorageTUnitTests/NonPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua:(6,0-27): attempt to index a nil value [compatibility: Lua 5.1]"
+    },
+    {
       "file": "TableTUnitTests/TableMethodChainingReturnsSelf.lua",
       "lua_version": "5.1",
       "classification": "unclassified",
@@ -2124,6 +2289,28 @@
       "nova_error_sha256": "b8bf44b7a857e391525c894a17c73c488a8814acadd2e82995e60d8cbe1a812a",
       "lua_error_excerpt": "lua: LuaFixtures/TableTUnitTests/TableMethodChainingReturnsSelf.lua:<line>: 'end' expected (to close 'function' at line 6) near '<eof>'",
       "nova_error_excerpt": "'end' expected near '<eof>'"
+    },
+    {
+      "file": "TailCallTUnitTests/ArgumentViewTailCallContinuationKeepsSpanBackedReturnValue.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "199e8eb50897be259df329a55c342331e5a0d6dd4b751eba00ca0be3ebba7a05",
+      "nova_error_sha256": "bd9fca43a8a1534864eb2c959389a680e115ef74e838f85ae1291a97c7e3d64c",
+      "lua_error_excerpt": "lua: ...ewTailCallContinuationKeepsSpanBackedReturnValue.lua:<line>: attempt to call global 'clrtail' (a nil value) | stack traceback: | \t...ewTailCallContinuationKeepsSpanBacke...",
+      "nova_error_excerpt": "LuaFixtures/TailCallTUnitTests/ArgumentViewTailCallContinuationKeepsSpanBackedReturnValue.lua:(10,16-32): attempt to call a nil value [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "TailCallTUnitTests/DebugGetInfoRejectsTailCallOptionInLua51.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "50635ef8a88889d041a06923149f46a76cbdfaac43f19f20be54e57d1e36fa8d",
+      "nova_error_sha256": "4d5ce05b63f7114b89f8ff079d5698a5c4d05daf1e87dca0c0da449ed1d7fb04",
+      "lua_error_excerpt": "lua: ...itTests/DebugGetInfoRejectsTailCallOptionInLua51.lua:<line>: bad argument #2 to 'getinfo' (invalid option) | stack traceback: | \t[C]: in function 'getinfo' | \t...itTests...",
+      "nova_error_excerpt": "LuaFixtures/TailCallTUnitTests/DebugGetInfoRejectsTailCallOptionInLua51.lua:(7,0-28): bad argument #2 to 'getinfo' (invalid option) [compatibility: Lua 5.1]"
     },
     {
       "file": "TailCallTUnitTests/TailCallRequestPropagatesAcrossClrCallback.lua",
@@ -2236,6 +2423,39 @@
       "nova_error_excerpt": "LuaFixtures/Vector3Accessor/StructFieldCantSetThroughLua.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.1]"
     },
     {
+      "file": "VmStackCeilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "e38109a6037480cfd3601a4f402933359717b43696991cec8e47195a641ec32a",
+      "nova_error_sha256": "c7c7cb84413dfe7c9b448521dae4aa32cef9e2b83f17df6413fce8a858569deb",
+      "lua_error_excerpt": "lua: ...gTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:<line>: stack overflow | stack traceback: | \t...gTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:<line>: in func...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:(6,19-33): stack overflow [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "52540a2d7dfa9613ce070cea5d68c7438ea653b7c8b5c44325d64f554d42e8b1",
+      "nova_error_sha256": "15669c0c9458bea937552727b32898daddf5dddcf0a546a83bbaa2673e31cadd",
+      "lua_error_excerpt": "lua: ...kCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:<line>: stack overflow | stack traceback: | \t...kCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:<line>: in func...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:(6,20-39): stack overflow [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "3c483f865179d89a9433acb48f3d8b77e72c0e787b5ebf6bc4b87fbde179e862",
+      "nova_error_sha256": "102711dad9e1cffcedcb83ae5ec28199ee25e43cfa70af0fb0b5c00180721ff8",
+      "lua_error_excerpt": "lua: ...CeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:<line>: stack overflow | stack traceback: | \t...CeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:<line>: in func...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:(6,20-39): stack overflow [compatibility: Lua 5.1]"
+    },
+    {
       "file": "matches/PunctMatchesSpecificCharacters.lua",
       "lua_version": "5.1",
       "classification": "unclassified",
@@ -2333,6 +2553,28 @@
       "nova_error_sha256": "364af2477591d149425f8ebdf0f1908aa350f47090148a44b3fb4f6218c05800",
       "lua_error_excerpt": "lua: ...haviourTUnitTests/TreatAsColonDisablesMethodCallFlag.lua:<line>: attempt to index global 'target' (a nil value) | stack traceback: | \t...haviourTUnitTests/TreatAsColonDi...",
       "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlag.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "b0c0e3d078179ffbd4454b283d0616c420d75591c2c252aa7a776c6e43e889c5",
+      "nova_error_sha256": "323666393df47ee1ad60d1ccac70f94fc4c5c835bdd3c30175c16d2197e05312",
+      "lua_error_excerpt": "lua: ...s/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua:<line>: attempt to index global 'target' (a nil value) | stack traceback: | \t...s/TreatAsColonDisablesMethodCall...",
+      "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "97b508d4f3f1176bf53518c1df913769ebdd3d427216301f8732f61346d72454",
+      "nova_error_sha256": "ec3722b37565019cfd4a5c4e1f89a26ab54c1618c2c66dc0e9db38dade05eaf5",
+      "lua_error_excerpt": "lua: ...TUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua:<line>: attempt to index global 'target' (a nil value) | stack traceback: | \t...TUnitTests/TreatAsDotKeepsMethod...",
+      "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.2]"
     },
     {
       "file": "ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbacks.lua",
@@ -2456,6 +2698,17 @@
       "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/GetInfoInvalidArgumentThrows.lua:(6,13-24): bad argument #1 to 'getinfo' (function or level expected) [compatibility: Lua 5.2]"
     },
     {
+      "file": "DebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "f062be4c0602410b5f47bd7369b60ebf0122a1e37727ce074e01a8ea43e6daaf",
+      "nova_error_sha256": "9a0df5b65da217375907ec2e58809ad65f60e30141edca02fd35e26083f79a82",
+      "lua_error_excerpt": "lua: ...ebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua:<line>: bad argument #2 to 'getupvalue' (number expected, got table) | stack traceback: | \t[C]: in function 'get...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua:(14,16-60): bad argument #2 to 'getupvalue' (number expected, got table) [compatibility: Lua 5.2]"
+    },
+    {
       "file": "DebugModuleTapParityTUnitTests/SetUserValueReturnsOriginalHandle.lua",
       "lua_version": "5.2",
       "classification": "unclassified",
@@ -2465,6 +2718,39 @@
       "nova_error_sha256": "2544ba6b332dad237229d316bccdf9f6e584466281d500c4bdbcd485b3e0763a",
       "lua_error_excerpt": "lua: ...apParityTUnitTests/SetUserValueReturnsOriginalHandle.lua:<line>: bad argument #1 to 'setuservalue' (userdata expected, got nil) | stack traceback: | \t[C]: in function 's...",
       "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/SetUserValueReturnsOriginalHandle.lua:(8,16-68): bad argument #1 to 'setuservalue' (userdata expected, got nil) [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "b0c6ccc05e3f52c1173e0bec0c61ff852a8c4e5fd8bf1787492123a2c927571a",
+      "nova_error_sha256": "c67df0d73656d272449a1df158cb90f199ce6c4d38030cb6a1c9117d34f8cd5c",
+      "lua_error_excerpt": "lua: ...ugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua:<line>: bad argument #2 to 'setupvalue' (number expected, got table) | stack traceback: | \t[C]: in function 'set...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua:(14,32-57): bad argument #2 to 'setupvalue' (number expected, got table) [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "86b3c9639a43c0f2b7f1596db42c4ef73f192284a2f2362d299eb8e89400387a",
+      "nova_error_sha256": "df8f499bb24b9b8aab6275229fcacfef2c053126bc017e1f652d6c6bd3145d69",
+      "lua_error_excerpt": "lua: ...eTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua:<line>: bad argument #2 to 'upvalueid' (number expected, got table) | stack traceback: | \t[C]: in function 'upva...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua:(15,16-66): bad argument #2 to 'upvalueid' (number expected, got table) [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "7b40d8a1e45ec7bf1bc3e70195a4ba75f70ed013c0717d2dc402ab08348e99ab",
+      "nova_error_sha256": "b2d4055b28b9bc39c4c48f79a71714084e67d35b59b89bd2585cbb93d5336d68",
+      "lua_error_excerpt": "lua: ...ebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua:<line>: bad argument #2 to 'upvalueid' (number expected, got table) | stack traceback: | \t[C]: in function 'upva...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua:(19,16-114): bad argument #2 to 'upvalueid' (number expected, got table) [compatibility: Lua 5.2]"
     },
     {
       "file": "DispatchingUserDataDescriptorTUnitTests/ArithmeticOperatorsDispatchToClrOverloads.lua",
@@ -3039,15 +3325,37 @@
       "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/PairsMetamethodControlsIteration_1.lua:(6,0-35): bad argument #1 to 'concat' (table expected, got nil) [compatibility: Lua 5.2]"
     },
     {
+      "file": "MetatableTUnitTests/TableValuedCallMetamethodChainsInLatestDefault.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "e792ee679444c38ae8e559c63305fd4a56dfde4ef8d478e888372663e8aaf0ae",
+      "nova_error_sha256": "25cbb23edb7124ab37d87f8970c0e7d59eaa80122d70edf782c3f27f671eb1e8",
+      "lua_error_excerpt": "lua: ...Tests/TableValuedCallMetamethodChainsInLatestDefault.lua:<line>: attempt to call local 'target' (a table value) | stack traceback: | \t...Tests/TableValuedCallMetamethodC...",
+      "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/TableValuedCallMetamethodChainsInLatestDefault.lua:(15,16-31): attempt to call a table value [compatibility: Lua 5.2]"
+    },
+    {
       "file": "MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua",
       "lua_version": "5.2",
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "d2bd3af38fd2227ff4650c43219f67b843b3f0755836a2ffec99bcfc27f33cf4",
-      "nova_error_sha256": "76715259016fc5799255211b7ecb27d198481ef61c445fdc490f56cc16ec9f5b",
+      "nova_error_sha256": "f4b8d51d7d8e112cdc0d20e69703e561aede41c0bba02075ecb96888b80f8594",
       "lua_error_excerpt": "lua: ...sts/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:<line>: attempt to call local 'target' (a table value) | stack traceback: | \t...sts/TableValuedCallMetamethodDoe...",
-      "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:(17,0-15): attempt to call a table value [compatibility: Lua 5.2]"
+      "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:(14,20-35): attempt to call a table value [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "231f690427c3f90c7ee21bc4ee08c69b5e2b22787dd72c2d9975867cf7efe263",
+      "nova_error_sha256": "9c2b6104ad97e21221e47ad3876750b18ec464b35bd9149a34e0305e51afb41d",
+      "lua_error_excerpt": "lua: ...Tests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:<line>: attempt to index global 'argument_view_probe' (a nil value) | stack traceback: | \t...Tests/RegisterModul...",
+      "nova_error_excerpt": "LuaFixtures/ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:(6,0-41): attempt to index a nil value [compatibility: Lua 5.2]"
     },
     {
       "file": "MyObject/MetatableExtensibleObjectSample.lua",
@@ -3215,6 +3523,39 @@
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:(8,20-40): attempt to call a nil value [compatibility: Lua 5.2]"
     },
     {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "eee8509f036387691171b946285bf916c1e1bc947fa0f60b1e7a8de8fe6cc449",
+      "nova_error_sha256": "6f896ea96a9f3954eefa02ff5ecce4c3d7481d0f4b9a27985a0ce4651cc98bfc",
+      "lua_error_excerpt": "lua: ...textTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua:<line>: attempt to call global 'callInner' (a nil value) | stack traceback: | \t...textTUnitTests/FixedCallOverlo...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua:(6,0-18): attempt to call a nil value [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "03c8e82e51d708809112dd05838a07232f103c929bc3a851e61f3a1a13b1a0a0",
+      "nova_error_sha256": "7764ba0b5acd64a4f61a5fc3d6869dfe70a2a152c611e4f2f3c4678689432dd2",
+      "lua_error_excerpt": "lua: ...extTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua:<line>: attempt to call global 'callSum' (a nil value) | stack traceback: | \t...extTUnitTests/FixedCallOverloads...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua:(6,0-16): attempt to call a nil value [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "65d05bbbd4e70d6903a02716910581fcd40cfea4c4d0445d29869b69f0a4ad04",
+      "nova_error_sha256": "7df9df80605f48c376a1cddf63875444a7850db4e8dc5d865ed148f14bed163f",
+      "lua_error_excerpt": "lua: ...sPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua:<line>: attempt to call global 'callInner' (a nil value) | stack traceback: | \t...sPreserveLegacyCallbackArgumen...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua:(6,0-18): attempt to call a nil value [compatibility: Lua ..."
+    },
+    {
       "file": "ScriptExecutionContextTUnitTests/GetMetamethodTailCallReturnsTailCallRequest.lua",
       "lua_version": "5.2",
       "classification": "unclassified",
@@ -3257,6 +3598,28 @@
       "nova_error_sha256": "68128794afced03f0484fe56c8d4fbd6c141fb3a035454763bf1510463a804c4",
       "lua_error_excerpt": "lua: ...itTests/PerformMessageDecorationDecoratesException_1.lua:<line>: attempt to call global 'decorateMessage' (a nil value) | stack traceback: | \t...itTests/PerformMessageDe...",
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/PerformMessageDecorationDecoratesException_1.lua:(6,0-24): attempt to call a nil value [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "369d848afbb3b0732b4b4d7a5955860f40fd12a21054836dcf7ac045bbb97374",
+      "nova_error_sha256": "4195fda080b85eee42eb54b64194283eae9e3bec265867a2a8f7534a371ce133",
+      "lua_error_excerpt": "lua: ...ests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua:<line>: attempt to call local 'f' (a nil value) | stack traceback: | \t...ests/CachedNamedDoStringRuntimeErrorUse...",
+      "nova_error_excerpt": "LuaFixtures/ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua:(6,15-25): attempt to call a nil value [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "fd6f60c80ec08db220ff5d35c2eaf0f5be2e07a9bd54a80b659eb0e2cdcf0807",
+      "nova_error_sha256": "7e7c9621b9cd9da3eb73fa0085db97063da55ea0668614e4483339ec8dc372dd",
+      "lua_error_excerpt": "lua: ...ts/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua:<line>: attempt to call local 'f' (a nil value) | stack traceback: | \t...ts/CachedNamedDoStringRuntimeErrorUsesF...",
+      "nova_error_excerpt": "LuaFixtures/ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua:(6,15-25): attempt to call a nil value [compatibility: Lua 5.2]"
     },
     {
       "file": "ScriptOptionsTUnitTests/IndexNilWithLuaCompatibleErrorsReturnsGlobalVariableName.lua",
@@ -3798,6 +4161,17 @@
       "nova_error_excerpt": "LuaFixtures/TableModuleTUnitTests/SortThrowsWhenValuesHaveNoNaturalOrder.lua:(6,10-27): attempt to compare two boolean values [compatibility: Lua 5.2]"
     },
     {
+      "file": "TableStorageTUnitTests/NonPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "1772bc3d696d764a592db7766f426fb06c888f2b40b513101f7cb72b0ce793b1",
+      "nova_error_sha256": "b27b110c73a4b043939146cdaa99288c3fb71b940a04fd6944c80cffbf0e416c",
+      "lua_error_excerpt": "lua: ...onPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua:<line>: attempt to index global 't' (a nil value) | stack traceback: | \t...onPositiveHostIntegerKeysAddressTheSa...",
+      "nova_error_excerpt": "LuaFixtures/TableStorageTUnitTests/NonPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua:(6,0-27): attempt to index a nil value [compatibility: Lua 5.2]"
+    },
+    {
       "file": "TableTUnitTests/TableMethodChainingReturnsSelf.lua",
       "lua_version": "5.2",
       "classification": "unclassified",
@@ -3807,6 +4181,17 @@
       "nova_error_sha256": "b8bf44b7a857e391525c894a17c73c488a8814acadd2e82995e60d8cbe1a812a",
       "lua_error_excerpt": "lua: ...tures/TableTUnitTests/TableMethodChainingReturnsSelf.lua:<line>: 'end' expected (to close 'function' at line 6) near <eof>",
       "nova_error_excerpt": "'end' expected near '<eof>'"
+    },
+    {
+      "file": "TailCallTUnitTests/ArgumentViewTailCallContinuationKeepsSpanBackedReturnValue.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "fe4338ee4c51e2e7cf6cca904e4a517e154e83db45793348055306bd0994566f",
+      "nova_error_sha256": "af5b287549044814a8bb8069ce47edf3ac00f08dd0349a5133314056151b84af",
+      "lua_error_excerpt": "lua: ...ntViewTailCallContinuationKeepsSpanBackedReturnValue.lua:<line>: attempt to call global 'clrtail' (a nil value) | stack traceback: | \t...ntViewTailCallContinuationKeepsS...",
+      "nova_error_excerpt": "LuaFixtures/TailCallTUnitTests/ArgumentViewTailCallContinuationKeepsSpanBackedReturnValue.lua:(10,16-32): attempt to call a nil value [compatibility: Lua 5.2]"
     },
     {
       "file": "TailCallTUnitTests/TailCallRequestPropagatesAcrossClrCallback.lua",
@@ -3906,6 +4291,50 @@
       "nova_error_sha256": "6568b89eeb165520f6773978593aa5721367cc5979208575a0c68ab8e7398f17",
       "lua_error_excerpt": "lua: ...ixtures/Vector3Accessor/StructFieldCantSetThroughLua.lua:<line>: attempt to index global 'transform' (a nil value) | stack traceback: | \t...ixtures/Vector3Accessor/Struc...",
       "nova_error_excerpt": "LuaFixtures/Vector3Accessor/StructFieldCantSetThroughLua.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "VmCorrectnessRegressionTUnitTests/DebugSetUpValueStillWorks.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "e9b15140ebf97474ce83e10bdb6354ee25ed32e3583ec2213bfd2bbecfa1d6c9",
+      "nova_error_sha256": "0dc437ecf3d6d5a8c5950183135032417d149220f703a004e849d710a9c7f13b",
+      "lua_error_excerpt": "lua: ...ctnessRegressionTUnitTests/DebugSetUpValueStillWorks.lua:<line>: bad argument #2 to 'setupvalue' (number expected, got table) | stack traceback: | \t[C]: in function 'set...",
+      "nova_error_excerpt": "LuaFixtures/VmCorrectnessRegressionTUnitTests/DebugSetUpValueStillWorks.lua:(11,32-49): bad argument #2 to 'setupvalue' (number expected, got table) [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "cafe5c5b72b54c8de28157ca669a2564312172f54e794c602a565093a4a3ddc5",
+      "nova_error_sha256": "f76668e9f86cb12e233cab45836ad56f2c25be9ede40e25cb8997db5623c6bd3",
+      "lua_error_excerpt": "lua: ...ilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:<line>: stack overflow | stack traceback: | \t...ilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:<line>:...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:(6,19-33): stack overflow [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "12bb90624c15dae3a4fee022464973389d504440c2e174fe3e20051a0768be8a",
+      "nova_error_sha256": "a3a7abc2db40274aaebca6a0e7537220f4771f534bcb9d8216932933b4cd4b63",
+      "lua_error_excerpt": "lua: ...StackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:<line>: stack overflow | stack traceback: | \t...StackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:<line>:...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:(6,20-39): stack overflow [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "2ff729cae8094aa2a2f50de123e60b853fa0a70a0c5b3fd4078e22e068a93d22",
+      "nova_error_sha256": "7e00e05ffa5bebd483665e5cc07d169f76ba0527bfd34247da034ffa297183e0",
+      "lua_error_excerpt": "lua: ...tackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:<line>: stack overflow | stack traceback: | \t...tackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:<line>:...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:(6,20-39): stack overflow [compatibility: Lua 5.2]"
     },
     {
       "file": "matches/PunctMatchesSpecificCharacters.lua",
@@ -4016,6 +4445,28 @@
       "nova_error_sha256": "7c12a21bd4d0b6ba687da99bbbc20d7c404a87e9eb25536a906f1baed1ebb249",
       "lua_error_excerpt": "lua: ...haviourTUnitTests/TreatAsColonDisablesMethodCallFlag.lua:<line>: attempt to index a nil value (global 'target') | stack traceback: | \t...haviourTUnitTests/TreatAsColonDi...",
       "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlag.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "c396990307d4969bfc1bd83ceb7748ff58b896288d69b569b15248a70d8f947c",
+      "nova_error_sha256": "e60ec5678dd9066bee5200d057d3170c5c0cf52672d24571549e465189d8945d",
+      "lua_error_excerpt": "lua: ...s/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua:<line>: attempt to index a nil value (global 'target') | stack traceback: | \t...s/TreatAsColonDisablesMethodCall...",
+      "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "05256cdc28a854ed850ef6ccaf3abe36d2287411f51fbf5fe834e8847c12e709",
+      "nova_error_sha256": "b14f372053d344ddc142973e2aec2deb2932e04eafaee07d9d164940c27e86fa",
+      "lua_error_excerpt": "lua: ...TUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua:<line>: attempt to index a nil value (global 'target') | stack traceback: | \t...TUnitTests/TreatAsDotKeepsMethod...",
+      "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.3]"
     },
     {
       "file": "ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbacks.lua",
@@ -4139,6 +4590,17 @@
       "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/GetInfoInvalidArgumentThrows.lua:(6,13-24): bad argument #1 to 'getinfo' (function or level expected) [compatibility: Lua 5.3]"
     },
     {
+      "file": "DebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "1b04bd3b9c4010ccdb048e3ffb8be23ead8df86b99e41082a085561e6ec8e391",
+      "nova_error_sha256": "d0bfaebbb81c74553d77d6a9e35e31472d9efef3cd607ba2af617016d567a5bb",
+      "lua_error_excerpt": "lua: ...ebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua:<line>: bad argument #2 to 'getupvalue' (number expected, got table) | stack traceback: | \t[C]: in function 'deb...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua:(14,16-60): bad argument #2 to 'getupvalue' (number expected, got table) [compatibility: Lua 5.3]"
+    },
+    {
       "file": "DebugModuleTapParityTUnitTests/SetUserValueReturnsOriginalHandle.lua",
       "lua_version": "5.3",
       "classification": "unclassified",
@@ -4148,6 +4610,39 @@
       "nova_error_sha256": "79eba8cefc7822e4989615b7c19defd6ddb16cab7d0da4ada0cbc2c7e8173c52",
       "lua_error_excerpt": "lua: ...apParityTUnitTests/SetUserValueReturnsOriginalHandle.lua:<line>: bad argument #1 to 'setuservalue' (userdata expected, got nil) | stack traceback: | \t[C]: in function 'd...",
       "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/SetUserValueReturnsOriginalHandle.lua:(8,16-68): bad argument #1 to 'setuservalue' (userdata expected, got nil) [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "44fd6748c9172aafa82a38f9b7997a5c66b58c1fc73a7b60a21b26ff8cd62ac3",
+      "nova_error_sha256": "e26baddb3e277ed92c81679156445e57250ca594b5756d6f640a5b311acaa480",
+      "lua_error_excerpt": "lua: ...ugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua:<line>: bad argument #2 to 'setupvalue' (number expected, got table) | stack traceback: | \t[C]: in function 'deb...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua:(14,32-57): bad argument #2 to 'setupvalue' (number expected, got table) [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "0e00420a622c4e8fca56da0bd8c591b5cf566bc7ef4ae10229c6c0376f8079b9",
+      "nova_error_sha256": "5a1452df1b2142ff963a36abcb19491d8669cca0487f6c574578525916d12f01",
+      "lua_error_excerpt": "lua: ...eTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua:<line>: bad argument #2 to 'upvalueid' (number expected, got table) | stack traceback: | \t[C]: in function 'debu...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua:(15,16-66): bad argument #2 to 'upvalueid' (number expected, got table) [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "0422869f5abfc8f74c86f47c388bd6ca540686bd9cce473d95e6637a184bb950",
+      "nova_error_sha256": "de0ff1cbd6a5b0260ba6789ec285f0dfb0b5589ed04a838b4fb7d5205c68871d",
+      "lua_error_excerpt": "lua: ...ebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua:<line>: bad argument #2 to 'upvalueid' (number expected, got table) | stack traceback: | \t[C]: in function 'debu...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua:(19,16-114): bad argument #2 to 'upvalueid' (number expected, got table) [compatibility: Lua 5.3]"
     },
     {
       "file": "DispatchingUserDataDescriptorTUnitTests/ArithmeticOperatorsDispatchToClrOverloads.lua",
@@ -4313,6 +4808,17 @@
       "nova_error_sha256": "5ea7b64d36df0ca05c29810baa46d9d7c9f8fb174be903c2d084e2c126908e4c",
       "lua_error_excerpt": "lua: ...rrorHandlingModuleTUnitTests/XpcallAcceptsClrHandler.lua:<line>: bad argument #2 to 'xpcall' (function expected, got nil) | stack traceback: | \t[C]: in function 'xpcall'...",
       "nova_error_excerpt": "LuaFixtures/ErrorHandlingModuleTUnitTests/XpcallAcceptsClrHandler.lua:(10,16-47): bad argument #2 to 'xpcall' (function expected, got nil) [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "ErrorHandlingModuleTUnitTests/XpcallDecoratesCallbackViewExceptionWithHandlerBeforeUnwind_1.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "2d339fd8adc5d63756b9b952b51b6cf60439829ff6b7cac3ea4947e7352b1ddf",
+      "nova_error_sha256": "d94faf90819cc6dab922567df14be8f6def65d6b39b114f9e884cd3c0ecdb7e6",
+      "lua_error_excerpt": "lua: ...oratesCallbackViewExceptionWithHandlerBeforeUnwind_1.lua:<line>: bad argument #2 to 'xpcall' (function expected, got nil) | stack traceback: | \t[C]: in function 'xpcall'...",
+      "nova_error_excerpt": "LuaFixtures/ErrorHandlingModuleTUnitTests/XpcallDecoratesCallbackViewExceptionWithHandlerBeforeUnwind_1.lua:(6,0-29): bad argument #2 to 'xpcall' (function expected, got nil) [c..."
     },
     {
       "file": "ErrorHandlingModuleTUnitTests/XpcallDecoratesClrExceptionWithHandlerBeforeUnwind_1.lua",
@@ -5195,15 +5701,37 @@
       "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/PairsMetamethodControlsIteration_1.lua:(6,0-35): bad argument #1 to 'concat' (table expected, got nil) [compatibility: Lua 5.3]"
     },
     {
+      "file": "MetatableTUnitTests/TableValuedCallMetamethodChainsInLatestDefault.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "bdcef5d0e3bab3954b429b4586ca997bb925e58bbbb88e41acbce71fad3c64f0",
+      "nova_error_sha256": "bb781ba94fed83c4a57c65f8c5e4c3d1e9e835258faa3706fbc3275ae1015bd0",
+      "lua_error_excerpt": "lua: ...Tests/TableValuedCallMetamethodChainsInLatestDefault.lua:<line>: attempt to call a table value (local 'target') | stack traceback: | \t...Tests/TableValuedCallMetamethodC...",
+      "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/TableValuedCallMetamethodChainsInLatestDefault.lua:(15,16-31): attempt to call a table value [compatibility: Lua 5.3]"
+    },
+    {
       "file": "MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua",
       "lua_version": "5.3",
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "de69decb07cf30aac89d36e76ee2effa91b2db8185fc026fa85499aea1809169",
-      "nova_error_sha256": "8ac3035095e1d25971b97576d45c8ead1e840f8f27f2eb3f68a882a4ff2ef2c9",
+      "nova_error_sha256": "0eee21970eae307f44e6194850c9467b6b252a7309b41819e349880618f14e04",
       "lua_error_excerpt": "lua: ...sts/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:<line>: attempt to call a table value (local 'target') | stack traceback: | \t...sts/TableValuedCallMetamethodDoe...",
-      "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:(17,0-15): attempt to call a table value [compatibility: Lua 5.3]"
+      "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:(14,20-35): attempt to call a table value [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "0b23b41ee3f5297578bb8eeb6b0de6583fcf2251fbd3a540d15d60f2d662dcef",
+      "nova_error_sha256": "0fc7368a3e9f62708f66412bdb01499ba152afb5f93f01d33f8ab29cf6e07bba",
+      "lua_error_excerpt": "lua: ...Tests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:<line>: attempt to index a nil value (global 'argument_view_probe') | stack traceback: | \t...Tests/RegisterModul...",
+      "nova_error_excerpt": "LuaFixtures/ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:(6,0-41): attempt to index a nil value [compatibility: Lua 5.3]"
     },
     {
       "file": "MyObject/MetatableExtensibleObjectSample.lua",
@@ -5404,6 +5932,39 @@
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:(8,20-40): attempt to call a nil value [compatibility: Lua 5.3]"
     },
     {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "81ce30d5e61999027641edcdfc4aab152c83d7c2fd7b4c163c6ea29ee3209826",
+      "nova_error_sha256": "a5129405138195b939d5da8d488ac30ea047cc7aa241991da6e674d02c5d7666",
+      "lua_error_excerpt": "lua: ...textTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua:<line>: attempt to call a nil value (global 'callInner') | stack traceback: | \t...textTUnitTests/FixedCallOverlo...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua:(6,0-18): attempt to call a nil value [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "e6702e380edeaee452b68a0aa5da659c85cede83aa0c98202e67dc85d0594336",
+      "nova_error_sha256": "7a12a638e419b7bb53b9ea49706533e3b29d01be90b18b140840f698e4cc9484",
+      "lua_error_excerpt": "lua: ...extTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua:<line>: attempt to call a nil value (global 'callSum') | stack traceback: | \t...extTUnitTests/FixedCallOverloads...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua:(6,0-16): attempt to call a nil value [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "6b3be38ce3cb30577452b7b80726c9ce799df7deab73e758ffc9368fb746174e",
+      "nova_error_sha256": "cebc8fdb4d22e8c0d79c98d19be99091d1cf600a17a6160a3e8e739270d1fb68",
+      "lua_error_excerpt": "lua: ...sPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua:<line>: attempt to call a nil value (global 'callInner') | stack traceback: | \t...sPreserveLegacyCallbackArgumen...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua:(6,0-18): attempt to call a nil value [compatibility: Lua ..."
+    },
+    {
       "file": "ScriptExecutionContextTUnitTests/GetMetamethodTailCallReturnsTailCallRequest.lua",
       "lua_version": "5.3",
       "classification": "unclassified",
@@ -5446,6 +6007,28 @@
       "nova_error_sha256": "c5e1e817e8233080a993230cee90c442447fa345b0388ed37092f7a09dc07368",
       "lua_error_excerpt": "lua: ...itTests/PerformMessageDecorationDecoratesException_1.lua:<line>: attempt to call a nil value (global 'decorateMessage') | stack traceback: | \t...itTests/PerformMessageDe...",
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/PerformMessageDecorationDecoratesException_1.lua:(6,0-24): attempt to call a nil value [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "852702d6f54b438bc429b8fbeebc1366cd09abbbf645c8790c1e4f37b4d104b3",
+      "nova_error_sha256": "47fd87af8b403085913e085bcd2a8fb31fde07c739e35d0df1a9fa2ec55b7b6c",
+      "lua_error_excerpt": "lua: ...ests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua:<line>: attempt to call a nil value (local 'f') | stack traceback: | \t...ests/CachedNamedDoStringRuntimeErrorUse...",
+      "nova_error_excerpt": "LuaFixtures/ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua:(6,15-25): attempt to call a nil value [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "44513df36640fd1c527ccd2d9a835804725650790c518ffcd5ab46129f8d816c",
+      "nova_error_sha256": "6de54e1ad4d7d96470c62c52d61ef619cbbd6178c60da6ad54dc1ca17950dedd",
+      "lua_error_excerpt": "lua: ...ts/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua:<line>: attempt to call a nil value (local 'f') | stack traceback: | \t...ts/CachedNamedDoStringRuntimeErrorUsesF...",
+      "nova_error_excerpt": "LuaFixtures/ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua:(6,15-25): attempt to call a nil value [compatibility: Lua 5.3]"
     },
     {
       "file": "ScriptOptionsTUnitTests/IndexNilWithLuaCompatibleErrorsReturnsGlobalVariableName.lua",
@@ -6306,6 +6889,17 @@
       "nova_error_excerpt": "LuaFixtures/TableModuleTUnitTests/UnpackIntegerRepresentation_52plus.lua:(12,12-23): bad argument #2 to 'unpack' (number has no integer representation) [compatibility: Lua 5.3]"
     },
     {
+      "file": "TableStorageTUnitTests/NonPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "d4895b3597095bba0f58d16fbf673e603e42b048e8b081593c50cbb52b58e749",
+      "nova_error_sha256": "a8cd09e22d9c49bdc4fc78c9771833ec90841f01e7f2f421194f368859b98cd5",
+      "lua_error_excerpt": "lua: ...onPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua:<line>: attempt to index a nil value (global 't') | stack traceback: | \t...onPositiveHostIntegerKeysAddressTheSa...",
+      "nova_error_excerpt": "LuaFixtures/TableStorageTUnitTests/NonPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua:(6,0-27): attempt to index a nil value [compatibility: Lua 5.3]"
+    },
+    {
       "file": "TableTUnitTests/TableMethodChainingReturnsSelf.lua",
       "lua_version": "5.3",
       "classification": "unclassified",
@@ -6315,6 +6909,17 @@
       "nova_error_sha256": "b8bf44b7a857e391525c894a17c73c488a8814acadd2e82995e60d8cbe1a812a",
       "lua_error_excerpt": "lua: ...tures/TableTUnitTests/TableMethodChainingReturnsSelf.lua:<line>: 'end' expected (to close 'function' at line 6) near <eof>",
       "nova_error_excerpt": "'end' expected near '<eof>'"
+    },
+    {
+      "file": "TailCallTUnitTests/ArgumentViewTailCallContinuationKeepsSpanBackedReturnValue.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "26ca27e1fc8770cc83d73ffa54df8f8ee648ab299c4a311249b4abc907b1ad07",
+      "nova_error_sha256": "f4280b174e63b7eadaf271135eca4d778d9437e8c217f635a20c0cf3a36f55ac",
+      "lua_error_excerpt": "lua: ...ntViewTailCallContinuationKeepsSpanBackedReturnValue.lua:<line>: attempt to call a nil value (global 'clrtail') | stack traceback: | \t...ntViewTailCallContinuationKeepsS...",
+      "nova_error_excerpt": "LuaFixtures/TailCallTUnitTests/ArgumentViewTailCallContinuationKeepsSpanBackedReturnValue.lua:(10,16-32): attempt to call a nil value [compatibility: Lua 5.3]"
     },
     {
       "file": "TailCallTUnitTests/TailCallRequestPropagatesAcrossClrCallback.lua",
@@ -6812,6 +7417,50 @@
       "nova_error_excerpt": "LuaFixtures/Vector3Accessor/StructFieldCantSetThroughLua.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.3]"
     },
     {
+      "file": "VmCorrectnessRegressionTUnitTests/DebugSetUpValueStillWorks.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "a4ffd1df6a53c117befea30aee8a2c380f9f6429c50fe40f4318723785828ea1",
+      "nova_error_sha256": "bd98404483d83c03c2509953300f5b50d13991875a2552950327a0c54b34ad6f",
+      "lua_error_excerpt": "lua: ...ctnessRegressionTUnitTests/DebugSetUpValueStillWorks.lua:<line>: bad argument #2 to 'setupvalue' (number expected, got table) | stack traceback: | \t[C]: in function 'deb...",
+      "nova_error_excerpt": "LuaFixtures/VmCorrectnessRegressionTUnitTests/DebugSetUpValueStillWorks.lua:(11,32-49): bad argument #2 to 'setupvalue' (number expected, got table) [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "653f9680f4527648c543a12a0ba83eb624e7f46aee5075179a0dbb877b8590ab",
+      "nova_error_sha256": "93ce2cff71c240f5b5c1042492dee54b939a4af7d51b04db1f09f2d1b073ae5f",
+      "lua_error_excerpt": "lua: ...ilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:<line>: stack overflow | stack traceback: | \t...ilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:<line>:...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:(6,19-33): stack overflow [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "b6066433103f43245053fc85f5b04648db52c6c79dd0463e28f20e87b84671da",
+      "nova_error_sha256": "4bd8028f088a5298acd63e240ad2d64807a6a79dfa2c3265a8d4a5780a11e2d1",
+      "lua_error_excerpt": "lua: ...StackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:<line>: stack overflow | stack traceback: | \t...StackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:<line>:...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:(6,20-39): stack overflow [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "ef9e4d9d53ca18f3eb26b300749e9368d5a5fbfd00ea0ba766e361a2e79194d9",
+      "nova_error_sha256": "03c61d82e9a283b69426be266adb60255294fcb74439e2076a417c32f7ee0fc7",
+      "lua_error_excerpt": "lua: ...tackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:<line>: stack overflow | stack traceback: | \t...tackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:<line>:...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:(6,20-39): stack overflow [compatibility: Lua 5.3]"
+    },
+    {
       "file": "matches/PunctMatchesSpecificCharacters.lua",
       "lua_version": "5.3",
       "classification": "unclassified",
@@ -6920,6 +7569,28 @@
       "nova_error_sha256": "14cbb6226a5ceb7c5b7626462ba787b7572cfa7bf3d5d3ad7f296dbe3e22d0b3",
       "lua_error_excerpt": "lua: ...haviourTUnitTests/TreatAsColonDisablesMethodCallFlag.lua:<line>: attempt to index a nil value (global 'target') | stack traceback: | \t...haviourTUnitTests/TreatAsColonDi...",
       "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlag.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "c396990307d4969bfc1bd83ceb7748ff58b896288d69b569b15248a70d8f947c",
+      "nova_error_sha256": "c87ee5df1193b8adbf11832452aff24c8429f9106de520252b9e2adb1e1f9881",
+      "lua_error_excerpt": "lua: ...s/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua:<line>: attempt to index a nil value (global 'target') | stack traceback: | \t...s/TreatAsColonDisablesMethodCall...",
+      "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "05256cdc28a854ed850ef6ccaf3abe36d2287411f51fbf5fe834e8847c12e709",
+      "nova_error_sha256": "80e1ac4358cd7b06a271eb517cf1997293c02d02b621eaf9c59f08659dc490ad",
+      "lua_error_excerpt": "lua: ...TUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua:<line>: attempt to index a nil value (global 'target') | stack traceback: | \t...TUnitTests/TreatAsDotKeepsMethod...",
+      "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.4]"
     },
     {
       "file": "ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbacks.lua",
@@ -7043,6 +7714,17 @@
       "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/GetInfoInvalidArgumentThrows.lua:(6,13-24): bad argument #1 to 'getinfo' (function or level expected) [compatibility: Lua 5.4]"
     },
     {
+      "file": "DebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "1b04bd3b9c4010ccdb048e3ffb8be23ead8df86b99e41082a085561e6ec8e391",
+      "nova_error_sha256": "9161d11d21d9812e406416e4bd9bf54017acdf67e3cb45f5928837c47b8d1a5f",
+      "lua_error_excerpt": "lua: ...ebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua:<line>: bad argument #2 to 'getupvalue' (number expected, got table) | stack traceback: | \t[C]: in function 'deb...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua:(14,16-60): bad argument #2 to 'getupvalue' (number expected, got table) [compatibility: Lua 5.4]"
+    },
+    {
       "file": "DebugModuleTapParityTUnitTests/SetUserValueReturnsOriginalHandle.lua",
       "lua_version": "5.4",
       "classification": "unclassified",
@@ -7052,6 +7734,39 @@
       "nova_error_sha256": "fc1bfbb9fe1c058b6e7893e36a58fd7f44648597100a08bada1244424b949525",
       "lua_error_excerpt": "lua: ...apParityTUnitTests/SetUserValueReturnsOriginalHandle.lua:<line>: bad argument #1 to 'setuservalue' (userdata expected, got nil) | stack traceback: | \t[C]: in function 'd...",
       "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/SetUserValueReturnsOriginalHandle.lua:(8,16-68): bad argument #1 to 'setuservalue' (userdata expected, got nil) [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "44fd6748c9172aafa82a38f9b7997a5c66b58c1fc73a7b60a21b26ff8cd62ac3",
+      "nova_error_sha256": "1b727ce888be8dd0bf918ffa3a9e4ef73c6ed5c4254182e78fca20d486e5069d",
+      "lua_error_excerpt": "lua: ...ugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua:<line>: bad argument #2 to 'setupvalue' (number expected, got table) | stack traceback: | \t[C]: in function 'deb...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua:(14,32-57): bad argument #2 to 'setupvalue' (number expected, got table) [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "0e00420a622c4e8fca56da0bd8c591b5cf566bc7ef4ae10229c6c0376f8079b9",
+      "nova_error_sha256": "20285783709d10f864240a13f7dde516e8a31abb307eca6fefdae6b2eee4fa2e",
+      "lua_error_excerpt": "lua: ...eTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua:<line>: bad argument #2 to 'upvalueid' (number expected, got table) | stack traceback: | \t[C]: in function 'debu...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua:(15,16-66): bad argument #2 to 'upvalueid' (number expected, got table) [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "0422869f5abfc8f74c86f47c388bd6ca540686bd9cce473d95e6637a184bb950",
+      "nova_error_sha256": "69bdeb33f0f5ac5c6a06b1a983a2b23b1faa54f7294ae66e197c63549257eb42",
+      "lua_error_excerpt": "lua: ...ebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua:<line>: bad argument #2 to 'upvalueid' (number expected, got table) | stack traceback: | \t[C]: in function 'debu...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua:(19,16-114): bad argument #2 to 'upvalueid' (number expected, got table) [compatibility: Lua 5.4]"
     },
     {
       "file": "DispatchingUserDataDescriptorTUnitTests/ArithmeticOperatorsDispatchToClrOverloads.lua",
@@ -7217,6 +7932,17 @@
       "nova_error_sha256": "02a436d0aae09613d4cef7de41fcaaff8a480ad2816a9c3436550453c9978429",
       "lua_error_excerpt": "lua: ...rrorHandlingModuleTUnitTests/XpcallAcceptsClrHandler.lua:<line>: bad argument #2 to 'xpcall' (function expected, got nil) | stack traceback: | \t[C]: in function 'xpcall'...",
       "nova_error_excerpt": "LuaFixtures/ErrorHandlingModuleTUnitTests/XpcallAcceptsClrHandler.lua:(10,16-47): bad argument #2 to 'xpcall' (function expected, got nil) [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "ErrorHandlingModuleTUnitTests/XpcallDecoratesCallbackViewExceptionWithHandlerBeforeUnwind_1.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "2d339fd8adc5d63756b9b952b51b6cf60439829ff6b7cac3ea4947e7352b1ddf",
+      "nova_error_sha256": "bf120f9c54f57dc6cfcb0a7585daa9edd9b44b8d3dcd9ee48fec6bf1649742fd",
+      "lua_error_excerpt": "lua: ...oratesCallbackViewExceptionWithHandlerBeforeUnwind_1.lua:<line>: bad argument #2 to 'xpcall' (function expected, got nil) | stack traceback: | \t[C]: in function 'xpcall'...",
+      "nova_error_excerpt": "LuaFixtures/ErrorHandlingModuleTUnitTests/XpcallDecoratesCallbackViewExceptionWithHandlerBeforeUnwind_1.lua:(6,0-29): bad argument #2 to 'xpcall' (function expected, got nil) [c..."
     },
     {
       "file": "ErrorHandlingModuleTUnitTests/XpcallDecoratesClrExceptionWithHandlerBeforeUnwind_1.lua",
@@ -8132,6 +8858,17 @@
       "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/PairsMetamethodControlsIteration_1.lua:(6,0-35): bad argument #1 to 'concat' (table expected, got nil) [compatibility: Lua 5.4]"
     },
     {
+      "file": "ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "0b23b41ee3f5297578bb8eeb6b0de6583fcf2251fbd3a540d15d60f2d662dcef",
+      "nova_error_sha256": "83dcb8181805e3da2184bb1c54c28742adef9c0782336909597e9281ce94905f",
+      "lua_error_excerpt": "lua: ...Tests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:<line>: attempt to index a nil value (global 'argument_view_probe') | stack traceback: | \t...Tests/RegisterModul...",
+      "nova_error_excerpt": "LuaFixtures/ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:(6,0-41): attempt to index a nil value [compatibility: Lua 5.4]"
+    },
+    {
       "file": "MyObject/MetatableExtensibleObjectSample.lua",
       "lua_version": "5.4",
       "classification": "unclassified",
@@ -8330,6 +9067,39 @@
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:(8,20-40): attempt to call a nil value [compatibility: Lua 5.4]"
     },
     {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "81ce30d5e61999027641edcdfc4aab152c83d7c2fd7b4c163c6ea29ee3209826",
+      "nova_error_sha256": "93bdef5cd68628fdb5f6738097f1cd7ae9f77a7512b933d5becbe8a7b275378d",
+      "lua_error_excerpt": "lua: ...textTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua:<line>: attempt to call a nil value (global 'callInner') | stack traceback: | \t...textTUnitTests/FixedCallOverlo...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua:(6,0-18): attempt to call a nil value [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "e6702e380edeaee452b68a0aa5da659c85cede83aa0c98202e67dc85d0594336",
+      "nova_error_sha256": "f13f7c860b7a39c547376ba2caca5968a0730c1127c2aa5bf857e3bfb3a6c290",
+      "lua_error_excerpt": "lua: ...extTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua:<line>: attempt to call a nil value (global 'callSum') | stack traceback: | \t...extTUnitTests/FixedCallOverloads...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua:(6,0-16): attempt to call a nil value [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "6b3be38ce3cb30577452b7b80726c9ce799df7deab73e758ffc9368fb746174e",
+      "nova_error_sha256": "b6ecbd0e0321f47c30890cc7c98d753e095074ef751c196bce1f19b1cf654cf5",
+      "lua_error_excerpt": "lua: ...sPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua:<line>: attempt to call a nil value (global 'callInner') | stack traceback: | \t...sPreserveLegacyCallbackArgumen...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua:(6,0-18): attempt to call a nil value [compatibility: Lua ..."
+    },
+    {
       "file": "ScriptExecutionContextTUnitTests/GetMetamethodTailCallReturnsTailCallRequest.lua",
       "lua_version": "5.4",
       "classification": "unclassified",
@@ -8372,6 +9142,28 @@
       "nova_error_sha256": "466e99932df3e26c1ea162d03e1a00c4afb8c6aaf073529a724ab1f78901ca03",
       "lua_error_excerpt": "lua: ...itTests/PerformMessageDecorationDecoratesException_1.lua:<line>: attempt to call a nil value (global 'decorateMessage') | stack traceback: | \t...itTests/PerformMessageDe...",
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/PerformMessageDecorationDecoratesException_1.lua:(6,0-24): attempt to call a nil value [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "852702d6f54b438bc429b8fbeebc1366cd09abbbf645c8790c1e4f37b4d104b3",
+      "nova_error_sha256": "dd5235318a6a8a2922a30302b19a8244cdb15484ebc82e54e1401ac12dec1ab5",
+      "lua_error_excerpt": "lua: ...ests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua:<line>: attempt to call a nil value (local 'f') | stack traceback: | \t...ests/CachedNamedDoStringRuntimeErrorUse...",
+      "nova_error_excerpt": "LuaFixtures/ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua:(6,15-25): attempt to call a nil value [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "44513df36640fd1c527ccd2d9a835804725650790c518ffcd5ab46129f8d816c",
+      "nova_error_sha256": "db0055e033620651cdb26aa47fd8470fe41c0bd9857fec8c215e4c2c06db3932",
+      "lua_error_excerpt": "lua: ...ts/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua:<line>: attempt to call a nil value (local 'f') | stack traceback: | \t...ts/CachedNamedDoStringRuntimeErrorUsesF...",
+      "nova_error_excerpt": "LuaFixtures/ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua:(6,15-25): attempt to call a nil value [compatibility: Lua 5.4]"
     },
     {
       "file": "ScriptOptionsTUnitTests/IndexNilWithLuaCompatibleErrorsReturnsGlobalVariableName.lua",
@@ -9232,6 +10024,28 @@
       "nova_error_excerpt": "LuaFixtures/TableModuleTUnitTests/UnpackIntegerRepresentation_52plus.lua:(12,12-23): bad argument #2 to 'unpack' (number has no integer representation) [compatibility: Lua 5.4]"
     },
     {
+      "file": "TableStorageTUnitTests/NonPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "d4895b3597095bba0f58d16fbf673e603e42b048e8b081593c50cbb52b58e749",
+      "nova_error_sha256": "d25bedc12ff8f55b1284fc6aa5f303be139aa050fa6209c0c05e482cfaae6d43",
+      "lua_error_excerpt": "lua: ...onPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua:<line>: attempt to index a nil value (global 't') | stack traceback: | \t...onPositiveHostIntegerKeysAddressTheSa...",
+      "nova_error_excerpt": "LuaFixtures/TableStorageTUnitTests/NonPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua:(6,0-27): attempt to index a nil value [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "TableTUnitTests/ArrayConstructorRejectsForeignScriptResource_1.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "8acf18d91f6161f0aa96173b4d6c33578146f1a64f12195638692a8c61f0c2cc",
+      "nova_error_sha256": "a76d4079e9ecec32c242a8658865db1afa049fa479f671d395d47d341c4ca7d2",
+      "lua_error_excerpt": "lua: ...Tests/ArrayConstructorRejectsForeignScriptResource_1.lua:<line>: attempt to call a nil value (global 'foreign') | stack traceback: | \t...Tests/ArrayConstructorRejectsFor...",
+      "nova_error_excerpt": "LuaFixtures/TableTUnitTests/ArrayConstructorRejectsForeignScriptResource_1.lua:(7,0-20): attempt to call a nil value [compatibility: Lua 5.4]"
+    },
+    {
       "file": "TableTUnitTests/TableMethodChainingReturnsSelf.lua",
       "lua_version": "5.4",
       "classification": "unclassified",
@@ -9241,6 +10055,17 @@
       "nova_error_sha256": "b8bf44b7a857e391525c894a17c73c488a8814acadd2e82995e60d8cbe1a812a",
       "lua_error_excerpt": "lua: ...tures/TableTUnitTests/TableMethodChainingReturnsSelf.lua:<line>: 'end' expected (to close 'function' at line 6) near <eof>",
       "nova_error_excerpt": "'end' expected near '<eof>'"
+    },
+    {
+      "file": "TailCallTUnitTests/ArgumentViewTailCallContinuationKeepsSpanBackedReturnValue.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "26ca27e1fc8770cc83d73ffa54df8f8ee648ab299c4a311249b4abc907b1ad07",
+      "nova_error_sha256": "59a4f42859e472b6cd6f68e9a1a20fed4e5fe89c6e013894bd0dbf27e19f80f1",
+      "lua_error_excerpt": "lua: ...ntViewTailCallContinuationKeepsSpanBackedReturnValue.lua:<line>: attempt to call a nil value (global 'clrtail') | stack traceback: | \t...ntViewTailCallContinuationKeepsS...",
+      "nova_error_excerpt": "LuaFixtures/TailCallTUnitTests/ArgumentViewTailCallContinuationKeepsSpanBackedReturnValue.lua:(10,16-32): attempt to call a nil value [compatibility: Lua 5.4]"
     },
     {
       "file": "TailCallTUnitTests/TailCallRequestPropagatesAcrossClrCallback.lua",
@@ -9716,6 +10541,50 @@
       "nova_error_excerpt": "LuaFixtures/Vector3Accessor/StructFieldCantSetThroughLua.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.4]"
     },
     {
+      "file": "VmCorrectnessRegressionTUnitTests/DebugSetUpValueStillWorks.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "a4ffd1df6a53c117befea30aee8a2c380f9f6429c50fe40f4318723785828ea1",
+      "nova_error_sha256": "1c17e52f6028f0a8f382a0d91bc889c0df36b3ae9e9bddb8dafb56aee38808e4",
+      "lua_error_excerpt": "lua: ...ctnessRegressionTUnitTests/DebugSetUpValueStillWorks.lua:<line>: bad argument #2 to 'setupvalue' (number expected, got table) | stack traceback: | \t[C]: in function 'deb...",
+      "nova_error_excerpt": "LuaFixtures/VmCorrectnessRegressionTUnitTests/DebugSetUpValueStillWorks.lua:(11,32-49): bad argument #2 to 'setupvalue' (number expected, got table) [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "8e859c88c462d7e75168ddf651c7c1cd0ce33e5b78903c12b58dbb551c92ee14",
+      "nova_error_sha256": "7a771f2fd8640e0cbf853a1ac4fc96d8cb64157582f790a9827127ad071e0e7c",
+      "lua_error_excerpt": "lua: ...ilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:<line>: stack overflow | stack traceback: | \t...ilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:<line>:...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:(6,19-33): stack overflow [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "a6871666f6e5957c553c990dfc8bf8796cb2cecf237bfa026da119c9db33c4f7",
+      "nova_error_sha256": "e3d27538dfd01a13ab00897dc31e7fd94a8cb9a968437370a5ee54580d5b6076",
+      "lua_error_excerpt": "lua: ...StackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:<line>: stack overflow | stack traceback: | \t...StackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:<line>:...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:(6,20-39): stack overflow [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "558d635278b9013f4666c047b5f7bbb1fa48aff3e914859dbf008d8658c9f52b",
+      "nova_error_sha256": "0eb3217d160baad511f874787aac3874ea4dfdd06ef2ab24d3b7e06315b3c6de",
+      "lua_error_excerpt": "lua: ...tackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:<line>: stack overflow | stack traceback: | \t...tackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:<line>:...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:(6,20-39): stack overflow [compatibility: Lua 5.4]"
+    },
+    {
       "file": "matches/PunctMatchesSpecificCharacters.lua",
       "lua_version": "5.4",
       "classification": "unclassified",
@@ -9824,6 +10693,28 @@
       "nova_error_sha256": "d65b3118e6d525a4fe261a7f9e41de911bfc1f1ac4ef152d14d77f4fd7f7fe00",
       "lua_error_excerpt": "lua: ...haviourTUnitTests/TreatAsColonDisablesMethodCallFlag.lua:<line>: attempt to index a nil value (global 'target') | stack traceback: | \t...haviourTUnitTests/TreatAsColonDi...",
       "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlag.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "c396990307d4969bfc1bd83ceb7748ff58b896288d69b569b15248a70d8f947c",
+      "nova_error_sha256": "c346bd54cfa62b638e93579677c570b215ee408da593ee7122eb0890e67b43ca",
+      "lua_error_excerpt": "lua: ...s/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua:<line>: attempt to index a nil value (global 'target') | stack traceback: | \t...s/TreatAsColonDisablesMethodCall...",
+      "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsColonDisablesMethodCallFlagForCallbackViews.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "05256cdc28a854ed850ef6ccaf3abe36d2287411f51fbf5fe834e8847c12e709",
+      "nova_error_sha256": "2a6a38729427641c3f83764fcb120e01a1a78f036883a3cc05e2bccf84668e1f",
+      "lua_error_excerpt": "lua: ...TUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua:<line>: attempt to index a nil value (global 'target') | stack traceback: | \t...TUnitTests/TreatAsDotKeepsMethod...",
+      "nova_error_excerpt": "LuaFixtures/ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbackViews.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.5]"
     },
     {
       "file": "ColonOperatorBehaviourTUnitTests/TreatAsDotKeepsMethodCallForCallbacks.lua",
@@ -9947,6 +10838,17 @@
       "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/GetInfoInvalidArgumentThrows.lua:(6,13-24): bad argument #1 to 'getinfo' (function or level expected) [compatibility: Lua 5.5]"
     },
     {
+      "file": "DebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "c2b583a05d8db73a93138c89770371533a06b944982ff0119ca1f0503d96a1cd",
+      "nova_error_sha256": "b97a3c9ae01e04adfc07f3345b0af68f0b9d55b695de5146d89841288b0cdf78",
+      "lua_error_excerpt": "lua: ...ebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua:<line>: bad argument #2 to 'getupvalue' (number expected, got table) | stack traceback: | \t[C]: in field 'getupv...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/GetUpvalueReturnsTuple.lua:(14,16-60): bad argument #2 to 'getupvalue' (number expected, got table) [compatibility: Lua 5.5]"
+    },
+    {
       "file": "DebugModuleTapParityTUnitTests/SetUserValueReturnsOriginalHandle.lua",
       "lua_version": "5.5",
       "classification": "unclassified",
@@ -9956,6 +10858,39 @@
       "nova_error_sha256": "6049208dd4045379b39a57ce36eabe3c34ad7b2708c21dac8589230dc13cda33",
       "lua_error_excerpt": "lua: ...apParityTUnitTests/SetUserValueReturnsOriginalHandle.lua:<line>: bad argument #1 to 'setuservalue' (userdata expected, got nil) | stack traceback: | \t[C]: in field 'setu...",
       "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/SetUserValueReturnsOriginalHandle.lua:(8,16-68): bad argument #1 to 'setuservalue' (userdata expected, got nil) [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "f5de5a8e7e37a38d4f63cd66d633e8ff38eec5ff017394caeb9872c13977d60e",
+      "nova_error_sha256": "2baa9c0d6735369c9d7ec911ad76b7681e5f3d289a9e6e4f56578ef8aacd675b",
+      "lua_error_excerpt": "lua: ...ugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua:<line>: bad argument #2 to 'setupvalue' (number expected, got table) | stack traceback: | \t[C]: in field 'setupv...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/SetupValueUpdatesClosure.lua:(14,32-57): bad argument #2 to 'setupvalue' (number expected, got table) [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "4b775f55defb20730980f66b3d767b30aee1df8c5b70300d3076ea2a385632b9",
+      "nova_error_sha256": "2b4dd356566e25015fcef94a848e776e3b928406bcb821444da14fbd9f343fd0",
+      "lua_error_excerpt": "lua: ...eTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua:<line>: bad argument #2 to 'upvalueid' (number expected, got table) | stack traceback: | \t[C]: in field 'upvalue...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua:(15,16-66): bad argument #2 to 'upvalueid' (number expected, got table) [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "DebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "0fdf956505ecf19cc7c4711f3a22f56a4f00623c6756ef049795c2b76f209f3f",
+      "nova_error_sha256": "b778d0895889b686f4b565edcb190c612b9107aeb1308d2a454825e104804ceb",
+      "lua_error_excerpt": "lua: ...ebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua:<line>: bad argument #2 to 'upvalueid' (number expected, got table) | stack traceback: | \t[C]: in field 'upvalue...",
+      "nova_error_excerpt": "LuaFixtures/DebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua:(19,16-114): bad argument #2 to 'upvalueid' (number expected, got table) [compatibility: Lua 5.5]"
     },
     {
       "file": "DispatchingUserDataDescriptorTUnitTests/ArithmeticOperatorsDispatchToClrOverloads.lua",
@@ -10121,6 +11056,17 @@
       "nova_error_sha256": "d87a2ec3b95c09b4c7d737ada0985095ed7ef77e0eaffe2e40992dfa59dff59b",
       "lua_error_excerpt": "lua: ...rrorHandlingModuleTUnitTests/XpcallAcceptsClrHandler.lua:<line>: bad argument #2 to 'xpcall' (function expected, got nil) | stack traceback: | \t[C]: in global 'xpcall' |...",
       "nova_error_excerpt": "LuaFixtures/ErrorHandlingModuleTUnitTests/XpcallAcceptsClrHandler.lua:(10,16-47): bad argument #2 to 'xpcall' (function expected, got nil) [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "ErrorHandlingModuleTUnitTests/XpcallDecoratesCallbackViewExceptionWithHandlerBeforeUnwind_1.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "f96871cf7a3412cbc981d86e701cf89ee162282f37e4f849d8c76a36b2a54c41",
+      "nova_error_sha256": "2876f3a7482d03a2ceb6a37b8a8e38b0c6a9a22551c530bb6e0f1cf504ecd8ca",
+      "lua_error_excerpt": "lua: ...oratesCallbackViewExceptionWithHandlerBeforeUnwind_1.lua:<line>: bad argument #2 to 'xpcall' (function expected, got nil) | stack traceback: | \t[C]: in global 'xpcall' |...",
+      "nova_error_excerpt": "LuaFixtures/ErrorHandlingModuleTUnitTests/XpcallDecoratesCallbackViewExceptionWithHandlerBeforeUnwind_1.lua:(6,0-29): bad argument #2 to 'xpcall' (function expected, got nil) [c..."
     },
     {
       "file": "ErrorHandlingModuleTUnitTests/XpcallDecoratesClrExceptionWithHandlerBeforeUnwind_1.lua",
@@ -11113,6 +12059,17 @@
       "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/PairsMetamethodControlsIteration_1.lua:(6,0-35): bad argument #1 to 'concat' (table expected, got nil) [compatibility: Lua 5.5]"
     },
     {
+      "file": "ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "0b23b41ee3f5297578bb8eeb6b0de6583fcf2251fbd3a540d15d60f2d662dcef",
+      "nova_error_sha256": "1935f17a8ce8b3ca84bc18e5c654b90c9704b0c225f89b9b1f2d87bfe32970e4",
+      "lua_error_excerpt": "lua: ...Tests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:<line>: attempt to index a nil value (global 'argument_view_probe') | stack traceback: | \t...Tests/RegisterModul...",
+      "nova_error_excerpt": "LuaFixtures/ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:(6,0-41): attempt to index a nil value [compatibility: Lua 5.5]"
+    },
+    {
       "file": "MyObject/MetatableExtensibleObjectSample.lua",
       "lua_version": "5.5",
       "classification": "unclassified",
@@ -11311,6 +12268,39 @@
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:(8,20-40): attempt to call a nil value [compatibility: Lua 5.5]"
     },
     {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "81ce30d5e61999027641edcdfc4aab152c83d7c2fd7b4c163c6ea29ee3209826",
+      "nova_error_sha256": "30ed55812daf745f706b7713160d63c4100cccaf3ff6e140813a4e70a6d47fa5",
+      "lua_error_excerpt": "lua: ...textTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua:<line>: attempt to call a nil value (global 'callInner') | stack traceback: | \t...textTUnitTests/FixedCallOverlo...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua:(6,0-18): attempt to call a nil value [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "e6702e380edeaee452b68a0aa5da659c85cede83aa0c98202e67dc85d0594336",
+      "nova_error_sha256": "55de8d60d8c25ae370729b35b237b409ce7e6c0920dc2818aff379328d3bfb91",
+      "lua_error_excerpt": "lua: ...extTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua:<line>: attempt to call a nil value (global 'callSum') | stack traceback: | \t...extTUnitTests/FixedCallOverloads...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeLuaFunctions_1.lua:(6,0-16): attempt to call a nil value [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "6b3be38ce3cb30577452b7b80726c9ce799df7deab73e758ffc9368fb746174e",
+      "nova_error_sha256": "38b0c0477fa006a4e7a6368ab8143a68cc4f72cf6638f45326334511f0f1ed61",
+      "lua_error_excerpt": "lua: ...sPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua:<line>: attempt to call a nil value (global 'callInner') | stack traceback: | \t...sPreserveLegacyCallbackArgumen...",
+      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/FixedCallOverloadsPreserveLegacyCallbackArgumentsWithFixedStorageSpan.lua:(6,0-18): attempt to call a nil value [compatibility: Lua ..."
+    },
+    {
       "file": "ScriptExecutionContextTUnitTests/GetMetamethodTailCallReturnsTailCallRequest.lua",
       "lua_version": "5.5",
       "classification": "unclassified",
@@ -11353,6 +12343,28 @@
       "nova_error_sha256": "c38452240fbccb434cc02fcb2fd3fc8f3b9013f19343b85cec343bac33966ba5",
       "lua_error_excerpt": "lua: ...itTests/PerformMessageDecorationDecoratesException_1.lua:<line>: attempt to call a nil value (global 'decorateMessage') | stack traceback: | \t...itTests/PerformMessageDe...",
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/PerformMessageDecorationDecoratesException_1.lua:(6,0-24): attempt to call a nil value [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "852702d6f54b438bc429b8fbeebc1366cd09abbbf645c8790c1e4f37b4d104b3",
+      "nova_error_sha256": "6c0b2a729c65e581df18a169b3a3b222d5f30e9f4ec7842e5eea4dc09351c42d",
+      "lua_error_excerpt": "lua: ...ests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua:<line>: attempt to call a nil value (local 'f') | stack traceback: | \t...ests/CachedNamedDoStringRuntimeErrorUse...",
+      "nova_error_excerpt": "LuaFixtures/ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName.lua:(6,15-25): attempt to call a nil value [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "44513df36640fd1c527ccd2d9a835804725650790c518ffcd5ab46129f8d816c",
+      "nova_error_sha256": "57fe90946867ac804ada31ddb749c757141fe23b624195e1a3687b36b64b3ee0",
+      "lua_error_excerpt": "lua: ...ts/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua:<line>: attempt to call a nil value (local 'f') | stack traceback: | \t...ts/CachedNamedDoStringRuntimeErrorUsesF...",
+      "nova_error_excerpt": "LuaFixtures/ScriptLoadTUnitTests/CachedNamedDoStringRuntimeErrorUsesFriendlyName_1.lua:(6,15-25): attempt to call a nil value [compatibility: Lua 5.5]"
     },
     {
       "file": "ScriptOptionsTUnitTests/IndexNilWithLuaCompatibleErrorsReturnsGlobalVariableName.lua",
@@ -12213,6 +13225,28 @@
       "nova_error_excerpt": "LuaFixtures/TableModuleTUnitTests/UnpackIntegerRepresentation_52plus.lua:(12,12-23): bad argument #2 to 'unpack' (number has no integer representation) [compatibility: Lua 5.5]"
     },
     {
+      "file": "TableStorageTUnitTests/NonPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "d4895b3597095bba0f58d16fbf673e603e42b048e8b081593c50cbb52b58e749",
+      "nova_error_sha256": "8a28bf9a42d1411793088cf452748f82a08226e3133b35f9696d0665b8c1ce68",
+      "lua_error_excerpt": "lua: ...onPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua:<line>: attempt to index a nil value (global 't') | stack traceback: | \t...onPositiveHostIntegerKeysAddressTheSa...",
+      "nova_error_excerpt": "LuaFixtures/TableStorageTUnitTests/NonPositiveHostIntegerKeysAddressTheSameEntryAsScript.lua:(6,0-27): attempt to index a nil value [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "TableTUnitTests/ArrayConstructorRejectsForeignScriptResource_1.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "8acf18d91f6161f0aa96173b4d6c33578146f1a64f12195638692a8c61f0c2cc",
+      "nova_error_sha256": "7fb42ca61a424070a7b3603470cd9701b7f82ef1be9c0b48f61457bd504486c1",
+      "lua_error_excerpt": "lua: ...Tests/ArrayConstructorRejectsForeignScriptResource_1.lua:<line>: attempt to call a nil value (global 'foreign') | stack traceback: | \t...Tests/ArrayConstructorRejectsFor...",
+      "nova_error_excerpt": "LuaFixtures/TableTUnitTests/ArrayConstructorRejectsForeignScriptResource_1.lua:(7,0-20): attempt to call a nil value [compatibility: Lua 5.5]"
+    },
+    {
       "file": "TableTUnitTests/TableMethodChainingReturnsSelf.lua",
       "lua_version": "5.5",
       "classification": "unclassified",
@@ -12222,6 +13256,17 @@
       "nova_error_sha256": "b8bf44b7a857e391525c894a17c73c488a8814acadd2e82995e60d8cbe1a812a",
       "lua_error_excerpt": "lua: ...tures/TableTUnitTests/TableMethodChainingReturnsSelf.lua:<line>: 'end' expected (to close 'function' at line 6) near <eof>",
       "nova_error_excerpt": "'end' expected near '<eof>'"
+    },
+    {
+      "file": "TailCallTUnitTests/ArgumentViewTailCallContinuationKeepsSpanBackedReturnValue.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "26ca27e1fc8770cc83d73ffa54df8f8ee648ab299c4a311249b4abc907b1ad07",
+      "nova_error_sha256": "7c8cbe58d3d0be45d66aa0ce55f90cafb5ba5483e28ed197d0fca3baa2a415d2",
+      "lua_error_excerpt": "lua: ...ntViewTailCallContinuationKeepsSpanBackedReturnValue.lua:<line>: attempt to call a nil value (global 'clrtail') | stack traceback: | \t...ntViewTailCallContinuationKeepsS...",
+      "nova_error_excerpt": "LuaFixtures/TailCallTUnitTests/ArgumentViewTailCallContinuationKeepsSpanBackedReturnValue.lua:(10,16-32): attempt to call a nil value [compatibility: Lua 5.5]"
     },
     {
       "file": "TailCallTUnitTests/TailCallRequestPropagatesAcrossClrCallback.lua",
@@ -12706,6 +13751,50 @@
       "nova_error_sha256": "ce1abecc7a805384f461fd73559896fa86eb3e0682dccdc066c216fab4b9dba0",
       "lua_error_excerpt": "lua: ...ixtures/Vector3Accessor/StructFieldCantSetThroughLua.lua:<line>: attempt to index a nil value (global 'transform') | stack traceback: | \t...ixtures/Vector3Accessor/Struc...",
       "nova_error_excerpt": "LuaFixtures/Vector3Accessor/StructFieldCantSetThroughLua.lua:(6,0-25): attempt to index a nil value [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "VmCorrectnessRegressionTUnitTests/DebugSetUpValueStillWorks.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "8113e77905ed646362c779e7308b00f5991c241dbb37e162df30c292896f3ed2",
+      "nova_error_sha256": "ccb8f78d760bcb9c3915ac36ce0ea76a33e24173ba042b87686c4d2a2239b8a9",
+      "lua_error_excerpt": "lua: ...ctnessRegressionTUnitTests/DebugSetUpValueStillWorks.lua:<line>: bad argument #2 to 'setupvalue' (number expected, got table) | stack traceback: | \t[C]: in field 'setupv...",
+      "nova_error_excerpt": "LuaFixtures/VmCorrectnessRegressionTUnitTests/DebugSetUpValueStillWorks.lua:(11,32-49): bad argument #2 to 'setupvalue' (number expected, got table) [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "8e859c88c462d7e75168ddf651c7c1cd0ce33e5b78903c12b58dbb551c92ee14",
+      "nova_error_sha256": "03b16cf6137965f26a7ec31ea916e8e120b017b5735a092edb3afd5e56b45778",
+      "lua_error_excerpt": "lua: ...ilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:<line>: stack overflow | stack traceback: | \t...ilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:<line>:...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/InfiniteRecursionThrowsStackOverflow.lua:(6,19-33): stack overflow [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "a6871666f6e5957c553c990dfc8bf8796cb2cecf237bfa026da119c9db33c4f7",
+      "nova_error_sha256": "115bb03bf3858a10594d70d576203178505006c22f2d65da6d923f7d1b3adf15",
+      "lua_error_excerpt": "lua: ...StackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:<line>: stack overflow | stack traceback: | \t...StackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:<line>:...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/LowCallStackCeilingTripsEarly.lua:(6,20-39): stack overflow [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "VmStackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "558d635278b9013f4666c047b5f7bbb1fa48aff3e914859dbf008d8658c9f52b",
+      "nova_error_sha256": "53bd5ada196459c14c83c33dbeda3f86bbe92e20b6feeaeddedab668dc72d83a",
+      "lua_error_excerpt": "lua: ...tackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:<line>: stack overflow | stack traceback: | \t...tackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:<line>:...",
+      "nova_error_excerpt": "LuaFixtures/VmStackCeilingTUnitTests/LowValueStackCeilingTripsEarly.lua:(6,20-39): stack overflow [compatibility: Lua 5.5]"
     },
     {
       "file": "matches/PunctMatchesSpecificCharacters.lua",

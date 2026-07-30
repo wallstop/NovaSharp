@@ -1,7 +1,7 @@
 -- @lua-versions: 5.4+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\MetamethodLtLeFallbackTUnitTests.cs:173
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/MetamethodLtLeFallbackTUnitTests.cs:173
 -- @test: MetamethodLtLeFallbackTUnitTests.LtFallbackHandlesEqualValues
 -- Test targets Lua 5.4+
 local mt = {

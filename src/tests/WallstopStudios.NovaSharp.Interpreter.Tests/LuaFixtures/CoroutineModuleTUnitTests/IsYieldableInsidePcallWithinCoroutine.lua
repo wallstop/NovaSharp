@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\CoroutineModuleTUnitTests.cs:826
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:1201
 -- @test: CoroutineModuleTUnitTests.IsYieldableInsidePcallWithinCoroutine
 -- Test targets Lua 5.3+
 function pcallyield()

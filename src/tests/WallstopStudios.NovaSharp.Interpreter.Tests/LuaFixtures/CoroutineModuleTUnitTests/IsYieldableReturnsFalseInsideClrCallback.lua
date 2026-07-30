@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\CoroutineModuleTUnitTests.cs:740
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:1115
 -- @test: CoroutineModuleTUnitTests.IsYieldableReturnsFalseInsideClrCallback
 -- Test targets Lua 5.3+
 function invokeClrCheck()

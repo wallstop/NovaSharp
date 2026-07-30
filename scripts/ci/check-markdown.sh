@@ -48,6 +48,7 @@ detect_base_ref() {
 }
 
 base_ref="$(detect_base_ref)"
+PYTHON_BIN="${PYTHON:-python3}"
 
 if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
   echo "Base ref $base_ref not found; defaulting to HEAD^." >&2
@@ -58,6 +59,14 @@ if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
   fi
 fi
 
+"$PYTHON_BIN" scripts/ci/test_format_markdown.py
+"$PYTHON_BIN" scripts/ci/test_check_jekyll_liquid.py
+
+# Repository-wide, not diff-scoped: GitHub Pages renders every Markdown file in
+# the repo through Liquid, so one bad file anywhere takes the published site
+# down even when this change touches no Markdown at all.
+"$PYTHON_BIN" scripts/ci/check_jekyll_liquid.py
+
 mapfile -t md_files < <(
   (git diff --name-only "$base_ref"...HEAD -- '*.md' 2>/dev/null || \
   git diff --name-only "$base_ref" HEAD -- '*.md') | grep -v '^progress/'
@@ -67,8 +76,6 @@ if [[ ${#md_files[@]} -eq 0 ]]; then
   echo "No Markdown changes detected against $base_ref; skipping lint."
   exit 0
 fi
-
-PYTHON_BIN="${PYTHON:-python3}"
 
 echo "Linting Markdown files changed since $base_ref:"
 printf '  %s\n' "${md_files[@]}"

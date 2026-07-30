@@ -1668,7 +1668,7 @@ local t = {"banana", "apple", "cherry"}
 table.sort(t)  -- {"apple", "banana", "cherry"}
 
 -- Custom comparison
-local t = {{x=3}, {x=1}, {x=2}}
+local t = { {x=3}, {x=1}, {x=2} }
 table.sort(t, function(a, b) return a.x < b.x end)
 ```
 

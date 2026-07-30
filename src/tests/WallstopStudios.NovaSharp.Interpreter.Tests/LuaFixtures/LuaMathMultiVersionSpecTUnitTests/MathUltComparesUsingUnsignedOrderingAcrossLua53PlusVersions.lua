@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\LuaMathMultiVersionSpecTUnitTests.cs:115
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/LuaMathMultiVersionSpecTUnitTests.cs:115
 -- @test: LuaMathMultiVersionSpecTUnitTests.MathUltComparesUsingUnsignedOrderingAcrossLua53PlusVersions
 -- Test targets Lua 5.3+; Lua 5.3+: math.ult (5.3+)
 return math.ult(0, -1), math.ult(-1, 0), math.ult(10, 20)

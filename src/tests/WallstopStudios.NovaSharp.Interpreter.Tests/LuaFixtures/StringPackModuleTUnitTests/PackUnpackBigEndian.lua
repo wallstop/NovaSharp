@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\StringPackModuleTUnitTests.cs:187
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/StringPackModuleTUnitTests.cs:187
 -- @test: StringPackModuleTUnitTests.PackUnpackBigEndian
 -- Test targets Lua 5.3+; Lua 5.3+: string.pack (5.3+)
 local packed = string.pack('>I2', 0x0102)

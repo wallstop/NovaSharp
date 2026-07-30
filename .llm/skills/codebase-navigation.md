@@ -1,21 +1,17 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "search codebase"
-- "find code"
-- "grep"
-- "find file"
-- "debug interpreter"
-- "pipeline"
-  category: workflow
-  related:
-- lua-spec-verification
-- test-failure-investigation
-  priority: recommended
-
-______________________________________________________________________
-
+  - "search codebase"
+  - "find code"
+  - "grep"
+  - "find file"
+  - "debug interpreter"
+  - "pipeline"
+category: workflow
+related:
+  - lua-spec-verification
+  - test-failure-investigation
+priority: recommended
+---
 # Skill: Codebase Navigation
 
 **When to use**: Finding code, patterns, usages, and debugging the interpreter pipeline.

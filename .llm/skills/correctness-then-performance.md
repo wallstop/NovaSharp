@@ -1,21 +1,17 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "priority"
-- "correctness"
-- "Lua spec"
-- "compliance"
-- "behavior"
-- "optimization decision"
-  category: core
-  related:
-- lua-spec-verification
-- high-performance-csharp
-  priority: core
-
-______________________________________________________________________
-
+  - "priority"
+  - "correctness"
+  - "Lua spec"
+  - "compliance"
+  - "behavior"
+  - "optimization decision"
+category: core
+related:
+  - lua-spec-verification
+  - high-performance-csharp
+priority: core
+---
 # Skill: Correctness-First Performance
 
 **When to use**: ALL development work — this establishes the priority order for the entire project.

@@ -1,7 +1,7 @@
 -- @lua-versions: 5.2+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\CoroutineModuleTUnitTests.cs:594
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:969
 -- @test: CoroutineModuleTUnitTests.IsYieldableReturnsTrueInsideCoroutine
 -- Test targets Lua 5.2+
 function buildYieldableChecker()

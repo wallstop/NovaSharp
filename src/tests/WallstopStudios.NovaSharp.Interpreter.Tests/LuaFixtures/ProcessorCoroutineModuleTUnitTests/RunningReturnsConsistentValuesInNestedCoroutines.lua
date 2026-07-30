@@ -1,7 +1,7 @@
 -- @lua-versions: 5.2+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoroutineModuleTUnitTests.cs:577
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineModuleTUnitTests.cs:969
 -- @test: ProcessorCoroutineModuleTUnitTests.RunningReturnsConsistentValuesInNestedCoroutines
 -- Test targets Lua 5.2+
 results = {}

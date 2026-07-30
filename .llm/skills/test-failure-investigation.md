@@ -1,23 +1,19 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "test failure"
-- "failing test"
-- "flaky test"
-- "test investigation"
-- "root cause"
-- "test debugging"
-  category: testing
-  related:
-- codebase-navigation
-- lua-spec-verification
-- tunit-test-writing
-- lua-comparison-harness
-  priority: core
-
-______________________________________________________________________
-
+  - "test failure"
+  - "failing test"
+  - "flaky test"
+  - "test investigation"
+  - "root cause"
+  - "test debugging"
+category: testing
+related:
+  - codebase-navigation
+  - lua-spec-verification
+  - tunit-test-writing
+  - lua-comparison-harness
+priority: core
+---
 # Skill: Test Failure Investigation
 
 **When to use**: Any test failure occurs — whether intermittent, unexpected, or seemingly unrelated to current changes.

@@ -821,8 +821,13 @@ check_yaml_lint
 check_github_actions_lint
 check_test_lint
 
-# Validate LLM skill metadata (strict mode - fail on errors)
+# Validate LLM skill metadata and generated index (strict, read-only)
 log "[pre-commit] Validating LLM skill metadata..."
 run_python tools/LlmSkillIndexer/llm_skill_indexer.py --check
+
+# GitHub Pages renders every Markdown file in the repository through Liquid, so
+# this is deliberately repo-wide rather than scoped to the staged files.
+log "[pre-commit] Checking Markdown for fatal Liquid syntax..."
+run_python scripts/ci/check_jekyll_liquid.py
 
 log "[pre-commit] Completed successfully."

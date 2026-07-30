@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:328
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:328
 -- @test: MathModuleTUnitTests.ToIntegerReturnsNilForTable
 -- Test targets Lua 5.3+; Lua 5.3+: math.tointeger (5.3+)
 return math.tointeger({})

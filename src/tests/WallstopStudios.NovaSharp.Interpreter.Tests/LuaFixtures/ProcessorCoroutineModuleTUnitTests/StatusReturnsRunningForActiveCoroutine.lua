@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoroutineModuleTUnitTests.cs:195
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineModuleTUnitTests.cs:196
 -- @test: ProcessorCoroutineModuleTUnitTests.StatusReturnsRunningForActiveCoroutine
 -- Test targets Lua 5.1
 function queryRunningStatus()

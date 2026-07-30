@@ -20,6 +20,7 @@
 1. **Lua Spec = Source of Truth** - Fix NovaSharp, never tests
 1. **Pre-Commit Validation Allowed** - `bash ./scripts/dev/pre-commit.sh` is expected before commits and may restage files it auto-formats or regenerates.
 1. **No false green-lighting** - Only say `green`, `verified`, `passes`, or `complete` after the exact local checks and PR CI were observed passing. Otherwise report the check as `not run` or failing residual risk.
+1. **Mandatory post-work improvement gate** - After every large change or investigation, and before declaring it complete, follow [`.llm/skills/post-work-reflection.md`](.llm/skills/post-work-reflection.md). Fix discovered defects, capture reusable techniques or durable knowledge in the appropriate `.llm` artifact, and obtain an independent review when agents are available.
 
 ## Build & Test
 

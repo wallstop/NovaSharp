@@ -1,7 +1,7 @@
 -- @lua-versions: 5.2+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\CoreLib\ErrorHandlingModuleTUnitTests.cs:551
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/ErrorHandlingModuleTUnitTests.cs:1221
 -- @test: ErrorHandlingModuleTUnitTests.XpcallPassesExtraArgumentsInLua52Plus
 -- Test targets Lua 5.2+
 local received = {}

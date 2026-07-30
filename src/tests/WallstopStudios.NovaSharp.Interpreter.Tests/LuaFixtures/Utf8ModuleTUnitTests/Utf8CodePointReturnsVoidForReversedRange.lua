@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\Utf8ModuleTUnitTests.cs:197
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Utf8ModuleTUnitTests.cs:197
 -- @test: Utf8ModuleTUnitTests.Utf8CodePointReturnsVoidForReversedRange
 -- Test targets Lua 5.3+; Lua 5.3+: utf8 library
 return utf8.codepoint('abc', 3, 1)

@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoroutineModuleTUnitTests.cs:627
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineModuleTUnitTests.cs:1019
 -- @test: ProcessorCoroutineModuleTUnitTests.RunningInNestedCoroutinesLua51
 -- Test targets Lua 5.1
 results = {}

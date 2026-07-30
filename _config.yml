@@ -1,0 +1,44 @@
+# GitHub Pages configuration.
+#
+# Pages serves this repository from the branch root through the `github-pages`
+# gem. Its plugin set includes `jekyll-optional-front-matter`, which promotes
+# *every* Markdown file in the repository to a Jekyll page — so without an
+# `exclude` list the published site is all 257 Markdown files, and every one of
+# them is parsed by Liquid before Markdown conversion. A Lua nested table
+# constructor in a code fence is then enough to fail the entire site build.
+#
+# So the site is scoped to the documentation intended for readers: the README
+# (which `jekyll-readme-index` turns into the home page) and `docs/`. Internal
+# engineering material — session notes, roadmap, agent instructions, sources,
+# scripts, tooling — is excluded. `scripts/ci/check_jekyll_liquid.py` reads the
+# list below so its scan covers exactly what Pages renders.
+title: NovaSharp
+description: >-
+  A faithful, high-performance Lua 5.1-5.5 interpreter for .NET and Unity,
+  written entirely in C#.
+theme: jekyll-theme-primer
+
+exclude:
+  # Agent and contributor instructions, not reader documentation.
+  - AGENTS.md
+  - CLAUDE.md
+  - PLAN.md
+  # Session-by-session engineering notes. These quote Lua and Liquid snippets
+  # freely and must never be able to break the published site.
+  - progress/
+  # Sources, tests, tooling, and helper scripts.
+  - scripts/
+  - src/
+  - tools/
+  # Build and dependency configuration.
+  - Directory.Build.props
+  - Directory.Build.targets
+  - csharpier.json
+  - global.json
+  - requirements.tooling.txt
+  # Local build output that is never committed but may exist in a working tree.
+  - artifacts/
+  - node_modules/
+  - package.json
+  - package-lock.json
+  - vendor/

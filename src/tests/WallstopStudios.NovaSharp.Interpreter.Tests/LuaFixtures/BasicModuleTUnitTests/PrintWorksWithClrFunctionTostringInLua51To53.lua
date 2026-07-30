@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\BasicModuleTUnitTests.cs:1238
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1295
 -- @test: BasicModuleTUnitTests.PrintWorksWithClrFunctionTostringInLua51To53
 -- Test targets Lua 5.1
 print({})

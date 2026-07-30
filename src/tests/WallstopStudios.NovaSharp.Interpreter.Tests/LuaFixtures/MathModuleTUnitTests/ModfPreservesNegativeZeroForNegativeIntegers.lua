@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:1836
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1836
 -- @test: MathModuleTUnitTests.ModfPreservesNegativeZeroForNegativeIntegers
 -- Test targets Lua 5.3+
 local int_part, frac_part = math.modf(-5)

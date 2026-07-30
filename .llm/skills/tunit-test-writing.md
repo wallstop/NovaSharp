@@ -1,23 +1,19 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "TUnit"
-- "write test"
-- "test writing"
-- "multi-version test"
-- "AllLuaVersions"
-- "test isolation"
-  category: testing
-  related:
-- exhaustive-test-coverage
-- lua-fixture-creation
-- lua-spec-verification
-- test-failure-investigation
-  priority: core
-
-______________________________________________________________________
-
+  - "TUnit"
+  - "write test"
+  - "test writing"
+  - "multi-version test"
+  - "AllLuaVersions"
+  - "test isolation"
+category: testing
+related:
+  - exhaustive-test-coverage
+  - lua-fixture-creation
+  - lua-spec-verification
+  - test-failure-investigation
+priority: core
+---
 # Skill: Writing TUnit Tests for NovaSharp
 
 **When to use**: Writing or modifying TUnit tests for the interpreter.

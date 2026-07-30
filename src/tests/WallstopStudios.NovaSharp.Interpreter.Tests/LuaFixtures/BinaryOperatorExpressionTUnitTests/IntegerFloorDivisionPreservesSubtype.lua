@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Tree\Expressions\BinaryOperatorExpressionTUnitTests.cs:FloorDivisionPreservesIntegerSubtype
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Tree/Expressions/BinaryOperatorExpressionTUnitTests.cs:FloorDivisionPreservesIntegerSubtype
 -- @test: BinaryOperatorExpressionTUnitTests.FloorDivisionPreservesIntegerSubtype
 -- Integer floor division should preserve integer subtype in Lua 5.3+
 

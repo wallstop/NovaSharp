@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Sandbox\DeterministicExecutionTUnitTests.cs:502
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/DeterministicExecutionTUnitTests.cs:502
 -- @test: DeterministicExecutionTUnitTests.FullDeterministicExecutionProducesIdenticalResults
 -- Lua 5.3+: bitwise OR
 local results = {}

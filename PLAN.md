@@ -9,9 +9,9 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 1. **ADD REGRESSION TESTS** with standalone `.lua` fixtures runnable against real Lua
 1. **NEVER adjust tests to accommodate bugs** — fix the runtime instead
 
-**Current Status**: A full local comparison run on 2026-07-29 with `compare-lua-outputs.py --enforce` across Lua 5.1-5.5 reported 0 `mismatch`, 0 `lua_only`, and 0 `nova_only` over 2,142 fixtures per version, with the both-error ratchet unchanged (0 new, 0 changed). PR #49 CI was observed passing on 2026-07-03 after the Phase A0 benchmark baseline gates were hardened.
+**Current Status**: A full local comparison run on 2026-07-29 with `compare-lua-outputs.py --enforce` across Lua 5.1-5.5 reported 0 `mismatch`, 0 `lua_only`, and 0 `nova_only` over **2,286** fixtures per version (931 / 701 / 875 / 936 / 972 matches by version), with the both-error ratchet at 1,255 entries and 0 new / 0 changed / 0 missing. PR #49 CI was observed passing on 2026-07-03 after the Phase A0 benchmark baseline gates were hardened.
 
-⚠️ **Known tooling hazard**: `tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py` regenerates the whole corpus and **overwrites curated `@lua-versions` / `@novasharp-only` headers**, which reintroduces divergences that were already resolved and fails `tools/test_lua_fixture_metadata.py` in CI. Adding a fixture currently requires reverting the collateral by hand. See [progress/session-171-a4-table-array-hash-parts.md](progress/session-171-a4-table-array-hash-parts.md).
+✅ **Extractor metadata hazard resolved** (2026-07-29, [#90](https://github.com/wallstop/NovaSharp/issues/90)): `tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py` now treats a committed fixture header as authoritative, refreshing only `@source`, `@test`, and the body. Regeneration is idempotent across consecutive runs and `@source` always uses POSIX separators, so adding a fixture no longer requires reverting collateral by hand. `--refresh-metadata` deliberately recomputes and warns. See [progress/session-172-pages-ci-and-fixture-corpus-integrity.md](progress/session-172-pages-ci-and-fixture-corpus-integrity.md).
 
 ______________________________________________________________________
 
@@ -512,9 +512,11 @@ ______________________________________________________________________
 
 ## 🔴 HIGH PRIORITY: Known Issues
 
-### Lua Comparison CI/CD Failure Resolution
+### Lua Comparison CI/CD Failure Resolution ✅ **RESOLVED**
 
-**Status**: Historical phases recorded on 2026-01-02; PR 30 follow-up remains active until fresh CI is observed passing.
+**Status**: ✅ **RESOLVED** — 2026-07-30. Every PR 30 follow-up bullet below is in place and was observed passing on PR #97's full matrix: `lua-comparison` and `code-coverage` run as jobs independent of the OS unit-test matrix, the 3 OS × 5 Lua matrix reports `mismatch` / `lua_only` / `nova_only` / `both_error` / ratchet counts / runtime, and `docs/testing/lua-error-ratchet.json` gates new and changed unclassified signatures. Local verification the same day: 0 `mismatch`, 0 `lua_only`, 0 `nova_only` across Lua 5.1-5.5 over 2,286 fixtures, ratchet 0 new / 0 changed / 0 missing.
+
+The **Guiding Principle** below remains the operative policy for fixture metadata and is not historical.
 
 **Problem**: Lua comparison tests are failing across various OS/version combinations in CI/CD. Failures downloaded as `lua-comparison-VERSION-OS-latest.zip` artifacts need systematic extraction, categorization, and resolution while maintaining strict Lua spec compliance.
 
@@ -1070,6 +1072,7 @@ ______________________________________________________________________
 - Lint guards run in CI.
 - New helpers must live under `scripts/<area>/` with README updates.
 - Keep `docs/Testing.md`, `docs/Modernization.md`, and `scripts/README.md` aligned.
+- **`pages build and deployment` counts as CI.** GitHub Pages renders every *published* Markdown file through Liquid before Markdown conversion, so a Lua nested table constructor written `{{n=1}, {n=2}}` reads as an unterminated Liquid variable and fails the whole site build. `_config.yml` scopes the published site to `README.md` + `docs/` — `progress/`, `scripts/`, `src/`, `tools/`, `PLAN.md`, `AGENTS.md`, and `CLAUDE.md` are excluded, so internal notes may quote whatever they need. `scripts/ci/check_jekyll_liquid.py` reads that exclude list and scans the published set repository-wide (not diff-scoped) from `check-markdown.sh` and `pre-commit.sh`, because the Pages workflow only reports after a push to `main`. Adding a new path to `_config.yml`'s `exclude` removes it from both the site and the guard at once.
 
 ______________________________________________________________________
 
