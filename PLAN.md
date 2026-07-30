@@ -512,9 +512,11 @@ ______________________________________________________________________
 
 ## 🔴 HIGH PRIORITY: Known Issues
 
-### Lua Comparison CI/CD Failure Resolution
+### Lua Comparison CI/CD Failure Resolution ✅ **RESOLVED**
 
-**Status**: Historical phases recorded on 2026-01-02; PR 30 follow-up remains active until fresh CI is observed passing.
+**Status**: ✅ **RESOLVED** — 2026-07-30. Every PR 30 follow-up bullet below is in place and was observed passing on PR #97's full matrix: `lua-comparison` and `code-coverage` run as jobs independent of the OS unit-test matrix, the 3 OS × 5 Lua matrix reports `mismatch` / `lua_only` / `nova_only` / `both_error` / ratchet counts / runtime, and `docs/testing/lua-error-ratchet.json` gates new and changed unclassified signatures. Local verification the same day: 0 `mismatch`, 0 `lua_only`, 0 `nova_only` across Lua 5.1-5.5 over 2,286 fixtures, ratchet 0 new / 0 changed / 0 missing.
+
+The **Guiding Principle** below remains the operative policy for fixture metadata and is not historical.
 
 **Problem**: Lua comparison tests are failing across various OS/version combinations in CI/CD. Failures downloaded as `lua-comparison-VERSION-OS-latest.zip` artifacts need systematic extraction, categorization, and resolution while maintaining strict Lua spec compliance.
 
