@@ -124,11 +124,72 @@ FATALITY_CASES = (
     ("when_inside_if", "{% if x %}{% when 1 %}{% endif %}\n", True),
     ("else_inside_case", "{% case x %}{% else %}a{% endcase %}\n", False),
     ("elsif_inside_unless", "{% unless x %}a{% elsif y %}b{% endunless %}\n", False),
-    # Comments swallow tag errors but not variable errors
+    # Comments discard names Liquid cannot resolve, but nothing else. Registered
+    # block openers are still parsed inside a comment body and still need closers,
+    # and a nested block restores normal unknown-tag behaviour.
     ("comment_hides_end", "{% comment %}{% endfor %}{% endcomment %}\n", False),
     ("comment_hides_unknown", "{% comment %}{% nope %}{% endcomment %}\n", False),
+    ("comment_hides_orphan_else", "{% comment %}{% else %}{% endcomment %}\n", False),
+    ("comment_hides_orphan_when", "{% comment %}{% when 1 %}{% endcomment %}\n", False),
     ("comment_bad_variable", "{% comment %}{{n=2}{% endcomment %}\n", True),
+    ("comment_unclosed_if", "{% comment %}{% if x %}{% endcomment %}\n", True),
+    ("comment_closed_if", "{% comment %}{% if x %}y{% endif %}{% endcomment %}\n", False),
+    ("comment_unclosed_for", "{% comment %}{% for a in b %}{% endcomment %}\n", True),
+    ("comment_unclosed_capture", "{% comment %}{% capture v %}{% endcomment %}\n", True),
+    ("comment_unclosed_raw", "{% comment %}{% raw %}x{% endcomment %}\n", True),
+    (
+        "comment_closed_raw",
+        "{% comment %}{% raw %}{{n=2}{% endraw %}{% endcomment %}\n",
+        False,
+    ),
+    (
+        "comment_nested_comment",
+        "{% comment %}{% comment %}x{% endcomment %}{% endcomment %}\n",
+        False,
+    ),
+    (
+        "comment_nested_unclosed",
+        "{% comment %}{% comment %}x{% endcomment %}\n",
+        True,
+    ),
+    (
+        "comment_unknown_inside_if",
+        "{% comment %}{% if x %}{% nope %}{% endif %}{% endcomment %}\n",
+        True,
+    ),
+    (
+        "comment_badvar_inside_if",
+        "{% comment %}{% if x %}{{n=2}{% endif %}{% endcomment %}\n",
+        True,
+    ),
+    (
+        "comment_crossed_nesting",
+        "{% comment %}{% if x %}{% endfor %}{% endif %}{% endcomment %}\n",
+        True,
+    ),
+    ("comment_assign", "{% comment %}{% assign x = 1 %}{% endcomment %}\n", False),
+    ("unknown_inside_if", "{% if x %}{% nope %}{% endif %}\n", True),
 )
+
+
+# Shapes that abort a real Pages build but that this guard deliberately does not
+# detect, because catching them means resolving `_includes/` and the site's
+# document set rather than tokenising Liquid. Pinned so the gap stays visible: if
+# coverage is ever added, this test fails and someone updates it on purpose.
+UNCOVERED_CASES = (
+    ("include_missing", "{% include nope.html %}\n"),
+    ("link_missing", "{% link nope.md %}\n"),
+)
+
+
+class UncoveredCaseTests(unittest.TestCase):
+    def test_resource_resolution_is_a_known_gap(self) -> None:
+        """These fail a real build; the guard is syntax-only and says so."""
+        for label, markdown in UNCOVERED_CASES:
+            with self.subTest(label=label):
+                self.assertEqual(
+                    [], check_jekyll_liquid.scan_text(markdown, "sample.md")
+                )
 
 
 class FatalityTests(unittest.TestCase):

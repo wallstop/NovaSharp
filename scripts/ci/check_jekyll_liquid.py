@@ -37,9 +37,24 @@ skips them, and ``{% comment %}`` swallows tag errors but *not* variable errors,
 because ``Liquid::Comment#unknown_tag`` is a no-op while its body is still
 tokenised for variables.
 
-Every rule above was checked against a real ``github-pages`` v232 build — 52 cases,
-one build each, guard verdict compared to Jekyll's exit code, 52/52 in agreement.
-``scripts/ci/test_check_jekyll_liquid.py`` pins all 52.
+Every rule above was checked against a real ``github-pages`` v232 build, one build
+per case, guard verdict compared to Jekyll's exit code.
+``scripts/ci/test_check_jekyll_liquid.py`` pins every case.
+
+**Deliberately out of scope: resource resolution.** ``{% include missing.html %}``
+and ``{% link missing.md %}`` are syntactically valid and abort the build anyway::
+
+    Could not locate the included file 'nope.html' in any of [...]
+    Could not find document 'nope.md' in tag 'link'.
+
+Catching those means resolving ``_includes/`` and the site's document set, which is
+a different job from tokenising Liquid. No published page uses any Jekyll tag
+today, so this cannot fire until someone writes the first one. The gap is pinned
+by ``UNCOVERED_CASES`` below so it stays visible rather than silent.
+
+Also out of scope: an ``.html`` page carrying real YAML front matter is
+Liquid-rendered but is not scanned — there are none here, and one written
+deliberately would be using Liquid on purpose.
 
 Usage:
     python3 scripts/ci/check_jekyll_liquid.py [--files FILE ...]
@@ -117,10 +132,16 @@ STANDALONE_TAGS = frozenset(
 
 _ENDRAW_BODY = re.compile(r"\s*endraw(?!\w)")
 
-_HINT = (
+_VARIABLE_HINT = (
     "Liquid parses this before Markdown, including inside fenced code blocks. "
     "Separate the braces (`{ {n=2} }`), or wrap the block in `{% raw %}` / "
     "`{% endraw %}`."
+)
+
+_TAG_HINT = (
+    "Liquid parses this before Markdown, including inside fenced code blocks. "
+    "Close or remove the tag, or wrap the block in `{% raw %}` / `{% endraw %}` "
+    "if it is meant to be shown literally."
 )
 
 
@@ -143,12 +164,15 @@ class Finding:
     column: int
     snippet: str
     message: str
+    # Brace advice is nonsense for a block-nesting error, so the hint follows the
+    # kind of defect rather than being one string for everything.
+    hint: str = _VARIABLE_HINT
 
     def format(self) -> str:
         return (
             f"{self.path}:{self.line}:{self.column}: {self.message}\n"
             f"    {self.snippet}\n"
-            f"    {_HINT}"
+            f"    {self.hint}"
         )
 
 
@@ -289,6 +313,7 @@ def scan_text(text: str, path: str) -> list[Finding]:
                     f"`{{% {block.name} %}}` is never closed by "
                     f"`{{% end{block.name} %}}`"
                 ),
+                hint=_TAG_HINT,
             )
         )
 
@@ -347,7 +372,13 @@ def _scan_tag(
         return start + 2
 
     name = _tag_name(text[start + 2 : close])
-    inside_comment = bool(open_blocks) and open_blocks[-1].name == "comment"
+
+    # `Liquid::Comment#unknown_tag` is a no-op, so a name Liquid cannot resolve —
+    # an unknown tag, an orphan `end*`, an orphan inner tag — is discarded when
+    # the *innermost* open block is a comment. Everything else still applies:
+    # registered block openers are parsed inside a comment body and still require
+    # their closers, and a nested block makes its own `unknown_tag` raise again.
+    unresolved_is_ignored = bool(open_blocks) and open_blocks[-1].name == "comment"
 
     if name == "raw":
         endraw = _find_endraw(text, close + 2)
@@ -364,42 +395,34 @@ def _scan_tag(
 
     if name.startswith("end") and name[3:]:
         closing = name[3:]
-        if inside_comment and closing != "comment":
-            # `Liquid::Comment#unknown_tag` is a no-op, so a stray end tag inside
-            # a comment is discarded rather than fatal.
-            return close + 2
         if not open_blocks:
             _add(findings, path, text, start, _unknown_tag_message(name))
         elif open_blocks[-1].name != closing:
-            _add(
-                findings,
-                path,
-                text,
-                start,
-                f"`{name}` is not a valid delimiter for "
-                f"`{{% {open_blocks[-1].name} %}}`",
-            )
+            if not unresolved_is_ignored:
+                _add(
+                    findings,
+                    path,
+                    text,
+                    start,
+                    f"`{name}` is not a valid delimiter for "
+                    f"`{{% {open_blocks[-1].name} %}}`",
+                )
         else:
             open_blocks.pop()
         return close + 2
 
-    if inside_comment:
-        # Inside a comment every other tag is ignored, including unknown ones and
-        # further block openers. Variables are still parsed, which is why the
-        # caller keeps scanning the body rather than skipping it wholesale.
-        return close + 2
-
     if name in BLOCK_TAGS:
         line, column = _position(text, start)
-        open_blocks.append(
-            _OpenBlock(name, line, column, _snippet(text, start))
-        )
+        open_blocks.append(_OpenBlock(name, line, column, _snippet(text, start)))
         return close + 2
 
     if name in INNER_TAGS:
         if not open_blocks:
             _add(findings, path, text, start, _unknown_tag_message(name))
-        elif name not in BLOCK_TAGS[open_blocks[-1].name]:
+        elif (
+            name not in BLOCK_TAGS[open_blocks[-1].name]
+            and not unresolved_is_ignored
+        ):
             _add(
                 findings,
                 path,
@@ -410,7 +433,7 @@ def _scan_tag(
             )
         return close + 2
 
-    if name not in STANDALONE_TAGS:
+    if name not in STANDALONE_TAGS and not unresolved_is_ignored:
         _add(findings, path, text, start, _unknown_tag_message(name))
 
     return close + 2
@@ -436,6 +459,7 @@ def _add(
             column=column,
             snippet=_snippet(text, start),
             message=message,
+            hint=_TAG_HINT,
         )
     )
 
