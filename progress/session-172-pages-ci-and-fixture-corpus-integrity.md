@@ -227,6 +227,40 @@ Match counts per version: 931 / 701 / 875 / 936 / 972.
 
 ______________________________________________________________________
 
+## What this unblocks, and what A1c actually costs
+
+This session deliberately did not touch [#96](https://github.com/wallstop/NovaSharp/issues/96)
+(`fib(30)` allocating 2.1 GB/op) or [#95](https://github.com/wallstop/NovaSharp/issues/95), which are
+the highest gameplay-impact issues open. Their fix is Phase A1c — `DynValue` class → `readonly struct
+LuaValue` — and PLAN.md's own methodology forbids starting it here: *"No phase merges with a red
+fixture,"* and the corpus was not trustworthy. 463 fixtures had drifted from their manifest, 144 had
+never been compared against reference Lua at all, and `main`'s Pages leg had never been green. Those
+are now fixed, so A1c can be judged against a harness that means something. #96 got a written
+diagnosis against the committed A0 numbers instead of a partial fix.
+
+Measured blast radius, so the next session can size it rather than estimate:
+
+| Signal | Count |
+| ------------------------------------------ | ------ |
+| `DynValue` references across `src/` | 13,217 |
+| Files mentioning `DynValue` (whole repo) | 366 |
+| Files mentioning `DynValue` (runtime only) | 136 |
+| `DynValue.NewNumber` call sites | 1,412 |
+| `DynValue.Nil` / `DynValue.Void` references | 552 / 200 |
+| `?? DynValue.Nil` (the null-vs-Nil hazard PLAN.md flags) | 82 |
+| `DynValue.cs` itself | 1,892 lines |
+
+The work is concentrated rather than uniform — `Script.cs` (470), `ProcessorInstructionLoop.cs` (213),
+`CompiledScript.cs` (201), `DynValue.cs` (199), and `ScriptExecutionContext.cs` (176) hold a large
+share of the runtime references. That is consistent with PLAN.md's compiler-error-driven plan: the
+conversion is mechanical in most of the 366 files and genuinely hard in about five.
+
+The 82 `?? DynValue.Nil` sites are the ones PLAN.md says must be **audited manually, not by regex**,
+because `default(LuaValue) == Nil` silently changes what a null coalesce means. That count is the
+honest measure of the phase's risk, not its file count.
+
+______________________________________________________________________
+
 ## Review round on PR #97
 
 Copilot could not review this PR at all — both attempts returned "exceeds the maximum number of
