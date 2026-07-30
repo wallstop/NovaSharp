@@ -227,18 +227,77 @@ Match counts per version: 931 / 701 / 875 / 936 / 972.
 
 ______________________________________________________________________
 
+## Review round on PR #97
+
+Copilot could not review this PR at all — both attempts returned "exceeds the maximum number of
+files (300)". The diff is ~1,890 files, of which 1,879 are the regenerated corpus. Getting under the
+limit would mean splitting the regeneration into its own PR. So Bugbot was the only automated
+reviewer, and the hand-written surface got an adversarial pass on the main thread instead.
+
+### Bugbot found one issue, and it was the sharpest one available
+
+`tools/LlmSkillIndexer/llm_skill_indexer.py` built `file_path` with `str(Path.relative_to(...))`,
+which is OS-native. That value lands in the committed `.llm/skills-index.json` — and **this session is
+what made `--check` compare that file byte-for-byte**. So the session converted a cosmetic
+inconsistency into a CI-breaking one, in exactly the bug class it was fixing for fixture `@source`
+paths, in a file it had just made fail-closed.
+
+Sweeping the class across all 73 `relative_to` call sites in `tools/` and `scripts/` found **one more
+live instance Bugbot did not flag**: `lua_corpus_extractor.py` — the v1 extractor, still pointed at by
+`scripts/tests/run-lua-corpus.sh:99` — carries the identical line v2 was fixed for. Running it would
+rewrite `@source` on every fixture and undo this session's normalisation. Everything else was already
+`as_posix()`, kept as a `Path` for `.parts` comparison, or human-facing output only.
+
+Both fixes are **Windows-only in effect** — on Linux `str(Path)` and `as_posix()` are the same string —
+and the `lint` job that runs the indexer check is `ubuntu-latest` only. So neither the bug nor its new
+test will ever fire in CI. The code change is the protection; the test pins intent. Claiming red/green
+here would be false.
+
+### Self-review found a false negative in the guard
+
+Jekyll's `markdown_ext` defaults to `markdown,mkdown,mkdn,mkd,md` (jekyll-3.10.0
+`configuration.rb:27`), and `jekyll-optional-front-matter` promotes every one to a page. The guard
+covered two. A `.mkd`, `.mkdn`, or `.mkdown` file could therefore carry an unterminated delimiter,
+take the site down, and **pass the guard silently** — the one failure direction it exists to prevent.
+
+Verified rather than assumed: the same bad snippet was built under each of the five extensions and all
+five abort the build. The guard now agrees on all five and reads the set from `_config.yml`'s
+`markdown_ext`, the same treatment `exclude` already had. No such file exists today; fixed because a
+guard whose value is "no false negatives" cannot have one.
+
+### A third defect, filed rather than fixed
+
+Counting snippets against unique output paths showed 1,965 snippets collapsing onto 1,940 paths. All
+25 collisions come from **different source files**: `output_path` keys on the *simple* class name, which
+is not unique across the test tree (`ClrToScriptConversionsIntegrationTUnitTests.cs` declares
+`class ClrToScriptConversionsTUnitTests`), and `method_snippet_counts` is per-file so no `_1` suffix is
+added. `write_snippets` overwrites, `manifest.json` lists both, and 25 tests contribute no
+reference-Lua comparison at all.
+
+This does not weaken the new manifest/header agreement test — all 25 duplicated paths happen to carry
+identical curated values, so whichever entry wins agrees with the file on disk. But it holds by luck
+rather than construction. Filed as #101 rather than fixed here: the 25 recovered snippets would each
+need reference-Lua triage, which is #91's work over again and does not belong in an already-large PR.
+
+______________________________________________________________________
+
 ## Follow-ups filed
 
-- The NovaSharp batch runner ignores `--fixtures-dir`, writing outputs flat while the reference side
-  nests them. A run over a non-canonical fixtures directory therefore compares **nothing** and still
-  prints `[OK] All comparable fixtures match`, because `lua_only` is not a failure without
-  `--enforce`. This wasted a full triage cycle in this session.
-- 346 committed fixtures are no longer produced by extraction (renamed or deleted tests). They still
-  execute, because the harness walks the corpus directory rather than the manifest, but nothing
-  reports them as orphaned.
-- The extractor's injected-variable heuristic reads raw snippet text including comments, and misses
-  host functions registered as CLR callbacks — which is how
-  `ClrReentrantOverflowCaughtByPcall...` shipped as comparable, and how session 171's
-  `SparseAndDenseIntegerKeysCoexist.lua` was wrongly excluded.
-- Pages publishes the entire repository, including `progress/` and `src/tests/**/*.md`. Scoping the
-  site is design work that belongs with #85; the guard makes the current scope safe meanwhile.
+- **[#98](https://github.com/wallstop/NovaSharp/issues/98)** — the batch runner ignores
+  `--fixtures-dir`, writing outputs flat while the reference side nests them. A run over a
+  non-canonical fixtures directory compares **nothing** and still prints `[OK] All comparable fixtures
+  match`, because `lua_only` is not a failure without `--enforce`. This wasted a full triage cycle
+  here. The more important half of the fix is making a zero-comparable-pair run fail loudly, which
+  covers any future layout mismatch rather than this one.
+- **[#99](https://github.com/wallstop/NovaSharp/issues/99)** — the injected-variable heuristic reads
+  raw snippet text *including comments* and misses host functions registered as CLR callbacks. Both
+  directions have already produced wrong metadata: `ClrReentrantOverflowCaughtByPcall...` shipped as
+  comparable, and session 171's `SparseAndDenseIntegerKeysCoexist.lua` was wrongly excluded.
+- **[#100](https://github.com/wallstop/NovaSharp/issues/100)** — 346 committed fixtures are no longer
+  produced by extraction (renamed or deleted tests). They still execute, because the harness walks the
+  corpus directory rather than the manifest, but nothing reports them as orphaned.
+- **[#101](https://github.com/wallstop/NovaSharp/issues/101)** — 25 snippets are silently overwritten
+  by fixture-path collisions on the simple class name.
+
+Pages publishing scope beyond "green" belongs with #85; `_config.yml` makes the current scope
+intentional and the guard makes it safe meanwhile.
