@@ -16,8 +16,9 @@ the only signal — no other CI leg reads Markdown as Liquid, and it only report
 after a push to ``main``. This check reproduces Liquid's own tokenizer failure
 modes so the problem surfaces on the pull request instead.
 
-The scanned set is derived from ``_config.yml``'s ``exclude`` list, so the guard
-covers exactly what Pages renders and the two cannot drift apart.
+The scanned set is derived from ``_config.yml``'s ``exclude`` and ``markdown_ext``,
+so the guard covers exactly what Pages renders and the two cannot drift apart.
+Note that ``markdown_ext`` defaults to five extensions, not just ``.md``.
 
 Only the constructs Liquid treats as *fatal* are reported:
 
@@ -43,17 +44,20 @@ import argparse
 import re
 import subprocess
 import sys
-
-import yaml
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
+import yaml
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 JEKYLL_CONFIG = REPO_ROOT / "_config.yml"
 
-# ``jekyll-optional-front-matter`` promotes these extensions to pages.
-RENDERED_SUFFIXES = {".md", ".markdown"}
+# ``jekyll-optional-front-matter`` promotes every extension in Jekyll's
+# ``markdown_ext`` to a page, and Jekyll's default is five of them — not just
+# ``.md``. Covering fewer would leave a silent hole exactly where this guard is
+# supposed to have none.
+DEFAULT_MARKDOWN_EXT = "markdown,mkdown,mkdn,mkd,md"
 
 # Liquid + Jekyll + github-pages tags. A tag outside this set raises
 # "Unknown tag" and fails the build, so an unrecognised name is an error rather
@@ -138,6 +142,15 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def load_config(config_path: Path = JEKYLL_CONFIG) -> dict:
+    """Return ``_config.yml`` as a dict, or empty when it cannot be read."""
+    try:
+        config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return {}
+    return config if isinstance(config, dict) else {}
+
+
 def load_excludes(config_path: Path = JEKYLL_CONFIG) -> tuple[str, ...]:
     """Return the ``exclude`` entries from ``_config.yml``, slashes stripped.
 
@@ -145,25 +158,40 @@ def load_excludes(config_path: Path = JEKYLL_CONFIG) -> tuple[str, ...]:
     the state that broke the site — so fall back to excluding nothing rather
     than silently narrowing the scan.
     """
-    try:
-        config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-    except (OSError, yaml.YAMLError):
-        return ()
-
-    excludes = config.get("exclude") or []
+    excludes = load_config(config_path).get("exclude") or []
     if not isinstance(excludes, list):
         return ()
     return tuple(str(entry).strip().strip("/") for entry in excludes if str(entry).strip())
 
 
-def is_rendered(relative_path: Path, excludes: tuple[str, ...] = ()) -> bool:
+def load_rendered_suffixes(config_path: Path = JEKYLL_CONFIG) -> frozenset[str]:
+    """Return the file suffixes Jekyll renders, from ``markdown_ext``."""
+    raw = load_config(config_path).get("markdown_ext") or DEFAULT_MARKDOWN_EXT
+    return frozenset(
+        f".{entry.strip().lstrip('.').lower()}"
+        for entry in str(raw).split(",")
+        if entry.strip().strip(".")
+    )
+
+
+def is_rendered(
+    relative_path: Path,
+    excludes: tuple[str, ...] = (),
+    suffixes: frozenset[str] | None = None,
+) -> bool:
     """Return True when Jekyll would render ``relative_path`` as a page.
 
     Jekyll's ``EntryFilter`` drops every entry whose name starts with ``.`` or
     ``_``, so those paths cannot break the build no matter what they contain. An
     ``exclude`` entry drops the file itself or any directory above it.
+
+    Not covered: an ``.html`` page carrying real YAML front matter is also
+    Liquid-rendered. There are none in this repository, and one written
+    deliberately would be using Liquid on purpose.
     """
-    if relative_path.suffix.lower() not in RENDERED_SUFFIXES:
+    if suffixes is None:
+        suffixes = load_rendered_suffixes()
+    if relative_path.suffix.lower() not in suffixes:
         return False
     if any(part.startswith((".", "_")) for part in relative_path.parts):
         return False
@@ -176,16 +204,19 @@ def is_rendered(relative_path: Path, excludes: tuple[str, ...] = ()) -> bool:
 
 def discover_files(repo_root: Path) -> list[Path]:
     """Return every tracked Markdown file Jekyll would render, sorted."""
+    config_path = repo_root / "_config.yml"
+    suffixes = load_rendered_suffixes(config_path)
+    patterns = [f"*{suffix}" for suffix in sorted(suffixes)]
     result = subprocess.run(
-        ["git", "ls-files", "-z", "*.md", "*.markdown"],
+        ["git", "ls-files", "-z", *patterns],
         cwd=repo_root,
         capture_output=True,
         check=True,
         text=True,
     )
-    excludes = load_excludes(repo_root / "_config.yml")
+    excludes = load_excludes(config_path)
     tracked = (Path(entry) for entry in result.stdout.split("\0") if entry)
-    return sorted(path for path in tracked if is_rendered(path, excludes))
+    return sorted(path for path in tracked if is_rendered(path, excludes, suffixes))
 
 
 def _position(text: str, offset: int) -> tuple[int, int]:
@@ -351,6 +382,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.files:
         excludes = load_excludes()
+        suffixes = load_rendered_suffixes()
         candidates = []
         for raw in args.files:
             path = Path(raw)
@@ -359,7 +391,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if path.is_absolute()
                 else Path(raw)
             )
-            if is_rendered(relative, excludes):
+            if is_rendered(relative, excludes, suffixes):
                 candidates.append(relative)
     else:
         candidates = discover_files(REPO_ROOT)

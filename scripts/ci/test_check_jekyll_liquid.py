@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import check_jekyll_liquid
 
@@ -45,6 +46,10 @@ RENDERED_CASES = (
     ("_layouts/default.md", False),
     ("docs/notes.txt", False),
     ("src/Runtime.cs", False),
+    # Jekyll's `markdown_ext` default is five extensions, not just `.md`.
+    ("docs/guide.mkd", True),
+    ("docs/guide.mkdn", True),
+    ("docs/guide.mkdown", True),
     # Excluded by `_config.yml`, so free to quote Liquid delimiters.
     ("PLAN.md", False),
     ("progress/session-001-example.md", False),
@@ -107,6 +112,24 @@ class IsRenderedTests(unittest.TestCase):
             (), check_jekyll_liquid.load_excludes(Path("does/not/exist/_config.yml"))
         )
         self.assertTrue(check_jekyll_liquid.is_rendered(Path("PLAN.md"), ()))
+
+    def test_rendered_suffixes_cover_every_jekyll_markdown_extension(self) -> None:
+        """A narrower set would be a silent hole, which is the one thing this
+        guard must not have."""
+        self.assertEqual(
+            {".markdown", ".mkdown", ".mkdn", ".mkd", ".md"},
+            set(check_jekyll_liquid.load_rendered_suffixes()),
+        )
+
+    def test_rendered_suffixes_honour_a_config_override(self) -> None:
+        with TemporaryDirectory() as temporary_directory:
+            config = Path(temporary_directory) / "_config.yml"
+            config.write_text("markdown_ext: md, text\n", encoding="utf-8")
+
+            self.assertEqual(
+                {".md", ".text"},
+                set(check_jekyll_liquid.load_rendered_suffixes(config)),
+            )
 
     def test_exclude_matches_directories_not_name_prefixes(self) -> None:
         self.assertTrue(
