@@ -22,13 +22,24 @@ Note that ``markdown_ext`` defaults to five extensions, not just ``.md``.
 
 Only the constructs Liquid treats as *fatal* are reported:
 
-* ``{{`` that is not terminated by ``}}``      (``raise_missing_variable_terminator``)
-* ``{%`` that is not terminated by ``%}``      (``raise_missing_tag_terminator``)
-* ``{% name %}`` where ``name`` is not a tag available on GitHub Pages
-  (``Liquid::SyntaxError: Unknown tag``)
+* ``{{`` that is not terminated by ``}}``  (``raise_missing_variable_terminator``)
+* ``{%`` that is not terminated by ``%}``  (``raise_missing_tag_terminator``)
+* a tag name Jekyll cannot resolve         (``Unknown tag``)
+* a block-only tag outside its block — an orphan ``end*``, ``else``, ``elsif``, or
+  ``when``, since Liquid registers those on the parent block and not on the
+  document (``Unknown tag`` / ``Unexpected outer 'else' tag``)
+* a closer that does not match the innermost open block
+  (``'endfor' is not a valid delimiter for if``)
+* a block that is never closed             (``'if' tag was never closed``)
 
-Well-formed Liquid is left alone, and ``{% raw %}`` regions are skipped exactly
-as Liquid skips them.
+Well-formed Liquid is left alone. ``{% raw %}`` regions are skipped as Liquid
+skips them, and ``{% comment %}`` swallows tag errors but *not* variable errors,
+because ``Liquid::Comment#unknown_tag`` is a no-op while its body is still
+tokenised for variables.
+
+Every rule above was checked against a real ``github-pages`` v232 build — 52 cases,
+one build each, guard verdict compared to Jekyll's exit code, 52/52 in agreement.
+``scripts/ci/test_check_jekyll_liquid.py`` pins all 52.
 
 Usage:
     python3 scripts/ci/check_jekyll_liquid.py [--files FILE ...]
@@ -59,43 +70,42 @@ JEKYLL_CONFIG = REPO_ROOT / "_config.yml"
 # supposed to have none.
 DEFAULT_MARKDOWN_EXT = "markdown,mkdown,mkdn,mkd,md"
 
-# Liquid + Jekyll + github-pages tags. A tag outside this set raises
-# "Unknown tag" and fails the build, so an unrecognised name is an error rather
-# than something to silently accept.
-KNOWN_TAGS = frozenset(
+# Liquid does not register block-only names on the document. `else`, `elsif`,
+# `when`, and every `end*` name are accepted *only* inside their parent block, so
+# a flat allowlist lets an orphan `{% endfor %}` or `{% else %}` through while
+# Pages fails with "Unknown tag". These tables model the nesting instead, and
+# every entry below was checked against a real github-pages v232 build.
+#
+# Block openers, mapped to the inner tags each one accepts.
+BLOCK_TAGS: dict[str, frozenset[str]] = {
+    "if": frozenset({"else", "elsif"}),
+    "unless": frozenset({"else", "elsif"}),
+    "case": frozenset({"when", "else"}),
+    "for": frozenset({"else"}),
+    "tablerow": frozenset(),
+    "capture": frozenset(),
+    "comment": frozenset(),
+    "ifchanged": frozenset(),
+    "highlight": frozenset(),
+}
+
+# Valid only inside a parent block that accepts them.
+INNER_TAGS = frozenset({"else", "elsif", "when"})
+
+# Registered globally, so legal anywhere — including at document level. `break`
+# and `continue` belong here rather than under `for`: Liquid registers them
+# globally and they do not fail outside a loop.
+STANDALONE_TAGS = frozenset(
     {
         # Liquid core
         "assign",
-        "capture",
-        "endcapture",
-        "case",
-        "when",
-        "endcase",
-        "comment",
-        "endcomment",
-        "cycle",
-        "decrement",
-        "for",
-        "else",
-        "elsif",
-        "endfor",
         "break",
         "continue",
-        "if",
-        "endif",
-        "ifchanged",
-        "endifchanged",
+        "cycle",
+        "decrement",
         "increment",
-        "raw",
-        "endraw",
-        "tablerow",
-        "endtablerow",
-        "unless",
-        "endunless",
-        # Jekyll
-        "highlight",
-        "endhighlight",
         "include",
+        # Jekyll
         "include_relative",
         "link",
         "post_url",
@@ -112,6 +122,16 @@ _HINT = (
     "Separate the braces (`{ {n=2} }`), or wrap the block in `{% raw %}` / "
     "`{% endraw %}`."
 )
+
+
+@dataclass(frozen=True)
+class _OpenBlock:
+    """A block tag awaiting its closer, kept so an unclosed one can be reported."""
+
+    name: str
+    line: int
+    column: int
+    snippet: str
 
 
 @dataclass(frozen=True)
@@ -241,6 +261,7 @@ def scan_text(text: str, path: str) -> list[Finding]:
     ``%}``; and ``{% raw %}`` suppresses parsing until ``{% endraw %}``.
     """
     findings: list[Finding] = []
+    open_blocks: list[_OpenBlock] = []
     index = 0
     length = len(text)
 
@@ -253,7 +274,23 @@ def scan_text(text: str, path: str) -> list[Finding]:
         if tag_start == -1 or (variable_start != -1 and variable_start < tag_start):
             index = _scan_variable(text, path, variable_start, findings)
         else:
-            index = _scan_tag(text, path, tag_start, findings)
+            index = _scan_tag(text, path, tag_start, findings, open_blocks)
+
+    # Liquid raises when a block's tokens run out before its closer, so an
+    # unclosed block is fatal even though nothing about it looks malformed.
+    for block in reversed(open_blocks):
+        findings.append(
+            Finding(
+                path=path,
+                line=block.line,
+                column=block.column,
+                snippet=block.snippet,
+                message=(
+                    f"`{{% {block.name} %}}` is never closed by "
+                    f"`{{% end{block.name} %}}`"
+                ),
+            )
+        )
 
     return findings
 
@@ -290,56 +327,117 @@ def _tag_name(raw_body: str) -> str:
     return body.split(None, 1)[0] if body else ""
 
 
-def _scan_tag(text: str, path: str, start: int, findings: list[Finding]) -> int:
+def _scan_tag(
+    text: str,
+    path: str,
+    start: int,
+    findings: list[Finding],
+    open_blocks: list[_OpenBlock],
+) -> int:
     """Validate the ``{% ... %}`` token at ``start``; return the next offset."""
     close = text.find("%}", start + 2)
     if close == -1:
-        line, column = _position(text, start)
-        findings.append(
-            Finding(
-                path=path,
-                line=line,
-                column=column,
-                snippet=_snippet(text, start),
-                message="unterminated Liquid tag `{%` (expected a closing `%}`)",
-            )
+        _add(
+            findings,
+            path,
+            text,
+            start,
+            "unterminated Liquid tag `{%` (expected a closing `%}`)",
         )
         return start + 2
 
     name = _tag_name(text[start + 2 : close])
-    if name not in KNOWN_TAGS:
-        line, column = _position(text, start)
-        findings.append(
-            Finding(
-                path=path,
-                line=line,
-                column=column,
-                snippet=_snippet(text, start),
-                message=(
-                    f"unknown Liquid tag `{name or '(empty)'}`; "
-                    "Jekyll aborts the build on tags it cannot resolve"
-                ),
-            )
-        )
-        return close + 2
+    inside_comment = bool(open_blocks) and open_blocks[-1].name == "comment"
 
     if name == "raw":
         endraw = _find_endraw(text, close + 2)
         if endraw == -1:
-            line, column = _position(text, start)
-            findings.append(
-                Finding(
-                    path=path,
-                    line=line,
-                    column=column,
-                    snippet=_snippet(text, start),
-                    message="`{% raw %}` is never closed by `{% endraw %}`",
-                )
+            _add(
+                findings,
+                path,
+                text,
+                start,
+                "`{% raw %}` is never closed by `{% endraw %}`",
             )
             return len(text)
         return endraw
 
+    if name.startswith("end") and name[3:]:
+        closing = name[3:]
+        if inside_comment and closing != "comment":
+            # `Liquid::Comment#unknown_tag` is a no-op, so a stray end tag inside
+            # a comment is discarded rather than fatal.
+            return close + 2
+        if not open_blocks:
+            _add(findings, path, text, start, _unknown_tag_message(name))
+        elif open_blocks[-1].name != closing:
+            _add(
+                findings,
+                path,
+                text,
+                start,
+                f"`{name}` is not a valid delimiter for "
+                f"`{{% {open_blocks[-1].name} %}}`",
+            )
+        else:
+            open_blocks.pop()
+        return close + 2
+
+    if inside_comment:
+        # Inside a comment every other tag is ignored, including unknown ones and
+        # further block openers. Variables are still parsed, which is why the
+        # caller keeps scanning the body rather than skipping it wholesale.
+        return close + 2
+
+    if name in BLOCK_TAGS:
+        line, column = _position(text, start)
+        open_blocks.append(
+            _OpenBlock(name, line, column, _snippet(text, start))
+        )
+        return close + 2
+
+    if name in INNER_TAGS:
+        if not open_blocks:
+            _add(findings, path, text, start, _unknown_tag_message(name))
+        elif name not in BLOCK_TAGS[open_blocks[-1].name]:
+            _add(
+                findings,
+                path,
+                text,
+                start,
+                f"`{{% {name} %}}` is not valid inside "
+                f"`{{% {open_blocks[-1].name} %}}`",
+            )
+        return close + 2
+
+    if name not in STANDALONE_TAGS:
+        _add(findings, path, text, start, _unknown_tag_message(name))
+
     return close + 2
+
+
+def _unknown_tag_message(name: str) -> str:
+    if name == "else":
+        return "unexpected outer `{% else %}`; Liquid rejects it outside a block"
+    return (
+        f"unknown Liquid tag `{name or '(empty)'}`; "
+        "Jekyll aborts the build on tags it cannot resolve"
+    )
+
+
+def _add(
+    findings: list[Finding], path: str, text: str, start: int, message: str
+) -> None:
+    line, column = _position(text, start)
+    findings.append(
+        Finding(
+            path=path,
+            line=line,
+            column=column,
+            snippet=_snippet(text, start),
+            message=message,
+        )
+    )
 
 
 def _find_endraw(text: str, start: int) -> int:

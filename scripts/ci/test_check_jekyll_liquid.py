@@ -58,6 +58,111 @@ RENDERED_CASES = (
 )
 
 
+# (label, markdown, does Jekyll abort the build?)
+#
+# Every row below was verified by building it under a real `github-pages` v232
+# install, one build per row, and comparing Jekyll's exit code against this
+# guard's verdict. 52/52 agree. Where a row looks surprising, Jekyll's behaviour
+# is the reason — `Liquid::Comment#unknown_tag` is a no-op, so a comment hides a
+# stray end tag but still parses variables; `break` and `continue` are registered
+# globally, so they are legal outside a loop.
+FATALITY_CASES = (
+    # Variable delimiters
+    ("lua_nested_table", "local t = {{n=2}, {n=1}}\n", True),
+    ("spaced_nested_table", "local t = { {n=2}, {n=1} }\n", False),
+    ("well_formed_variable", "Title: {{ site.title }}\n", False),
+    ("variable_filter", "{{ page.title | upcase }}\n", False),
+    ("var_single_brace", "{{ oops }\n", True),
+    ("var_never_closed", "trailing {{ oops\n", True),
+    ("two_defects_one_line", "{{a} and {{b}\n", True),
+    ("closing_braces_only", "end of table }}\n", False),
+    ("no_liquid", "# H\n\nprose and `code`.\n", False),
+    # Tag delimiters and unknown names
+    ("unknown_tag", "{% nope %}\n", True),
+    ("empty_tag", "{%  %}\n", True),
+    ("unterminated_tag", "{% if page.title\n", True),
+    ("echo_tag", "{% echo x %}\n", True),
+    ("assign_standalone", "{% assign x = 1 %}\n", False),
+    # Raw regions
+    ("raw_suppresses_var", "{% raw %}{{n=2}, {n=1}}{% endraw %}\n", False),
+    ("raw_open_ws_control", "{%- raw -%}{{n=2}{% endraw %}\n", False),
+    ("raw_close_ws_control", "{%- raw -%}{{n=2}{%- endraw -%}\n", True),
+    ("endraw_lookalike", "{% raw %}{{n=2}{% endrawx %}\n", True),
+    ("unclosed_raw", "{% raw %}{{n=2}\n", True),
+    ("raw_inside_if", "{% if x %}{% raw %}{{n=2}{% endraw %}{% endif %}\n", False),
+    # Orphan block-only tags — the class a flat allowlist misses
+    ("orphan_endfor", "{% endfor %}\n", True),
+    ("orphan_endif", "{% endif %}\n", True),
+    ("orphan_else", "{% else %}\n", True),
+    ("orphan_elsif", "{% elsif x %}\n", True),
+    ("orphan_when", "{% when 1 %}\n", True),
+    ("orphan_endcapture", "{% endcapture %}\n", True),
+    ("orphan_endraw", "{% endraw %}\n", True),
+    ("orphan_break", "{% break %}\n", False),
+    ("orphan_continue", "{% continue %}\n", False),
+    # Unclosed blocks
+    ("unclosed_if", "{% if x %}text\n", True),
+    ("unclosed_for", "{% for a in b %}text\n", True),
+    ("unclosed_capture", "{% capture v %}x\n", True),
+    ("unclosed_comment", "{% comment %}x\n", True),
+    ("unclosed_highlight", "{% highlight ruby %}code\n", True),
+    # Mismatched and crossed delimiters
+    ("mismatched_end", "{% if x %}text{% endfor %}\n", True),
+    ("crossed_nesting", "{% for a in b %}{% if a %}x{% endfor %}{% endif %}\n", True),
+    # Well-formed blocks
+    ("proper_if", "{% if x %}text{% endif %}\n", False),
+    ("proper_for_else", "{% for a in b %}x{% else %}y{% endfor %}\n", False),
+    ("proper_case", "{% case x %}{% when 1 %}a{% endcase %}\n", False),
+    ("proper_capture", "{% capture v %}x{% endcapture %}\n", False),
+    ("proper_highlight", "{% highlight ruby %}c{% endhighlight %}\n", False),
+    ("proper_comment", "{% comment %}x{% endcomment %}\n", False),
+    ("proper_ifchanged", "{% ifchanged %}x{% endifchanged %}\n", False),
+    ("proper_tablerow", "{% tablerow a in b %}x{% endtablerow %}\n", False),
+    ("break_inside_for", "{% for a in b %}{% break %}{% endfor %}\n", False),
+    ("nested_if_in_for", "{% for a in b %}{% if a %}x{% endif %}{% endfor %}\n", False),
+    # Inner-tag placement
+    ("when_inside_if", "{% if x %}{% when 1 %}{% endif %}\n", True),
+    ("else_inside_case", "{% case x %}{% else %}a{% endcase %}\n", False),
+    ("elsif_inside_unless", "{% unless x %}a{% elsif y %}b{% endunless %}\n", False),
+    # Comments swallow tag errors but not variable errors
+    ("comment_hides_end", "{% comment %}{% endfor %}{% endcomment %}\n", False),
+    ("comment_hides_unknown", "{% comment %}{% nope %}{% endcomment %}\n", False),
+    ("comment_bad_variable", "{% comment %}{{n=2}{% endcomment %}\n", True),
+)
+
+
+class FatalityTests(unittest.TestCase):
+    def test_verdicts_match_a_real_jekyll_build(self) -> None:
+        """Each row's expectation is Jekyll's observed exit code, not a guess."""
+        for label, markdown, fatal in FATALITY_CASES:
+            with self.subTest(label=label):
+                findings = check_jekyll_liquid.scan_text(markdown, "sample.md")
+
+                self.assertEqual(
+                    fatal,
+                    bool(findings),
+                    f"{label}: {[finding.message for finding in findings]}",
+                )
+
+    def test_block_tables_cover_every_end_tag(self) -> None:
+        """An opener with no matching `end*` handling would never close."""
+        for opener in check_jekyll_liquid.BLOCK_TAGS:
+            with self.subTest(opener=opener):
+                markdown = f"{{% {opener} x %}}body{{% end{opener} %}}\n"
+                self.assertEqual([], check_jekyll_liquid.scan_text(markdown, "s.md"))
+
+    def test_inner_tags_are_never_also_standalone(self) -> None:
+        """Overlap would let an orphan inner tag pass as globally registered."""
+        self.assertEqual(
+            frozenset(),
+            check_jekyll_liquid.INNER_TAGS & check_jekyll_liquid.STANDALONE_TAGS,
+        )
+        self.assertEqual(
+            frozenset(),
+            frozenset(check_jekyll_liquid.BLOCK_TAGS) & check_jekyll_liquid.STANDALONE_TAGS,
+        )
+
+
 class ScanTextTests(unittest.TestCase):
     def test_findings_match_expected_counts(self) -> None:
         for label, markdown, expected in SCAN_CASES:
