@@ -234,7 +234,11 @@ def extract_snippets_from_file(file_path: Path) -> Iterator[LuaSnippet]:
         
         yield LuaSnippet(
             lua_code=lua_code.strip(),
-            source_file=str(file_path.relative_to(ROOT)),
+            # POSIX separators unconditionally, matching the v2 extractor. Native
+            # separators here would rewrite `@source` on every fixture written on
+            # the other platform, which is the churn the corpus was just
+            # normalised to remove.
+            source_file=file_path.relative_to(ROOT).as_posix(),
             line_number=line_number,
             test_class=test_class,
             test_method=test_method,

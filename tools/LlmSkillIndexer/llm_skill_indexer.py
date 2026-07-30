@@ -216,7 +216,11 @@ def process_skill_file(file_path: Path, repo_root: Path) -> SkillMetadata:
 
     # Extract base info
     name = file_path.stem
-    rel_path = str(file_path.relative_to(repo_root))
+    # POSIX separators unconditionally. This lands in the committed
+    # `.llm/skills-index.json`, and `--check` now compares that file byte-for-byte,
+    # so a native-separator path would make an index regenerated on Windows look
+    # stale on Unix CI and vice versa.
+    rel_path = file_path.relative_to(repo_root).as_posix()
     line_count = count_lines(content)
 
     skill = SkillMetadata(

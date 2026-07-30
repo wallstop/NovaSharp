@@ -224,6 +224,28 @@ class MetadataTests(unittest.TestCase):
             self.assertEqual(["invalid"], index["categories"]["uncategorized"])
             self.assertGreater(index["validation_summary"]["total_warnings"], 0)
 
+    def test_skill_paths_use_posix_separators(self) -> None:
+        """`--check` compares the committed index byte-for-byte.
+
+        A native-separator path would make an index regenerated on Windows look
+        stale on Unix CI and vice versa.
+        """
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo_root = Path(temporary_directory)
+            skills_directory = repo_root / ".llm" / "skills"
+            skills_directory.mkdir(parents=True)
+            (skills_directory / "example.md").write_text(
+                "---\ntriggers:\n  - example\ncategory: core\npriority: core\n---\n"
+                "# Example\n",
+                encoding="utf-8",
+            )
+
+            index = generate_index(repo_root)
+
+            (skill,) = index["skills"]
+            self.assertEqual(".llm/skills/example.md", skill["file_path"])
+            self.assertNotIn("\\", skill["file_path"])
+
 
 if __name__ == "__main__":
     unittest.main()
