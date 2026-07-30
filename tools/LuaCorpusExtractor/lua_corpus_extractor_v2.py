@@ -409,6 +409,10 @@ def strip_absorbed_body_prefix(header_lines: list[str], lua_code: str) -> list[s
     the ground truth: any tail of `header_lines` that matches the snippet's own
     leading comments belongs to the body, not the header. Without this the
     comments are emitted twice, once more on every regeneration.
+
+    Strips *every* accumulated copy, not just the last one. A fixture written by
+    the pre-fix tool can already hold several, and removing one would leave the
+    duplicate in place forever instead of healing it.
     """
     body_lines = lua_code.splitlines()
     leading = 0
@@ -417,12 +421,17 @@ def strip_absorbed_body_prefix(header_lines: list[str], lua_code: str) -> list[s
             break
         leading += 1
 
-    while leading > 0:
-        if len(header_lines) >= leading and header_lines[-leading:] == body_lines[:leading]:
-            return header_lines[:-leading]
-        leading -= 1
+    if leading == 0:
+        return header_lines
 
-    return header_lines
+    remaining = list(header_lines)
+    while True:
+        for width in range(leading, 0, -1):
+            if len(remaining) >= width and remaining[-width:] == body_lines[:width]:
+                remaining = remaining[:-width]
+                break
+        else:
+            return remaining
 
 
 def parse_header_metadata(header_lines: list[str]) -> dict[str, str]:

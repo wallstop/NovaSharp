@@ -179,6 +179,63 @@ class StripAbsorbedBodyPrefixTests(unittest.TestCase):
             extractor.strip_absorbed_body_prefix(header, "-- first\n-- second\nreturn 1"),
         )
 
+    def test_heals_a_fixture_that_already_accumulated_copies(self) -> None:
+        """The pre-fix tool could append the prefix on every run.
+
+        Stripping only the last copy would leave the duplicate in place forever
+        instead of healing it.
+        """
+        note = "-- defines a factorial function"
+        for copies in (1, 2, 5):
+            with self.subTest(copies=copies):
+                header = ["-- @test: T.M"] + [note] * copies
+
+                self.assertEqual(
+                    ["-- @test: T.M"],
+                    extractor.strip_absorbed_body_prefix(
+                        header, f"{note}\nfunction fact(n) end"
+                    ),
+                )
+
+    def test_heals_multi_line_accumulated_prefixes(self) -> None:
+        header = ["-- @test: T.M", "-- a", "-- b", "-- a", "-- b"]
+
+        self.assertEqual(
+            ["-- @test: T.M"],
+            extractor.strip_absorbed_body_prefix(header, "-- a\n-- b\nreturn 1"),
+        )
+
+    def test_regeneration_emits_exactly_one_copy_after_damage(self) -> None:
+        """End to end: a damaged fixture converges to a single copy in one pass."""
+        note = "-- defines a factorial function"
+        lua_code = f"{note}\nfunction fact(n) end"
+        damaged = (
+            "-- @lua-versions: 5.1+\n"
+            "-- @novasharp-only: false\n"
+            "-- @expects-error: false\n"
+            "-- @source: src/tests/Sample.cs:10\n"
+            "-- @test: SampleTests.Sample\n"
+            f"{note}\n{note}\n{note}\n"
+            "function fact(n) end\n"
+        )
+
+        with TemporaryDirectory() as temporary_directory:
+            output_dir = Path(temporary_directory)
+            (output_dir / "SampleTests").mkdir(parents=True)
+            (output_dir / "SampleTests" / "Sample.lua").write_text(
+                damaged, encoding="utf-8"
+            )
+
+            snippet = make_snippet(lua_code=lua_code)
+            result = extractor.ExtractionResult(snippets=[snippet])
+            extractor.apply_curated_metadata(result, output_dir)
+            extractor.write_snippets(result, output_dir)
+            healed = (output_dir / "SampleTests" / "Sample.lua").read_text(
+                encoding="utf-8"
+            )
+
+        self.assertEqual(1, healed.count(note))
+
 
 class ApplyCuratedMetadataTests(unittest.TestCase):
     CURATED_FIXTURE = (
