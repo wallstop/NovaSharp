@@ -358,6 +358,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <returns></returns>
         public DynValue GetMetamethod(DynValue value, string metamethod)
         {
+            return TryGetMetamethod(value, metamethod, out DynValue resolvedMetamethod)
+                ? resolvedMetamethod
+                : null;
+        }
+
+        /// <summary>
+        /// Attempts to get the specified metamethod associated with the given value.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <param name="metamethod">The metamethod name.</param>
+        /// <param name="resolvedMetamethod">
+        /// The resolved metamethod, or <see cref="DynValue.Nil"/> when none is available.
+        /// </param>
+        /// <returns><see langword="true"/> when a metamethod was resolved; otherwise, <see langword="false"/>.</returns>
+        public bool TryGetMetamethod(
+            DynValue value,
+            string metamethod,
+            out DynValue resolvedMetamethod
+        )
+        {
             if (value == null)
             {
                 throw new ArgumentNullException(nameof(value));
@@ -368,7 +388,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(metamethod));
             }
 
-            return _processor.GetMetamethod(value, metamethod);
+            return _processor.TryGetMetamethod(value, metamethod, out resolvedMetamethod);
         }
 
         /// <summary>
@@ -380,8 +400,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             params DynValue[] args
         )
         {
-            DynValue meta = GetMetamethod(value, metamethod);
-            if (meta == null)
+            if (!TryGetMetamethod(value, metamethod, out DynValue meta))
             {
                 return null;
             }
@@ -393,6 +412,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// Gets the metamethod to be used for a binary operation using op1 and op2.
         /// </summary>
         public DynValue GetBinaryMetamethod(DynValue op1, DynValue op2, string eventName)
+        {
+            return TryGetBinaryMetamethod(op1, op2, eventName, out DynValue resolvedMetamethod)
+                ? resolvedMetamethod
+                : null;
+        }
+
+        /// <summary>
+        /// Attempts to get the metamethod used for a binary operation on <paramref name="op1"/> and
+        /// <paramref name="op2"/>.
+        /// </summary>
+        /// <param name="op1">The left operand.</param>
+        /// <param name="op2">The right operand.</param>
+        /// <param name="eventName">The metamethod name.</param>
+        /// <param name="resolvedMetamethod">
+        /// The resolved metamethod, or <see cref="DynValue.Nil"/> when none is available.
+        /// </param>
+        /// <returns><see langword="true"/> when a metamethod was resolved; otherwise, <see langword="false"/>.</returns>
+        public bool TryGetBinaryMetamethod(
+            DynValue op1,
+            DynValue op2,
+            string eventName,
+            out DynValue resolvedMetamethod
+        )
         {
             if (op1 == null)
             {
@@ -409,7 +451,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(eventName));
             }
 
-            return _processor.GetBinaryMetamethod(op1, op2, eventName);
+            return _processor.TryGetBinaryMetamethod(op1, op2, eventName, out resolvedMetamethod);
         }
 
         /// <summary>
@@ -823,9 +865,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             while (maxloops > 0)
             {
-                DynValue v = GetMetamethod(func, Metamethods.Call);
-
-                if (v == null || v.IsNil() || !CanCallMetamethod(v))
+                if (
+                    !TryGetMetamethod(func, Metamethods.Call, out DynValue v)
+                    || v.IsNil()
+                    || !CanCallMetamethod(v)
+                )
                 {
                     throw ScriptRuntimeException.AttemptToCallNonFunc(func.Type);
                 }
@@ -916,9 +960,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
                 while (maxloops > 0)
                 {
-                    DynValue v = GetMetamethod(func, Metamethods.Call);
-
-                    if (v == null || v.IsNil() || !CanCallMetamethod(v))
+                    if (
+                        !TryGetMetamethod(func, Metamethods.Call, out DynValue v)
+                        || v.IsNil()
+                        || !CanCallMetamethod(v)
+                    )
                     {
                         throw ScriptRuntimeException.AttemptToCallNonFunc(func.Type);
                     }
@@ -1291,8 +1337,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
         private DynValue GetCallableMetamethodOrThrow(DynValue func)
         {
-            DynValue metafunction = GetMetamethod(func, Metamethods.Call);
-            if (metafunction != null && !metafunction.IsNil() && CanCallMetamethod(metafunction))
+            if (
+                TryGetMetamethod(func, Metamethods.Call, out DynValue metafunction)
+                && !metafunction.IsNil()
+                && CanCallMetamethod(metafunction)
+            )
             {
                 return metafunction;
             }

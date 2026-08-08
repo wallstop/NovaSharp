@@ -123,9 +123,9 @@ Found 151 undocumented public/internal type declarations.
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs
   - line 623: missing XML docs for `BeginDefaultOptionsScope()`
   - line 731: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
-  - line 4847: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
-  - line 4855: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
-  - line 4982: missing XML docs for `Dispose()`
+  - line 4858: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
+  - line 4866: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
+  - line 4993: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf2.cs
   - line 198: missing XML docs for `FromT0()`
   - line 211: missing XML docs for `FromT1()`

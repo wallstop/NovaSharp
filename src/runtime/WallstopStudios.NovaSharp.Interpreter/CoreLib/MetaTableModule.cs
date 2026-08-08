@@ -43,9 +43,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue table = args.AsType(0, "setmetatable", DataType.Table);
             DynValue metatable = args.AsType(1, "setmetatable", DataType.Table, true);
 
-            DynValue curmeta = executionContext.GetMetamethod(table, Metamethods.Metatable);
-
-            if (curmeta != null)
+            if (executionContext.TryGetMetamethod(table, Metamethods.Metatable, out DynValue _))
             {
                 throw new ScriptRuntimeException("cannot change a protected metatable");
             }

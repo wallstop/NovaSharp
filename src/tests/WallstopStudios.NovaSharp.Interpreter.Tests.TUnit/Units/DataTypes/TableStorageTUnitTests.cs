@@ -141,11 +141,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             table.Set(3, DynValue.NewNumber(30));
 
             table.Set(2, DynValue.Nil);
+            table.Set("hash-nil", DynValue.Nil);
 
             TablePair? next = table.NextKey(DynValue.NewNumber(2));
+            bool foundArrayNil = table.TryRawGet(2, out DynValue arrayNil);
+            bool foundHashNil = table.TryRawGet("hash-nil", out DynValue hashNil);
+            bool foundMissing = table.TryRawGet("missing", out DynValue missing);
 
             await Assert.That(next.HasValue).IsTrue().ConfigureAwait(false);
             await Assert.That(next.Value.Key.Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(foundArrayNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(arrayNil.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(foundHashNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(hashNil.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(foundMissing).IsFalse().ConfigureAwait(false);
+            await Assert.That(missing.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

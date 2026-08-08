@@ -366,13 +366,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _span = span;
             _list = list;
             _callbackArguments = callbackArguments;
-            _arg0 = arg0;
-            _arg1 = arg1;
-            _arg2 = arg2;
-            _arg3 = arg3;
-            _arg4 = arg4;
-            _arg5 = arg5;
-            _arg6 = arg6;
+            _arg0 = arg0 ?? DynValue.Nil;
+            _arg1 = arg1 ?? DynValue.Nil;
+            _arg2 = arg2 ?? DynValue.Nil;
+            _arg3 = arg3 ?? DynValue.Nil;
+            _arg4 = arg4 ?? DynValue.Nil;
+            _arg5 = arg5 ?? DynValue.Nil;
+            _arg6 = arg6 ?? DynValue.Nil;
             _source = source;
             _offset = offset;
             _storedCount = storedCount;
@@ -431,31 +431,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public DynValue this[int index]
         {
-            get { return RawGet(index, translateVoids: true) ?? DynValue.Void; }
+            get
+            {
+                TryRawGet(index, translateVoids: true, out DynValue value);
+                return value;
+            }
         }
 
         /// <summary>
         /// Gets the <see cref="DynValue"/> at the specified index, or <c>null</c>.
         /// </summary>
+        /// <remarks>
+        /// Retained for compatibility. Use <see cref="TryRawGet(int, bool, out DynValue)"/> when
+        /// argument presence must be distinguished from an explicit nil or void value.
+        /// </remarks>
         public DynValue RawGet(int index, bool translateVoids)
         {
-            if (index < 0)
+            return TryRawGet(index, translateVoids, out DynValue value) ? value : null;
+        }
+
+        /// <summary>
+        /// Tries to get the <see cref="DynValue"/> at the specified index.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <param name="translateVoids">if set to <c>true</c> all voids are translated to nils.</param>
+        /// <param name="value">
+        /// When successful, receives the argument; otherwise, receives <see cref="DynValue.Void"/>.
+        /// </param>
+        /// <returns><c>true</c> when the argument is present; otherwise, <c>false</c>.</returns>
+        public bool TryRawGet(int index, bool translateVoids, out DynValue value)
+        {
+            if (index < 0 || index >= _count)
             {
-                return null;
+                value = DynValue.Void;
+                return false;
             }
 
             if (_source == SourceCallbackArguments)
             {
-                return _callbackArguments.RawGet(index, translateVoids);
+                return _callbackArguments.TryRawGet(index, translateVoids, out value);
             }
 
-            DynValue value;
             int visibleStoredCount = _storedCount - _offset;
-            if (index >= _count)
-            {
-                return null;
-            }
-
             if (!_lastIsTuple || index < visibleStoredCount - 1)
             {
                 value = GetStoredArgument(_offset + index);
@@ -477,7 +494,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 value = DynValue.Nil;
             }
 
-            return value;
+            return true;
         }
 
         /// <summary>

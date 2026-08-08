@@ -2743,7 +2743,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             bool isNameIndex = i.OpCode == OpCode.IndexSetN;
             bool isMultiIndex = (i.OpCode == OpCode.IndexSetL);
 
-            DynValue originalIdx = i.Value ?? _valueStack.Pop();
+            DynValue originalIdx = i.HasValue ? i.Value : _valueStack.Pop();
             DynValue idx = originalIdx.ToScalar();
             DynValue obj = _valueStack.Pop().ToScalar();
             DynValue value = GetStoreValue(i);
@@ -2847,7 +2847,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             bool isMultiIndex = (i.OpCode == OpCode.IndexL);
 
-            DynValue originalIdx = i.Value ?? _valueStack.Pop();
+            DynValue originalIdx = i.HasValue ? i.Value : _valueStack.Pop();
             DynValue idx = originalIdx.ToScalar();
             DynValue obj = _valueStack.Pop().ToScalar();
 

@@ -109,9 +109,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = CreateScript(version);
             DynValue lastTailCall = null;
+            DynValue resolvedMetamethod = DynValue.Nil;
+            bool foundMetamethod = false;
             DynValue callback = DynValue.NewCallback(
                 (context, args) =>
                 {
+                    foundMetamethod = context.TryGetMetamethod(
+                        args[0],
+                        "__call",
+                        out resolvedMetamethod
+                    );
                     lastTailCall = context.GetMetamethodTailCall(
                         args[0],
                         "__call",
@@ -132,6 +139,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             );
 
             DynValue tail = lastTailCall;
+            await Assert.That(foundMetamethod).IsTrue();
+            await Assert.That(resolvedMetamethod.Type).IsEqualTo(DataType.Function);
             await Assert.That(tail).IsNotNull();
             await Assert.That(tail.Type).IsEqualTo(DataType.TailCallRequest);
             await Assert.That(tail.TailCallData.Function.Type).IsEqualTo(DataType.Function);
@@ -2055,9 +2064,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             ArgumentNullException methodException = ExpectException<ArgumentNullException>(() =>
                 context.GetMetamethod(value, null)
             );
+            ArgumentNullException tryValueException = ExpectException<ArgumentNullException>(() =>
+                context.TryGetMetamethod(null, "__call", out DynValue _)
+            );
+            ArgumentNullException tryMethodException = ExpectException<ArgumentNullException>(() =>
+                context.TryGetMetamethod(value, null, out DynValue _)
+            );
 
             await Assert.That(valueException.ParamName).IsEqualTo("value");
             await Assert.That(methodException.ParamName).IsEqualTo("metamethod");
+            await Assert.That(tryValueException.ParamName).IsEqualTo("value");
+            await Assert.That(tryMethodException.ParamName).IsEqualTo("metamethod");
         }
 
         [global::TUnit.Core.Test]
@@ -2076,10 +2093,62 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             ArgumentNullException eventException = ExpectException<ArgumentNullException>(() =>
                 context.GetBinaryMetamethod(operand, operand, null)
             );
+            ArgumentNullException tryOp1Exception = ExpectException<ArgumentNullException>(() =>
+                context.TryGetBinaryMetamethod(null, operand, "__add", out DynValue _)
+            );
+            ArgumentNullException tryOp2Exception = ExpectException<ArgumentNullException>(() =>
+                context.TryGetBinaryMetamethod(operand, null, "__add", out DynValue _)
+            );
+            ArgumentNullException tryEventException = ExpectException<ArgumentNullException>(() =>
+                context.TryGetBinaryMetamethod(operand, operand, null, out DynValue _)
+            );
+
+            Table left = new(script);
+            Table meta = new(script);
+            DynValue addMetamethod = DynValue.NewCallback((_, _) => DynValue.Nil);
+            meta.Set("__add", addMetamethod);
+            left.MetaTable = meta;
+
+            bool found = context.TryGetBinaryMetamethod(
+                DynValue.NewTable(left),
+                operand,
+                "__add",
+                out DynValue resolved
+            );
+            bool missing = context.TryGetBinaryMetamethod(
+                operand,
+                operand,
+                "__add",
+                out DynValue absent
+            );
+            DynValue legacyResolved = context.GetBinaryMetamethod(
+                DynValue.NewTable(left),
+                operand,
+                "__add"
+            );
+            DynValue legacyAbsent = context.GetBinaryMetamethod(operand, operand, "__add");
+            meta.Set("__sub", DynValue.Nil);
+            bool foundExplicitNil = context.TryGetBinaryMetamethod(
+                DynValue.NewTable(left),
+                operand,
+                "__sub",
+                out DynValue explicitNil
+            );
 
             await Assert.That(op1Exception.ParamName).IsEqualTo("op1");
             await Assert.That(op2Exception.ParamName).IsEqualTo("op2");
             await Assert.That(eventException.ParamName).IsEqualTo("eventName");
+            await Assert.That(tryOp1Exception.ParamName).IsEqualTo("op1");
+            await Assert.That(tryOp2Exception.ParamName).IsEqualTo("op2");
+            await Assert.That(tryEventException.ParamName).IsEqualTo("eventName");
+            await Assert.That(found).IsTrue();
+            await Assert.That(resolved).IsEqualTo(addMetamethod);
+            await Assert.That(missing).IsFalse();
+            await Assert.That(absent.IsNil()).IsTrue();
+            await Assert.That(legacyResolved).IsEqualTo(addMetamethod);
+            await Assert.That(legacyAbsent).IsNull();
+            await Assert.That(foundExplicitNil).IsFalse();
+            await Assert.That(explicitNil.IsNil()).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -2118,10 +2187,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new(default(CoreModules));
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            DynValue target = DynValue.NewTable(new Table(script));
+            Table targetTable = new(script);
+            DynValue target = DynValue.NewTable(targetTable);
 
+            bool found = context.TryGetMetamethod(target, "__call", out DynValue metamethod);
+            DynValue legacyMetamethod = context.GetMetamethod(target, "__call");
             DynValue tail = context.GetMetamethodTailCall(target, "__call");
+            await Assert.That(found).IsFalse();
+            await Assert.That(metamethod.IsNil()).IsTrue();
+            await Assert.That(legacyMetamethod).IsNull();
             await Assert.That(tail).IsNull();
+
+            Table metatable = new(script);
+            metatable.Set("__call", DynValue.Nil);
+            targetTable.MetaTable = metatable;
+
+            bool foundExplicitNil = context.TryGetMetamethod(
+                target,
+                "__call",
+                out DynValue explicitNil
+            );
+            await Assert.That(foundExplicitNil).IsFalse();
+            await Assert.That(explicitNil.IsNil()).IsTrue();
         }
 
         [global::TUnit.Core.Test]

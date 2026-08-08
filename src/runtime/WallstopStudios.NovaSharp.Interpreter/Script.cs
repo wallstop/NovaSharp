@@ -2976,10 +2976,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     throw ScriptRuntimeException.LoopInCall();
                 }
 
-                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
-
                 if (
-                    metafunction == null
+                    !_mainProcessor.TryGetMetamethod(
+                        function,
+                        Metamethods.Call,
+                        out DynValue metafunction
+                    )
                     || metafunction.IsNil()
                     || !CanCallMetamethod(metafunction)
                 )
@@ -3086,10 +3088,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     throw ScriptRuntimeException.LoopInCall();
                 }
 
-                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
-
                 if (
-                    metafunction == null
+                    !_mainProcessor.TryGetMetamethod(
+                        function,
+                        Metamethods.Call,
+                        out DynValue metafunction
+                    )
                     || metafunction.IsNil()
                     || !CanCallMetamethod(metafunction)
                 )
@@ -3639,8 +3643,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private DynValue GetCallableMetamethodOrThrow(DynValue function)
         {
-            DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
-            if (metafunction != null && !metafunction.IsNil() && CanCallMetamethod(metafunction))
+            if (
+                _mainProcessor.TryGetMetamethod(
+                    function,
+                    Metamethods.Call,
+                    out DynValue metafunction
+                )
+                && !metafunction.IsNil()
+                && CanCallMetamethod(metafunction)
+            )
             {
                 return metafunction;
             }

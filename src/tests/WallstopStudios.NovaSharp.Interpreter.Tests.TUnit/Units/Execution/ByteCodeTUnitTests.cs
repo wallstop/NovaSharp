@@ -230,8 +230,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             DynValue index = DynValue.NewString("before");
 
             Instruction instruction = byteCode.EmitIndex(index);
+            Instruction absent = byteCode.EmitIndex();
+            Instruction explicitNil = byteCode.EmitIndex(DynValue.Nil);
 
+            await Assert.That(instruction.HasValue).IsTrue().ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
+            await Assert.That(absent.HasValue).IsFalse().ConfigureAwait(false);
+            await Assert.That(absent.Value).IsSameReferenceAs(DynValue.Nil).ConfigureAwait(false);
+            await Assert.That(explicitNil.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(explicitNil.Value)
+                .IsSameReferenceAs(DynValue.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -246,8 +256,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             DynValue index = DynValue.NewString("before");
 
             Instruction instruction = byteCode.EmitIndexSet(stackofs: 0, tupleidx: 0, index: index);
+            Instruction absent = byteCode.EmitIndexSet(stackofs: 0, tupleidx: 0);
+            Instruction explicitNil = byteCode.EmitIndexSet(
+                stackofs: 0,
+                tupleidx: 0,
+                index: DynValue.Nil
+            );
 
+            await Assert.That(instruction.HasValue).IsTrue().ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
+            await Assert.That(absent.HasValue).IsFalse().ConfigureAwait(false);
+            await Assert.That(absent.Value).IsSameReferenceAs(DynValue.Nil).ConfigureAwait(false);
+            await Assert.That(explicitNil.HasValue).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -266,8 +286,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 OpCodeMetadataType.ChunkEntrypoint,
                 payload
             );
+            Instruction absent = byteCode.EmitMeta("chunk", OpCodeMetadataType.ChunkEntrypoint);
+            Instruction explicitNil = byteCode.EmitMeta(
+                "chunk",
+                OpCodeMetadataType.ChunkEntrypoint,
+                DynValue.Nil
+            );
+            Instruction explicitVoid = byteCode.EmitMeta(
+                "chunk",
+                OpCodeMetadataType.ChunkEntrypoint,
+                DynValue.Void
+            );
 
+            await Assert.That(instruction.HasValue).IsTrue().ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
+            await Assert.That(absent.HasValue).IsFalse().ConfigureAwait(false);
+            await Assert.That(explicitNil.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(explicitVoid.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(explicitVoid.Value.Type)
+                .IsEqualTo(DataType.Void)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

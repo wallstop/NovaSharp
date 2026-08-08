@@ -180,13 +180,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 || nonStringOperand.Type == DataType.UserData
             )
             {
-                DynValue otherMetamethod = ctx.GetBinaryMetamethod(
-                    nonStringOperand,
-                    nonStringOperand,
-                    metamethodName
-                );
-
-                if (otherMetamethod != null && otherMetamethod.IsNotNil())
+                if (
+                    ctx.TryGetBinaryMetamethod(
+                        nonStringOperand,
+                        nonStringOperand,
+                        metamethodName,
+                        out DynValue otherMetamethod
+                    ) && otherMetamethod.IsNotNil()
+                )
                 {
                     // Call the other operand's metamethod with the original arguments
                     return ctx.Script.Call(otherMetamethod, left, right);

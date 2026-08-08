@@ -166,6 +166,107 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
             await AssertUndumpedLiteral("return 'constant'", DataType.String, version)
                 .ConfigureAwait(false);
+            await AssertInstructionValueRoundTrip(
+                    version,
+                    hasValue: false,
+                    DynValue.Nil,
+                    DataType.Nil
+                )
+                .ConfigureAwait(false);
+            await AssertInstructionValueRoundTrip(
+                    version,
+                    hasValue: true,
+                    DynValue.Nil,
+                    DataType.Nil
+                )
+                .ConfigureAwait(false);
+            await AssertInstructionValueRoundTrip(
+                    version,
+                    hasValue: true,
+                    DynValue.Void,
+                    DataType.Void
+                )
+                .ConfigureAwait(false);
+            await AssertLegacyAbsentInstructionBytes(version).ConfigureAwait(false);
+        }
+
+        private static async Task AssertLegacyAbsentInstructionBytes(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            using MemoryStream stream = new();
+            using (BinaryWriter writer = new(stream, Encoding.UTF8, leaveOpen: true))
+            {
+                writer.Write((byte)OpCode.Meta);
+                writer.Write(0);
+                writer.Write((int)OpCodeMetadataType.ChunkEntrypoint);
+                writer.Write("legacy-presence");
+                writer.Write(false);
+            }
+
+            stream.Position = 0;
+            Instruction restored;
+            using (BinaryReader reader = new(stream, Encoding.UTF8, leaveOpen: true))
+            {
+                restored = Instruction.ReadBinary(
+                    chunkRef: null,
+                    reader,
+                    baseAddress: 0,
+                    script.Globals,
+                    Array.Empty<SymbolRef>()
+                );
+            }
+
+            await Assert.That(restored.OpCode).IsEqualTo(OpCode.Meta).ConfigureAwait(false);
+            await Assert.That(restored.HasValue).IsFalse().ConfigureAwait(false);
+            await Assert.That(restored.Value.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        private static async Task AssertInstructionValueRoundTrip(
+            LuaCompatibilityVersion version,
+            bool hasValue,
+            DynValue value,
+            DataType expectedType
+        )
+        {
+            Script script = new(version);
+            Instruction instruction = new(null)
+            {
+                OpCode = OpCode.Meta,
+                Name = "presence",
+                NumVal2 = (int)OpCodeMetadataType.ChunkEntrypoint,
+            };
+            if (hasValue)
+            {
+                instruction.Value = value;
+            }
+
+            using MemoryStream stream = new();
+            using (BinaryWriter writer = new(stream, Encoding.UTF8, leaveOpen: true))
+            {
+                instruction.WriteBinary(
+                    writer,
+                    baseAddress: 0,
+                    new System.Collections.Generic.Dictionary<SymbolRef, int>()
+                );
+            }
+
+            stream.Position = 0;
+            Instruction restored;
+            using (BinaryReader reader = new(stream, Encoding.UTF8, leaveOpen: true))
+            {
+                restored = Instruction.ReadBinary(
+                    chunkRef: null,
+                    reader,
+                    baseAddress: 0,
+                    script.Globals,
+                    Array.Empty<SymbolRef>()
+                );
+            }
+
+            await Assert.That(restored.HasValue).IsEqualTo(hasValue).ConfigureAwait(false);
+            await Assert.That(restored.Value.Type).IsEqualTo(expectedType).ConfigureAwait(false);
         }
 
         private static async Task AssertUndumpedLiteral(

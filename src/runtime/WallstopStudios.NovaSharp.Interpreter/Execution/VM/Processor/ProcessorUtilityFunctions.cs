@@ -66,37 +66,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             int instructionPtr
         )
         {
-            DynValue m = null;
-
-            if (op1.Type == DataType.UserData)
+            if (TryGetMetamethod(op1, eventName, out DynValue metamethod))
             {
-                m = op1.UserData.Descriptor.MetaIndex(_script, op1.UserData.Object, eventName);
-            }
-
-            if (m == null)
-            {
-                Table op1MetaTable = GetMetatable(op1);
-
-                if (op1MetaTable != null)
-                {
-                    DynValue meta1 = op1MetaTable.RawGet(eventName);
-                    if (meta1 != null && meta1.IsNotNil())
-                    {
-                        m = meta1;
-                    }
-                }
-            }
-
-            if (m != null)
-            {
-                _valueStack.Push(m);
+                _valueStack.Push(metamethod);
                 _valueStack.Push(op1);
                 return InternalExecCall(1, instructionPtr);
             }
-            else
-            {
-                return -1;
-            }
+
+            return -1;
         }
 
         /// <summary>
@@ -110,24 +87,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue extraPush = null
         )
         {
-            DynValue m = GetBinaryMetamethod(l, r, eventName);
-
-            if (m != null)
+            if (TryGetBinaryMetamethod(l, r, eventName, out DynValue metamethod))
             {
                 if (extraPush != null)
                 {
                     _valueStack.Push(extraPush);
                 }
 
-                _valueStack.Push(m);
+                _valueStack.Push(metamethod);
                 _valueStack.Push(l);
                 _valueStack.Push(r);
                 return InternalExecCall(2, instructionPtr);
             }
-            else
-            {
-                return -1;
-            }
+
+            return -1;
         }
 
         /// <summary>

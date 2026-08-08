@@ -222,9 +222,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         private static Table ResolveNextTable(Table table, object key)
         {
-            DynValue value = table.RawGet(key);
-
-            if (value == null)
+            if (!table.TryRawGet(key, out DynValue value))
             {
                 throw new ScriptRuntimeException("Key '{0}' did not point to anything", key);
             }
@@ -285,21 +283,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             this.CheckScriptOwnership(value);
             int appendKey = Length + 1;
-            DynValue previous = _storage.SetInt(appendKey, value);
-            OnEntryWritten(previous, value, true, appendKey, appendKey);
+            bool hadPrevious = _storage.SetInt(appendKey, value, out DynValue previous);
+            OnEntryWritten(hadPrevious, previous, value, true, appendKey, appendKey);
         }
 
         /// <summary>
         /// Updates the derived border/nil bookkeeping after an entry has been written to storage.
         /// </summary>
-        /// <param name="prev">The value the key held before the write, or <c>null</c> when it was absent.</param>
+        /// <param name="hadPrevious">Whether the key was present before the write.</param>
+        /// <param name="previous">The value the key held before the write.</param>
         /// <param name="value">The value just written.</param>
         /// <param name="isNumber">Whether the key travelled the integer route.</param>
         /// <param name="numericKey">The integer key when <paramref name="isNumber"/> is set; otherwise zero.</param>
         /// <param name="appendKey">The key being appended for the array fast path, or -1.</param>
         /// <param name="isConstructorField">Whether the write came from a table constructor.</param>
         private void OnEntryWritten(
-            DynValue prev,
+            bool hadPrevious,
+            DynValue previous,
             DynValue value,
             bool isNumber,
             int numericKey,
@@ -307,14 +307,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             bool isConstructorField = false
         )
         {
-            bool writesNilToMissingKey = value.IsNil() && (prev == null || prev.IsNil());
+            bool writesNilToMissingKey = value.IsNil() && (!hadPrevious || previous.IsNil());
             bool targetsConstructorArrayField =
                 !isConstructorField
                 && _constructorArrayLength > 0
                 && isNumber
                 && numericKey > 0
                 && numericKey <= _constructorArrayLength
-                && prev != null;
+                && hadPrevious;
             bool preservesLua54AbsentNilWrite =
                 !isConstructorField
                 && _constructorArrayLength > 0
@@ -325,7 +325,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 && _constructorArrayLength > 0
                 && isNumber
                 && value.IsNil()
-                && prev == null
+                && !hadPrevious
                 && ResolveCompatibilityVersion() != LuaCompatibilityVersion.Lua54;
             bool preservesConstructorArrayLength =
                 !clearsAbsentNumericNilWrite
@@ -353,7 +353,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 && !preservesConstructorArrayLength
                 && _containsNilEntries
                 && value.IsNotNil()
-                && (prev == null || prev.IsNil())
+                && (!hadPrevious || previous.IsNil())
             )
             {
                 CollectDeadKeys();
@@ -371,13 +371,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             else if (isNumber)
             {
                 // If this is an array insert, we might have to invalidate the array length
-                if (prev == null || prev.IsNilOrNan())
+                if (!hadPrevious || previous.IsNilOrNan())
                 {
                     // If this is an array append, let's check the next element before blindly invalidating
                     if (appendKey >= 0)
                     {
-                        DynValue next = _storage.GetInt(appendKey + 1);
-                        if (_cachedLength >= 0 && (next == null || next.IsNil()))
+                        bool hasNext = _storage.TryGetInt(appendKey + 1, out DynValue next);
+                        if (_cachedLength >= 0 && (!hasNext || next.IsNil()))
                         {
                             _cachedLength += 1;
                         }
@@ -412,8 +412,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             this.CheckScriptOwnership(value);
-            DynValue previous = _storage.SetString(key, value);
-            OnEntryWritten(previous, value, false, 0, -1);
+            bool hadPrevious = _storage.SetString(key, value, out DynValue previous);
+            OnEntryWritten(hadPrevious, previous, value, false, 0, -1);
         }
 
         /// <summary>
@@ -435,13 +435,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 // Non-positive integers are not part of the array key space; route them exactly like
                 // the equivalent Lua key so host and script writes address the same entry.
                 DynValue nonPositiveKey = DynValue.FromNumber(key);
-                DynValue replaced = _storage.SetValue(nonPositiveKey, value);
-                OnEntryWritten(replaced, value, false, 0, -1);
+                bool replaced = _storage.SetValue(nonPositiveKey, value, out DynValue previous);
+                OnEntryWritten(replaced, previous, value, false, 0, -1);
                 return;
             }
 
-            DynValue previous = _storage.SetInt(key, value);
-            OnEntryWritten(previous, value, true, key, -1);
+            bool hadPrevious = _storage.SetInt(key, value, out DynValue previousInt);
+            OnEntryWritten(hadPrevious, previousInt, value, true, key, -1);
         }
 
         /// <summary>
@@ -493,8 +493,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             this.CheckScriptOwnership(key);
             this.CheckScriptOwnership(value);
 
-            DynValue previous = _storage.SetValue(key, value);
-            OnEntryWritten(previous, value, false, 0, -1);
+            bool hadPrevious = _storage.SetValue(key, value, out DynValue previous);
+            OnEntryWritten(hadPrevious, previous, value, false, 0, -1);
         }
 
         /// <summary>
@@ -612,7 +612,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public DynValue Get(string key)
         {
             //Contract.Ensures(Contract.Result<DynValue>() != null);
-            return RawGet(key) ?? DynValue.Nil;
+            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
         }
 
         /// <summary>
@@ -622,7 +622,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public DynValue Get(int key)
         {
             //Contract.Ensures(Contract.Result<DynValue>() != null);
-            return RawGet(key) ?? DynValue.Nil;
+            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
         }
 
         /// <summary>
@@ -632,7 +632,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public DynValue Get(DynValue key)
         {
             //Contract.Ensures(Contract.Result<DynValue>() != null);
-            return RawGet(key) ?? DynValue.Nil;
+            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
         }
 
         /// <summary>
@@ -643,7 +643,91 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public DynValue Get(object key)
         {
             //Contract.Ensures(Contract.Result<DynValue>() != null);
-            return RawGet(key) ?? DynValue.Nil;
+            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Tries to get the value associated with a string key without conflating an absent entry
+        /// with a present entry whose value is nil.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The stored value, or nil when the key is absent.</param>
+        public bool TryRawGet(string key, out DynValue value)
+        {
+            if (key == null)
+            {
+                value = DynValue.Nil;
+                return false;
+            }
+
+            return _storage.TryGetString(key, out value);
+        }
+
+        /// <summary>
+        /// Tries to get the value associated with an integer key without conflating an absent entry
+        /// with a present entry whose value is nil.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The stored value, or nil when the key is absent.</param>
+        public bool TryRawGet(int key, out DynValue value)
+        {
+            return key > 0
+                ? _storage.TryGetInt(key, out value)
+                : _storage.TryGetValue(DynValue.FromNumber(key), out value);
+        }
+
+        /// <summary>
+        /// Tries to get the value associated with a Lua key without conflating an absent entry with
+        /// a present entry whose value is nil.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The stored value, or nil when the key is absent.</param>
+        public bool TryRawGet(DynValue key, out DynValue value)
+        {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            switch (key.Type)
+            {
+                case DataType.String:
+                    return TryRawGet(key.String, out value);
+                case DataType.Number:
+                {
+                    int index = GetIntegralKey(key.Number);
+                    if (index > 0)
+                    {
+                        return TryRawGet(index, out value);
+                    }
+
+                    break;
+                }
+            }
+
+            return _storage.TryGetValue(key, out value);
+        }
+
+        /// <summary>
+        /// Tries to get the value associated with a CLR key without conflating an absent entry with
+        /// a present entry whose value is nil.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The stored value, or nil when the key is absent.</param>
+        public bool TryRawGet(object key, out DynValue value)
+        {
+            switch (key)
+            {
+                case null:
+                    value = DynValue.Nil;
+                    return false;
+                case string text:
+                    return TryRawGet(text, out value);
+                case int integer:
+                    return TryRawGet(integer, out value);
+                default:
+                    return TryRawGet(DynValue.FromObject(OwnerScript, key), out value);
+            }
         }
 
         /// <summary>
@@ -705,7 +789,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key">The key.</param>
         public DynValue RawGet(string key)
         {
-            return key == null ? null : _storage.GetString(key);
+            return TryRawGet(key, out DynValue value) ? value : null;
         }
 
         /// <summary>
@@ -715,7 +799,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key">The key.</param>
         public DynValue RawGet(int key)
         {
-            return key > 0 ? _storage.GetInt(key) : _storage.GetValue(DynValue.FromNumber(key));
+            return TryRawGet(key, out DynValue value) ? value : null;
         }
 
         /// <summary>
@@ -725,28 +809,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key">The key.</param>
         public DynValue RawGet(DynValue key)
         {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            switch (key.Type)
-            {
-                case DataType.String:
-                    return RawGet(key.String);
-                case DataType.Number:
-                {
-                    int idx = GetIntegralKey(key.Number);
-                    if (idx > 0)
-                    {
-                        return RawGet(idx);
-                    }
-
-                    break;
-                }
-            }
-
-            return _storage.GetValue(key);
+            return TryRawGet(key, out DynValue value) ? value : null;
         }
 
         /// <summary>
@@ -756,13 +819,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key">The key.</param>
         public DynValue RawGet(object key)
         {
-            return key switch
-            {
-                null => null,
-                string s => RawGet(s),
-                int i => RawGet(i),
-                _ => RawGet(DynValue.FromObject(OwnerScript, key)),
-            };
+            return TryRawGet(key, out DynValue value) ? value : null;
         }
 
         /// <summary>
@@ -1152,8 +1209,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return false;
             }
 
-            DynValue value = _storage.GetInt(index);
-            return value != null && value.IsNotNil();
+            return _storage.TryGetInt(index, out DynValue value) && value.IsNotNil();
         }
 
         /// <summary>
@@ -1186,8 +1242,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             if (key.Type == DataType.String)
             {
                 this.CheckScriptOwnership(value);
-                DynValue previousString = _storage.SetString(key.String, value);
-                OnEntryWritten(previousString, value, false, 0, -1, isConstructorField: true);
+                bool hadPrevious = _storage.SetString(
+                    key.String,
+                    value,
+                    out DynValue previousString
+                );
+                OnEntryWritten(
+                    hadPrevious,
+                    previousString,
+                    value,
+                    false,
+                    0,
+                    -1,
+                    isConstructorField: true
+                );
                 return;
             }
 
@@ -1198,8 +1266,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 if (idx > 0)
                 {
                     this.CheckScriptOwnership(value);
-                    DynValue previousInt = _storage.SetInt(idx, value);
-                    OnEntryWritten(previousInt, value, true, idx, -1, isConstructorField: true);
+                    bool hadPrevious = _storage.SetInt(idx, value, out DynValue previousInt);
+                    OnEntryWritten(
+                        hadPrevious,
+                        previousInt,
+                        value,
+                        true,
+                        idx,
+                        -1,
+                        isConstructorField: true
+                    );
                     ExtendConstructorArrayLengthThroughContiguousFields();
                     return;
                 }
@@ -1208,8 +1284,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             this.CheckScriptOwnership(key);
             this.CheckScriptOwnership(value);
 
-            DynValue previous = _storage.SetValue(key, value);
-            OnEntryWritten(previous, value, false, 0, -1, isConstructorField: true);
+            bool replaced = _storage.SetValue(key, value, out DynValue previous);
+            OnEntryWritten(replaced, previous, value, false, 0, -1, isConstructorField: true);
         }
 
         /// <summary>
@@ -1229,8 +1305,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 DynValue value = val.ToScalar();
                 this.CheckScriptOwnership(value);
                 _initArray++;
-                DynValue previous = _storage.SetInt(_initArray, value);
-                OnEntryWritten(previous, value, true, _initArray, -1, isConstructorField: true);
+                bool hadPrevious = _storage.SetInt(_initArray, value, out DynValue previous);
+                OnEntryWritten(
+                    hadPrevious,
+                    previous,
+                    value,
+                    true,
+                    _initArray,
+                    -1,
+                    isConstructorField: true
+                );
                 _constructorArrayLength = _initArray;
                 ExtendConstructorArrayLengthThroughContiguousFields();
             }

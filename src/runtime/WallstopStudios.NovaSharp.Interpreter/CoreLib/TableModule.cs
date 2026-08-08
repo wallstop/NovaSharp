@@ -222,9 +222,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             if (lt == null || lt.IsNil())
             {
-                lt = executionContext.GetBinaryMetamethod(a, b, Metamethods.Lt);
-
-                if (lt == null || lt.IsNil())
+                if (
+                    !executionContext.TryGetBinaryMetamethod(a, b, Metamethods.Lt, out lt)
+                    || lt.IsNil()
+                )
                 {
                     if (a.Type == DataType.Number && b.Type == DataType.Number)
                     {
@@ -539,11 +540,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         private static int GetTableLength(ScriptExecutionContext executionContext, DynValue vlist)
         {
-            DynValue len = executionContext.GetMetamethod(vlist, Metamethods.Len);
-
-            if (len != null)
+            if (
+                executionContext.TryGetMetamethod(
+                    vlist,
+                    Metamethods.Len,
+                    out DynValue lengthMetamethod
+                )
+            )
             {
-                DynValue lenv = executionContext.Script.Call(len, vlist);
+                DynValue lenv = executionContext.Script.Call(lengthMetamethod, vlist);
 
                 double? lengthValue = lenv.CastToNumber();
 
@@ -554,10 +559,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 return (int)lengthValue;
             }
-            else
-            {
-                return (int)vlist.Table.Length;
-            }
+            return (int)vlist.Table.Length;
         }
     }
 

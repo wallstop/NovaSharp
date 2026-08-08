@@ -29,27 +29,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
-        /// Resolves the metamethod invoked for a binary operation between <paramref name="op1"/> and <paramref name="op2"/>.
+        /// Attempts to resolve the metamethod invoked for a binary operation between
+        /// <paramref name="op1"/> and <paramref name="op2"/>.
         /// </summary>
-        internal DynValue GetBinaryMetamethod(DynValue op1, DynValue op2, string eventName)
+        internal bool TryGetBinaryMetamethod(
+            DynValue op1,
+            DynValue op2,
+            string eventName,
+            out DynValue metamethod
+        )
         {
             Table op1MetaTable = GetMetatable(op1);
             if (op1MetaTable != null)
             {
-                DynValue meta1 = op1MetaTable.RawGet(eventName);
-                if (meta1 != null && meta1.IsNotNil())
+                if (op1MetaTable.TryRawGet(eventName, out DynValue meta1) && meta1.IsNotNil())
                 {
-                    return meta1;
+                    metamethod = meta1;
+                    return true;
                 }
             }
 
             Table op2MetaTable = GetMetatable(op2);
             if (op2MetaTable != null)
             {
-                DynValue meta2 = op2MetaTable.RawGet(eventName);
-                if (meta2 != null && meta2.IsNotNil())
+                if (op2MetaTable.TryRawGet(eventName, out DynValue meta2) && meta2.IsNotNil())
                 {
-                    return meta2;
+                    metamethod = meta2;
+                    return true;
                 }
             }
 
@@ -63,7 +69,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 if (meta != null)
                 {
-                    return meta;
+                    metamethod = meta;
+                    return true;
                 }
             }
 
@@ -77,17 +84,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 if (meta != null)
                 {
-                    return meta;
+                    metamethod = meta;
+                    return true;
                 }
             }
 
-            return null;
+            metamethod = DynValue.Nil;
+            return false;
         }
 
         /// <summary>
-        /// Resolves the metamethod for the given value, probing userdata descriptors first.
+        /// Attempts to resolve the metamethod for the given value, probing userdata descriptors first.
         /// </summary>
-        internal DynValue GetMetamethod(DynValue value, string metamethod)
+        internal bool TryGetMetamethod(
+            DynValue value,
+            string metamethod,
+            out DynValue resolvedMetamethod
+        )
         {
             if (value.Type == DataType.UserData)
             {
@@ -98,34 +111,65 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 );
                 if (v != null)
                 {
-                    return v;
+                    resolvedMetamethod = v;
+                    return true;
                 }
             }
 
-            return GetMetamethodRaw(value, metamethod);
+            return TryGetMetamethodRaw(value, metamethod, out resolvedMetamethod);
         }
 
         /// <summary>
-        /// Resolves the metamethod from the metatable only (no userdata descriptor lookup).
+        /// Resolves the metamethod for the given value, or returns <see langword="null"/> when none is
+        /// available.
+        /// </summary>
+        internal DynValue GetMetamethod(DynValue value, string metamethod)
+        {
+            return TryGetMetamethod(value, metamethod, out DynValue resolvedMetamethod)
+                ? resolvedMetamethod
+                : null;
+        }
+
+        /// <summary>
+        /// Attempts to resolve the metamethod from the metatable only (no userdata descriptor lookup).
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal DynValue GetMetamethodRaw(DynValue value, string metamethod)
+        internal bool TryGetMetamethodRaw(
+            DynValue value,
+            string metamethod,
+            out DynValue resolvedMetamethod
+        )
         {
             Table metatable = GetMetatable(value);
 
             if (metatable == null)
             {
-                return null;
+                resolvedMetamethod = DynValue.Nil;
+                return false;
             }
 
-            DynValue metameth = metatable.RawGet(metamethod);
-
-            if (metameth == null || metameth.IsNil())
+            if (
+                !metatable.TryRawGet(metamethod, out resolvedMetamethod)
+                || resolvedMetamethod.IsNil()
+            )
             {
-                return null;
+                resolvedMetamethod = DynValue.Nil;
+                return false;
             }
 
-            return metameth;
+            return true;
+        }
+
+        /// <summary>
+        /// Resolves the metamethod from the metatable only, or returns <see langword="null"/> when none
+        /// is available.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal DynValue GetMetamethodRaw(DynValue value, string metamethod)
+        {
+            return TryGetMetamethodRaw(value, metamethod, out DynValue resolvedMetamethod)
+                ? resolvedMetamethod
+                : null;
         }
 
         /// <summary>

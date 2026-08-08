@@ -47,21 +47,60 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         private readonly struct SubrangeResult
         {
             public bool NegativeRawGetIsNull { get; }
+            public bool NegativeTryRawGetSucceeded { get; }
+            public DataType NegativeTryRawGetType { get; }
             public DataType NegativeIndexerType { get; }
             public double First { get; }
             public double Second { get; }
 
             public SubrangeResult(
                 bool negativeRawGetIsNull,
+                bool negativeTryRawGetSucceeded,
+                DataType negativeTryRawGetType,
                 DataType negativeIndexerType,
                 double first,
                 double second
             )
             {
                 NegativeRawGetIsNull = negativeRawGetIsNull;
+                NegativeTryRawGetSucceeded = negativeTryRawGetSucceeded;
+                NegativeTryRawGetType = negativeTryRawGetType;
                 NegativeIndexerType = negativeIndexerType;
                 First = first;
                 Second = second;
+            }
+        }
+
+        private readonly struct PresenceResult
+        {
+            public bool Found { get; }
+            public DataType Type { get; }
+
+            public PresenceResult(bool found, DataType type)
+            {
+                Found = found;
+                Type = type;
+            }
+        }
+
+        private readonly struct FixedPresenceResult
+        {
+            public int Count { get; }
+            public bool AllStoredArgumentsFound { get; }
+            public bool MissingArgumentFound { get; }
+            public DataType MissingArgumentType { get; }
+
+            public FixedPresenceResult(
+                int count,
+                bool allStoredArgumentsFound,
+                bool missingArgumentFound,
+                DataType missingArgumentType
+            )
+            {
+                Count = count;
+                AllStoredArgumentsFound = allStoredArgumentsFound;
+                MissingArgumentFound = missingArgumentFound;
+                MissingArgumentType = missingArgumentType;
             }
         }
 
@@ -283,23 +322,202 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         private static SubrangeResult ExecuteViewSubrange(FastStackDynamic<DynValue> backing)
         {
             CallbackArgumentsView args = new(backing, offset: 1, count: 2, isMethodCall: false);
+            bool found = args.TryRawGet(-1, translateVoids: true, out DynValue missing);
             return new SubrangeResult(
                 args.RawGet(-1, translateVoids: true) == null,
+                found,
+                missing.Type,
                 args[-1].Type,
                 args[0].Number,
                 args[1].Number
             );
         }
 
-        private static NullStoredArgumentResult ExecuteNullStoredArgumentView()
+        private static PresenceResult ExecuteTryRawGet(
+            CallbackArguments args,
+            int index,
+            bool translateVoids
+        )
         {
-            CallbackArgumentsView args = new(DynValue.NewNumber(1), null, isMethodCall: false);
-            DynValue raw = args.RawGet(1, translateVoids: false);
-            DynValue value = args[1];
-            DynValue[] buffer = new DynValue[args.Count];
-            args.CopyTo(buffer);
+            bool found = args.TryRawGet(index, translateVoids, out DynValue value);
+            return new PresenceResult(found, value.Type);
+        }
 
-            return new NullStoredArgumentResult(args.Count, raw.Type, value.Type, buffer[1].Type);
+        private static PresenceResult ExecuteViewTryRawGet(
+            IList<DynValue> backing,
+            int index,
+            bool translateVoids
+        )
+        {
+            CallbackArgumentsView args = new(backing, isMethodCall: false);
+            bool found = args.TryRawGet(index, translateVoids, out DynValue value);
+            return new PresenceResult(found, value.Type);
+        }
+
+        private static FixedPresenceResult ExecuteFixedTryRawGet(int count, bool useArgumentView)
+        {
+            DynValue one = DynValue.NewNumber(1);
+            DynValue two = DynValue.NewNumber(2);
+            DynValue three = DynValue.NewNumber(3);
+            DynValue four = DynValue.NewNumber(4);
+            DynValue five = DynValue.NewNumber(5);
+            DynValue six = DynValue.NewNumber(6);
+            DynValue seven = DynValue.NewNumber(7);
+
+            if (useArgumentView)
+            {
+                CallbackArgumentsView args = count switch
+                {
+                    0 => new CallbackArgumentsView(isMethodCall: false),
+                    1 => new CallbackArgumentsView(one, isMethodCall: false),
+                    2 => new CallbackArgumentsView(one, two, isMethodCall: false),
+                    3 => new CallbackArgumentsView(one, two, three, isMethodCall: false),
+                    4 => new CallbackArgumentsView(one, two, three, four, isMethodCall: false),
+                    5 => new CallbackArgumentsView(
+                        one,
+                        two,
+                        three,
+                        four,
+                        five,
+                        isMethodCall: false
+                    ),
+                    6 => new CallbackArgumentsView(
+                        one,
+                        two,
+                        three,
+                        four,
+                        five,
+                        six,
+                        isMethodCall: false
+                    ),
+                    7 => new CallbackArgumentsView(
+                        one,
+                        two,
+                        three,
+                        four,
+                        five,
+                        six,
+                        seven,
+                        isMethodCall: false
+                    ),
+                    _ => throw new ArgumentOutOfRangeException(nameof(count)),
+                };
+
+                bool allStoredArgumentsFound = true;
+                for (int i = 0; i < count; i++)
+                {
+                    allStoredArgumentsFound &= args.TryRawGet(
+                        i,
+                        translateVoids: false,
+                        out DynValue _
+                    );
+                }
+
+                bool missingArgumentFound = args.TryRawGet(
+                    count,
+                    translateVoids: false,
+                    out DynValue missingArgument
+                );
+                return new FixedPresenceResult(
+                    args.Count,
+                    allStoredArgumentsFound,
+                    missingArgumentFound,
+                    missingArgument.Type
+                );
+            }
+
+            CallbackArguments legacyArgs = count switch
+            {
+                0 => new CallbackArguments(isMethodCall: false),
+                1 => new CallbackArguments(one, isMethodCall: false),
+                2 => new CallbackArguments(one, two, isMethodCall: false),
+                3 => new CallbackArguments(one, two, three, isMethodCall: false),
+                4 => new CallbackArguments(one, two, three, four, isMethodCall: false),
+                5 => new CallbackArguments(one, two, three, four, five, isMethodCall: false),
+                6 => new CallbackArguments(one, two, three, four, five, six, isMethodCall: false),
+                7 => new CallbackArguments(
+                    one,
+                    two,
+                    three,
+                    four,
+                    five,
+                    six,
+                    seven,
+                    isMethodCall: false
+                ),
+                _ => throw new ArgumentOutOfRangeException(nameof(count)),
+            };
+
+            bool allLegacyStoredArgumentsFound = true;
+            for (int i = 0; i < count; i++)
+            {
+                allLegacyStoredArgumentsFound &= legacyArgs.TryRawGet(
+                    i,
+                    translateVoids: false,
+                    out DynValue _
+                );
+            }
+
+            bool legacyMissingArgumentFound = legacyArgs.TryRawGet(
+                count,
+                translateVoids: false,
+                out DynValue legacyMissingArgument
+            );
+            return new FixedPresenceResult(
+                legacyArgs.Count,
+                allLegacyStoredArgumentsFound,
+                legacyMissingArgumentFound,
+                legacyMissingArgument.Type
+            );
+        }
+
+        private static DataType[] ExecutePooledTupleExpansion()
+        {
+            CallbackArguments args = new(
+                new[] { DynValue.NewNumber(1), DynValue.NewTuple(DynValue.Void, DynValue.Nil) },
+                isMethodCall: false
+            );
+
+            using PooledResource<DynValue[]> pooled = args.GetPooledArray(out DynValue[] values);
+            DataType[] types = new DataType[args.Count];
+            for (int i = 0; i < types.Length; i++)
+            {
+                types[i] = values[i].Type;
+            }
+
+            return types;
+        }
+
+        private static NullStoredArgumentResult ExecuteNullStoredFixedArgument(bool useArgumentView)
+        {
+            if (useArgumentView)
+            {
+                CallbackArgumentsView args = new(DynValue.NewNumber(1), null, isMethodCall: false);
+                DynValue raw = args.RawGet(1, translateVoids: false);
+                DynValue value = args[1];
+                DynValue[] buffer = new DynValue[args.Count];
+                args.CopyTo(buffer);
+
+                return new NullStoredArgumentResult(
+                    args.Count,
+                    raw.Type,
+                    value.Type,
+                    buffer[1].Type
+                );
+            }
+
+            CallbackArguments legacyArgs = new(DynValue.NewNumber(1), null, isMethodCall: false);
+            DynValue legacyRaw = legacyArgs.RawGet(1, translateVoids: false);
+            DynValue legacyValue = legacyArgs[1];
+            DynValue[] legacyBuffer = new DynValue[legacyArgs.Count];
+            legacyArgs.CopyTo(legacyBuffer);
+
+            return new NullStoredArgumentResult(
+                legacyArgs.Count,
+                legacyRaw.Type,
+                legacyValue.Type,
+                legacyBuffer[1].Type
+            );
         }
 
         private static NullStoredArgumentResult ExecuteNullTupleExpansion(bool useArgumentView)
@@ -484,6 +702,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             SubrangeResult result = ExecuteViewSubrange(backing);
 
             await Assert.That(result.NegativeRawGetIsNull).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.NegativeTryRawGetSucceeded).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(result.NegativeTryRawGetType)
+                .IsEqualTo(DataType.Void)
+                .ConfigureAwait(false);
             await Assert
                 .That(result.NegativeIndexerType)
                 .IsEqualTo(DataType.Void)
@@ -495,12 +718,80 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewTreatsNullStoredArgumentsAsNil()
         {
-            NullStoredArgumentResult result = ExecuteNullStoredArgumentView();
+            foreach (bool useArgumentView in new[] { false, true })
+            {
+                NullStoredArgumentResult result = ExecuteNullStoredFixedArgument(useArgumentView);
+                await Assert.That(result.Count).IsEqualTo(2).ConfigureAwait(false);
+                await Assert.That(result.RawType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+                await Assert.That(result.IndexerType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+                await Assert.That(result.CopyType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
 
-            await Assert.That(result.Count).IsEqualTo(2).ConfigureAwait(false);
-            await Assert.That(result.RawType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
-            await Assert.That(result.IndexerType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
-            await Assert.That(result.CopyType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+                DynValue[] backing = new[] { DynValue.Nil, DynValue.Void, DynValue.NewNumber(3) };
+                PresenceResult explicitNil = useArgumentView
+                    ? ExecuteViewTryRawGet(backing, 0, translateVoids: false)
+                    : ExecuteTryRawGet(
+                        new CallbackArguments(backing, false),
+                        0,
+                        translateVoids: false
+                    );
+                PresenceResult explicitVoid = useArgumentView
+                    ? ExecuteViewTryRawGet(backing, 1, translateVoids: false)
+                    : ExecuteTryRawGet(
+                        new CallbackArguments(backing, false),
+                        1,
+                        translateVoids: false
+                    );
+                PresenceResult translatedVoid = useArgumentView
+                    ? ExecuteViewTryRawGet(backing, 1, translateVoids: true)
+                    : ExecuteTryRawGet(
+                        new CallbackArguments(backing, false),
+                        1,
+                        translateVoids: true
+                    );
+                PresenceResult missing = useArgumentView
+                    ? ExecuteViewTryRawGet(backing, backing.Length, translateVoids: false)
+                    : ExecuteTryRawGet(
+                        new CallbackArguments(backing, false),
+                        backing.Length,
+                        translateVoids: false
+                    );
+
+                await Assert.That(explicitNil.Found).IsTrue().ConfigureAwait(false);
+                await Assert.That(explicitNil.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+                await Assert.That(explicitVoid.Found).IsTrue().ConfigureAwait(false);
+                await Assert.That(explicitVoid.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
+                await Assert.That(translatedVoid.Found).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(translatedVoid.Type)
+                    .IsEqualTo(DataType.Nil)
+                    .ConfigureAwait(false);
+                await Assert.That(missing.Found).IsFalse().ConfigureAwait(false);
+                await Assert.That(missing.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
+
+                for (int count = 0; count <= 7; count++)
+                {
+                    FixedPresenceResult fixedResult = ExecuteFixedTryRawGet(count, useArgumentView);
+                    await Assert.That(fixedResult.Count).IsEqualTo(count).ConfigureAwait(false);
+                    await Assert
+                        .That(fixedResult.AllStoredArgumentsFound)
+                        .IsTrue()
+                        .ConfigureAwait(false);
+                    await Assert
+                        .That(fixedResult.MissingArgumentFound)
+                        .IsFalse()
+                        .ConfigureAwait(false);
+                    await Assert
+                        .That(fixedResult.MissingArgumentType)
+                        .IsEqualTo(DataType.Void)
+                        .ConfigureAwait(false);
+                }
+            }
+
+            DataType[] pooledTypes = ExecutePooledTupleExpansion();
+            await Assert.That(pooledTypes.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(pooledTypes[0]).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(pooledTypes[1]).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(pooledTypes[2]).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [Test]

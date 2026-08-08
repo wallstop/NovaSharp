@@ -516,13 +516,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         /// <param name="funcName">Name of the helper.</param>
         /// <param name="metaType">Metadata category.</param>
-        /// <param name="value">Optional payload.</param>
-        public Instruction EmitMeta(
-            string funcName,
-            OpCodeMetadataType metaType,
-            DynValue value = null
-        )
+        public Instruction EmitMeta(string funcName, OpCodeMetadataType metaType)
         {
+            return AppendInstruction(
+                new Instruction(_currentSourceRef)
+                {
+                    OpCode = OpCode.Meta,
+                    Name = funcName,
+                    NumVal2 = (int)metaType,
+                }
+            );
+        }
+
+        /// <summary>
+        /// Emits a metadata instruction with an explicit Lua value payload.
+        /// </summary>
+        /// <param name="funcName">Name of the helper.</param>
+        /// <param name="metaType">Metadata category.</param>
+        /// <param name="value">Payload carried by the instruction.</param>
+        public Instruction EmitMeta(string funcName, OpCodeMetadataType metaType, DynValue value)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
                 {
@@ -673,15 +691,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Emits the appropriate index instruction depending on the access style (name / expr list / regular).
         /// </summary>
-        /// <param name="index">Optional literal index.</param>
-        /// <param name="isNameIndex">Whether the index is a string literal.</param>
         /// <param name="isExpList">Whether the index was produced by an expression list.</param>
         /// <param name="baseName">Optional name of the base variable being indexed (for error messages).</param>
+        public Instruction EmitIndex(bool isExpList = false, string baseName = null)
+        {
+            return EmitIndexCore(
+                DynValue.Nil,
+                hasIndex: false,
+                isNameIndex: false,
+                isExpList,
+                baseName
+            );
+        }
+
+        /// <summary>
+        /// Emits an index instruction with an explicit literal index operand.
+        /// </summary>
+        /// <param name="index">Literal index carried by the instruction.</param>
+        /// <param name="isNameIndex">Whether the index is a string literal.</param>
+        /// <param name="isExpList">Whether the index was produced by an expression list.</param>
+        /// <param name="baseName">Optional name of the base variable being indexed.</param>
         public Instruction EmitIndex(
-            DynValue index = null,
+            DynValue index,
             bool isNameIndex = false,
             bool isExpList = false,
             string baseName = null
+        )
+        {
+            if (index == null)
+            {
+                throw new ArgumentNullException(nameof(index));
+            }
+
+            return EmitIndexCore(index, hasIndex: true, isNameIndex, isExpList, baseName);
+        }
+
+        private Instruction EmitIndexCore(
+            DynValue index,
+            bool hasIndex,
+            bool isNameIndex,
+            bool isExpList,
+            string baseName
         )
         {
             OpCode o;
@@ -698,14 +748,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 o = OpCode.Index;
             }
 
-            return AppendInstruction(
-                new Instruction(_currentSourceRef)
-                {
-                    OpCode = o,
-                    Value = index,
-                    Name = baseName,
-                }
-            );
+            Instruction instruction = new(_currentSourceRef) { OpCode = o, Name = baseName };
+            if (hasIndex)
+            {
+                instruction.Value = index;
+            }
+
+            return AppendInstruction(instruction);
         }
 
         /// <summary>
@@ -713,17 +762,68 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         /// <param name="stackofs">Stack offset containing the table.</param>
         /// <param name="tupleidx">Index within the tuple source.</param>
-        /// <param name="index">Optional literal index.</param>
-        /// <param name="isNameIndex">Whether the index is a string literal.</param>
         /// <param name="isExpList">Whether the index was produced by an expression list.</param>
         /// <param name="baseName">Optional name of the base variable being indexed (for error messages).</param>
         public Instruction EmitIndexSet(
             int stackofs,
             int tupleidx,
-            DynValue index = null,
+            bool isExpList = false,
+            string baseName = null
+        )
+        {
+            return EmitIndexSetCore(
+                stackofs,
+                tupleidx,
+                DynValue.Nil,
+                hasIndex: false,
+                isNameIndex: false,
+                isExpList,
+                baseName
+            );
+        }
+
+        /// <summary>
+        /// Emits an index-set instruction with an explicit literal index operand.
+        /// </summary>
+        /// <param name="stackofs">Stack offset containing the table.</param>
+        /// <param name="tupleidx">Index within the tuple source.</param>
+        /// <param name="index">Literal index carried by the instruction.</param>
+        /// <param name="isNameIndex">Whether the index is a string literal.</param>
+        /// <param name="isExpList">Whether the index was produced by an expression list.</param>
+        /// <param name="baseName">Optional name of the base variable being indexed.</param>
+        public Instruction EmitIndexSet(
+            int stackofs,
+            int tupleidx,
+            DynValue index,
             bool isNameIndex = false,
             bool isExpList = false,
             string baseName = null
+        )
+        {
+            if (index == null)
+            {
+                throw new ArgumentNullException(nameof(index));
+            }
+
+            return EmitIndexSetCore(
+                stackofs,
+                tupleidx,
+                index,
+                hasIndex: true,
+                isNameIndex,
+                isExpList,
+                baseName
+            );
+        }
+
+        private Instruction EmitIndexSetCore(
+            int stackofs,
+            int tupleidx,
+            DynValue index,
+            bool hasIndex,
+            bool isNameIndex,
+            bool isExpList,
+            string baseName
         )
         {
             OpCode o;
@@ -740,16 +840,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 o = OpCode.IndexSet;
             }
 
-            return AppendInstruction(
-                new Instruction(_currentSourceRef)
-                {
-                    OpCode = o,
-                    NumVal = stackofs,
-                    NumVal2 = tupleidx,
-                    Value = index,
-                    Name = baseName,
-                }
-            );
+            Instruction instruction = new(_currentSourceRef)
+            {
+                OpCode = o,
+                NumVal = stackofs,
+                NumVal2 = tupleidx,
+                Name = baseName,
+            };
+            if (hasIndex)
+            {
+                instruction.Value = index;
+            }
+
+            return AppendInstruction(instruction);
         }
 
         /// <summary>

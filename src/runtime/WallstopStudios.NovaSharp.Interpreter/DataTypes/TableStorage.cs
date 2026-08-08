@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System;
+    using System.Diagnostics;
     using System.Runtime.CompilerServices;
 
     /// <summary>
@@ -10,9 +11,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// <remarks>
     /// <para>
     /// The array part stores values only; the key for slot <c>i</c> is the integer <c>i + 1</c>. A
-    /// <c>null</c> slot means the key is absent, while a non-null slot (including
-    /// <see cref="DynValue.Nil"/>) means an entry exists. That distinction mirrors the previous
-    /// linked-list storage, where writing nil to a key created a node whose value was nil.
+    /// compact occupancy bitmap records whether a slot is present independently of its value, so
+    /// <see cref="DynValue.Nil"/> remains a storable present value and the value representation can
+    /// use default-as-nil without conflating nil with absence.
     /// </para>
     /// <para>
     /// The hash part is a dense <see cref="Node"/> array indexed by a bucket table, in the shape .NET's
@@ -44,7 +45,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         private struct Node
         {
-            /// <summary>The entry key, or <c>null</c> when the slot has been removed.</summary>
+            /// <summary>The entry key. The hash field records whether the node is live.</summary>
             public DynValue key;
 
             /// <summary>The entry value; may be <see cref="DynValue.Nil"/> for a present-but-nil entry.</summary>
@@ -58,6 +59,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         private DynValue[] _array;
+
+        /// <summary>
+        /// One presence bit per array slot. Array values cannot encode absence because nil is a
+        /// present value until dead-key collection runs.
+        /// </summary>
+        private uint[] _arrayOccupancy;
 
         /// <summary>
         /// Memoized key values for the array part, where <c>_arrayKeys[i]</c> is the boxed integer
@@ -99,6 +106,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     bytes += ArrayObjectOverhead + ((long)_array.Length * IntPtr.Size);
                 }
 
+                if (_arrayOccupancy is { Length: > 0 })
+                {
+                    bytes += ArrayObjectOverhead + ((long)_arrayOccupancy.Length * sizeof(uint));
+                }
+
                 if (_arrayKeys is { Length: > 0 })
                 {
                     bytes += ArrayObjectOverhead + ((long)_arrayKeys.Length * IntPtr.Size);
@@ -127,6 +139,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public void Clear()
         {
             _array = null;
+            _arrayOccupancy = null;
             _arrayKeys = null;
             _nodes = null;
             _buckets = null;
@@ -140,41 +153,68 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         // ---------------------------------------------------------------------------------------
 
         /// <summary>
-        /// Gets the value stored under the positive integer <paramref name="key"/>, or <c>null</c>
-        /// when the key is absent.
+        /// Tries to get the value stored under the positive integer <paramref name="key"/>.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public DynValue GetInt(int key)
+        public bool TryGetInt(int key, out DynValue value)
         {
             DynValue[] array = _array;
             if (array != null && (uint)(key - 1) < (uint)array.Length)
             {
-                return array[key - 1];
+                int slot = key - 1;
+                if (IsArraySlotOccupied(slot))
+                {
+                    value = array[slot];
+                    return true;
+                }
+
+                value = DynValue.Nil;
+                return false;
             }
 
             int node = FindInt(key);
-            return node < 0 ? null : _nodes[node].value;
+            if (node >= 0)
+            {
+                value = _nodes[node].value;
+                return true;
+            }
+
+            value = DynValue.Nil;
+            return false;
         }
 
         /// <summary>
-        /// Gets the value stored under the string <paramref name="key"/>, or <c>null</c> when the key
-        /// is absent.
+        /// Tries to get the value stored under the string <paramref name="key"/>.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public DynValue GetString(string key)
+        public bool TryGetString(string key, out DynValue value)
         {
             int node = FindString(key);
-            return node < 0 ? null : _nodes[node].value;
+            if (node >= 0)
+            {
+                value = _nodes[node].value;
+                return true;
+            }
+
+            value = DynValue.Nil;
+            return false;
         }
 
         /// <summary>
-        /// Gets the value stored under an arbitrary <paramref name="key"/> that is neither a string nor
-        /// a positive integer, or <c>null</c> when the key is absent.
+        /// Tries to get the value stored under an arbitrary <paramref name="key"/> that is neither a
+        /// string nor a positive integer.
         /// </summary>
-        public DynValue GetValue(DynValue key)
+        public bool TryGetValue(DynValue key, out DynValue value)
         {
             int node = FindValue(key);
-            return node < 0 ? null : _nodes[node].value;
+            if (node >= 0)
+            {
+                value = _nodes[node].value;
+                return true;
+            }
+
+            value = DynValue.Nil;
+            return false;
         }
 
         // ---------------------------------------------------------------------------------------
@@ -183,70 +223,76 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Stores <paramref name="value"/> under the positive integer <paramref name="key"/> and
-        /// returns the previous value, or <c>null</c> when the key was absent.
+        /// reports whether <paramref name="previous"/> was present.
         /// </summary>
-        public DynValue SetInt(int key, DynValue value)
+        public bool SetInt(int key, DynValue value, out DynValue previous)
         {
             DynValue[] array = _array;
             if (array != null && (uint)(key - 1) < (uint)array.Length)
             {
-                DynValue previous = array[key - 1];
-                array[key - 1] = value;
-                if (previous == null)
+                int slot = key - 1;
+                bool replaced = IsArraySlotOccupied(slot);
+                previous = replaced ? array[slot] : DynValue.Nil;
+                array[slot] = value;
+                if (!replaced)
                 {
+                    MarkArraySlotOccupied(slot);
                     _arrayCount++;
                 }
 
-                return previous;
+                return replaced;
             }
 
             int node = FindInt(key);
             if (node >= 0)
             {
-                DynValue previous = _nodes[node].value;
+                previous = _nodes[node].value;
                 _nodes[node].value = value;
-                return previous;
+                return true;
             }
 
             InsertNew(HashInt(key), DynValue.FromNumber(key), value, key);
-            return null;
+            previous = DynValue.Nil;
+            return false;
         }
 
         /// <summary>
-        /// Stores <paramref name="value"/> under the string <paramref name="key"/> and returns the
-        /// previous value, or <c>null</c> when the key was absent.
+        /// Stores <paramref name="value"/> under the string <paramref name="key"/> and reports
+        /// whether <paramref name="previous"/> was present.
         /// </summary>
-        public DynValue SetString(string key, DynValue value)
+        public bool SetString(string key, DynValue value, out DynValue previous)
         {
             int node = FindString(key);
             if (node >= 0)
             {
-                DynValue previous = _nodes[node].value;
+                previous = _nodes[node].value;
                 _nodes[node].value = value;
-                return previous;
+                return true;
             }
 
             InsertNew(HashString(key), DynValue.NewString(key), value, 0);
-            return null;
+            previous = DynValue.Nil;
+            return false;
         }
 
         /// <summary>
         /// Stores <paramref name="value"/> under an arbitrary <paramref name="key"/> that is neither a
-        /// string nor a positive integer, and returns the previous value, or <c>null</c> when the key
-        /// was absent.
+        /// string nor a positive integer, and reports whether <paramref name="previous"/> was
+        /// present.
         /// </summary>
-        public DynValue SetValue(DynValue key, DynValue value)
+        public bool SetValue(DynValue key, DynValue value, out DynValue previous)
         {
             int node = FindValue(key);
             if (node >= 0)
             {
-                DynValue previous = _nodes[node].value;
+                previous = _nodes[node].value;
                 _nodes[node].value = value;
-                return previous;
+                return true;
             }
 
             InsertNew(HashValue(key), key, value, 0);
-            return null;
+            previous = DynValue.Nil;
+            return false;
         }
 
         // ---------------------------------------------------------------------------------------
@@ -261,12 +307,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue[] array = _array;
             if (array != null && (uint)(key - 1) < (uint)array.Length)
             {
-                if (array[key - 1] == null)
+                int slot = key - 1;
+                if (!IsArraySlotOccupied(slot))
                 {
                     return false;
                 }
 
-                array[key - 1] = null;
+                array[slot] = DynValue.Nil;
+                ClearArraySlotOccupied(slot);
                 _arrayCount--;
                 return true;
             }
@@ -304,9 +352,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 for (int i = 0; i < array.Length; i++)
                 {
                     DynValue value = array[i];
-                    if (value != null && value.IsNil())
+                    if (IsArraySlotOccupied(i) && value.IsNil())
                     {
-                        array[i] = null;
+                        array[i] = DynValue.Nil;
+                        ClearArraySlotOccupied(i);
                         _arrayCount--;
                         reclaimed = true;
                     }
@@ -319,10 +368,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 for (int i = 0; i < _nodeCount; i++)
                 {
                     ref Node node = ref nodes[i];
-                    if (node.key != null && node.value.IsNil())
+                    if (IsNodeLive(in node) && node.value.IsNil())
                     {
-                        node.key = null;
-                        node.value = null;
+                        node.key = DynValue.Nil;
+                        node.value = DynValue.Nil;
+                        node.hash = -1;
                         _deadCount++;
                         reclaimed = true;
                     }
@@ -364,7 +414,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 int slot = arrayIndex++;
                 DynValue value = array[slot];
-                if (value == null || (skipNilValues && value.IsNil()))
+                if (!IsArraySlotOccupied(slot) || (skipNilValues && value.IsNil()))
                 {
                     continue;
                 }
@@ -378,7 +428,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 int slot = nodeIndex++;
                 ref Node node = ref nodes[slot];
-                if (node.key == null || (skipNilValues && node.value.IsNil()))
+                if (!IsNodeLive(in node) || (skipNilValues && node.value.IsNil()))
                 {
                     continue;
                 }
@@ -397,7 +447,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public bool TryLocateInt(int key, out int arrayIndex, out int nodeIndex)
         {
             DynValue[] array = _array;
-            if (array != null && (uint)(key - 1) < (uint)array.Length && array[key - 1] != null)
+            if (
+                array != null
+                && (uint)(key - 1) < (uint)array.Length
+                && IsArraySlotOccupied(key - 1)
+            )
             {
                 arrayIndex = key;
                 nodeIndex = 0;
@@ -458,7 +512,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 DynValue nodeKey = node.key;
                 if (
                     node.hash == hash
-                    && nodeKey != null
+                    && IsNodeLive(in node)
                     && nodeKey.Type == DataType.Number
                     && nodeKey.Number == key
                 )
@@ -484,7 +538,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 ref Node node = ref nodes[i];
                 DynValue nodeKey = node.key;
-                if (node.hash != hash || nodeKey == null)
+                if (node.hash != hash || !IsNodeLive(in node))
                 {
                     continue;
                 }
@@ -520,7 +574,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 ref Node node = ref nodes[i];
                 DynValue nodeKey = node.key;
-                if (node.hash == hash && nodeKey != null && nodeKey.Equals(key))
+                if (node.hash == hash && IsNodeLive(in node) && nodeKey.Equals(key))
                 {
                     return i;
                 }
@@ -561,8 +615,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 previous = i;
             }
 
-            nodes[node].key = null;
-            nodes[node].value = null;
+            nodes[node].key = DynValue.Nil;
+            nodes[node].value = DynValue.Nil;
+            nodes[node].hash = -1;
             nodes[node].next = -1;
             _deadCount++;
             return true;
@@ -570,6 +625,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         private void InsertNew(int hash, DynValue key, DynValue value, int intKeyCandidate)
         {
+            Debug.Assert(hash >= 0, "Live node hashes must be non-negative.");
+
             if (_nodes == null || _nodeCount == _nodes.Length)
             {
                 Rehash(intKeyCandidate, hasPendingEntry: true);
@@ -582,12 +639,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     && (uint)(intKeyCandidate - 1) < (uint)grown.Length
                 )
                 {
-                    if (grown[intKeyCandidate - 1] == null)
+                    int slot = intKeyCandidate - 1;
+                    if (!IsArraySlotOccupied(slot))
                     {
+                        MarkArraySlotOccupied(slot);
                         _arrayCount++;
                     }
 
-                    grown[intKeyCandidate - 1] = value;
+                    grown[slot] = value;
                     return;
                 }
             }
@@ -626,7 +685,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 for (int i = 0; i < array.Length; i++)
                 {
-                    if (array[i] != null)
+                    if (IsArraySlotOccupied(i))
                     {
                         nums[CeilLog2((uint)(i + 1))]++;
                         totalIntKeys++;
@@ -640,7 +699,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 for (int i = 0; i < _nodeCount; i++)
                 {
                     DynValue key = nodes[i].key;
-                    if (key != null && TryGetPositiveIntKey(key, out int intKey))
+                    if (IsNodeLive(in nodes[i]) && TryGetPositiveIntKey(key, out int intKey))
                     {
                         nums[CeilLog2((uint)intKey)]++;
                         totalIntKeys++;
@@ -662,7 +721,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 for (int i = 0; i < array.Length; i++)
                 {
-                    if (array[i] != null && i >= arrayCapacity)
+                    if (IsArraySlotOccupied(i) && i >= arrayCapacity)
                     {
                         survivingHashEntries++;
                     }
@@ -674,7 +733,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 for (int i = 0; i < _nodeCount; i++)
                 {
                     DynValue key = nodes[i].key;
-                    if (key == null)
+                    if (!IsNodeLive(in nodes[i]))
                     {
                         continue;
                     }
@@ -721,6 +780,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private void Resize(int arrayCapacity, int hashEntries)
         {
             DynValue[] oldArray = _array;
+            uint[] oldArrayOccupancy = _arrayOccupancy;
             Node[] oldNodes = _nodes;
             int oldNodeCount = _nodeCount;
             int oldArrayLength = oldArray == null ? 0 : oldArray.Length;
@@ -728,6 +788,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             int bucketCapacity = hashEntries <= 0 ? 0 : NextPowerOfTwo(hashEntries);
 
             _array = arrayCapacity > 0 ? new DynValue[arrayCapacity] : null;
+            _arrayOccupancy = arrayCapacity > 0 ? new uint[(arrayCapacity + 31) >> 5] : null;
 
             // Slot-to-key mapping is stable, so a memo that still fits is reused across a grow; a
             // shrink drops it rather than paying to copy keys the table no longer addresses.
@@ -749,9 +810,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 for (int i = 0; i < copyLength; i++)
                 {
                     DynValue value = oldArray[i];
-                    if (value != null)
+                    if (IsArraySlotOccupied(oldArrayOccupancy, i))
                     {
                         _array[i] = value;
+                        MarkArraySlotOccupied(i);
                         _arrayCount++;
                     }
                 }
@@ -759,7 +821,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 for (int i = copyLength; i < oldArrayLength; i++)
                 {
                     DynValue value = oldArray[i];
-                    if (value != null)
+                    if (IsArraySlotOccupied(oldArrayOccupancy, i))
                     {
                         ReinsertInt(i + 1, value);
                     }
@@ -772,7 +834,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 {
                     ref Node node = ref oldNodes[i];
                     DynValue key = node.key;
-                    if (key == null)
+                    if (!IsNodeLive(in node))
                     {
                         continue;
                     }
@@ -794,12 +856,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue[] array = _array;
             if (array != null && (uint)(key - 1) < (uint)array.Length)
             {
-                if (array[key - 1] == null)
+                int slot = key - 1;
+                if (!IsArraySlotOccupied(slot))
                 {
+                    MarkArraySlotOccupied(slot);
                     _arrayCount++;
                 }
 
-                array[key - 1] = value;
+                array[slot] = value;
                 return;
             }
 
@@ -808,6 +872,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         private void ReinsertNode(int hash, DynValue key, DynValue value)
         {
+            Debug.Assert(hash >= 0, "Live node hashes must be non-negative.");
+
             if (_nodes == null || _nodeCount == _nodes.Length)
             {
                 GrowNodes();
@@ -842,7 +908,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             for (int i = 0; i < count; i++)
             {
-                if (nodes[i].key == null)
+                if (!IsNodeLive(in nodes[i]))
                 {
                     continue;
                 }
@@ -907,6 +973,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             return key;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsArraySlotOccupied(int slot)
+        {
+            return IsArraySlotOccupied(_arrayOccupancy, slot);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsArraySlotOccupied(uint[] occupancy, int slot)
+        {
+            return occupancy != null && (occupancy[slot >> 5] & (1u << (slot & 31))) != 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void MarkArraySlotOccupied(int slot)
+        {
+            _arrayOccupancy[slot >> 5] |= 1u << (slot & 31);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ClearArraySlotOccupied(int slot)
+        {
+            _arrayOccupancy[slot >> 5] &= ~(1u << (slot & 31));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsNodeLive(in Node node)
+        {
+            return node.hash >= 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

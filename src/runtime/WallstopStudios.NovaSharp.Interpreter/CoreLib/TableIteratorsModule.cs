@@ -229,8 +229,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     }
 
                     // Raw value is nil, check for __index metamethod
-                    DynValue indexMeta = executionContext.GetMetamethod(current, Metamethods.Index);
-                    if (indexMeta == null || indexMeta.IsNil())
+                    if (
+                        !executionContext.TryGetMetamethod(
+                            current,
+                            Metamethods.Index,
+                            out DynValue indexMeta
+                        ) || indexMeta.IsNil()
+                    )
                     {
                         // No __index metamethod, return nil
                         return DynValue.Nil;
