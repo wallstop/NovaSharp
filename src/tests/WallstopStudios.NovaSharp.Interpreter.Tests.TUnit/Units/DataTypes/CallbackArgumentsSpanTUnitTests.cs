@@ -10,6 +10,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
@@ -135,6 +136,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             {
                 Success = success;
                 Length = length;
+            }
+        }
+
+        private readonly struct AsTypeResult
+        {
+            public double ConvertedNumber { get; }
+            public DataType AllowedNilType { get; }
+            public string MissingError { get; }
+
+            public AsTypeResult(
+                double convertedNumber,
+                DataType allowedNilType,
+                string missingError
+            )
+            {
+                ConvertedNumber = convertedNumber;
+                AllowedNilType = allowedNilType;
+                MissingError = missingError;
             }
         }
 
@@ -581,6 +600,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             return args[0].Type;
         }
 
+        private static AsTypeResult ExecuteAsType(bool useArgumentView)
+        {
+            LuaValue[] backing = { LuaValue.NewString("42.5"), LuaValue.Nil };
+            LuaValue converted;
+            LuaValue allowedNil;
+            string missingError;
+
+            if (useArgumentView)
+            {
+                CallbackArgumentsView args = new((IList<LuaValue>)backing, isMethodCall: false);
+                converted = args.AsType(0, "probe", DataType.Number);
+                allowedNil = args.AsType(1, "probe", DataType.Number, allowNil: true);
+                try
+                {
+                    args.AsType(2, "probe", DataType.Number);
+                    throw new InvalidOperationException(
+                        "Missing argument validation did not fail."
+                    );
+                }
+                catch (ScriptRuntimeException exception)
+                {
+                    missingError = exception.Message;
+                }
+            }
+            else
+            {
+                CallbackArguments args = new(backing, isMethodCall: false);
+                converted = args.AsType(0, "probe", DataType.Number);
+                allowedNil = args.AsType(1, "probe", DataType.Number, allowNil: true);
+                missingError = Assert
+                    .Throws<ScriptRuntimeException>(() => args.AsType(2, "probe", DataType.Number))
+                    .Message;
+            }
+
+            return new AsTypeResult(converted.Number, allowedNil.Type, missingError);
+        }
+
         private static LuaValue CreateArrayValueRequiringNormalization(string valueKind)
         {
             switch (valueKind)
@@ -738,6 +794,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewTreatsNullStoredArgumentsAsNil()
         {
+            AsTypeResult legacyAsType = ExecuteAsType(useArgumentView: false);
+            AsTypeResult viewAsType = ExecuteAsType(useArgumentView: true);
+            await Assert
+                .That(viewAsType.ConvertedNumber)
+                .IsEqualTo(legacyAsType.ConvertedNumber)
+                .ConfigureAwait(false);
+            await Assert
+                .That(viewAsType.AllowedNilType)
+                .IsEqualTo(legacyAsType.AllowedNilType)
+                .ConfigureAwait(false);
+            await Assert
+                .That(viewAsType.MissingError)
+                .IsEqualTo(legacyAsType.MissingError)
+                .ConfigureAwait(false);
+
             foreach (bool useArgumentView in new[] { false, true })
             {
                 NullStoredArgumentResult result = ExecuteNullStoredFixedArgument(useArgumentView);

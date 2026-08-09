@@ -76,12 +76,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         }
 
         private static long RequireIntegerArgument(
-            CallbackArguments args,
+            CallbackArgumentsView args,
             int index,
             string funcName
         )
         {
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             LuaValue value = args.AsType(index, funcName, DataType.Number, false);
 
             // Use TryGetIntegerFromDynValue to preserve integer precision when the
@@ -101,25 +100,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         }
 
         private static LuaValue Exec1(
-            CallbackArguments args,
+            CallbackArgumentsView args,
             string funcName,
             Func<double, double> func
         )
         {
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-
             LuaValue arg = args.AsType(0, funcName, DataType.Number, false);
             return LuaValue.NewNumber(func(arg.Number));
         }
 
         private static LuaValue Exec2(
-            CallbackArguments args,
+            CallbackArgumentsView args,
             string funcName,
             Func<double, double, double> func
         )
         {
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-
             LuaValue arg = args.AsType(0, funcName, DataType.Number, false);
             LuaValue arg2 = args.AsType(1, funcName, DataType.Number, false);
             return LuaValue.NewNumber(func(arg.Number, arg2.Number));
@@ -130,27 +125,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Used for operations like exponentiation that always produce floats per Lua spec.
         /// </summary>
         private static LuaValue Exec2Float(
-            CallbackArguments args,
+            CallbackArgumentsView args,
             string funcName,
             Func<double, double, double> func
         )
         {
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-
             LuaValue arg = args.AsType(0, funcName, DataType.Number, false);
             LuaValue arg2 = args.AsType(1, funcName, DataType.Number, false);
             return LuaValue.NewFloat(func(arg.Number, arg2.Number));
         }
 
         private static LuaValue Exec2N(
-            CallbackArguments args,
+            CallbackArgumentsView args,
             string funcName,
             double defVal,
             Func<double, double, double> func
         )
         {
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-
             LuaValue arg = args.AsType(0, funcName, DataType.Number, false);
             LuaValue arg2 = args.AsType(1, funcName, DataType.Number, true);
 
@@ -158,12 +149,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         }
 
         private static LuaValue Execaccum(
-            CallbackArguments args,
+            CallbackArgumentsView args,
             string funcName,
             Func<double, double, double> func
         )
         {
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             double accum = double.NaN;
 
             if (args.Count == 0)
@@ -211,7 +201,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Type(new CallbackArgumentsView(args));
+        }
 
+        [NovaSharpModuleMethod(Name = "type")]
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        private static LuaValue Type(CallbackArgumentsView args)
+        {
             // Per Lua spec, math.type returns nil for non-numbers (doesn't throw)
             LuaValue value = args[0];
             if (value.Type != DataType.Number)
@@ -242,6 +238,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return ToInteger(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "tointeger")]
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        private static LuaValue ToInteger(CallbackArgumentsView args)
+        {
             if (args.Count == 0)
             {
                 throw ScriptRuntimeException.BadArgumentNoValue(0, "tointeger", DataType.Number);
@@ -278,6 +281,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Ult(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "ult")]
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        private static LuaValue Ult(CallbackArgumentsView args)
+        {
             long left = RequireIntegerArgument(args, 0, "ult");
             long right = RequireIntegerArgument(args, 1, "ult");
 
@@ -306,7 +317,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Abs(new CallbackArgumentsView(args));
+        }
 
+        [NovaSharpModuleMethod(Name = "abs")]
+        private static LuaValue Abs(CallbackArgumentsView args)
+        {
             LuaValue arg = args.AsType(0, "abs", DataType.Number, false);
 
             // For integer subtypes, preserve integer semantics per Lua 5.3+ spec
@@ -340,6 +356,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Acos(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "acos")]
+        private static LuaValue Acos(CallbackArgumentsView args)
+        {
             return Exec1(args, "acos", d => Math.Acos(d));
         }
 
@@ -356,6 +379,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Asin(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "asin")]
+        private static LuaValue Asin(CallbackArgumentsView args)
+        {
             return Exec1(args, "asin", d => Math.Asin(d));
         }
 
@@ -372,6 +402,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Atan(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "atan")]
+        private static LuaValue Atan(CallbackArgumentsView args)
+        {
             return Exec1(args, "atan", d => Math.Atan(d));
         }
 
@@ -391,6 +428,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Atan2(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "atan2")]
+        private static LuaValue Atan2(CallbackArgumentsView args)
+        {
             return Exec2(args, "atan2", Atan2Op);
         }
 
@@ -413,7 +457,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Ceil(executionContext, new CallbackArgumentsView(args));
+        }
 
+        [NovaSharpModuleMethod(Name = "ceil")]
+        private static LuaValue Ceil(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             LuaValue arg = args.AsType(0, "ceil", DataType.Number, false);
 
             // Check version for integer promotion behavior
@@ -461,6 +517,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Cos(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "cos")]
+        private static LuaValue Cos(CallbackArgumentsView args)
+        {
             return Exec1(args, "cos", d => Math.Cos(d));
         }
 
@@ -477,6 +540,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Cosh(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "cosh")]
+        private static LuaValue Cosh(CallbackArgumentsView args)
+        {
             return Exec1(args, "cosh", d => Math.Cosh(d));
         }
 
@@ -493,6 +563,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Deg(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "deg")]
+        private static LuaValue Deg(CallbackArgumentsView args)
+        {
             return Exec1(args, "deg", d => d * 180.0 / Math.PI);
         }
 
@@ -509,6 +586,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Exp(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "exp")]
+        private static LuaValue Exp(CallbackArgumentsView args)
+        {
             return Exec1(args, "exp", d => Math.Exp(d));
         }
 
@@ -534,7 +618,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Floor(executionContext, new CallbackArgumentsView(args));
+        }
 
+        [NovaSharpModuleMethod(Name = "floor")]
+        private static LuaValue Floor(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             LuaValue arg = args.AsType(0, "floor", DataType.Number, false);
 
             // Check version for integer promotion behavior
@@ -587,7 +683,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Fmod(executionContext, new CallbackArgumentsView(args));
+        }
 
+        [NovaSharpModuleMethod(Name = "fmod")]
+        private static LuaValue Fmod(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             LuaValue arg1 = args.AsType(0, "fmod", DataType.Number, false);
             LuaValue arg2 = args.AsType(1, "fmod", DataType.Number, false);
 
@@ -624,6 +732,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Mod(new CallbackArgumentsView(args));
+        }
+
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
+        [NovaSharpModuleMethod(Name = "mod")]
+        private static LuaValue Mod(CallbackArgumentsView args)
+        {
             // Lua 5.1 only - no zero divisor check
             return Exec2(args, "mod", FmodOp);
         }
@@ -646,6 +762,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Frexp(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "frexp")]
+        private static LuaValue Frexp(CallbackArgumentsView args)
+        {
             // http://stackoverflow.com/questions/389993/extracting-mantissa-and-exponent-from-double-in-c-sharp
 
             LuaValue arg = args.AsType(0, "frexp", DataType.Number, false);
@@ -722,6 +844,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Ldexp(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "ldexp")]
+        private static LuaValue Ldexp(CallbackArgumentsView args)
+        {
             return Exec2(args, "ldexp", LdexpOp);
         }
 
@@ -744,7 +873,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Log(executionContext, new CallbackArgumentsView(args));
+        }
 
+        [NovaSharpModuleMethod(Name = "log")]
+        private static LuaValue Log(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             LuaValue arg = args.AsType(0, "log", DataType.Number, false);
 
             // Lua 5.1: only natural log, ignore any base argument
@@ -788,6 +929,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Log10(new CallbackArgumentsView(args));
+        }
+
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua54)]
+        [NovaSharpModuleMethod(Name = "log10")]
+        private static LuaValue Log10(CallbackArgumentsView args)
+        {
             return Exec1(args, "log10", d => Math.Log10(d));
         }
 
@@ -804,6 +953,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Max(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "max")]
+        private static LuaValue Max(CallbackArgumentsView args)
+        {
             return Execaccum(args, "max", MaxOp);
         }
 
@@ -820,6 +976,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Min(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "min")]
+        private static LuaValue Min(CallbackArgumentsView args)
+        {
             return Execaccum(args, "min", MinOp);
         }
 
@@ -842,6 +1005,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Modf(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "modf")]
+        private static LuaValue Modf(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
             LuaValue arg = args.AsType(0, "modf", DataType.Number, false);
 
             double value = arg.Number;
@@ -918,6 +1094,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Pow(new CallbackArgumentsView(args));
+        }
+
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua54)]
+        [NovaSharpModuleMethod(Name = "pow")]
+        private static LuaValue Pow(CallbackArgumentsView args)
+        {
             // Exponentiation always returns float per Lua spec (§3.4.1)
             return Exec2Float(args, "pow", PowOp);
         }
@@ -935,6 +1119,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Rad(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "rad")]
+        private static LuaValue Rad(CallbackArgumentsView args)
+        {
             return Exec1(args, "rad", d => d * Math.PI / 180.0);
         }
 
@@ -974,6 +1165,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Random(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "random")]
+        [SuppressMessage(
+            "Security",
+            "CA5394:Do not use insecure randomness",
+            Justification = "Lua math.random is intentionally deterministic and non-cryptographic."
+        )]
+        private static LuaValue Random(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
 
             // Check for too many arguments (max 2 allowed)
             // Reference Lua 5.2+ throws "wrong number of arguments" for math.random(1, 2, 3)
@@ -1178,6 +1387,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return RandomSeed(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "randomseed")]
+        [SuppressMessage(
+            "Security",
+            "CA5394:Do not use insecure randomness",
+            Justification = "Lua math.randomseed mirrors the non-cryptographic behavior of the upstream interpreter."
+        )]
+        private static LuaValue RandomSeed(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
 
             Script script = executionContext.Script;
             IRandomProvider r = script.RandomProvider;
@@ -1272,6 +1499,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Sin(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "sin")]
+        private static LuaValue Sin(CallbackArgumentsView args)
+        {
             return Exec1(args, "sin", d => Math.Sin(d));
         }
 
@@ -1288,6 +1522,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Sinh(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "sinh")]
+        private static LuaValue Sinh(CallbackArgumentsView args)
+        {
             return Exec1(args, "sinh", d => Math.Sinh(d));
         }
 
@@ -1304,6 +1545,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Sqrt(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "sqrt")]
+        private static LuaValue Sqrt(CallbackArgumentsView args)
+        {
             return Exec1(args, "sqrt", d => Math.Sqrt(d));
         }
 
@@ -1320,6 +1568,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Tan(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "tan")]
+        private static LuaValue Tan(CallbackArgumentsView args)
+        {
             return Exec1(args, "tan", d => Math.Tan(d));
         }
 
@@ -1336,6 +1591,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Tanh(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "tanh")]
+        private static LuaValue Tanh(CallbackArgumentsView args)
+        {
             return Exec1(args, "tanh", d => Math.Tanh(d));
         }
     }

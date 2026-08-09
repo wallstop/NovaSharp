@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 {
     using System;
+    using System.Reflection;
     using System.Threading;
     using System.Threading.Tasks;
     using global::NovaSharp;
@@ -11,6 +12,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
@@ -133,6 +135,157 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             );
 
             await Assert.That(result.Number).IsEqualTo(4d);
+
+            globals.RegisterModuleType(typeof(MathModule));
+            Table math = globals.RawGet("math").Table;
+            CallbackFunction sin = math.RawGet("sin").Callback;
+            CallbackFunction ceil = math.RawGet("ceil").Callback;
+            MethodInfo legacySin = typeof(MathModule).GetMethod(
+                nameof(MathModule.Sin),
+                new[] { typeof(ScriptExecutionContext), typeof(CallbackArguments) }
+            );
+            MethodInfo viewSin = typeof(MathModule).GetMethod(
+                nameof(MathModule.Sin),
+                BindingFlags.NonPublic | BindingFlags.Static,
+                binder: null,
+                new[] { typeof(CallbackArgumentsView) },
+                modifiers: null
+            );
+            await Assert.That(sin.HasArgumentViewNoContextCallback).IsTrue();
+            await Assert.That(ceil.HasArgumentViewCallback).IsTrue();
+            await Assert.That(ceil.HasArgumentViewNoContextCallback).IsFalse();
+            await Assert.That(legacySin).IsNotNull();
+            await Assert.That(viewSin).IsNotNull();
+            await Assert
+                .That(legacySin.GetCustomAttribute<NovaSharpModuleMethodAttribute>())
+                .IsNotNull();
+            await Assert.That(ValidateMathRegistrationPairs()).IsEqualTo(32);
+
+            MethodInfo[] selected = ModuleRegister.SelectPreferredBuiltInModuleMethods(
+                new[] { viewSin, legacySin }
+            );
+            await Assert.That(selected.Length).IsEqualTo(1);
+            await Assert.That(selected[0]).IsSameReferenceAs(viewSin);
+
+            MethodInfo[] ambiguousMethods = typeof(AmbiguousArgumentViewModule).GetMethods(
+                BindingFlags.Public | BindingFlags.Static
+            );
+            Assert.Throws<InvalidOperationException>(() =>
+                ModuleRegister.SelectPreferredBuiltInModuleMethods(ambiguousMethods)
+            );
+
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments legacyArguments = new(
+                new[] { LuaValue.NewNumber(0) },
+                isMethodCall: false
+            );
+            LuaValue legacyResult = MathModule.Sin(context, legacyArguments);
+            await Assert.That(legacyResult.Number).IsEqualTo(0d);
+
+            bool modExpected = version == LuaCompatibilityVersion.Lua51;
+            await Assert.That(math.RawGet("mod").IsNil).IsEqualTo(!modExpected);
+            await Assert.That(math.RawGet("Mod").IsNil).IsEqualTo(!modExpected);
+        }
+
+        private static int ValidateMathRegistrationPairs()
+        {
+            MethodInfo[] methods = typeof(MathModule).GetMethods(
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static
+            );
+            int legacyCount = 0;
+
+            for (int i = 0; i < methods.Length; i++)
+            {
+                MethodInfo legacy = methods[i];
+                ParameterInfo[] legacyParameters = legacy.GetParameters();
+                NovaSharpModuleMethodAttribute legacyAttribute =
+                    legacy.GetCustomAttribute<NovaSharpModuleMethodAttribute>();
+                if (
+                    !legacy.IsPublic
+                    || legacyAttribute == null
+                    || legacyParameters.Length != 2
+                    || legacyParameters[0].ParameterType != typeof(ScriptExecutionContext)
+                    || legacyParameters[1].ParameterType != typeof(CallbackArguments)
+                )
+                {
+                    continue;
+                }
+
+                legacyCount++;
+                MethodInfo view = null;
+                for (int j = 0; j < methods.Length; j++)
+                {
+                    MethodInfo candidate = methods[j];
+                    if (
+                        candidate.Name != legacy.Name
+                        || candidate.IsPublic
+                        || candidate.GetCustomAttribute<NovaSharpModuleMethodAttribute>() == null
+                        || (
+                            !CallbackFunction.CheckArgumentViewCallbackSignature(candidate, true)
+                            && !CallbackFunction.CheckArgumentViewNoContextCallbackSignature(
+                                candidate,
+                                true
+                            )
+                        )
+                    )
+                    {
+                        continue;
+                    }
+
+                    if (view != null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Math module method '{legacy.Name}' has multiple view overloads."
+                        );
+                    }
+
+                    view = candidate;
+                }
+
+                if (view == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Math module method '{legacy.Name}' has no internal view overload."
+                    );
+                }
+
+                NovaSharpModuleMethodAttribute viewAttribute =
+                    view.GetCustomAttribute<NovaSharpModuleMethodAttribute>();
+                if (
+                    !string.Equals(
+                        legacyAttribute.Name,
+                        viewAttribute.Name,
+                        StringComparison.Ordinal
+                    )
+                )
+                {
+                    throw new InvalidOperationException(
+                        $"Math module method '{legacy.Name}' changed its Lua alias."
+                    );
+                }
+
+                LuaCompatibilityAttribute legacyCompatibility =
+                    legacy.GetCustomAttribute<LuaCompatibilityAttribute>();
+                LuaCompatibilityAttribute viewCompatibility =
+                    view.GetCustomAttribute<LuaCompatibilityAttribute>();
+                if (
+                    (legacyCompatibility == null) != (viewCompatibility == null)
+                    || (
+                        legacyCompatibility != null
+                        && (
+                            legacyCompatibility.MinVersion != viewCompatibility.MinVersion
+                            || legacyCompatibility.MaxVersion != viewCompatibility.MaxVersion
+                        )
+                    )
+                )
+                {
+                    throw new InvalidOperationException(
+                        $"Math module method '{legacy.Name}' changed its compatibility metadata."
+                    );
+                }
+            }
+
+            return legacyCount;
         }
 
         [global::TUnit.Core.Test]
@@ -346,6 +499,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             public static LuaValue Count(CallbackArgumentsView args)
             {
                 return LuaValue.NewNumber(args.Count);
+            }
+        }
+
+        private static class AmbiguousArgumentViewModule
+        {
+            [NovaSharpModuleMethod(Name = "probe")]
+            public static LuaValue Probe(ScriptExecutionContext context, CallbackArguments args)
+            {
+                return LuaValue.Nil;
+            }
+
+            [NovaSharpModuleMethod(Name = "probe")]
+            public static LuaValue Probe(ScriptExecutionContext context, CallbackArgumentsView args)
+            {
+                return LuaValue.Nil;
+            }
+
+            [NovaSharpModuleMethod(Name = "probe")]
+            public static LuaValue Probe(CallbackArgumentsView args)
+            {
+                return LuaValue.Nil;
             }
         }
 

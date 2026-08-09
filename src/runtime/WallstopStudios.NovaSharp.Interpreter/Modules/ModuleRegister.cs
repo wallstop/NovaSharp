@@ -541,6 +541,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
 
             List<ModuleMethodRegistration> methodActions = new();
             MethodInfo[] methods = Framework.Do.GetMethods(t);
+            if (Framework.Do.GetAssembly(t) == Framework.Do.GetAssembly(typeof(ModuleRegister)))
+            {
+                methods = SelectPreferredBuiltInModuleMethods(methods);
+            }
+
             for (int i = 0; i < methods.Length; i++)
             {
                 MethodInfo mi = methods[i];
@@ -691,6 +696,170 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 scriptFields.ToArray(),
                 constants.ToArray()
             );
+        }
+
+        /// <summary>
+        /// Selects one argument-view callback for each paired built-in module method group while
+        /// retaining unpaired callbacks in their original reflection order.
+        /// </summary>
+        /// <param name="methods">The reflected built-in module methods to filter.</param>
+        /// <returns>The methods that should be registered for the built-in module.</returns>
+        internal static MethodInfo[] SelectPreferredBuiltInModuleMethods(MethodInfo[] methods)
+        {
+            bool[] processed = new bool[methods.Length];
+            bool[] excluded = new bool[methods.Length];
+
+            for (int i = 0; i < methods.Length; i++)
+            {
+                if (processed[i] || !IsModuleCallback(methods[i]))
+                {
+                    continue;
+                }
+
+                MethodInfo method = methods[i];
+                NovaSharpModuleMethodAttribute attribute =
+                    method.GetCustomAttribute<NovaSharpModuleMethodAttribute>();
+                LuaCompatibilityAttribute compatibility =
+                    method.GetCustomAttribute<LuaCompatibilityAttribute>();
+                string[] names = GetModuleNameVariants(attribute.Name, method.Name);
+                int argumentViewCount = 0;
+
+                for (int j = i; j < methods.Length; j++)
+                {
+                    MethodInfo candidate = methods[j];
+                    if (
+                        processed[j]
+                        || !IsSameBuiltInCallbackGroup(candidate, method.Name, names, compatibility)
+                    )
+                    {
+                        continue;
+                    }
+
+                    processed[j] = true;
+                    if (
+                        CallbackFunction.CheckArgumentViewNoContextCallbackSignature(
+                            candidate,
+                            true
+                        ) || CallbackFunction.CheckArgumentViewCallbackSignature(candidate, true)
+                    )
+                    {
+                        argumentViewCount++;
+                        continue;
+                    }
+
+                    if (CallbackFunction.CheckLegacyCallbackSignature(candidate, true))
+                    {
+                        excluded[j] = true;
+                    }
+                }
+
+                if (argumentViewCount > 1)
+                {
+                    throw new InvalidOperationException(
+                        ZString.Concat(
+                            "Built-in module method group '",
+                            method.DeclaringType.FullName,
+                            ".",
+                            method.Name,
+                            "' has multiple argument-view callbacks."
+                        )
+                    );
+                }
+
+                if (argumentViewCount == 0)
+                {
+                    for (int j = i; j < methods.Length; j++)
+                    {
+                        if (
+                            IsSameBuiltInCallbackGroup(
+                                methods[j],
+                                method.Name,
+                                names,
+                                compatibility
+                            ) && CallbackFunction.CheckLegacyCallbackSignature(methods[j], true)
+                        )
+                        {
+                            excluded[j] = false;
+                        }
+                    }
+                }
+            }
+
+            List<MethodInfo> selected = new(methods.Length);
+            for (int i = 0; i < methods.Length; i++)
+            {
+                if (!excluded[i])
+                {
+                    selected.Add(methods[i]);
+                }
+            }
+
+            return selected.ToArray();
+        }
+
+        private static bool IsModuleCallback(MethodInfo method)
+        {
+            return method.IsStatic
+                && method.GetCustomAttribute<NovaSharpModuleMethodAttribute>() != null;
+        }
+
+        private static bool IsSameBuiltInCallbackGroup(
+            MethodInfo candidate,
+            string methodName,
+            string[] names,
+            LuaCompatibilityAttribute compatibility
+        )
+        {
+            if (!IsModuleCallback(candidate) || candidate.Name != methodName)
+            {
+                return false;
+            }
+
+            NovaSharpModuleMethodAttribute candidateAttribute =
+                candidate.GetCustomAttribute<NovaSharpModuleMethodAttribute>();
+            string[] candidateNames = GetModuleNameVariants(
+                candidateAttribute.Name,
+                candidate.Name
+            );
+            if (!HaveSameNames(names, candidateNames))
+            {
+                return false;
+            }
+
+            LuaCompatibilityAttribute candidateCompatibility =
+                candidate.GetCustomAttribute<LuaCompatibilityAttribute>();
+            return HaveSameCompatibility(compatibility, candidateCompatibility);
+        }
+
+        private static bool HaveSameNames(string[] left, string[] right)
+        {
+            if (left.Length != right.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < left.Length; i++)
+            {
+                if (!string.Equals(left[i], right[i], StringComparison.Ordinal))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool HaveSameCompatibility(
+            LuaCompatibilityAttribute left,
+            LuaCompatibilityAttribute right
+        )
+        {
+            if (left == null || right == null)
+            {
+                return left == null && right == null;
+            }
+
+            return left.MinVersion == right.MinVersion && left.MaxVersion == right.MaxVersion;
         }
 
         private static ScriptFunctionCallbackView CreateArgumentViewCallback(MethodInfo mi)

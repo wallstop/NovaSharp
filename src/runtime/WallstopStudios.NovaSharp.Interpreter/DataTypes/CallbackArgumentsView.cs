@@ -498,6 +498,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Gets the specified argument as the requested Lua type, raising a Lua argument error when
+        /// conversion is not possible.
+        /// </summary>
+        /// <param name="argNum">The zero-based argument index.</param>
+        /// <param name="funcName">The Lua function name used in errors.</param>
+        /// <param name="type">The requested Lua type.</param>
+        /// <param name="allowNil">Whether nil and missing values are accepted.</param>
+        /// <returns>The validated or converted argument.</returns>
+        public LuaValue AsType(int argNum, string funcName, DataType type, bool allowNil = false)
+        {
+            return this[argNum]
+                .CheckType(
+                    funcName,
+                    type,
+                    argNum,
+                    allowNil
+                        ? TypeValidationOptions.AllowNil | TypeValidationOptions.AutoConvert
+                        : TypeValidationOptions.AutoConvert
+                );
+        }
+
+        /// <summary>
         /// Converts the arguments to an array.
         /// </summary>
         public LuaValue[] GetArray(int skip = 0)

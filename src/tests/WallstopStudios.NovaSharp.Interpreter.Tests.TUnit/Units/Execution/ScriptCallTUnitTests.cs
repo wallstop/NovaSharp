@@ -1570,6 +1570,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.NotInParallel]
         public async Task FixedDynValueCallToNoContextCallbackViewAvoidsContextAllocation()
         {
             const int iterations = 1024;
@@ -1630,6 +1631,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .IsLessThan(contextAllocated)
                 .Because(
                     $"Contextful callback-view calls allocated {contextAllocated} bytes; no-context callback-view calls allocated {noContextAllocated} bytes."
+                )
+                .ConfigureAwait(false);
+
+            CompiledScript numericLoops = script.PrepareString(
+                NumericLoopsSource,
+                null,
+                "numeric_loops_callback_allocation.lua"
+            );
+            double expected = numericLoops.Execute().Number;
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long numericLoopsAllocated = MeasureNumericLoopsAllocations(
+                numericLoops,
+                expected,
+                iterations: 2
+            );
+            long numericLoopsAllocatedPerCall = numericLoopsAllocated / 2;
+
+            await Assert
+                .That(numericLoopsAllocatedPerCall)
+                .IsLessThan(1L)
+                .Because(
+                    $"Warmed NumericLoops allocated {numericLoopsAllocated} bytes across 2 executions ({numericLoopsAllocatedPerCall} bytes/execution). Registered contextless math callbacks must retain stack-only argument views."
                 )
                 .ConfigureAwait(false);
         }
@@ -3975,6 +4002,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             return GC.GetAllocatedBytesForCurrentThread() - before;
         }
+
+        private static long MeasureNumericLoopsAllocations(
+            CompiledScript numericLoops,
+            double expected,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+            {
+                LuaValue result = numericLoops.Execute();
+                if (result.Number != expected)
+                {
+                    throw new InvalidOperationException(
+                        "NumericLoops allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private const string NumericLoopsSource = """
+            local sum = 0.0
+            for i = 1, 2000 do
+                sum = sum + math.sin(i) * math.cos(i * 0.5)
+                if (i % 7) == 0 then
+                    sum = sum / 2.0
+                end
+            end
+            return sum
+            """;
 
         private static long MeasureFixedThreeArgumentLegacyCallbackAllocations(
             Script script,
