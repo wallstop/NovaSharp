@@ -43,4 +43,4 @@ The A5 struct-frame PLAN item and issue #108 remain open. The post-change Hanoi 
 - The corpus extractor dry run reports 1,970 existing fixtures and zero new fixtures after reconciling three previously omitted comparable snippets and one stale manifest-only entry found during review.
 - Full-corpus Lua 5.1-5.5 enforcement reported zero mismatches, zero one-sided or missing outputs, and no new or changed both-error ratchet entries.
 - CSharpier, Markdown formatting, and the repository pre-commit checks completed successfully.
-- Independent reviews found and corrected a stale incremental benchmark artifact and generated-corpus manifest drift in the first draft of this report. PR CI is pending publication.
+- Independent reviews found and corrected a stale incremental benchmark artifact and generated-corpus manifest drift in the first draft of this report. PR #109 CI passed CSharpier plus the complete Tests workflow, including coverage, all three OS test jobs, all 15 Lua comparison lanes, and the aggregate report; the benchmark workflow was correctly path-filtered because no runtime or benchmark implementation remains in the diff.
