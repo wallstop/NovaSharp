@@ -30,8 +30,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             Table table = new(script);
             table.Set(1, DynValue.NewNumber(2));
 
+            bool handledNull = ClrToScriptConversions.TryObjectToTrivialDynValue(
+                script,
+                null,
+                out DynValue explicitNil
+            );
             await Assert
                 .That(ClrToScriptConversions.TryObjectToTrivialDynValue(script, null).IsNil())
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(handledNull).IsTrue().ConfigureAwait(false);
+            await Assert.That(explicitNil.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(ClrToScriptConversions.ObjectToDynValue(script, null).IsNil())
                 .IsTrue()
                 .ConfigureAwait(false);
 
@@ -56,6 +67,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .That(ClrToScriptConversions.TryObjectToTrivialDynValue(script, table).Table)
                 .IsSameReferenceAs(table)
                 .ConfigureAwait(false);
+
+            bool handledUnsupported = ClrToScriptConversions.TryObjectToTrivialDynValue(
+                script,
+                new object(),
+                out DynValue unsupported
+            );
+            await Assert.That(handledUnsupported).IsFalse().ConfigureAwait(false);
+            await Assert.That(unsupported.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -110,18 +129,86 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         {
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
                 registry =>
-                    registry.SetClrToScriptCustomConversion<CustomValue>(
-                        (_, _) => DynValue.NewString("converted")
+                    registry.SetClrToScriptTryConversion<CustomValue>(
+                        (Script _, CustomValue value, out DynValue converted) =>
+                        {
+                            if (value.Name == "nil")
+                            {
+                                converted = DynValue.Nil;
+                                return true;
+                            }
+
+                            if (value.Name == "void")
+                            {
+                                converted = DynValue.Void;
+                                return true;
+                            }
+
+                            if (value.Name == "decline")
+                            {
+                                converted = DynValue.NewString("ignored");
+                                return false;
+                            }
+
+                            converted = DynValue.NewString("converted");
+                            return true;
+                        }
                     )
             );
             Script script = new();
 
-            DynValue result = ClrToScriptConversions.TryObjectToSimpleDynValue(
+            bool handled = ClrToScriptConversions.TryObjectToSimpleDynValue(
                 script,
-                new CustomValue("converted")
+                new CustomValue("converted"),
+                out DynValue result
+            );
+            bool handledNil = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                new CustomValue("nil"),
+                out DynValue nilResult
+            );
+            bool handledVoid = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                new CustomValue("void"),
+                out DynValue voidResult
+            );
+            bool declined = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                new CustomValue("decline"),
+                out DynValue declinedResult
             );
 
+            await Assert.That(handled).IsTrue().ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("converted").ConfigureAwait(false);
+            await Assert.That(handledNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(nilResult.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(handledVoid).IsTrue().ConfigureAwait(false);
+            await Assert.That(voidResult.IsVoid()).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(
+                    ClrToScriptConversions.ObjectToDynValue(script, new CustomValue("nil")).IsNil()
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(
+                    ClrToScriptConversions
+                        .ObjectToDynValue(script, new CustomValue("void"))
+                        .IsVoid()
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(declined).IsFalse().ConfigureAwait(false);
+            await Assert.That(declinedResult.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(
+                    ClrToScriptConversions.TryObjectToSimpleDynValue(
+                        script,
+                        new CustomValue("decline")
+                    )
+                )
+                .IsNull()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -344,6 +431,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             IEnumerator enumerator = YieldStrings().GetEnumerator();
             DynValue iteratorTuple = ClrToScriptConversions.ObjectToDynValue(script, enumerator);
             await Assert.That(iteratorTuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+
+            bool handledEnumerator = ClrToScriptConversions.TryEnumerationToDynValue(
+                script,
+                enumerator,
+                out DynValue explicitIteratorTuple
+            );
+            bool handledObject = ClrToScriptConversions.TryEnumerationToDynValue(
+                script,
+                new object(),
+                out DynValue missingIterator
+            );
+            await Assert.That(handledEnumerator).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(explicitIteratorTuple.Type)
+                .IsEqualTo(DataType.Tuple)
+                .ConfigureAwait(false);
+            await Assert.That(handledObject).IsFalse().ConfigureAwait(false);
+            await Assert.That(missingIterator.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

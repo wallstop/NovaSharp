@@ -17,24 +17,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
         /// </summary>
         /// <param name="script">Owning script used for table allocation and conversions.</param>
         /// <param name="o">The CLR object to convert.</param>
-        /// <param name="valueForNulls">Optional value used when encountering <c>null</c> references.</param>
+        /// <returns>A <see cref="DynValue"/> representing the object graph.</returns>
+        public static DynValue SerializeObjectToDynValue(Script script, object o)
+        {
+            return SerializeObjectToDynValueCore(script, o, DynValue.Nil);
+        }
+
+        /// <summary>
+        /// Serializes a CLR object into a Lua value, recursively walking enumerables and properties.
+        /// </summary>
+        /// <param name="script">Owning script used for table allocation and conversions.</param>
+        /// <param name="o">The CLR object to convert.</param>
+        /// <param name="valueForNulls">The value used when encountering <c>null</c> references.</param>
         /// <returns>A <see cref="DynValue"/> representing the object graph.</returns>
         public static DynValue SerializeObjectToDynValue(
             Script script,
             object o,
-            DynValue valueForNulls = null
+            DynValue valueForNulls
+        )
+        {
+            return SerializeObjectToDynValueCore(script, o, valueForNulls ?? DynValue.Nil);
+        }
+
+        private static DynValue SerializeObjectToDynValueCore(
+            Script script,
+            object o,
+            DynValue valueForNulls
         )
         {
             if (o == null)
             {
-                return valueForNulls ?? DynValue.Nil;
+                return valueForNulls;
             }
 
-            DynValue v = ClrToScriptConversions.TryObjectToTrivialDynValue(script, o);
-
-            if (v != null)
+            if (ClrToScriptConversions.TryObjectToTrivialDynValue(script, o, out DynValue value))
             {
-                return v;
+                return value;
             }
 
             if (o is Enum)
@@ -50,7 +68,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
             {
                 foreach (object obj in ienum)
                 {
-                    t.Append(SerializeObjectToDynValue(script, obj, valueForNulls));
+                    t.Append(SerializeObjectToDynValueCore(script, obj, valueForNulls));
                 }
             }
             else
@@ -63,7 +81,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
                     bool isStatic = getter.IsStatic;
                     object obj = getter.Invoke(isStatic ? null : o, null); // convoluted workaround for --full-aot Mono execution
 
-                    t.Set(pi.Name, SerializeObjectToDynValue(script, obj, valueForNulls));
+                    t.Set(pi.Name, SerializeObjectToDynValueCore(script, obj, valueForNulls));
                 }
             }
 

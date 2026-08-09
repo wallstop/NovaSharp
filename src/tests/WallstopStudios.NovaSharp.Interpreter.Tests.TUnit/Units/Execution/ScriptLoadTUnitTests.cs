@@ -880,12 +880,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 "function(a) return a == 'custom:42' end",
                 funcFriendlyName: "compiled_primitive_custom_check"
             );
+            CompiledScript argumentCount = script.CompileFunction(
+                "function(...) return select('#', ...) end",
+                funcFriendlyName: "compiled_primitive_custom_argument_count"
+            );
 
             DynValue result = identity.Execute(42);
 
             await Assert.That(result.String).IsEqualTo("custom:42").ConfigureAwait(false);
             await Assert.That(isConverted.ExecuteBoolean(42)).IsTrue().ConfigureAwait(false);
             Assert.Throws<ScriptRuntimeException>(() => identity.ExecuteNumber(42));
+
+            Script.GlobalOptions.CustomConverters.SetClrToScriptTryConversion<int>(
+                (Script _, int value, out DynValue converted) =>
+                {
+                    if (value == 42)
+                    {
+                        converted = DynValue.Nil;
+                        return true;
+                    }
+
+                    if (value == 43)
+                    {
+                        converted = DynValue.Void;
+                        return true;
+                    }
+
+                    converted = DynValue.Nil;
+                    return false;
+                }
+            );
+
+            DynValue handledNil = identity.Execute(42);
+            DynValue handledVoid = identity.Execute(43);
+            DynValue declined = identity.Execute(44);
+
+            await Assert.That(handledNil.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(handledVoid.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(declined.Number).IsEqualTo(44d).ConfigureAwait(false);
+            await Assert.That(argumentCount.ExecuteNumber(42)).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(argumentCount.ExecuteNumber(43)).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(argumentCount.ExecuteNumber(44)).IsEqualTo(1d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

@@ -321,18 +321,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static DynValue Create(object o)
         {
+            return TryCreate(o, out DynValue value) ? value : null;
+        }
+
+        /// <summary>
+        /// Attempts to create a userdata value from the specified object.
+        /// </summary>
+        /// <param name="o">The object.</param>
+        /// <param name="value">The userdata value when a descriptor is available.</param>
+        /// <returns><see langword="true"/> when the object has a descriptor.</returns>
+        public static bool TryCreate(object o, out DynValue value)
+        {
             IUserDataDescriptor descr = GetDescriptorForObject(o);
             if (descr == null)
             {
                 if (o is Type type)
                 {
-                    return CreateStatic(type);
+                    return TryCreateStatic(type, out value);
                 }
 
-                return null;
+                value = DynValue.Nil;
+                return false;
             }
 
-            return Create(o, descr);
+            value = Create(o, descr);
+            return true;
         }
 
         /// <summary>
@@ -342,12 +355,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static DynValue CreateStatic(IUserDataDescriptor descr)
         {
+            return TryCreateStatic(descr, out DynValue value) ? value : null;
+        }
+
+        /// <summary>
+        /// Attempts to create a static userdata value from the specified descriptor.
+        /// </summary>
+        /// <param name="descr">The userdata descriptor.</param>
+        /// <param name="value">The static userdata value when the descriptor is available.</param>
+        /// <returns><see langword="true"/> when the descriptor is available.</returns>
+        public static bool TryCreateStatic(IUserDataDescriptor descr, out DynValue value)
+        {
             if (descr == null)
             {
-                return null;
+                value = DynValue.Nil;
+                return false;
             }
 
-            return DynValue.NewUserData(CreateCore(null, descr));
+            value = DynValue.NewUserData(CreateCore(null, descr));
+            return true;
         }
 
         private static UserData CreateCore(object obj, IUserDataDescriptor descriptor)
@@ -383,7 +409,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(t));
             }
 
-            return CreateStatic(GetDescriptorForType(t, false));
+            return TryCreateStatic(t, out DynValue value) ? value : null;
+        }
+
+        /// <summary>
+        /// Attempts to create a static userdata value for the specified type.
+        /// </summary>
+        /// <param name="t">The CLR type.</param>
+        /// <param name="value">The static userdata value when a descriptor is available.</param>
+        /// <returns><see langword="true"/> when the type has a descriptor.</returns>
+        public static bool TryCreateStatic(Type t, out DynValue value)
+        {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
+            return TryCreateStatic(GetDescriptorForType(t, false), out value);
         }
 
         /// <summary>
@@ -393,7 +435,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static DynValue CreateStatic<T>()
         {
-            return CreateStatic(GetDescriptorForType<T>(false));
+            return TryCreateStatic<T>(out DynValue value) ? value : null;
+        }
+
+        /// <summary>
+        /// Attempts to create a static userdata value for the specified type.
+        /// </summary>
+        /// <typeparam name="T">The CLR type.</typeparam>
+        /// <param name="value">The static userdata value when a descriptor is available.</param>
+        /// <returns><see langword="true"/> when the type has a descriptor.</returns>
+        public static bool TryCreateStatic<T>(out DynValue value)
+        {
+            return TryCreateStatic(GetDescriptorForType<T>(false), out value);
         }
 
         /// <summary>

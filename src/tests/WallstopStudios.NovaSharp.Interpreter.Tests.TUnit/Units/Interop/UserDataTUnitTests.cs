@@ -32,8 +32,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             UserData.UnregisterType<UnregisteredHost>();
 
             DynValue result = UserData.Create(new UnregisteredHost());
+            bool created = UserData.TryCreate(new UnregisteredHost(), out DynValue missing);
 
             await Assert.That(result).IsNull().ConfigureAwait(false);
+            await Assert.That(created).IsFalse().ConfigureAwait(false);
+            await Assert.That(missing.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -45,8 +48,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             CustomDescriptorHost instance = new("tracked");
 
             DynValue dynValue = UserData.Create(instance);
+            bool created = UserData.TryCreate(instance, out DynValue explicitValue);
             Table description = UserData.GetDescriptionOfRegisteredTypes();
 
+            await Assert.That(created).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(explicitValue.Type)
+                .IsEqualTo(DataType.UserData)
+                .ConfigureAwait(false);
             await Assert.That(dynValue.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
             await Assert.That(dynValue.UserData.Object).IsEqualTo(instance).ConfigureAwait(false);
             await Assert
@@ -145,7 +154,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         public async Task CreateStaticReturnsNullWhenDescriptorMissing()
         {
             DynValue result = UserData.CreateStatic((IUserDataDescriptor)null);
+            bool created = UserData.TryCreateStatic(
+                (IUserDataDescriptor)null,
+                out DynValue missing
+            );
             await Assert.That(result).IsNull().ConfigureAwait(false);
+            await Assert.That(created).IsFalse().ConfigureAwait(false);
+            await Assert.That(missing.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -154,8 +169,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             UserData.UnregisterType<UnregisteredHost>();
 
             DynValue result = UserData.CreateStatic<UnregisteredHost>();
+            bool created = UserData.TryCreateStatic<UnregisteredHost>(out DynValue missing);
 
             await Assert.That(result).IsNull().ConfigureAwait(false);
+            await Assert.That(created).IsFalse().ConfigureAwait(false);
+            await Assert.That(missing.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -470,7 +488,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             registrationScope.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
 
             DynValue dynValue = UserData.Create(typeof(RegistryHost));
+            bool created = UserData.TryCreate(typeof(RegistryHost), out DynValue explicitStatic);
 
+            await Assert.That(created).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(explicitStatic.Type)
+                .IsEqualTo(DataType.UserData)
+                .ConfigureAwait(false);
             await Assert.That(dynValue.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
             await Assert.That(dynValue.UserData.Object).IsNull().ConfigureAwait(false);
             await Assert
@@ -565,8 +589,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 UserData.CreateStatic((Type)null)
             );
+            ArgumentNullException tryException = Assert.Throws<ArgumentNullException>(() =>
+                UserData.TryCreateStatic((Type)null, out DynValue _)
+            );
 
             await Assert.That(exception.ParamName).IsEqualTo("t").ConfigureAwait(false);
+            await Assert.That(tryException.ParamName).IsEqualTo("t").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

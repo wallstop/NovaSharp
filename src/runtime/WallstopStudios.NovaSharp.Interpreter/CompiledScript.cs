@@ -1211,8 +1211,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private static DynValue ConvertBoolArgument(Script script, bool arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out DynValue converted))
             {
                 return converted;
             }
@@ -1222,8 +1221,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private static DynValue ConvertCharArgument(Script script, char arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out DynValue converted))
             {
                 return converted;
             }
@@ -1233,8 +1231,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private static DynValue ConvertDoubleArgument(Script script, double arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out DynValue converted))
             {
                 return converted;
             }
@@ -1244,8 +1241,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private static DynValue ConvertFloatArgument(Script script, float arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out DynValue converted))
             {
                 return converted;
             }
@@ -1255,8 +1251,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private static DynValue ConvertLongArgument(Script script, long arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out DynValue converted))
             {
                 return converted;
             }
@@ -1266,8 +1261,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private static DynValue ConvertIntArgument(Script script, int arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out DynValue converted))
             {
                 return converted;
             }
@@ -1277,8 +1271,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private static DynValue ConvertShortArgument(Script script, short arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out DynValue converted))
             {
                 return converted;
             }
@@ -1288,8 +1281,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private static DynValue ConvertSByteArgument(Script script, sbyte arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out DynValue converted))
             {
                 return converted;
             }
@@ -1299,8 +1291,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private static DynValue ConvertULongArgument(Script script, ulong arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out DynValue converted))
             {
                 return converted;
             }
@@ -1310,8 +1301,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private static DynValue ConvertUIntArgument(Script script, uint arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out DynValue converted))
             {
                 return converted;
             }
@@ -1321,8 +1311,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private static DynValue ConvertUShortArgument(Script script, ushort arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out DynValue converted))
             {
                 return converted;
             }
@@ -1332,8 +1321,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private static DynValue ConvertByteArgument(Script script, byte arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out DynValue converted))
             {
                 return converted;
             }
@@ -1342,16 +1330,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static DynValue TryCustomPrimitiveArgument<T>(Script script, T arg)
+        private static bool TryCustomPrimitiveArgument<T>(
+            Script script,
+            T arg,
+            out DynValue converted
+        )
         {
-            Func<Script, object, DynValue> converter =
-                Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(typeof(T));
-            if (converter == null)
-            {
-                return null;
-            }
-
-            return converter(script, arg);
+            return Script.GlobalOptions.CustomConverters.TryConvertClrToScript(
+                typeof(T),
+                script,
+                arg,
+                out converted
+            );
         }
 
         private static double ConvertNumberResult(DynValue result)

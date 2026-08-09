@@ -20,8 +20,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 null,
                 fallback
             );
+            DynValue defaultResult = ObjectValueConverter.SerializeObjectToDynValue(script, null);
+            DynValue explicitNil = ObjectValueConverter.SerializeObjectToDynValue(
+                script,
+                null,
+                DynValue.Nil
+            );
+            DynValue legacyNull = ObjectValueConverter.SerializeObjectToDynValue(
+                script,
+                null,
+                null
+            );
+            DynValue explicitVoid = ObjectValueConverter.SerializeObjectToDynValue(
+                script,
+                null,
+                DynValue.Void
+            );
 
             await Assert.That(result).IsSameReferenceAs(fallback).ConfigureAwait(false);
+            await Assert.That(defaultResult.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(explicitNil.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(legacyNull.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(explicitVoid.IsVoid()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
