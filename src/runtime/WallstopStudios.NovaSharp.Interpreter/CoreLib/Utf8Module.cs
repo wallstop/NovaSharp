@@ -350,8 +350,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
             if (version >= LuaCompatibilityVersion.Lua54)
             {
-                DynValue laxArg = args.RawGet(1, false);
-                lax = laxArg != null && laxArg.Type == DataType.Boolean && laxArg.Boolean;
+                lax =
+                    args.TryRawGet(1, translateVoids: false, out DynValue laxArg)
+                    && laxArg.Type == DataType.Boolean
+                    && laxArg.Boolean;
             }
 
             DynValue iterator = lax ? CachedCodesIteratorLaxCallback : CachedCodesIteratorCallback;

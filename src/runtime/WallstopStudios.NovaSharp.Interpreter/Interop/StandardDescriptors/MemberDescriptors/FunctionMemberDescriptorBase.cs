@@ -272,18 +272,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                 {
                     List<DynValue> extraArgs = new();
 
-                    while (true)
+                    while (args.TryRawGet(j, translateVoids: false, out DynValue arg))
                     {
-                        DynValue arg = args.RawGet(j, false);
                         j += 1;
-                        if (arg != null)
-                        {
-                            extraArgs.Add(arg);
-                        }
-                        else
-                        {
-                            break;
-                        }
+                        extraArgs.Add(arg);
                     }
 
                     // here we have to worry we already have an array.. damn. We only support this for userdata.
@@ -329,7 +321,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                 // else, convert it
                 else
                 {
-                    DynValue arg = args.RawGet(j, false) ?? DynValue.Void;
+                    DynValue arg = args.TryRawGet(
+                        j,
+                        translateVoids: false,
+                        out DynValue suppliedArgument
+                    )
+                        ? suppliedArgument
+                        : DynValue.Void;
                     pars[i] = ScriptToClrConversions.DynValueToObjectOfType(
                         arg,
                         parameters[i].Type,

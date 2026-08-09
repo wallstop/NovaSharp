@@ -632,19 +632,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 if (i == method.Parameters.Count - 1 && method.VarArgsArrayType != null)
                 {
                     int varArgCount = 0;
-                    DynValue firstArg = null;
+                    DynValue firstArg = DynValue.Nil;
                     int scoreBeforeVarArgs = totalScore;
 
                     // update score for varargs
-                    while (true)
+                    while (args.TryRawGet(argsCnt, translateVoids: false, out DynValue arg))
                     {
-                        DynValue arg = args.RawGet(argsCnt, false);
-                        if (arg == null)
+                        if (varArgCount == 0)
                         {
-                            break;
+                            firstArg = arg;
                         }
-
-                        firstArg ??= arg;
 
                         argsCnt += 1;
 
@@ -660,7 +657,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                     }
 
                     // check if exact-match
-                    if (varArgCount == 1 && firstArg != null)
+                    if (varArgCount == 1)
                     {
                         if (firstArg.Type == DataType.UserData && firstArg.UserData.Object != null)
                         {
@@ -690,7 +687,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 }
                 else
                 {
-                    DynValue arg = args.RawGet(argsCnt, false) ?? DynValue.Void;
+                    DynValue arg = args.TryRawGet(
+                        argsCnt,
+                        translateVoids: false,
+                        out DynValue suppliedArgument
+                    )
+                        ? suppliedArgument
+                        : DynValue.Void;
 
                     int score = CalcScoreForSingleArgument(
                         method.Parameters[i],
