@@ -19,6 +19,7 @@ local subnormalHex = tonumber("0xffffffffffffffffp-1138")
 local roundingHex = tonumber("0x220e087835b925585p376")
 local roundingHexInteger = tonumber("0x220e087835b925585")
 local unicodeExponent = tonumber("0x1p١")
+local isWindows = os.getenv("OS") == "Windows_NT" or os.getenv("WINDIR") ~= nil
 print("invalid", invalidHex == nil)
 print("thousands", thousands == nil)
 print(
@@ -32,20 +33,28 @@ print(
 )
 print("negative-zero", 1 / negativeZero == -math.huge)
 if _VERSION ~= "Lua 5.1" then
-    print(
-        "hex-exponent",
-        hexOverflow == nil,
-        hexOverflow == math.huge,
-        hexUnderflow == nil,
-        hexUnderflow == 0,
-        compensatedHex == nil,
-        compensatedHex == 1,
-        subnormalHex > 0 and subnormalHex / 2 == 0,
-        string.format("%a", roundingHex),
-        unicodeExponent == nil
-    )
-    if _VERSION == "Lua 5.2" then
-        print("hex-integer-rounding", string.format("%a", roundingHexInteger))
+    -- Lua delegates hexadecimal conversion to the host C runtime. MSVCRT rejects the
+    -- extreme exponents and rounds the wide significand differently, while Unix libcs
+    -- agree with NovaSharp. Keep portable syntax coverage on Windows; the exact IEEE
+    -- behavior remains asserted by the platform-independent C# test.
+    if isWindows then
+        print("hex-parser-portable", unicodeExponent == nil)
+    else
+        print(
+            "hex-exponent",
+            hexOverflow == nil,
+            hexOverflow == math.huge,
+            hexUnderflow == nil,
+            hexUnderflow == 0,
+            compensatedHex == nil,
+            compensatedHex == 1,
+            subnormalHex > 0 and subnormalHex / 2 == 0,
+            string.format("%a", roundingHex),
+            unicodeExponent == nil
+        )
+        if _VERSION == "Lua 5.2" then
+            print("hex-integer-rounding", string.format("%a", roundingHexInteger))
+        end
     end
 end
 return invalidHex == nil and thousands == nil
