@@ -8,7 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
     /// <summary>
     /// Wraps the default file userdata descriptor to align Lua semantics for numeric indexing.
     /// </summary>
-    internal sealed class FileUserDataDescriptor : IUserDataDescriptor
+    internal sealed class FileUserDataDescriptor : IUserDataDescriptorTryAccess
     {
         private readonly IUserDataDescriptor _inner;
 
@@ -23,13 +23,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
 
         public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
         {
+            return TryIndex(script, obj, index, isDirectIndexing, out DynValue value)
+                ? value
+                : null;
+        }
+
+        public bool TryIndex(
+            Script script,
+            object obj,
+            DynValue index,
+            bool isDirectIndexing,
+            out DynValue value
+        )
+        {
             DynValue scalar = index?.ToScalar();
             if (scalar != null && scalar.Type != DataType.String)
             {
-                return DynValue.Nil;
+                value = DynValue.Nil;
+                return true;
             }
 
-            return _inner.Index(script, obj, index, isDirectIndexing);
+            return UserDataAccess.TryIndex(_inner, script, obj, index, isDirectIndexing, out value);
         }
 
         public bool SetIndex(
@@ -56,7 +70,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
 
         public DynValue MetaIndex(Script script, object obj, string metaname)
         {
-            return _inner.MetaIndex(script, obj, metaname);
+            return TryMetaIndex(script, obj, metaname, out DynValue value) ? value : null;
+        }
+
+        public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+        {
+            return UserDataAccess.TryMetaIndex(_inner, script, obj, metaname, out value);
         }
 
         public bool IsTypeCompatible(Type type, object obj)

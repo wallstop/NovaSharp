@@ -9,7 +9,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
     /// <summary>
     /// Lightweight wrapper exposed to Lua scripts so CLR events surface <c>add</c>/<c>remove</c> helpers.
     /// </summary>
-    internal class EventFacade : IUserDataType
+    internal class EventFacade : IUserDataTypeTryAccess
     {
         private readonly Func<
             object,
@@ -54,15 +54,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// </summary>
         public DynValue Index(Script script, DynValue index, bool isDirectIndexing)
         {
+            TryIndex(script, index, isDirectIndexing, out DynValue value);
+            return value;
+        }
+
+        /// <inheritdoc/>
+        public bool TryIndex(
+            Script script,
+            DynValue index,
+            bool isDirectIndexing,
+            out DynValue value
+        )
+        {
             if (index.Type == DataType.String)
             {
                 if (index.String == "add")
                 {
-                    return DynValue.NewCallback((c, a) => _addCallback(_object, c, a));
+                    value = DynValue.NewCallback((c, a) => _addCallback(_object, c, a));
+                    return true;
                 }
                 else if (index.String == "remove")
                 {
-                    return DynValue.NewCallback((c, a) => _removeCallback(_object, c, a));
+                    value = DynValue.NewCallback((c, a) => _removeCallback(_object, c, a));
+                    return true;
                 }
             }
 
@@ -83,6 +97,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         public DynValue MetaIndex(Script script, string metaname)
         {
             return null;
+        }
+
+        /// <inheritdoc/>
+        public bool TryMetaIndex(Script script, string metaname, out DynValue value)
+        {
+            value = DynValue.Nil;
+            return false;
         }
     }
 }

@@ -65,8 +65,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 DynValue.NewNumber(42),
                 isDirectIndexing: true
             );
+            bool found = ((IUserDataDescriptorTryAccess)wrapper).TryIndex(
+                script,
+                new object(),
+                DynValue.NewNumber(42),
+                isDirectIndexing: true,
+                out DynValue explicitNil
+            );
 
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(found).IsTrue().ConfigureAwait(false);
+            await Assert.That(explicitNil.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

@@ -95,6 +95,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 .That(descriptor.MetaIndex(script, null, "__add"))
                 .IsNull()
                 .ConfigureAwait(false);
+            bool foundIndex = descriptor.TryIndex(
+                script,
+                null,
+                DynValue.NewString("anything"),
+                true,
+                out DynValue missingIndex
+            );
+            bool foundMeta = descriptor.TryMetaIndex(
+                script,
+                null,
+                "__add",
+                out DynValue missingMeta
+            );
+            await Assert.That(foundIndex).IsFalse().ConfigureAwait(false);
+            await Assert.That(missingIndex.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(foundMeta).IsFalse().ConfigureAwait(false);
+            await Assert.That(missingMeta.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

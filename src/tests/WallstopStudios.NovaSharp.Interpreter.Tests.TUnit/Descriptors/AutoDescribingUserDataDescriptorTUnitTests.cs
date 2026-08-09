@@ -26,10 +26,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             AutoDescribingUserDataDescriptor descriptor = new(typeof(SampleUserData), "Sample");
 
             DynValue value = descriptor.Index(script, userdata, DynValue.NewString("key"), true);
+            bool foundVoid = descriptor.TryIndex(
+                script,
+                userdata,
+                DynValue.NewString("void"),
+                true,
+                out DynValue explicitVoid
+            );
 
-            await Assert.That(userdata.IndexInvocations).IsEqualTo(1);
+            await Assert.That(userdata.IndexInvocations).IsEqualTo(2);
             await Assert.That(value.Type).IsEqualTo(DataType.String);
             await Assert.That(value.String).IsEqualTo("indexed:key");
+            await Assert.That(foundVoid).IsTrue();
+            await Assert.That(explicitVoid.IsVoid()).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -104,8 +113,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 DynValue.NewString("key"),
                 true
             );
+            bool found = descriptor.TryIndex(
+                script,
+                new object(),
+                DynValue.NewString("key"),
+                true,
+                out DynValue missing
+            );
 
             await Assert.That(value).IsNull();
+            await Assert.That(found).IsFalse();
+            await Assert.That(missing.IsNil()).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -128,7 +146,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             await Assert.That(descriptor.IsTypeCompatible(typeof(string), 5)).IsFalse();
         }
 
-        private sealed class SampleUserData : IUserDataType
+        private sealed class SampleUserData : IUserDataTypeTryAccess
         {
             internal int IndexInvocations { get; private set; }
 
@@ -141,7 +159,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             public DynValue Index(Script script, DynValue index, bool isDirectIndexing)
             {
                 IndexInvocations++;
+                if (index.String == "void")
+                {
+                    return DynValue.Void;
+                }
+
                 return DynValue.NewString($"indexed:{index.String}");
+            }
+
+            public bool TryIndex(
+                Script script,
+                DynValue index,
+                bool isDirectIndexing,
+                out DynValue value
+            )
+            {
+                value = Index(script, index, isDirectIndexing);
+                return true;
             }
 
             public bool SetIndex(
@@ -160,6 +194,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             {
                 MetaIndexInvocations++;
                 return DynValue.NewCallback((_, _) => DynValue.NewString($"meta:{metaname}"));
+            }
+
+            public bool TryMetaIndex(Script script, string metaname, out DynValue value)
+            {
+                value = MetaIndex(script, metaname);
+                return true;
             }
 
             public override string ToString()

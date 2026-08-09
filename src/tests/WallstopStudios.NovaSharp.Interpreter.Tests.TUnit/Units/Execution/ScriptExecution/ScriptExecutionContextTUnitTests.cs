@@ -9,6 +9,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
@@ -2134,6 +2135,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 "__sub",
                 out DynValue explicitNil
             );
+            PresenceAwareMetamethodDescriptor descriptor = new()
+            {
+                HandlesMetaIndex = true,
+                MetaIndexValue = DynValue.Void,
+            };
+            DynValue descriptorOperand = UserData.Create(new object(), descriptor);
+            bool foundDescriptorVoid = context.TryGetBinaryMetamethod(
+                descriptorOperand,
+                operand,
+                "__add",
+                out DynValue descriptorVoid
+            );
+            descriptor.HandlesMetaIndex = false;
+            bool missingDescriptorMeta = context.TryGetBinaryMetamethod(
+                descriptorOperand,
+                operand,
+                "__add",
+                out DynValue missingDescriptorValue
+            );
 
             await Assert.That(op1Exception.ParamName).IsEqualTo("op1");
             await Assert.That(op2Exception.ParamName).IsEqualTo("op2");
@@ -2149,6 +2169,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             await Assert.That(legacyAbsent).IsNull();
             await Assert.That(foundExplicitNil).IsFalse();
             await Assert.That(explicitNil.IsNil()).IsTrue();
+            await Assert.That(foundDescriptorVoid).IsTrue();
+            await Assert.That(descriptorVoid.IsVoid()).IsTrue();
+            await Assert.That(missingDescriptorMeta).IsFalse();
+            await Assert.That(missingDescriptorValue.IsNil()).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -2209,6 +2233,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             );
             await Assert.That(foundExplicitNil).IsFalse();
             await Assert.That(explicitNil.IsNil()).IsTrue();
+
+            PresenceAwareMetamethodDescriptor descriptor = new()
+            {
+                HandlesMetaIndex = true,
+                MetaIndexValue = DynValue.Nil,
+            };
+            DynValue descriptorTarget = UserData.Create(new object(), descriptor);
+            bool foundDescriptorNil = context.TryGetMetamethod(
+                descriptorTarget,
+                "__call",
+                out DynValue descriptorNil
+            );
+            DynValue legacyDescriptorNil = context.GetMetamethod(descriptorTarget, "__call");
+
+            await Assert.That(foundDescriptorNil).IsTrue();
+            await Assert.That(descriptorNil.IsNil()).IsTrue();
+            await Assert.That(legacyDescriptorNil.IsNil()).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -2709,6 +2750,72 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             }
 
             return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private sealed class PresenceAwareMetamethodDescriptor : IUserDataDescriptorTryAccess
+        {
+            internal bool HandlesMetaIndex { get; set; }
+
+            internal DynValue MetaIndexValue { get; set; } = DynValue.Nil;
+
+            public string Name => nameof(PresenceAwareMetamethodDescriptor);
+
+            public Type Type => typeof(object);
+
+            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+            {
+                return null;
+            }
+
+            public bool TryIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                bool isDirectIndexing,
+                out DynValue value
+            )
+            {
+                value = DynValue.Nil;
+                return false;
+            }
+
+            public bool SetIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                DynValue value,
+                bool isDirectIndexing
+            )
+            {
+                return false;
+            }
+
+            public string AsString(object obj)
+            {
+                return Name;
+            }
+
+            public DynValue MetaIndex(Script script, object obj, string metaname)
+            {
+                return HandlesMetaIndex ? MetaIndexValue : null;
+            }
+
+            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+            {
+                if (HandlesMetaIndex)
+                {
+                    value = MetaIndexValue;
+                    return true;
+                }
+
+                value = DynValue.Nil;
+                return false;
+            }
+
+            public bool IsTypeCompatible(Type type, object obj)
+            {
+                return type.IsInstanceOfType(obj);
+            }
         }
 
         private static long MeasureFixedThreeArgumentContextChainedCallMetamethodAllocations(

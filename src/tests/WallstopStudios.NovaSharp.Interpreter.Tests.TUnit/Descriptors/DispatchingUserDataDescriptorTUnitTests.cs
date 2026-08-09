@@ -115,8 +115,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostAdd);
 
             DynValue meta = descriptor.MetaIndex(script, hostAdd, "__unknown");
+            bool found = ((IUserDataDescriptorTryAccess)descriptor).TryMetaIndex(
+                script,
+                hostAdd,
+                "__unknown",
+                out DynValue missing
+            );
 
             await Assert.That(meta).IsNull();
+            await Assert.That(found).IsFalse();
+            await Assert.That(missing.IsNil()).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -287,6 +295,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             descriptor.AddMember("Value", member);
             descriptor.AddMetaMember("__meta", member);
             descriptor.AddDynValue("dyn", DynValue.NewNumber(5));
+            descriptor.AddDynValue("explicitVoid", DynValue.Void);
+
+            bool foundVoid = descriptor.TryIndex(
+                new Script(),
+                new DescriptorHost(),
+                DynValue.NewString("explicitVoid"),
+                true,
+                out DynValue explicitVoid
+            );
 
             IEnumerable<string> memberNames = descriptor.MemberNames;
             IEnumerable<KeyValuePair<string, IMemberDescriptor>> members = descriptor.Members;
@@ -301,6 +318,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 .That(metaMembers.Any(kv => kv.Key == "__meta" && kv.Value == member))
                 .IsTrue();
             await Assert.That(descriptor.FindMetaMember("__meta")).IsEqualTo(member);
+            await Assert.That(foundVoid).IsTrue();
+            await Assert.That(explicitVoid.IsVoid()).IsTrue();
 
             descriptor.RemoveMember("Value");
             descriptor.RemoveMetaMember("__meta");

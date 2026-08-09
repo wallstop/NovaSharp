@@ -9,7 +9,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
     /// <summary>
     /// Wrappers for enumerables as return types
     /// </summary>
-    internal class EnumerableWrapper : IUserDataType
+    internal class EnumerableWrapper : IUserDataTypeTryAccess
     {
         private readonly IEnumerator _enumerator;
         private readonly Script _script;
@@ -92,32 +92,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         /// </summary>
         public DynValue Index(Script script, DynValue index, bool isDirectIndexing)
         {
+            return TryIndex(script, index, isDirectIndexing, out DynValue value) ? value : null;
+        }
+
+        /// <inheritdoc/>
+        public bool TryIndex(
+            Script script,
+            DynValue index,
+            bool isDirectIndexing,
+            out DynValue value
+        )
+        {
             if (index.Type == DataType.String)
             {
                 string idx = index.String;
 
                 if (idx == "Current" || idx == "current")
                 {
-                    return DynValue.FromObject(script, _enumerator.Current);
+                    value = DynValue.FromObject(script, _enumerator.Current);
+                    return true;
                 }
                 else if (idx == "MoveNext" || idx == "moveNext" || idx == "move_next")
                 {
-                    return DynValue.NewCallback(
+                    value = DynValue.NewCallback(
                         (ctx, args) => DynValue.NewBoolean(_enumerator.MoveNext())
                     );
+                    return true;
                 }
                 else if (idx == "Reset" || idx == "reset")
                 {
-                    return DynValue.NewCallback(
+                    value = DynValue.NewCallback(
                         (ctx, args) =>
                         {
                             Reset();
                             return DynValue.Nil;
                         }
                     );
+                    return true;
                 }
             }
-            return null;
+
+            value = DynValue.Nil;
+            return false;
         }
 
         /// <summary>
@@ -133,14 +149,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         /// </summary>
         public DynValue MetaIndex(Script script, string metaname)
         {
+            return TryMetaIndex(script, metaname, out DynValue value) ? value : null;
+        }
+
+        /// <inheritdoc/>
+        public bool TryMetaIndex(Script script, string metaname, out DynValue value)
+        {
             if (metaname == Metamethods.Call)
             {
-                return DynValue.NewCallback(LuaIteratorCallback);
+                value = DynValue.NewCallback(LuaIteratorCallback);
+                return true;
             }
-            else
-            {
-                return null;
-            }
+
+            value = DynValue.Nil;
+            return false;
         }
     }
 }

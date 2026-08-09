@@ -22,7 +22,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
     /// <see cref="MetaIndex"/> .
     /// </summary>
     public abstract class DispatchingUserDataDescriptor
-        : IUserDataDescriptor,
+        : IUserDataDescriptorTryAccess,
             IOptimizableDescriptor
     {
         private int _extMethodsVersion;
@@ -313,6 +313,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             }
 
             return v;
+        }
+
+        public virtual bool TryIndex(
+            Script script,
+            object obj,
+            DynValue index,
+            bool isDirectIndexing,
+            out DynValue value
+        )
+        {
+            value = Index(script, obj, index, isDirectIndexing);
+            if (value != null)
+            {
+                return true;
+            }
+
+            value = DynValue.Nil;
+            return false;
         }
 
         /// <summary>
@@ -818,6 +836,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 default:
                     return null;
             }
+        }
+
+        public virtual bool TryMetaIndex(
+            Script script,
+            object obj,
+            string metaname,
+            out DynValue value
+        )
+        {
+            value = MetaIndex(script, obj, metaname);
+            if (value != null)
+            {
+                return true;
+            }
+
+            value = DynValue.Nil;
+            return false;
         }
 
         private static int PerformComparison(object obj, object p1, object p2)

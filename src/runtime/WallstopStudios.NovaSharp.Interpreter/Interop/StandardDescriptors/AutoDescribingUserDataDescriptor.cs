@@ -7,7 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
     /// <summary>
     /// Descriptor which acts as a non-containing adapter from IUserDataType to IUserDataDescriptor
     /// </summary>
-    public class AutoDescribingUserDataDescriptor : IUserDataDescriptor
+    public class AutoDescribingUserDataDescriptor : IUserDataDescriptorTryAccess
     {
         private readonly string _friendlyName;
         private readonly Type _type;
@@ -49,12 +49,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <returns></returns>
         public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
         {
-            if (obj is IUserDataType u)
+            return TryIndex(script, obj, index, isDirectIndexing, out DynValue value)
+                ? value
+                : null;
+        }
+
+        /// <inheritdoc/>
+        public bool TryIndex(
+            Script script,
+            object obj,
+            DynValue index,
+            bool isDirectIndexing,
+            out DynValue value
+        )
+        {
+            if (obj is IUserDataType userData)
             {
-                return u.Index(script, index, isDirectIndexing);
+                return UserDataAccess.TryIndex(
+                    userData,
+                    script,
+                    index,
+                    isDirectIndexing,
+                    out value
+                );
             }
 
-            return null;
+            value = DynValue.Nil;
+            return false;
         }
 
         /// <summary>
@@ -115,12 +136,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <returns></returns>
         public DynValue MetaIndex(Script script, object obj, string metaname)
         {
-            if (obj is IUserDataType u)
+            return TryMetaIndex(script, obj, metaname, out DynValue value) ? value : null;
+        }
+
+        /// <inheritdoc/>
+        public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+        {
+            if (obj is IUserDataType userData)
             {
-                return u.MetaIndex(script, metaname);
+                return UserDataAccess.TryMetaIndex(userData, script, metaname, out value);
             }
 
-            return null;
+            value = DynValue.Nil;
+            return false;
         }
 
         /// <summary>

@@ -38,8 +38,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [AllLuaVersions]
         public async Task IndexStopsIteratingAfterMatch(LuaCompatibilityVersion version)
         {
-            DynValue expected = DynValue.NewString("first");
-            StubDescriptor first = new(indexResult: expected);
+            StubDescriptor first = new(indexResult: DynValue.Nil);
             StubDescriptor second = new(indexResult: DynValue.Nil);
             CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
@@ -50,7 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 isDirectIndexing: true
             );
 
-            await Assert.That(value).IsSameReferenceAs(expected);
+            await Assert.That(value.IsNil()).IsTrue();
             await Assert.That(first.IndexCallCount).IsEqualTo(1);
             await Assert.That(second.IndexCallCount).IsEqualTo(0);
         }
@@ -70,8 +69,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 DynValue.NewString("missing"),
                 true
             );
+            bool found = descriptor.TryIndex(
+                new Script(version),
+                new object(),
+                DynValue.NewString("missing"),
+                true,
+                out DynValue missing
+            );
 
             await Assert.That(value).IsNull();
+            await Assert.That(found).IsFalse();
+            await Assert.That(missing.IsNil()).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -121,14 +129,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [AllLuaVersions]
         public async Task MetaIndexReturnsFirstNonNullValue(LuaCompatibilityVersion version)
         {
-            DynValue expected = DynValue.NewString("__call");
+            DynValue expected = DynValue.Void;
             StubDescriptor first = new(indexResult: null, metaResult: null);
             StubDescriptor second = new(indexResult: null, metaResult: expected);
             CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
             DynValue value = descriptor.MetaIndex(new Script(version), new object(), "__call");
 
-            await Assert.That(value).IsSameReferenceAs(expected);
+            await Assert.That(value.IsVoid()).IsTrue();
             await Assert.That(first.MetaCallCount).IsEqualTo(1);
             await Assert.That(second.MetaCallCount).IsEqualTo(1);
         }

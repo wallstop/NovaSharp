@@ -1448,7 +1448,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
         }
 
-        private sealed class UpvalueIdentifierDescriptor : IUserDataDescriptor
+        private sealed class UpvalueIdentifierDescriptor : IUserDataDescriptorTryAccess
         {
             public string Name => "upvalue";
 
@@ -1457,6 +1457,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
             {
                 return DynValue.Nil;
+            }
+
+            public bool TryIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                bool isDirectIndexing,
+                out DynValue value
+            )
+            {
+                value = DynValue.Nil;
+                return true;
             }
 
             public bool SetIndex(
@@ -1483,6 +1495,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             public DynValue MetaIndex(Script script, object obj, string metaname)
             {
                 return null;
+            }
+
+            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+            {
+                value = DynValue.Nil;
+                return false;
             }
 
             public bool IsTypeCompatible(Type type, object obj)

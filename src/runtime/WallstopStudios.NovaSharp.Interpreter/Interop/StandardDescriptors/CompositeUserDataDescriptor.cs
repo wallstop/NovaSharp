@@ -12,7 +12,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
     /// Used, for example, for objects implementing multiple interfaces but for which no descriptor is
     /// specifically registered.
     /// </summary>
-    public class CompositeUserDataDescriptor : IUserDataDescriptor
+    public class CompositeUserDataDescriptor : IUserDataDescriptorTryAccess
     {
         private readonly IList<IUserDataDescriptor> _descriptors;
         private readonly Type _type;
@@ -62,16 +62,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <returns></returns>
         public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
         {
+            return TryIndex(script, obj, index, isDirectIndexing, out DynValue value)
+                ? value
+                : null;
+        }
+
+        /// <inheritdoc/>
+        public bool TryIndex(
+            Script script,
+            object obj,
+            DynValue index,
+            bool isDirectIndexing,
+            out DynValue value
+        )
+        {
             foreach (IUserDataDescriptor dd in _descriptors)
             {
-                DynValue v = dd.Index(script, obj, index, isDirectIndexing);
-
-                if (v != null)
+                if (UserDataAccess.TryIndex(dd, script, obj, index, isDirectIndexing, out value))
                 {
-                    return v;
+                    return true;
                 }
             }
-            return null;
+
+            value = DynValue.Nil;
+            return false;
         }
 
         /// <summary>
@@ -127,16 +141,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <returns></returns>
         public DynValue MetaIndex(Script script, object obj, string metaname)
         {
+            return TryMetaIndex(script, obj, metaname, out DynValue value) ? value : null;
+        }
+
+        /// <inheritdoc/>
+        public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+        {
             foreach (IUserDataDescriptor dd in _descriptors)
             {
-                DynValue v = dd.MetaIndex(script, obj, metaname);
-
-                if (v != null)
+                if (UserDataAccess.TryMetaIndex(dd, script, obj, metaname, out value))
                 {
-                    return v;
+                    return true;
                 }
             }
-            return null;
+
+            value = DynValue.Nil;
+            return false;
         }
 
         /// <summary>

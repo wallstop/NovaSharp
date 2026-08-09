@@ -8,7 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
     /// Standard user data descriptor used to instantiate generics.
     /// </summary>
     public class StandardGenericsUserDataDescriptor
-        : IUserDataDescriptor,
+        : IUserDataDescriptorTryAccess,
             IGeneratorUserDataDescriptor
     {
         /// <summary>
@@ -53,6 +53,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         }
 
         /// <inheritdoc/>
+        public bool TryIndex(
+            Script script,
+            object obj,
+            DynValue index,
+            bool isDirectIndexing,
+            out DynValue value
+        )
+        {
+            value = DynValue.Nil;
+            return false;
+        }
+
+        /// <inheritdoc/>
         public bool SetIndex(
             Script script,
             object obj,
@@ -79,6 +92,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         public DynValue MetaIndex(Script script, object obj, string metaname)
         {
             return null;
+        }
+
+        /// <inheritdoc/>
+        public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+        {
+            value = DynValue.Nil;
+            return false;
         }
 
         /// <inheritdoc/>

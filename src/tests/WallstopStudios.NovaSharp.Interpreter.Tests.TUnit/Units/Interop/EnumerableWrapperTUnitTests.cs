@@ -213,7 +213,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 DynValue.NewString("does_not_exist"),
                 true
             );
+            bool foundUnknown = ((IUserDataDescriptorTryAccess)descriptor).TryIndex(
+                script,
+                instance,
+                DynValue.NewString("does_not_exist"),
+                true,
+                out DynValue missing
+            );
             await Assert.That(unknown).IsNull().ConfigureAwait(false);
+            await Assert.That(foundUnknown).IsFalse().ConfigureAwait(false);
+            await Assert.That(missing.IsNil()).IsTrue().ConfigureAwait(false);
 
             DynValue resetResult = reset.Callback.ClrCallback(
                 context,

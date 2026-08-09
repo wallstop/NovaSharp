@@ -69,6 +69,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             );
 
             await Assert.That(exception.Message).Contains("cannot multi-index through metamethods");
+
+            stack.Clear();
+            DynValue legacyUserData = UserData.Create(
+                new RejectingUserData(),
+                new RejectingUserDataDescriptor()
+            );
+            stack.Push(legacyUserData);
+            Instruction legacyInstruction = new Instruction(SourceRef.GetClrLocation())
+            {
+                OpCode = OpCode.IndexN,
+                Value = DynValue.NewString("legacy-nil"),
+            };
+
+            processor.ExecIndexForTests(legacyInstruction, 0);
+
+            await Assert.That(stack.Pop().IsNil()).IsTrue();
+
+            PresenceAwareUserDataDescriptor presenceDescriptor = new();
+            DynValue presenceUserData = UserData.Create(
+                new RejectingUserData(),
+                presenceDescriptor
+            );
+            Instruction presenceInstruction = new Instruction(SourceRef.GetClrLocation())
+            {
+                OpCode = OpCode.IndexN,
+                Value = DynValue.NewString("handled"),
+            };
+            stack.Push(presenceUserData);
+
+            processor.ExecIndexForTests(presenceInstruction, 0);
+
+            await Assert.That(stack.Pop().IsVoid()).IsTrue();
+
+            stack.Push(presenceUserData);
+            presenceInstruction.Value = DynValue.NewString("missing");
+            ScriptRuntimeException missingException = ExpectException<ScriptRuntimeException>(() =>
+                processor.ExecIndexForTests(presenceInstruction, 0)
+            );
+
+            await Assert.That(missingException.Message).Contains("missing");
         }
 
         private sealed class RejectingUserData { }
@@ -103,6 +143,70 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             public DynValue MetaIndex(Script script, object obj, string metaname)
             {
                 return null;
+            }
+
+            public bool IsTypeCompatible(Type type, object obj)
+            {
+                return obj is RejectingUserData;
+            }
+        }
+
+        private sealed class PresenceAwareUserDataDescriptor : IUserDataDescriptorTryAccess
+        {
+            public string Name => nameof(PresenceAwareUserDataDescriptor);
+
+            public Type Type => typeof(RejectingUserData);
+
+            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+            {
+                return TryIndex(script, obj, index, isDirectIndexing, out DynValue value)
+                    ? value
+                    : null;
+            }
+
+            public bool TryIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                bool isDirectIndexing,
+                out DynValue value
+            )
+            {
+                if (index.String == "handled")
+                {
+                    value = DynValue.Void;
+                    return true;
+                }
+
+                value = DynValue.Nil;
+                return false;
+            }
+
+            public bool SetIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                DynValue value,
+                bool isDirectIndexing
+            )
+            {
+                return false;
+            }
+
+            public string AsString(object obj)
+            {
+                return Name;
+            }
+
+            public DynValue MetaIndex(Script script, object obj, string metaname)
+            {
+                return null;
+            }
+
+            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+            {
+                value = DynValue.Nil;
+                return false;
             }
 
             public bool IsTypeCompatible(Type type, object obj)

@@ -541,9 +541,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         public async Task MetaIndexReturnsNullForNonFlags(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleEnum));
-            DynValue meta = descriptor.MetaIndex(new Script(version), SampleEnum.One, "__concat");
+            Script script = new(version);
+            DynValue meta = descriptor.MetaIndex(script, SampleEnum.One, "__concat");
+            bool found = descriptor.TryMetaIndex(
+                script,
+                SampleEnum.One,
+                "__concat",
+                out DynValue missing
+            );
 
             await Assert.That(meta).IsNull().ConfigureAwait(false);
+            await Assert.That(found).IsFalse().ConfigureAwait(false);
+            await Assert.That(missing.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

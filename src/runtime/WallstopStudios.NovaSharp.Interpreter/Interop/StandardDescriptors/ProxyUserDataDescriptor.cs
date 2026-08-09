@@ -8,7 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
     /// <summary>
     /// Data descriptor used for proxy objects
     /// </summary>
-    public sealed class ProxyUserDataDescriptor : IUserDataDescriptor
+    public sealed class ProxyUserDataDescriptor : IUserDataDescriptorTryAccess
     {
         private readonly IUserDataDescriptor _proxyDescriptor;
         private readonly IProxyFactory _proxyFactory;
@@ -65,7 +65,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <returns></returns>
         public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
         {
-            return _proxyDescriptor.Index(script, Proxy(obj), index, isDirectIndexing);
+            return TryIndex(script, obj, index, isDirectIndexing, out DynValue value)
+                ? value
+                : null;
+        }
+
+        /// <inheritdoc/>
+        public bool TryIndex(
+            Script script,
+            object obj,
+            DynValue index,
+            bool isDirectIndexing,
+            out DynValue value
+        )
+        {
+            return UserDataAccess.TryIndex(
+                _proxyDescriptor,
+                script,
+                Proxy(obj),
+                index,
+                isDirectIndexing,
+                out value
+            );
         }
 
         /// <summary>
@@ -114,7 +135,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <returns></returns>
         public DynValue MetaIndex(Script script, object obj, string metaname)
         {
-            return _proxyDescriptor.MetaIndex(script, Proxy(obj), metaname);
+            return TryMetaIndex(script, obj, metaname, out DynValue value) ? value : null;
+        }
+
+        /// <inheritdoc/>
+        public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+        {
+            return UserDataAccess.TryMetaIndex(
+                _proxyDescriptor,
+                script,
+                Proxy(obj),
+                metaname,
+                out value
+            );
         }
 
         /// <summary>
