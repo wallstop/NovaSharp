@@ -89,7 +89,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.REPL
             bool resetCurrentCommand = true;
             try
             {
-                DynValue result = null;
+                DynValue result;
 
                 if (isFirstLine && HandleClassicExprsSyntax && _currentCommand[0] == '=')
                 {

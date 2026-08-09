@@ -147,7 +147,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 throw new DynamicExpressionException("Attempt to index with nil or nan key.");
             }
 
-            return b.Table.Get(i) ?? DynValue.Nil;
+            return b.Table.Get(i);
         }
     }
 }

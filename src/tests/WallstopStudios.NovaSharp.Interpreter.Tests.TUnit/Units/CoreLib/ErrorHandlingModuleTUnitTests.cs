@@ -89,6 +89,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
                 .IsEqualTo(DataType.TailCallRequest)
                 .ConfigureAwait(false);
             await Assert
+                .That(first.TailCallData.HasErrorHandlerBeforeUnwind)
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandlerBeforeUnwind)
+                .IsNull()
+                .ConfigureAwait(false);
+            await Assert
                 .That(first.TailCallData.Continuation)
                 .IsSameReferenceAs(second.TailCallData.Continuation)
                 .ConfigureAwait(false);
@@ -563,11 +571,55 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             second.TailCallData.ErrorHandler.AdditionalData = "dirty";
             DynValue third = ErrorHandlingModule.Xpcall(context, args);
 
+            DynValue nilRequest = null;
+            DynValue voidRequest = null;
+            if (
+                version == LuaCompatibilityVersion.Lua51
+                || version == LuaCompatibilityVersion.Lua52
+            )
+            {
+                nilRequest = ErrorHandlingModule.Xpcall(
+                    context,
+                    new CallbackArguments(new[] { function, DynValue.Nil }, false)
+                );
+                voidRequest = ErrorHandlingModule.Xpcall(
+                    context,
+                    new CallbackArguments(new[] { function, DynValue.Void, DynValue.Nil }, false)
+                );
+            }
+
             await Assert.That(first.Type).IsEqualTo(DataType.TailCallRequest).ConfigureAwait(false);
             await Assert
                 .That(second.Type)
                 .IsEqualTo(DataType.TailCallRequest)
                 .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.HasErrorHandlerBeforeUnwind)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandlerBeforeUnwind)
+                .IsSameReferenceAs(handler)
+                .ConfigureAwait(false);
+            if (nilRequest != null)
+            {
+                await Assert
+                    .That(nilRequest.TailCallData.HasErrorHandlerBeforeUnwind)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(nilRequest.TailCallData.ErrorHandlerBeforeUnwind.Type)
+                    .IsEqualTo(DataType.Nil)
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(voidRequest.TailCallData.HasErrorHandlerBeforeUnwind)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(voidRequest.TailCallData.ErrorHandlerBeforeUnwind.Type)
+                    .IsEqualTo(DataType.Void)
+                    .ConfigureAwait(false);
+            }
             await Assert
                 .That(first.TailCallData.Continuation)
                 .IsSameReferenceAs(second.TailCallData.Continuation)

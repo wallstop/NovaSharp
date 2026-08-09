@@ -10,6 +10,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     public class TailCallData
     {
         private DynValue[] _args = Array.Empty<DynValue>();
+        private DynValue _errorHandlerBeforeUnwind = DynValue.Nil;
 
         /// <summary>
         /// Gets or sets the function to call
@@ -71,6 +72,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets or sets the error handler to be called before stack unwinding
         /// </summary>
-        public DynValue ErrorHandlerBeforeUnwind { get; set; }
+        public DynValue ErrorHandlerBeforeUnwind
+        {
+            get { return HasErrorHandlerBeforeUnwind ? _errorHandlerBeforeUnwind : null; }
+            set
+            {
+                if (value == null)
+                {
+                    _errorHandlerBeforeUnwind = DynValue.Nil;
+                    HasErrorHandlerBeforeUnwind = false;
+                    return;
+                }
+
+                _errorHandlerBeforeUnwind = value;
+                HasErrorHandlerBeforeUnwind = true;
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether an error handler was explicitly supplied for execution
+        /// before stack unwinding.
+        /// </summary>
+        public bool HasErrorHandlerBeforeUnwind { get; private set; }
+
+        /// <summary>
+        /// Gets the non-null VM representation of the optional pre-unwind error handler.
+        /// </summary>
+        internal DynValue ErrorHandlerBeforeUnwindValue => _errorHandlerBeforeUnwind;
     }
 }

@@ -31,7 +31,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         {
             List<DynValue> readLines = new();
 
-            DynValue readValue = null;
+            DynValue readValue;
 
             do
             {

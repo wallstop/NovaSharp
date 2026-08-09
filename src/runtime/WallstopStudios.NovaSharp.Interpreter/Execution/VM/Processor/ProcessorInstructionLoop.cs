@@ -11,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
+    using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
 
@@ -27,13 +28,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 int returnAddress,
                 CallbackFunction errorHandler,
                 CallbackFunction continuation,
-                DynValue errorHandlerBeforeUnwind
+                DynValue errorHandlerBeforeUnwind,
+                bool hasErrorHandlerBeforeUnwind
             )
             {
                 ReturnAddress = returnAddress;
                 ErrorHandler = errorHandler;
                 Continuation = continuation;
                 ErrorHandlerBeforeUnwind = errorHandlerBeforeUnwind;
+                HasErrorHandlerBeforeUnwind = hasErrorHandlerBeforeUnwind;
             }
 
             public int ReturnAddress { get; }
@@ -43,6 +46,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             public CallbackFunction Continuation { get; }
 
             public DynValue ErrorHandlerBeforeUnwind { get; }
+
+            public bool HasErrorHandlerBeforeUnwind { get; }
         }
 
         /// <summary>
@@ -606,9 +611,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return false;
             }
 
-            DynValue messageHandler = frame.ErrorHandlerBeforeUnwind;
-            if (messageHandler != null)
+            if (frame.HasErrorHandlerBeforeUnwind)
             {
+                DynValue messageHandler = frame.ErrorHandlerBeforeUnwind;
                 if (frame.ErrorHandlerBeforeUnwindInProgress)
                 {
                     return true;
@@ -1576,8 +1581,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             CallbackFunction Continuation = null,
             bool thisCall = false,
             string debugText = null,
-            DynValue unwindHandler = null,
             bool allowTailCallFrameReuse = false
+        )
+        {
+            return InternalExecCall(
+                argsCount,
+                instructionPtr,
+                handler,
+                Continuation,
+                thisCall,
+                debugText,
+                DynValue.Nil,
+                hasUnwindHandler: false,
+                allowTailCallFrameReuse
+            );
+        }
+
+        private int InternalExecCall(
+            int argsCount,
+            int instructionPtr,
+            CallbackFunction handler,
+            CallbackFunction Continuation,
+            bool thisCall,
+            string debugText,
+            DynValue unwindHandler,
+            bool hasUnwindHandler,
+            bool allowTailCallFrameReuse
         )
         {
             DynValue fn = _valueStack.Peek(argsCount);
@@ -1588,7 +1617,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     instructionPtr,
                     handler,
                     Continuation,
-                    unwindHandler
+                    hasUnwindHandler
                 );
             bool canReuseLuaTailCallFrame = canReuseTailCallFrame && fn.Type == DataType.Function;
             SourceRef callingSourceRef = GetCurrentSourceRef(instructionPtr - 1);
@@ -1609,7 +1638,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 frame.BasePointer = -1;
                 frame.ErrorHandler = handler;
                 frame.Continuation = Continuation;
-                frame.ErrorHandlerBeforeUnwind = unwindHandler;
+                frame.SetErrorHandlerBeforeUnwind(unwindHandler, hasUnwindHandler);
                 frame.Flags = Flags;
                 _executionStack.Push(frame);
 
@@ -1660,6 +1689,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 CallbackFunction effectiveHandler = handler;
                 CallbackFunction effectiveContinuation = Continuation;
                 DynValue effectiveUnwindHandler = unwindHandler;
+                bool hasEffectiveUnwindHandler = hasUnwindHandler;
 
                 if (canReuseLuaTailCallFrame)
                 {
@@ -1668,6 +1698,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     effectiveHandler = reuseState.ErrorHandler;
                     effectiveContinuation = reuseState.Continuation;
                     effectiveUnwindHandler = reuseState.ErrorHandlerBeforeUnwind;
+                    hasEffectiveUnwindHandler = reuseState.HasErrorHandlerBeforeUnwind;
                     Flags |= CallStackItemFlags.TailCall;
                 }
 
@@ -1683,7 +1714,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 frame.Function = fn;
                 frame.ErrorHandler = effectiveHandler;
                 frame.Continuation = effectiveContinuation;
-                frame.ErrorHandlerBeforeUnwind = effectiveUnwindHandler;
+                frame.SetErrorHandlerBeforeUnwind(
+                    effectiveUnwindHandler,
+                    hasEffectiveUnwindHandler
+                );
                 frame.Flags = Flags;
                 _executionStack.Push(frame);
                 return fn.Function.EntryPointByteCodeLocation;
@@ -1717,7 +1751,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     instructionPtr,
                     handler,
                     Continuation,
+                    false,
+                    null,
                     unwindHandler: unwindHandler,
+                    hasUnwindHandler: hasUnwindHandler,
                     allowTailCallFrameReuse: allowTailCallFrameReuse
                 );
             }
@@ -1729,7 +1766,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             int instructionPtr,
             CallbackFunction handler,
             CallbackFunction continuation,
-            DynValue unwindHandler
+            bool hasUnwindHandler
         )
         {
             if (!IsTailCallReturnSite(instructionPtr))
@@ -1738,7 +1775,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             CallStackItem currentFrame = _executionStack.Peek();
-            return CanReuseFrameForLuaTailCall(currentFrame, handler, continuation, unwindHandler);
+            return CanReuseFrameForLuaTailCall(
+                currentFrame,
+                handler,
+                continuation,
+                hasUnwindHandler
+            );
         }
 
         private bool IsTailCallReturnSite(int instructionPtr)
@@ -1756,13 +1798,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             CallStackItem currentFrame,
             CallbackFunction handler,
             CallbackFunction continuation,
-            DynValue unwindHandler
+            bool hasUnwindHandler
         )
         {
             return currentFrame.ClrFunction == null
                 && handler == null
                 && continuation == null
-                && unwindHandler == null
+                && !hasUnwindHandler
                 && !HasPendingCloseHandlers(currentFrame);
         }
 
@@ -1903,7 +1945,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     csi.ReturnAddress,
                     csi.ErrorHandler,
                     csi.Continuation,
-                    csi.ErrorHandlerBeforeUnwind
+                    csi.ErrorHandlerBeforeUnwind,
+                    csi.HasErrorHandlerBeforeUnwind
                 );
                 int argscnt = (int)(_valueStack.Pop().Number);
                 _valueStack.RemoveLast(argscnt + 1);
@@ -2022,7 +2065,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     tcd.Continuation,
                     false,
                     null,
-                    tcd.ErrorHandlerBeforeUnwind,
+                    tcd.ErrorHandlerBeforeUnwindValue,
+                    tcd.HasErrorHandlerBeforeUnwind,
                     allowTailCallFrameReuse
                 );
             }
@@ -2889,14 +2933,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     UserData ud = obj.UserData;
 
-                    DynValue v = ud.Descriptor.Index(
-                        GetScript(),
-                        ud.Object,
-                        originalIdx,
-                        isNameIndex
-                    );
-
-                    if (v == null)
+                    if (
+                        !UserDataAccess.TryIndex(
+                            ud.Descriptor,
+                            GetScript(),
+                            ud.Object,
+                            originalIdx,
+                            isNameIndex,
+                            out DynValue v
+                        )
+                    )
                     {
                         throw ScriptRuntimeException.UserDataMissingField(
                             ud.Descriptor.Name,

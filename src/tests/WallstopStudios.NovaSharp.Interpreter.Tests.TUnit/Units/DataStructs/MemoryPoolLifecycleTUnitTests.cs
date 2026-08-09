@@ -464,7 +464,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             CallStackItemPool.Trim(PoolTrimLevel.Critical);
             CallStackItem first = CallStackItemPool.Rent();
             CallStackItem second = CallStackItemPool.Rent();
+            first.SetErrorHandlerBeforeUnwind(DynValue.Void, hasHandler: true);
+            bool hadHandlerBeforeReturn = first.HasErrorHandlerBeforeUnwind;
             CallStackItemPool.Return(first);
+            bool hasHandlerAfterReturn = first.HasErrorHandlerBeforeUnwind;
+            DataType handlerTypeAfterReturn = first.ErrorHandlerBeforeUnwind.Type;
             CallStackItemPool.Return(second);
 
             CallStackItemPool.Trim(PoolTrimLevel.Critical);
@@ -482,6 +486,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
                 || ReferenceEquals(afterSecond, first)
                 || ReferenceEquals(afterSecond, second);
 
+            await Assert.That(hadHandlerBeforeReturn).IsTrue().ConfigureAwait(false);
+            await Assert.That(hasHandlerAfterReturn).IsFalse().ConfigureAwait(false);
+            await Assert.That(handlerTypeAfterReturn).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(reused).IsFalse().ConfigureAwait(false);
         }
 

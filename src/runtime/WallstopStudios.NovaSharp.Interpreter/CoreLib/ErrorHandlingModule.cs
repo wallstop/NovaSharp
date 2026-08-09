@@ -45,14 +45,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            return SetErrorHandlerStrategy("pcall", executionContext, args, null);
+            return SetErrorHandlerStrategy(
+                "pcall",
+                executionContext,
+                args,
+                DynValue.Nil,
+                hasHandlerBeforeUnwind: false
+            );
         }
 
         private static DynValue SetErrorHandlerStrategy(
             string funcName,
             ScriptExecutionContext executionContext,
             CallbackArguments args,
-            DynValue handlerBeforeUnwind
+            DynValue handlerBeforeUnwind,
+            bool hasHandlerBeforeUnwind
         )
         {
             CallbackFunction continuationCallback;
@@ -100,16 +107,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                             );
                         }
 
-                        return DynValue.NewTailCallReq(
-                            new TailCallData()
-                            {
-                                Args = ret.TailCallData.Args,
-                                Function = ret.TailCallData.Function,
-                                Continuation = continuationCallback,
-                                ErrorHandler = errorCallback,
-                                ErrorHandlerBeforeUnwind = handlerBeforeUnwind,
-                            }
-                        );
+                        TailCallData tailCallData = new()
+                        {
+                            Args = ret.TailCallData.Args,
+                            Function = ret.TailCallData.Function,
+                            Continuation = continuationCallback,
+                            ErrorHandler = errorCallback,
+                        };
+                        if (hasHandlerBeforeUnwind)
+                        {
+                            tailCallData.ErrorHandlerBeforeUnwind = handlerBeforeUnwind;
+                        }
+
+                        return DynValue.NewTailCallReq(tailCallData);
                     }
                     else if (ret.Type == DataType.YieldRequest)
                     {
@@ -125,7 +135,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
                 catch (ScriptRuntimeException ex)
                 {
-                    executionContext.PerformMessageDecorationBeforeUnwind(handlerBeforeUnwind, ex);
+                    if (hasHandlerBeforeUnwind)
+                    {
+                        executionContext.PerformMessageDecorationBeforeUnwind(
+                            handlerBeforeUnwind,
+                            ex
+                        );
+                    }
+                    else
+                    {
+                        ex.DecoratedMessage = ex.Message;
+                    }
                     return DynValue.NewTupleNested(
                         DynValue.False,
                         DynValue.NewString(ex.DecoratedMessage)
@@ -141,16 +161,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
             else
             {
-                return DynValue.NewTailCallReq(
-                    new TailCallData()
-                    {
-                        Args = a,
-                        Function = v,
-                        Continuation = continuationCallback,
-                        ErrorHandler = errorCallback,
-                        ErrorHandlerBeforeUnwind = handlerBeforeUnwind,
-                    }
-                );
+                TailCallData tailCallData = new()
+                {
+                    Args = a,
+                    Function = v,
+                    Continuation = continuationCallback,
+                    ErrorHandler = errorCallback,
+                };
+                if (hasHandlerBeforeUnwind)
+                {
+                    tailCallData.ErrorHandlerBeforeUnwind = handlerBeforeUnwind;
+                }
+
+                return DynValue.NewTailCallReq(tailCallData);
             }
         }
 
@@ -332,7 +355,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // NOTE: All versions throw if no handler argument is provided at all.
 
             // Missing handler argument throws in all versions
-            if (args.Count < 2)
+            if (!args.TryRawGet(1, translateVoids: false, out DynValue handlerArg))
             {
                 throw ScriptRuntimeException.BadArgument(
                     1,
@@ -343,8 +366,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
             }
 
-            DynValue handler = null;
-            DynValue handlerArg = args[1];
+            DynValue handler = DynValue.Nil;
             if (handlerArg.Type == DataType.Function || handlerArg.Type == DataType.ClrFunction)
             {
                 handler = handlerArg;
@@ -372,7 +394,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 "xpcall",
                 executionContext,
                 new CallbackArguments(a, false),
-                handler
+                handler,
+                hasHandlerBeforeUnwind: true
             );
         }
     }

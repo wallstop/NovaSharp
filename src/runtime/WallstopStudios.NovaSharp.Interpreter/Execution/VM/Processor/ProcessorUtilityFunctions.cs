@@ -83,13 +83,57 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue l,
             DynValue r,
             string eventName,
+            int instructionPtr
+        )
+        {
+            return InternalInvokeBinaryMetaMethodCore(
+                l,
+                r,
+                eventName,
+                instructionPtr,
+                hasExtraPush: false,
+                DynValue.Nil
+            );
+        }
+
+        /// <summary>
+        /// Pushes an additional explicit Lua value before scheduling a binary metamethod.
+        /// </summary>
+        private int InternalInvokeBinaryMetaMethod(
+            DynValue l,
+            DynValue r,
+            string eventName,
             int instructionPtr,
-            DynValue extraPush = null
+            DynValue extraPush
+        )
+        {
+            if (extraPush == null)
+            {
+                throw new ArgumentNullException(nameof(extraPush));
+            }
+
+            return InternalInvokeBinaryMetaMethodCore(
+                l,
+                r,
+                eventName,
+                instructionPtr,
+                hasExtraPush: true,
+                extraPush
+            );
+        }
+
+        private int InternalInvokeBinaryMetaMethodCore(
+            DynValue l,
+            DynValue r,
+            string eventName,
+            int instructionPtr,
+            bool hasExtraPush,
+            DynValue extraPush
         )
         {
             if (TryGetBinaryMetamethod(l, r, eventName, out DynValue metamethod))
             {
-                if (extraPush != null)
+                if (hasExtraPush)
                 {
                     _valueStack.Push(extraPush);
                 }

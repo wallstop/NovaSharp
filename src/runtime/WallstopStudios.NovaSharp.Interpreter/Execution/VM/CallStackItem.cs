@@ -49,9 +49,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Error handler executed before unwinding (used for message decoration).
         /// </summary>
-        public DynValue ErrorHandlerBeforeUnwind { get; set; }
+        public DynValue ErrorHandlerBeforeUnwind { get; private set; } = DynValue.Nil;
+
+        internal bool HasErrorHandlerBeforeUnwind { get; private set; }
 
         internal bool ErrorHandlerBeforeUnwindInProgress { get; set; }
+
+        internal void SetErrorHandlerBeforeUnwind(DynValue handler, bool hasHandler)
+        {
+            if (handler == null)
+            {
+                throw new System.ArgumentNullException(nameof(handler));
+            }
+
+            ErrorHandlerBeforeUnwind = hasHandler ? handler : DynValue.Nil;
+            HasErrorHandlerBeforeUnwind = hasHandler;
+        }
 
         /// <summary>
         /// Stack index of the base pointer for the frame.
@@ -101,7 +114,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             Function = null;
             Continuation = null;
             ErrorHandler = null;
-            ErrorHandlerBeforeUnwind = null;
+            SetErrorHandlerBeforeUnwind(DynValue.Nil, hasHandler: false);
             ErrorHandlerBeforeUnwindInProgress = false;
             BasePointer = 0;
             ReturnAddress = 0;
