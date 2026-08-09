@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785376188496,
+  "lastUpdate": 1786311121888,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -2254,6 +2254,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
             "value": 0.783536,
+            "unit": "μs",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b57b1f268fdd51c29c7e47dbf455266168bfb0c2",
+          "message": "Unify LuaValue and eliminate hot-path allocation classes (#107)\n\n## Summary\n\n- replace the heap DynValue/facade split with one VM-native readonly\n`NovaSharp.LuaValue` struct while preserving the shipped root API\n- make absence, Nil, Void, ownership, disposal, tuple copying, userdata\ndecline, and debugger identity explicit across runtime and tooling\n- consolidate exact Lua numeral parsing and correct debug/string/file\nnumeric coercion semantics against Lua 5.1-5.5\n- move recursive-call arguments and uncaptured locals to inline\nstack-backed storage\n- remove warmed GenericPool allocations and migrate all 32 Math\ncallbacks to stack-only argument views without breaking public\nreflection metadata\n- update Hardwire, debugger, CLI, benchmarks, Unity samples, lints, and\nlive repository guidance for the native value model\n\n## Why\n\nPhase A0 measured catastrophic recursive allocation: `fib(30)` allocated\n2,132,514,592 B/op and NumericLoops allocated 2,844,016 B/op. The root\ncause was structural—heap wrappers, copied argument slices, heap local\ncells, and legacy callback argument/context materialization.\n\nThis PR removes those allocation classes while preserving Lua semantics\nand the public facade contract.\n\n## Measured impact\n\n| Gate | Baseline | Current |\n| --- | ---: | ---: |\n| `fib(30)` allocation | 2,132,514,592 B/op | 192 B/op |\n| NumericLoops allocation | 2,844,016 B/op; 1,248,000 B/op immediately\nbefore Math migration | 0 B/op |\n| NumericLoops mean | 1.956 ms immediately before Math migration | 1.856\nms |\n| one-argument/one-result host call | open | 479.8 ns / 0 B |\n| Lua-to-CLR interop | 475.65 ns / 488 B Phase A0 | 540.11 ns / 0 B;\nsame-run NLua 603.53 ns / 504 B |\n\nThe remaining blocker is throughput, not allocation: same-run `fib(30)`\nand Hanoi are still 20.70x and 20.27x slower than NLua. Script\nconstruction is 319,436 B and fixed resume-3 is 592 B. These are\nintentionally left open.\n\n## Compatibility and API impact\n\n- root `NovaSharp.LuaValue` remains the only public value currency and\nmatches the checked-in shipped surface\n- public legacy Math methods and attributes remain available; built-in\nregistration deterministically prefers the private argument-view cores\n- external module registration behavior is unchanged\n- generated Hardwire output no longer depends on internal value\nfactories\n- Unity-facing samples use only the supported facade; no runtime code\ngeneration was introduced\n\nThis is a pre-1.0 intentional break for the old internal/public\n`DynValue` identity, as specified by PLAN.md.\n\n## Validation\n\n- PR CI: 42 checks passed, 1 expected autofix job skipped; merge state\n`CLEAN`\n- Lua comparison CI: all 15 OS/version lanes (Windows, macOS, Ubuntu ×\nLua 5.1-5.5) report 0 mismatches, one-sided outputs, missing outputs, or\nerror-ratchet regressions\n- full solution build: 0 warnings, 0 errors\n- full TUnit suite: 15,223/15,223 passed\n- Math comparison corpus: 296 executions across Lua 5.1-5.5, 0\nmismatches, 0 missing\n- changed parser/debug/string fixtures matched applicable reference Lua\n5.1-5.5 stdout/stderr\n- NumericLoops allocation gate: exact 0 B steady-state\n- recursive allocation gate: green across Lua 5.1-5.5\n- VM allocation lint and strict Lua-number lint: clean\n- repository formatting, diff checks, pre-commit, and pre-push: passed\n- Unity package generation and public facade/Hardwire external-consumer\nprobes: passed\n- real Unity Editor IL2CPP player build: not available locally\n- repeated independent adversarial reviews: APPROVE, zero actionable\nfindings\n\n## Follow-up\n\n#108 tracks the measured struct call-frame experiment and the remaining\nscript/coroutine lifecycle gates.\n\nCloses #96.\nRelated to #95.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **High Risk**\n> Large cross-cutting VM and public API change touching value\nrepresentation, call paths, debuggers, and semantics; pre-1.0 but\ncorrectness and performance regressions are the main risks.\n> \n> **Overview**\n> **Unifies the runtime on a single inline `NovaSharp.LuaValue` struct**\ninstead of the old heap `DynValue`/facade split. Public entry points\n(`LuaEngine`, `LuaChunk`, `LuaCoroutine`, `LuaFunction`, `LuaTable`) now\nbind lifetime to `Script`, wrap results through\n`LuaValue.Wrap`/`WrapResult`, and call span-friendly `*Values` APIs\nwhere varargs no longer need pooled `DynValue[]` copies on every call.\n> \n> **Semantics and host integration are tightened** for the struct model:\nexplicit absence vs Nil/Void, debugger display via\n`HasValue`/`ToRawString`, and lint rules that treat scalar `LuaValue`\nconstruction as allocation-free while still blocking `new LuaValue[]` /\n`List<LuaValue>` on VM hot paths.\n> \n> **Repository guidance and roadmap docs** (`.llm/*`, `README`,\n`PLAN.md`, session 173) are refreshed to `LuaValue` APIs (`IsTable`,\n`AsNumber`, `IsNil`) and record A1c/A5 progress—e.g. `fib(30)`\nallocation down to ~192 B/op with recursive speed still ~20× NLua, and\nfollow-up on struct call frames.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n7e7009b438eed091f5783b629e80c7bc19af872e. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-08-09T14:26:29-07:00",
+          "tree_id": "6a0d2b2b327503255b23bfd7bf835e908eb9eb11",
+          "url": "https://github.com/wallstop/NovaSharp/commit/b57b1f268fdd51c29c7e47dbf455266168bfb0c2"
+        },
+        "date": 1786311121144,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"CoroutinePipeline\")",
+            "value": 1.021,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"NumericLoops\")",
+            "value": 736.95,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"TableMutation\")",
+            "value": 7.581,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
+            "value": 1.189,
             "unit": "μs",
             "extra": ""
           }
