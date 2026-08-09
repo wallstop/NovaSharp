@@ -10,20 +10,20 @@ Found 176 undocumented public/internal type declarations.
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CompiledScript.cs
   - line 621: missing XML docs for `ExecuteValues()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/DebugModule.cs
-  - line 1442: missing XML docs for `Value`
-  - line 1447: missing XML docs for `Function`
-  - line 1448: missing XML docs for `Mask`
-  - line 1449: missing XML docs for `Count`
-  - line 1462: missing XML docs for `Upvalue`
-  - line 1464: missing XML docs for `ReferenceId`
-  - line 1466: missing XML docs for `ToString()`
-  - line 1477: missing XML docs for `Name`
-  - line 1479: missing XML docs for `Type`
-  - line 1481: missing XML docs for `TryIndex()`
-  - line 1493: missing XML docs for `SetIndex()`
-  - line 1504: missing XML docs for `AsString()`
-  - line 1514: missing XML docs for `TryMetaIndex()`
-  - line 1520: missing XML docs for `IsTypeCompatible()`
+  - line 1468: missing XML docs for `Value`
+  - line 1473: missing XML docs for `Function`
+  - line 1474: missing XML docs for `Mask`
+  - line 1475: missing XML docs for `Count`
+  - line 1488: missing XML docs for `Upvalue`
+  - line 1490: missing XML docs for `ReferenceId`
+  - line 1492: missing XML docs for `ToString()`
+  - line 1503: missing XML docs for `Name`
+  - line 1505: missing XML docs for `Type`
+  - line 1507: missing XML docs for `TryIndex()`
+  - line 1519: missing XML docs for `SetIndex()`
+  - line 1530: missing XML docs for `AsString()`
+  - line 1540: missing XML docs for `TryMetaIndex()`
+  - line 1546: missing XML docs for `IsTypeCompatible()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/IO/FileUserDataDescriptor.cs
   - line 21: missing XML docs for `Name`
   - line 23: missing XML docs for `Type`
@@ -133,7 +133,7 @@ Found 176 undocumented public/internal type declarations.
   - line 47: missing XML docs for `Continuation`
   - line 49: missing XML docs for `ErrorHandlerBeforeUnwind`
   - line 51: missing XML docs for `HasErrorHandlerBeforeUnwind`
-  - line 1550: missing XML docs for `Count`
+  - line 1553: missing XML docs for `Count`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/BasicDescriptors/DispatchingUserDataDescriptor.cs
   - line 314: missing XML docs for `TryIndex()`
   - line 816: missing XML docs for `TryMetaIndex()`

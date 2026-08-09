@@ -229,24 +229,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             LuaValue result = script.DoString(
                 @"
-                local ok, err = pcall(function()
-                    debug.setuservalue(handle, true)
+                local ok, valueOrError = pcall(function()
+                    return debug.setuservalue(handle, true)
                 end)
-                return ok, err
+                return ok, valueOrError, debug.getuservalue(handle)
                 "
             );
 
             LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
-            await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
-            string message = tuple[1].String ?? string.Empty;
-            await Assert
-                .That(message.Contains("table expected, got boolean", StringComparison.Ordinal))
-                .IsTrue()
-                .ConfigureAwait(false);
-            await Assert
-                .That(message.Contains("nil or table", StringComparison.Ordinal))
-                .IsFalse()
-                .ConfigureAwait(false);
+            if (version <= LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
+                string message = tuple[1].String ?? string.Empty;
+                await Assert
+                    .That(message.Contains("table expected, got boolean", StringComparison.Ordinal))
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(message.Contains("nil or table", StringComparison.Ordinal))
+                    .IsFalse()
+                    .ConfigureAwait(false);
+                await Assert.That(tuple[2].IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
+                await Assert.That(tuple[1].Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+                await Assert.That(tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            }
         }
 
         [Test]

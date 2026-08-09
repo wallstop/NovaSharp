@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
     using System.Text;
     using global::NovaSharp;
     using Cysharp.Text;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -102,7 +103,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                         }
                         else if (opt.StartsWith("*n", StringComparison.Ordinal))
                         {
-                            double? d = ReadNumber();
+                            LuaNumber? d = ReadNumber(executionContext.Script.CompatibilityVersion);
 
                             if (d.HasValue)
                             {
@@ -238,7 +239,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
             }
         }
 
-        private double? ReadNumber()
+        private LuaNumber? ReadNumber(LuaCompatibilityVersion version)
         {
             bool canRewind = SupportsRewind;
             long startPosition = canRewind ? GetCurrentPosition() : 0;
@@ -400,7 +401,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
             string numericText = literal.ToString();
 
             bool parsedSuccessfully = false;
-            double parsedValue = 0;
+            LuaNumber parsedValue = LuaNumber.Zero;
 
             if (isHex)
             {
@@ -413,7 +414,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                     isValidLiteral = false;
                 }
 
-                if (isValidLiteral && TryParseHexFloatLiteral(numericText, out parsedValue))
+                if (
+                    isValidLiteral && TryParseHexFloatLiteral(numericText, version, out parsedValue)
+                )
                 {
                     parsedSuccessfully = true;
                 }
@@ -426,15 +429,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                     && hasDigits
                     && !(exponentSeen && !exponentHasDigits);
 
-                if (
-                    isValidLiteral
-                    && double.TryParse(
-                        numericText,
-                        NumberStyles.Float,
-                        CultureInfo.InvariantCulture,
-                        out parsedValue
-                    )
-                )
+                if (isValidLiteral && LuaNumber.TryParse(numericText, version, out parsedValue))
                 {
                     parsedSuccessfully = true;
                 }
@@ -626,7 +621,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         /// <returns><c>true</c> when the literal is valid and <paramref name="value"/> contains the parsed number.</returns>
         internal static bool TryParseHexFloatLiteral(string literal, out double value)
         {
-            value = 0;
+            bool parsed = TryParseHexFloatLiteral(
+                literal,
+                LuaVersionDefaults.CurrentDefault,
+                out LuaNumber parsedNumber
+            );
+            value = parsedNumber.ToDouble;
+            return parsed;
+        }
+
+        private static bool TryParseHexFloatLiteral(
+            string literal,
+            LuaCompatibilityVersion version,
+            out LuaNumber value
+        )
+        {
+            value = LuaNumber.Zero;
 
             if (string.IsNullOrEmpty(literal))
             {
@@ -634,15 +644,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
             }
 
             int index = 0;
-            int sign = 1;
 
             if (literal[index] == '+' || literal[index] == '-')
             {
-                if (literal[index] == '-')
-                {
-                    sign = -1;
-                }
-
                 index++;
 
                 if (index >= literal.Length)
@@ -660,86 +664,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                 return false;
             }
 
-            index += 2;
-
-            double significand = 0;
-            bool digitsSeen = false;
-            int fractionalDigits = 0;
-
-            while (index < literal.Length && LexerUtils.CharIsHexDigit(literal[index]))
-            {
-                significand = (significand * 16.0) + TryGetHexDigitValue(literal[index]);
-                index++;
-                digitsSeen = true;
-            }
-
-            if (index < literal.Length && literal[index] == '.')
-            {
-                index++;
-
-                while (index < literal.Length && LexerUtils.CharIsHexDigit(literal[index]))
-                {
-                    significand = (significand * 16.0) + TryGetHexDigitValue(literal[index]);
-                    index++;
-                    digitsSeen = true;
-                    fractionalDigits++;
-                }
-            }
-
-            if (!digitsSeen)
-            {
-                return false;
-            }
-
-            int exponent = -4 * fractionalDigits;
-
-            if (index < literal.Length && (literal[index] == 'p' || literal[index] == 'P'))
-            {
-                index++;
-                if (index >= literal.Length)
-                {
-                    return false;
-                }
-
-                int exponentSign = 1;
-                if (literal[index] == '+' || literal[index] == '-')
-                {
-                    if (literal[index] == '-')
-                    {
-                        exponentSign = -1;
-                    }
-
-                    index++;
-                }
-
-                if (index >= literal.Length || !char.IsDigit(literal[index]))
-                {
-                    return false;
-                }
-
-                int exponentValue = 0;
-                while (index < literal.Length && char.IsDigit(literal[index]))
-                {
-                    exponentValue = (exponentValue * 10) + (literal[index] - '0');
-                    index++;
-                }
-
-                exponent += exponentSign * exponentValue;
-            }
-
-            if (index != literal.Length)
-            {
-                return false;
-            }
-
-            double magnitude = significand * Math.Pow(2.0, exponent);
-            value = sign * magnitude;
-            return true;
-        }
-
-        private static int TryGetHexDigitValue(char c)
-        {
-            return LexerUtils.HexDigit2Value(c);
+            LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
+            LuaCompatibilityVersion numericVersion =
+                resolved < LuaCompatibilityVersion.Lua53 ? LuaCompatibilityVersion.Lua52 : resolved;
+            return LuaNumber.TryParse(literal, numericVersion, out value);
         }
 
         private static LuaValue CreateIoFailure(Exception exception)

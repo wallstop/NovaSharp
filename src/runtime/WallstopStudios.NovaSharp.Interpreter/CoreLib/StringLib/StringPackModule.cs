@@ -11,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// Implements Lua 5.3+ string.pack, string.unpack, and string.packsize functions (§6.4.2).
@@ -342,16 +343,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
 
             LuaValue fmtArg = args.AsType(0, "unpack", DataType.String, false);
             LuaValue dataArg = args.AsType(1, "unpack", DataType.String, false);
-            LuaValue posArg = args.AsType(2, "unpack", DataType.Number, true);
+            LuaValue suppliedPosition = args[2];
+            LuaValue posArg;
+            if (suppliedPosition.Type == DataType.String)
+            {
+                posArg = LuaNumber.TryParse(
+                    suppliedPosition.String,
+                    executionContext.Script.CompatibilityVersion,
+                    out LuaNumber parsedPosition
+                )
+                    ? LuaValue.NewNumber(parsedPosition)
+                    : suppliedPosition.CheckType(
+                        "unpack",
+                        DataType.Number,
+                        2,
+                        TypeValidationOptions.None
+                    );
+            }
+            else
+            {
+                posArg = args.AsType(2, "unpack", DataType.Number, true);
+            }
 
             string fmt = fmtArg.String;
             string data = dataArg.String;
-            int pos = posArg.IsNil ? 0 : (int)posArg.Number - 1; // Lua uses 1-based indexing
-
-            if (pos < 0 || pos > data.Length)
-            {
-                throw new ScriptRuntimeException("initial position out of string");
-            }
+            int pos = ResolveUnpackPosition(
+                executionContext.Script.CompatibilityVersion,
+                posArg,
+                data.Length
+            );
 
             // Estimate result count based on format - use pooled LuaValue array
             int estimatedResults = EstimateResultCount(fmt);
@@ -581,6 +601,56 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
             LuaValue[] finalResults = new LuaValue[resultCount];
             Array.Copy(resultsBuffer, finalResults, resultCount);
             return LuaValue.NewTuple(finalResults);
+        }
+
+        private static int ResolveUnpackPosition(
+            LuaCompatibilityVersion version,
+            LuaValue positionArgument,
+            int dataLength
+        )
+        {
+            if (positionArgument.IsNil)
+            {
+                return 0;
+            }
+
+            long requested = LuaNumberHelpers.ToLongWithValidation(
+                version,
+                positionArgument,
+                "unpack",
+                3
+            );
+            long oneBasedPosition;
+            if (requested > 0)
+            {
+                oneBasedPosition = requested;
+            }
+            else if (requested < 0 && requested >= -(long)dataLength)
+            {
+                oneBasedPosition = dataLength + requested + 1L;
+            }
+            else if (LuaVersionDefaults.Resolve(version) >= LuaCompatibilityVersion.Lua54)
+            {
+                // Lua 5.4's posrelatI clamps zero and positions before the string to 1.
+                oneBasedPosition = 1;
+            }
+            else
+            {
+                // Lua 5.3's posrelat maps positions before the string to zero, which fails
+                // the subsequent one-based position check.
+                oneBasedPosition = 0;
+            }
+
+            if (oneBasedPosition < 1 || oneBasedPosition > (long)dataLength + 1L)
+            {
+                throw ScriptRuntimeException.BadArgument(
+                    2,
+                    "unpack",
+                    "initial position out of string"
+                );
+            }
+
+            return (int)(oneBasedPosition - 1L);
         }
 
         /// <summary>

@@ -179,6 +179,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .IsEqualTo(-10.0)
                 .Because("String unary minus should work")
                 .ConfigureAwait(false);
+
+            LuaValue infinityResult = script.DoString(
+                @"
+                local addOk, addResult = pcall(function() return 'Infinity' + 0 end)
+                local unaryOk, unaryResult = pcall(function() return -'Infinity' end)
+                return addOk, addResult, unaryOk, unaryResult
+                "
+            );
+            bool acceptsSymbolicInfinity = version == LuaCompatibilityVersion.Lua51;
+            await Assert.That(infinityResult.Tuple[0].Boolean).IsEqualTo(acceptsSymbolicInfinity);
+            await Assert.That(infinityResult.Tuple[2].Boolean).IsEqualTo(acceptsSymbolicInfinity);
+            if (acceptsSymbolicInfinity)
+            {
+                await Assert
+                    .That(double.IsPositiveInfinity(infinityResult.Tuple[1].Number))
+                    .IsTrue();
+                await Assert
+                    .That(double.IsNegativeInfinity(infinityResult.Tuple[3].Number))
+                    .IsTrue();
+            }
         }
 
         /// <summary>

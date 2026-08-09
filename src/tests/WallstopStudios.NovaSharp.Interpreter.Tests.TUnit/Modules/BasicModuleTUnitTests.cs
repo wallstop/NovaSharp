@@ -547,14 +547,129 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task ToNumberReturnsNilForInvalidHexString(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             // "0x" without digits is invalid
             CallbackArguments args = new(new[] { LuaValue.NewString("0x") }, isMethodCall: false);
 
             LuaValue result = BasicModule.ToNumber(context, args);
+            LuaValue thousandsResult = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("1,000") }, isMethodCall: false)
+            );
+            LuaValue trailingPoint = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("1.") }, isMethodCall: false)
+            );
+            LuaValue exponent = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("1e0") }, isMethodCall: false)
+            );
+            LuaValue overflow = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("1e999999") }, isMethodCall: false)
+            );
+            LuaValue underflow = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("1e-999999") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue highDecimal = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("9223372036854775807") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue highDecimalPlusOne = script.DoString(
+                "return tonumber('9223372036854775807') + 1"
+            );
+            LuaValue negativeZero = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("-0") }, isMethodCall: false)
+            );
+            LuaValue compensatedHexFloat = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0x" + new string('f', 400) + "p-1600") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue subnormalHexFloat = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0xffffffffffffffffp-1138") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue roundingHexFloat = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0x220e087835b925585p376") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue unicodeExponent = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("0x1p١") }, isMethodCall: false)
+            );
 
             await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(thousandsResult.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(trailingPoint.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(trailingPoint.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(exponent.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(exponent.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(double.IsPositiveInfinity(overflow.Number)).IsTrue();
+            await Assert.That(underflow.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(underflow.Number).IsEqualTo(0d).ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(compensatedHexFloat.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(subnormalHexFloat.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(roundingHexFloat.IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(compensatedHexFloat.Number).IsEqualTo(1d).ConfigureAwait(false);
+                await Assert
+                    .That(subnormalHexFloat.Number)
+                    .IsEqualTo(double.Epsilon)
+                    .ConfigureAwait(false);
+                long expectedRoundingBits = ((long)(441 + 1023) << 52) | 0x107043C1ADC93L;
+                await Assert
+                    .That(BitConverter.DoubleToInt64Bits(roundingHexFloat.Number))
+                    .IsEqualTo(expectedRoundingBits)
+                    .ConfigureAwait(false);
+            }
+            await Assert.That(unicodeExponent.IsNil).IsTrue().ConfigureAwait(false);
+            if (version <= LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(highDecimal.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(highDecimalPlusOne.LuaNumber.IsFloat)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert.That(highDecimalPlusOne.Number).IsGreaterThan(9e18);
+                await Assert.That(negativeZero.LuaNumber.IsFloat).IsTrue();
+                await Assert.That(1d / negativeZero.Number).IsEqualTo(double.NegativeInfinity);
+            }
+            else
+            {
+                await Assert.That(highDecimal.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(highDecimal.LuaNumber.AsInteger)
+                    .IsEqualTo(long.MaxValue)
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(highDecimalPlusOne.LuaNumber.AsInteger)
+                    .IsEqualTo(long.MinValue)
+                    .ConfigureAwait(false);
+                await Assert.That(negativeZero.LuaNumber.IsInteger).IsTrue();
+                await Assert.That(negativeZero.LuaNumber.AsInteger).IsEqualTo(0L);
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -734,17 +849,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task ToNumberReturnsNilForHexFloatInLua51(LuaCompatibilityVersion version)
         {
-            // In Lua 5.1, tonumber('0x1.8p0') without a base should return nil
-            Script script = CreateScript(LuaCompatibilityVersion.Lua51);
+            Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            CallbackArguments args = new(
-                new[] { LuaValue.NewString("0x1.8p0") },
-                isMethodCall: false
+            LuaValue normal = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("0x1.8p0") }, isMethodCall: false)
+            );
+            LuaValue overflow = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0x1p999999999999") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue underflow = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0x1p-999999999999") },
+                    isMethodCall: false
+                )
             );
 
-            LuaValue result = BasicModule.ToNumber(context, args);
-
-            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(normal.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(overflow.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(underflow.IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(normal.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(normal.Number).IsEqualTo(1.5d).ConfigureAwait(false);
+                await Assert.That(double.IsPositiveInfinity(overflow.Number)).IsTrue();
+                await Assert.That(underflow.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(underflow.Number).IsEqualTo(0d).ConfigureAwait(false);
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -759,7 +898,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Test that large hex integers are parsed with full 64-bit precision
             // 0x7FFFFFFFFFFFFFFF = long.MaxValue = 9223372036854775807
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
                 new[] { LuaValue.NewString("0x7FFFFFFFFFFFFFFF") },
@@ -768,12 +907,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             LuaValue result = BasicModule.ToNumber(context, args);
 
-            // Should be stored as integer with exact value
-            await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
-            await Assert
-                .That(result.LuaNumber.AsInteger)
-                .IsEqualTo(9223372036854775807L)
-                .ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else if (version == LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(result.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(result.Number).IsGreaterThan(9e18).ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(result.LuaNumber.AsInteger)
+                    .IsEqualTo(long.MaxValue)
+                    .ConfigureAwait(false);
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -787,7 +937,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             // 0x123456789ABCDEF = 81985529216486895 (within long range)
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
                 new[] { LuaValue.NewString("0x123456789ABCDEF") },
@@ -796,11 +946,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             LuaValue result = BasicModule.ToNumber(context, args);
 
-            await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
-            await Assert
-                .That(result.LuaNumber.AsInteger)
-                .IsEqualTo(81985529216486895L)
-                .ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else if (version == LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(result.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(result.Number).IsGreaterThan(8e16).ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(result.LuaNumber.AsInteger)
+                    .IsEqualTo(81985529216486895L)
+                    .ConfigureAwait(false);
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -813,20 +975,89 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             LuaCompatibilityVersion version
         )
         {
-            // 0xFFFFFFFFFFFFFFFF = 18446744073709551615 (exceeds long.MaxValue)
-            // Should be parsed as float since it can't fit in a signed 64-bit integer
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            CallbackArguments args = new(
-                new[] { LuaValue.NewString("0xFFFFFFFFFFFFFFFF") },
-                isMethodCall: false
+            LuaValue fullMask = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0xFFFFFFFFFFFFFFFF") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue wrappedZero = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0x10000000000000000") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue negativeFullMask = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("-0xFFFFFFFFFFFFFFFF") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue roundingValue = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0x220e087835b925585") },
+                    isMethodCall: false
+                )
             );
 
-            LuaValue result = BasicModule.ToNumber(context, args);
-
-            await Assert.That(result.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
-            // Due to double precision limits, the value will be approximately 1.844674407370955e+19
-            await Assert.That(result.LuaNumber.AsFloat).IsGreaterThan(1.8e19).ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(fullMask.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(wrappedZero.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(negativeFullMask.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(roundingValue.IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else if (version == LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(fullMask.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(fullMask.Number).IsGreaterThan(1.8e19).ConfigureAwait(false);
+                await Assert.That(wrappedZero.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(wrappedZero.Number).IsGreaterThan(1.8e19).ConfigureAwait(false);
+                await Assert
+                    .That(negativeFullMask.LuaNumber.IsFloat)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(negativeFullMask.Number)
+                    .IsLessThan(-1.8e19)
+                    .ConfigureAwait(false);
+                long expectedRoundingBits = ((long)(65 + 1023) << 52) | 0x107043C1ADC93L;
+                await Assert
+                    .That(BitConverter.DoubleToInt64Bits(roundingValue.Number))
+                    .IsEqualTo(expectedRoundingBits)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(fullMask.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(fullMask.LuaNumber.AsInteger)
+                    .IsEqualTo(-1L)
+                    .ConfigureAwait(false);
+                await Assert.That(wrappedZero.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(wrappedZero.LuaNumber.AsInteger)
+                    .IsEqualTo(0L)
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(negativeFullMask.LuaNumber.IsInteger)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(negativeFullMask.LuaNumber.AsInteger)
+                    .IsEqualTo(1L)
+                    .ConfigureAwait(false);
+                await Assert.That(roundingValue.LuaNumber.IsInteger).IsTrue();
+                await Assert
+                    .That(roundingValue.LuaNumber.AsInteger)
+                    .IsEqualTo(unchecked((long)0x20E087835B925585UL));
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -838,7 +1069,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task ToNumberParsesNegativeMaxLongCorrectly(LuaCompatibilityVersion version)
         {
             // -0x8000000000000000 = long.MinValue = -9223372036854775808
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
                 new[] { LuaValue.NewString("-0x8000000000000000") },
@@ -847,11 +1078,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             LuaValue result = BasicModule.ToNumber(context, args);
 
-            await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
-            await Assert
-                .That(result.LuaNumber.AsInteger)
-                .IsEqualTo(long.MinValue)
-                .ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else if (version == LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(result.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(result.Number).IsLessThan(-9e18).ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(result.LuaNumber.AsInteger)
+                    .IsEqualTo(long.MinValue)
+                    .ConfigureAwait(false);
+            }
         }
 
         // ========================================

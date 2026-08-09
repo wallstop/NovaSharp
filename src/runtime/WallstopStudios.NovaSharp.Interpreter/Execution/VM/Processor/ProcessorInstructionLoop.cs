@@ -1129,7 +1129,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             // Use CastToLuaNumber to preserve integer/float subtype for precise arithmetic.
             // Using CastToNumber (double) loses integer precision for large values near maxinteger,
             // causing for-loops to infinite loop due to floating-point precision limits.
-            LuaNumber? v = _valueStack.Pop().ToScalar().CastToLuaNumber();
+            LuaNumber? v = _valueStack
+                .Pop()
+                .ToScalar()
+                .CastToLuaNumber(_script.Options.CompatibilityVersion);
             if (v.HasValue)
             {
                 _valueStack.Push(LuaValue.NewNumber(v.Value));
@@ -3119,7 +3122,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
 
                 // 5.1-5.3: Auto-coerce strings to numbers
-                if (LuaNumber.TryParse(value.String, out LuaNumber result))
+                if (LuaNumber.TryParse(value.String, version, out LuaNumber result))
                 {
                     return result;
                 }

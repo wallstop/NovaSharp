@@ -1683,7 +1683,15 @@ namespace NovaSharp
         /// Uses coercion if the type is string.
         /// </summary>
         /// <returns>The LuaNumber value, or null if not number, not string or non-convertible-string.</returns>
-        internal LuaNumber? CastToLuaNumber()
+        internal LuaNumber? CastToLuaNumber() => CastToLuaNumber(LuaVersionDefaults.CurrentDefault);
+
+        /// <summary>
+        /// Casts this LuaValue to a <see cref="LuaNumber"/>, preserving integer/float subtyping
+        /// and applying the supplied Lua version's numeric-string grammar.
+        /// </summary>
+        /// <param name="version">The Lua compatibility version governing string coercion.</param>
+        /// <returns>The LuaNumber value, or null if not number, not string or non-convertible-string.</returns>
+        internal LuaNumber? CastToLuaNumber(LuaCompatibilityVersion version)
         {
             LuaValue rv = ToScalar();
             if (rv.Type == DataType.Number)
@@ -1692,7 +1700,7 @@ namespace NovaSharp
             }
             else if (rv.Type == DataType.String)
             {
-                if (LuaNumber.TryParse(rv.String, out LuaNumber result))
+                if (LuaNumber.TryParse(rv.String, version, out LuaNumber result))
                 {
                     return result;
                 }

@@ -182,35 +182,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            LuaValue v = args[0];
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
             bool isLua54OrLater =
                 LuaVersionDefaults.Resolve(version) >= LuaCompatibilityVersion.Lua54;
 
-            // In Lua 5.4+, optional second argument n specifies which user value (1-based)
-            // NovaSharp only supports a single user value, so only n=1 is valid
-            int n = 1;
-            if (isLua54OrLater && args.Count > 1 && args[1].IsNotNil())
-            {
-                LuaValue nArg = args[1];
-                if (nArg.Type != DataType.Number)
-                {
-                    throw ScriptRuntimeException.BadArgument(
-                        1,
-                        "getuservalue",
-                        "number expected, got " + nArg.Type.ToErrorTypeString()
-                    );
-                }
-
-                n = (int)nArg.Number;
-            }
+            // Lua 5.4 parses n before checking whether the first argument is userdata.
+            int n = isLua54OrLater
+                ? GetOptionalUserValueIndex(args, 1, "getuservalue", version)
+                : 1;
+            LuaValue v = args[0];
 
             if (v.Type != DataType.UserData)
             {
-                // Lua 5.4+: return nil, false for non-userdata
-                return isLua54OrLater
-                    ? LuaValue.NewTuple(LuaValue.Nil, LuaValue.False)
-                    : LuaValue.Nil;
+                return LuaValue.Nil;
             }
 
             // NovaSharp only supports a single user value (slot 1)
@@ -230,7 +214,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         }
 
         /// <summary>
-        /// Implements <c>debug.setuservalue</c>, assigning a new table to the supplied userdata's user value slot.
+        /// Implements <c>debug.setuservalue</c>, assigning a value to the supplied userdata's user value slot.
         /// In Lua 5.4+, accepts an optional third argument <c>n</c> specifying which user value slot (1-based).
         /// </summary>
         /// <param name="executionContext">Current execution context.</param>
@@ -248,44 +232,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
+            LuaCompatibilityVersion resolvedVersion = LuaVersionDefaults.Resolve(version);
+            bool isLua54OrLater = resolvedVersion >= LuaCompatibilityVersion.Lua54;
+
+            // Lua 5.4 parses n before validating the userdata and value arguments.
+            int n = isLua54OrLater
+                ? GetOptionalUserValueIndex(args, 2, "setuservalue", version)
+                : 1;
+
             LuaValue v = args.AsType(0, "setuservalue", DataType.UserData, false);
             LuaValue valueArgument = args.Count > 1 ? args[1] : LuaValue.Void;
 
             if (valueArgument.Type == DataType.Void)
             {
-                throw ScriptRuntimeException.BadArgumentNoValue(1, "setuservalue", DataType.Table);
+                if (resolvedVersion <= LuaCompatibilityVersion.Lua52)
+                {
+                    valueArgument = LuaValue.Nil;
+                }
+                else
+                {
+                    throw ScriptRuntimeException.BadArgumentValueExpected(1, "setuservalue");
+                }
             }
 
-            if (valueArgument.IsNotNil() && valueArgument.Type != DataType.Table)
+            // Lua 5.2 requires nil or table; Lua 5.3 broadens the user value to any Lua value.
+            // NovaSharp exposes this API in 5.1 compatibility mode with the 5.2 contract.
+            if (
+                resolvedVersion <= LuaCompatibilityVersion.Lua52
+                && valueArgument.IsNotNil()
+                && valueArgument.Type != DataType.Table
+            )
             {
-                string got = valueArgument.Type.ToErrorTypeString();
                 throw ScriptRuntimeException.BadArgument(
                     1,
                     "setuservalue",
-                    ZString.Concat("table expected, got ", got)
+                    ZString.Concat("table expected, got ", valueArgument.Type.ToErrorTypeString())
                 );
-            }
-
-            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
-            bool isLua54OrLater =
-                LuaVersionDefaults.Resolve(version) >= LuaCompatibilityVersion.Lua54;
-
-            // In Lua 5.4+, optional third argument n specifies which user value slot (1-based)
-            // NovaSharp only supports a single user value, so only n=1 is valid
-            int n = 1;
-            if (isLua54OrLater && args.Count > 2 && args[2].IsNotNil())
-            {
-                LuaValue nArg = args[2];
-                if (nArg.Type != DataType.Number)
-                {
-                    throw ScriptRuntimeException.BadArgument(
-                        2,
-                        "setuservalue",
-                        "number expected, got " + nArg.Type.ToErrorTypeString()
-                    );
-                }
-
-                n = (int)nArg.Number;
             }
 
             // NovaSharp only supports a single user value (slot 1)
@@ -295,9 +278,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return LuaValue.Nil;
             }
 
-            LuaValue userValue = valueArgument.IsNil ? LuaValue.Nil : valueArgument;
-            v.UserData.UserValue = userValue;
+            v.UserData.UserValue = valueArgument;
             return v;
+        }
+
+        private static int GetOptionalUserValueIndex(
+            CallbackArguments args,
+            int argumentIndex,
+            string functionName,
+            LuaCompatibilityVersion version
+        )
+        {
+            if (args.Count <= argumentIndex || args[argumentIndex].IsNil)
+            {
+                return 1;
+            }
+
+            LuaValue suppliedValue = args[argumentIndex];
+            LuaValue value;
+            if (suppliedValue.Type == DataType.String)
+            {
+                value = LuaNumber.TryParse(
+                    suppliedValue.String,
+                    version,
+                    out LuaNumber parsedNumber
+                )
+                    ? LuaValue.NewNumber(parsedNumber)
+                    : suppliedValue.CheckType(
+                        functionName,
+                        DataType.Number,
+                        argumentIndex,
+                        TypeValidationOptions.None
+                    );
+            }
+            else
+            {
+                value = args.AsType(argumentIndex, functionName, DataType.Number, false);
+            }
+            long index = LuaNumberHelpers.ToLongWithValidation(
+                version,
+                value,
+                functionName,
+                argumentIndex + 1
+            );
+
+            // Lua's implementation explicitly narrows lua_Integer to C int here.
+            return unchecked((int)index);
         }
 
         /// <summary>

@@ -423,6 +423,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
             await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(30L).ConfigureAwait(false);
+
+            Expression symbolicInfinity = BuildBinaryExpression(
+                script,
+                TokenType.OpAdd,
+                "+",
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("Infinity")),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(0))
+            );
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                LuaValue infinityResult = symbolicInfinity.Eval(
+                    TestHelpers.CreateExecutionContext(script)
+                );
+                await Assert
+                    .That(double.IsPositiveInfinity(infinityResult.Number))
+                    .IsTrue()
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                Assert.Throws<DynamicExpressionException>(() =>
+                    symbolicInfinity.Eval(TestHelpers.CreateExecutionContext(script))
+                );
+            }
         }
 
         [global::TUnit.Core.Test]

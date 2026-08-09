@@ -10,6 +10,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib.IO;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -612,27 +613,61 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ReadParsesHexFloatLiteralWithSignedExponent()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ReadParsesHexFloatLiteralWithSignedExponent(
+            LuaCompatibilityVersion version
+        )
         {
             using TestScope scope = InitializeTest();
-            Script script = CreateScript();
-            TestStreamFileUserData file = new("0x1p-4 tail");
+            Script script = CreateScript(version);
+            TestStreamFileUserData file = new(
+                "0x1p-4 0x1p999999999999 0x1p-999999999999 "
+                    + "0xffffffffffffffffp-1138 0x220e087835b925585p376 "
+                    + "0xffffffffffffffff 0x7fffffffffffffff tail"
+            );
 
             script.Globals["file"] = UserData.Create(file);
 
             LuaValue tuple = script.DoString(
                 @"
                 local f = file
-                local number = f:read('*n')
+                local number, overflow, underflow, subnormal, rounding, fullMask, maxInteger =
+                    f:read('*n', '*n', '*n', '*n', '*n', '*n', '*n')
                 local remainder = f:read('*a')
-                return number, remainder
+                return number, overflow, underflow, subnormal, rounding,
+                    fullMask, maxInteger, remainder
                 "
             );
 
             await Assert
                 .That(System.Math.Abs(tuple.Tuple[0].Number - System.Math.Pow(2, -4)) <= 1e-12)
                 .IsTrue();
-            await Assert.That(tuple.Tuple[1].String.TrimStart()).StartsWith("tail");
+            await Assert.That(double.IsPositiveInfinity(tuple.Tuple[1].Number)).IsTrue();
+            await Assert.That(tuple.Tuple[2].Number).IsEqualTo(0d);
+            await Assert.That(tuple.Tuple[3].Number).IsEqualTo(double.Epsilon);
+            long expectedRoundingBits = ((long)(441 + 1023) << 52) | 0x107043C1ADC93L;
+            await Assert
+                .That(BitConverter.DoubleToInt64Bits(tuple.Tuple[4].Number))
+                .IsEqualTo(expectedRoundingBits);
+            if (version <= LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(tuple.Tuple[5].LuaNumber.IsFloat).IsTrue();
+                await Assert.That(tuple.Tuple[5].Number).IsGreaterThan(1.8e19);
+                await Assert.That(tuple.Tuple[6].LuaNumber.IsFloat).IsTrue();
+                await Assert.That(tuple.Tuple[6].Number).IsGreaterThan(9e18);
+            }
+            else
+            {
+                await Assert.That(tuple.Tuple[5].LuaNumber.IsInteger).IsTrue();
+                await Assert.That(tuple.Tuple[5].LuaNumber.AsInteger).IsEqualTo(-1L);
+                await Assert.That(tuple.Tuple[6].LuaNumber.IsInteger).IsTrue();
+                await Assert.That(tuple.Tuple[6].LuaNumber.AsInteger).IsEqualTo(long.MaxValue);
+            }
+            await Assert.That(tuple.Tuple[7].String.TrimStart()).StartsWith("tail");
         }
 
         [global::TUnit.Core.Test]
@@ -1382,6 +1417,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         private static Script CreateScript()
         {
             Script script = new Script(CoreModulePresets.Complete);
+            script.Options.DebugPrint = _ => { };
+            return script;
+        }
+
+        private static Script CreateScript(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.Options.DebugPrint = _ => { };
             return script;
         }

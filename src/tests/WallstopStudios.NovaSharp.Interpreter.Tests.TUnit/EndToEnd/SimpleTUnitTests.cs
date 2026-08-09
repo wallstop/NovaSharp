@@ -1768,10 +1768,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [AllLuaVersions]
         public async Task HexFloats2(LuaCompatibilityVersion version)
         {
-            string script = "return 0xA23p-4";
+            string compensatedLiteral = "0x" + new string('f', 400) + "p-1600";
+            string script =
+                "return 0xA23p-4, 0x1p999999999999, 0x1p-999999999999, "
+                + compensatedLiteral
+                + ", 0xffffffffffffffffp-1138, 0x220e087835b925585p376";
             Script s = new(version);
             LuaValue result = s.DoString(script);
-            await Assert.That(result.Number).IsEqualTo((double)0xA23 / 16.0).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo((double)0xA23 / 16.0)
+                .ConfigureAwait(false);
+            await Assert.That(double.IsPositiveInfinity(result.Tuple[1].Number)).IsTrue();
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(double.Epsilon);
+            long expectedRoundingBits = ((long)(441 + 1023) << 52) | 0x107043C1ADC93L;
+            await Assert
+                .That(BitConverter.DoubleToInt64Bits(result.Tuple[5].Number))
+                .IsEqualTo(expectedRoundingBits);
         }
 
         [global::TUnit.Core.Test]

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
+    using System.Numerics;
     using System.Runtime.InteropServices;
     using Compatibility;
     using Cysharp.Text;
@@ -228,90 +229,477 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="s">The string to parse.</param>
         /// <param name="result">When successful, contains the parsed LuaNumber.</param>
         /// <returns>true if parsing succeeded; false otherwise.</returns>
+        /// <remarks>
+        /// Uses <see cref="LuaVersionDefaults.CurrentDefault"/> semantics. Call the versioned
+        /// overload when parsing depends on a script's compatibility version.
+        /// </remarks>
         public static bool TryParse(string s, out LuaNumber result)
         {
-            if (string.IsNullOrEmpty(s))
+            return TryParse(s, LuaVersionDefaults.CurrentDefault, out result);
+        }
+
+        /// <summary>
+        /// Parses a string into a Lua number using the numeral grammar for the requested Lua version.
+        /// </summary>
+        /// <param name="text">Input text to parse.</param>
+        /// <param name="version">Lua compatibility version for version-specific parsing rules.</param>
+        /// <param name="value">The parsed number when successful.</param>
+        /// <returns><c>true</c> when <paramref name="text"/> is a valid Lua numeral.</returns>
+        internal static bool TryParse(
+            string text,
+            LuaCompatibilityVersion version,
+            out LuaNumber value
+        )
+        {
+            value = Zero;
+            if (string.IsNullOrWhiteSpace(text))
             {
-                result = Zero;
                 return false;
             }
 
-            s = s.Trim();
-
-            // Try parsing as integer first (handles hex integers like 0x1F)
-            if (TryParseInteger(s, out long intValue))
+            ReadOnlySpan<char> span = text.AsSpan().Trim();
+            if (span.IsEmpty)
             {
-                result = FromInteger(intValue);
-                return true;
+                return false;
             }
 
-            // Try parsing as float
+            int index = 0;
+            bool negative = false;
+            if (span[index] == '+' || span[index] == '-')
+            {
+                negative = span[index] == '-';
+                index++;
+                if (index >= span.Length)
+                {
+                    return false;
+                }
+            }
+
+            LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
             if (
-                double.TryParse(
-                    s,
-                    NumberStyles.Float | NumberStyles.AllowThousands,
+                resolved >= LuaCompatibilityVersion.Lua52
+                && index + 1 < span.Length
+                && span[index] == '0'
+                && (span[index + 1] == 'x' || span[index + 1] == 'X')
+            )
+            {
+                return TryParseHexLuaNumeral(span, index + 2, negative, resolved, out value);
+            }
+
+            // Preserve the integer subtype and all 64 bits before considering a double fallback.
+            if (
+                long.TryParse(
+                    span,
+                    NumberStyles.Integer,
                     CultureInfo.InvariantCulture,
-                    out double floatValue
+                    out long integerValue
                 )
             )
             {
-                result = FromFloat(floatValue);
+                value =
+                    resolved >= LuaCompatibilityVersion.Lua53
+                        ? FromInteger(integerValue)
+                        : FromFloat(negative && integerValue == 0 ? -0d : integerValue);
                 return true;
             }
 
-            result = Zero;
-            return false;
+            ReadOnlySpan<char> remaining = span.Slice(index);
+            if (resolved >= LuaCompatibilityVersion.Lua52 && IsSymbolicNonFinite(remaining))
+            {
+                return false;
+            }
+
+            if (resolved == LuaCompatibilityVersion.Lua51)
+            {
+                if (
+                    remaining.Equals("inf".AsSpan(), StringComparison.OrdinalIgnoreCase)
+                    || remaining.Equals("infinity".AsSpan(), StringComparison.OrdinalIgnoreCase)
+                )
+                {
+                    value = FromDouble(
+                        negative ? double.NegativeInfinity : double.PositiveInfinity
+                    );
+                    return true;
+                }
+            }
+
+            if (
+                !double.TryParse(
+                    text,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out double doubleValue
+                )
+            )
+            {
+                return false;
+            }
+
+            if (double.IsNaN(doubleValue) && !negative)
+            {
+                long bits = BitConverter.DoubleToInt64Bits(doubleValue);
+                bits &= 0x7FFFFFFFFFFFFFFF;
+                doubleValue = BitConverter.Int64BitsToDouble(bits);
+            }
+
+            value = FromFloat(doubleValue);
+            return true;
         }
 
-        private static bool TryParseInteger(string s, out long value)
+        private static bool TryParseHexLuaNumeral(
+            ReadOnlySpan<char> span,
+            int startIndex,
+            bool negative,
+            LuaCompatibilityVersion version,
+            out LuaNumber value
+        )
         {
-            // Handle hexadecimal
-            if (s.Length > 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X'))
+            value = Zero;
+            int index = startIndex;
+            bool isFloat = false;
+            bool digitsSeen = false;
+            int integerDigitStart = index;
+
+            while (index < span.Length && IsHexDigit(span[index]))
             {
-#if NETSTANDARD2_1_OR_GREATER || NET6_0_OR_GREATER
-                if (
-                    long.TryParse(
-                        s.AsSpan(2),
-                        NumberStyles.HexNumber,
-                        CultureInfo.InvariantCulture,
-                        out value
-                    )
-                )
-                {
-                    return true;
-                }
-#else
-                if (
-                    long.TryParse(
-                        s.Substring(2),
-                        NumberStyles.HexNumber,
-                        CultureInfo.InvariantCulture,
-                        out value
-                    )
-                )
-                {
-                    return true;
-                }
-#endif
+                index++;
+                digitsSeen = true;
             }
 
-            // Handle decimal integers (no decimal point, no exponent)
-            bool hasDecimal = s.Contains('.', StringComparison.Ordinal);
-            bool hasExponent =
-                s.Contains('e', StringComparison.Ordinal)
-                || s.Contains('E', StringComparison.Ordinal);
-
-            if (
-                !hasDecimal
-                && !hasExponent
-                && long.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out value)
-            )
+            int integerDigitEnd = index;
+            if (index < span.Length && span[index] == '.')
             {
+                isFloat = true;
+                index++;
+                while (index < span.Length && IsHexDigit(span[index]))
+                {
+                    index++;
+                    digitsSeen = true;
+                }
+            }
+
+            if (!digitsSeen)
+            {
+                return false;
+            }
+
+            if (index < span.Length && (span[index] == 'p' || span[index] == 'P'))
+            {
+                isFloat = true;
+                index++;
+                if (index >= span.Length)
+                {
+                    return false;
+                }
+
+                if (span[index] == '+' || span[index] == '-')
+                {
+                    index++;
+                }
+
+                if (index >= span.Length || !IsAsciiDigit(span[index]))
+                {
+                    return false;
+                }
+
+                while (index < span.Length && IsAsciiDigit(span[index]))
+                {
+                    index++;
+                }
+            }
+
+            if (index != span.Length)
+            {
+                return false;
+            }
+
+            return isFloat
+                ? TryParseHexFloat(span, startIndex, negative, out value)
+                : TryParseHexInteger(
+                    span.Slice(integerDigitStart, integerDigitEnd - integerDigitStart),
+                    negative,
+                    version,
+                    out value
+                );
+        }
+
+        private static bool TryParseHexInteger(
+            ReadOnlySpan<char> hexDigits,
+            bool negative,
+            LuaCompatibilityVersion version,
+            out LuaNumber value
+        )
+        {
+            value = Zero;
+            if (hexDigits.IsEmpty)
+            {
+                return false;
+            }
+
+            if (version >= LuaCompatibilityVersion.Lua53)
+            {
+                ulong integerBits = 0;
+                foreach (char c in hexDigits)
+                {
+                    integerBits = unchecked((integerBits * 16UL) + (ulong)HexDigitToValue(c));
+                }
+
+                if (negative)
+                {
+                    integerBits = unchecked(0UL - integerBits);
+                }
+
+                value = FromInteger(unchecked((long)integerBits));
                 return true;
             }
 
-            value = 0;
-            return false;
+            BigInteger exactValue = BigInteger.Zero;
+            long bitLength = 0;
+            foreach (char c in hexDigits)
+            {
+                AccumulateHexSignificandDigitExact(
+                    HexDigitToValue(c),
+                    ref exactValue,
+                    ref bitLength
+                );
+            }
+
+            double doubleValue = ConvertBinaryIntegerToDouble(exactValue, bitLength, 0);
+            value = FromFloat(negative ? -doubleValue : doubleValue);
+            return true;
+        }
+
+        private static bool TryParseHexFloat(
+            ReadOnlySpan<char> span,
+            int startIndex,
+            bool negative,
+            out LuaNumber value
+        )
+        {
+            value = Zero;
+            int index = startIndex;
+            BigInteger significand = BigInteger.Zero;
+            bool digitsSeen = false;
+            int fractionalDigits = 0;
+            long significandBitLength = 0;
+
+            while (index < span.Length && IsHexDigit(span[index]))
+            {
+                AccumulateHexSignificandDigitExact(
+                    HexDigitToValue(span[index]),
+                    ref significand,
+                    ref significandBitLength
+                );
+                index++;
+                digitsSeen = true;
+            }
+
+            if (index < span.Length && span[index] == '.')
+            {
+                index++;
+                while (index < span.Length && IsHexDigit(span[index]))
+                {
+                    AccumulateHexSignificandDigitExact(
+                        HexDigitToValue(span[index]),
+                        ref significand,
+                        ref significandBitLength
+                    );
+                    index++;
+                    digitsSeen = true;
+                    fractionalDigits++;
+                }
+            }
+
+            if (!digitsSeen)
+            {
+                return false;
+            }
+
+            long exponent = -4L * fractionalDigits;
+            if (index < span.Length && (span[index] == 'p' || span[index] == 'P'))
+            {
+                index++;
+                if (index >= span.Length)
+                {
+                    return false;
+                }
+
+                int exponentSign = 1;
+                if (span[index] == '+' || span[index] == '-')
+                {
+                    exponentSign = span[index] == '-' ? -1 : 1;
+                    index++;
+                }
+
+                if (index >= span.Length || !IsAsciiDigit(span[index]))
+                {
+                    return false;
+                }
+
+                int exponentValue = 0;
+                while (index < span.Length && IsAsciiDigit(span[index]))
+                {
+                    int digit = span[index] - '0';
+                    exponentValue =
+                        exponentValue > (int.MaxValue - digit) / 10
+                            ? int.MaxValue
+                            : (exponentValue * 10) + digit;
+                    index++;
+                }
+
+                exponent += exponentSign * (long)exponentValue;
+            }
+
+            if (index != span.Length)
+            {
+                return false;
+            }
+
+            double result = ConvertBinaryIntegerToDouble(
+                significand,
+                significandBitLength,
+                exponent
+            );
+            value = FromFloat(negative ? -result : result);
+            return true;
+        }
+
+        private static void AccumulateHexSignificandDigitExact(
+            int digit,
+            ref BigInteger significand,
+            ref long bitLength
+        )
+        {
+            if (significand.IsZero && digit == 0)
+            {
+                return;
+            }
+
+            significand = (significand << 4) | digit;
+            if (bitLength == 0)
+            {
+                bitLength =
+                    digit >= 8 ? 4
+                    : digit >= 4 ? 3
+                    : digit >= 2 ? 2
+                    : 1;
+            }
+            else
+            {
+                bitLength += 4;
+            }
+        }
+
+        private static double ConvertBinaryIntegerToDouble(
+            BigInteger significand,
+            long bitLength,
+            long binaryExponent
+        )
+        {
+            if (significand.IsZero)
+            {
+                return 0d;
+            }
+
+            long unbiasedExponent = bitLength - 1 + binaryExponent;
+            if (unbiasedExponent > 1023)
+            {
+                return double.PositiveInfinity;
+            }
+
+            if (unbiasedExponent >= -1022)
+            {
+                long shift = bitLength - 53;
+                BigInteger roundedSignificand =
+                    shift > 0
+                        ? RoundRightShiftToEven(significand, checked((int)shift))
+                        : significand << checked((int)-shift);
+
+                BigInteger carry = BigInteger.One << 53;
+                if (roundedSignificand == carry)
+                {
+                    roundedSignificand >>= 1;
+                    unbiasedExponent++;
+                    if (unbiasedExponent > 1023)
+                    {
+                        return double.PositiveInfinity;
+                    }
+                }
+
+                const long FractionMask = 0x000FFFFFFFFFFFFF;
+                long fractionBits = (long)roundedSignificand & FractionMask;
+                long bits = ((unbiasedExponent + 1023) << 52) | fractionBits;
+                return BitConverter.Int64BitsToDouble(bits);
+            }
+
+            long unitExponent = binaryExponent + 1074;
+            BigInteger subnormalUnits;
+            if (unitExponent >= 0)
+            {
+                subnormalUnits = significand << checked((int)unitExponent);
+            }
+            else
+            {
+                long shift = -unitExponent;
+                if (shift > bitLength)
+                {
+                    return 0d;
+                }
+
+                subnormalUnits = RoundRightShiftToEven(significand, checked((int)shift));
+            }
+
+            long subnormalBits = (long)subnormalUnits;
+            return BitConverter.Int64BitsToDouble(subnormalBits);
+        }
+
+        private static BigInteger RoundRightShiftToEven(BigInteger value, int shift)
+        {
+            if (shift <= 0)
+            {
+                return value;
+            }
+
+            BigInteger quotient = value >> shift;
+            BigInteger remainder = value - (quotient << shift);
+            BigInteger halfway = BigInteger.One << (shift - 1);
+            if (remainder > halfway || (remainder == halfway && !quotient.IsEven))
+            {
+                quotient++;
+            }
+
+            return quotient;
+        }
+
+        private static bool IsAsciiDigit(char value) => value is >= '0' and <= '9';
+
+        private static bool IsSymbolicNonFinite(ReadOnlySpan<char> value)
+        {
+            return value.Equals("nan".AsSpan(), StringComparison.OrdinalIgnoreCase)
+                || value.Equals("inf".AsSpan(), StringComparison.OrdinalIgnoreCase)
+                || value.Equals("infinity".AsSpan(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsHexDigit(char candidate)
+        {
+            return (candidate >= '0' && candidate <= '9')
+                || (candidate >= 'a' && candidate <= 'f')
+                || (candidate >= 'A' && candidate <= 'F');
+        }
+
+        private static int HexDigitToValue(char candidate)
+        {
+            if (candidate >= '0' && candidate <= '9')
+            {
+                return candidate - '0';
+            }
+
+            if (candidate >= 'a' && candidate <= 'f')
+            {
+                return candidate - 'a' + 10;
+            }
+
+            return candidate - 'A' + 10;
         }
 
         private LuaNumber(long integerValue, bool isInteger)

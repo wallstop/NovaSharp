@@ -523,13 +523,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            // In Lua 5.4+, getuservalue returns (nil, false) for non-userdata
-            LuaValue result = script.DoString("return debug.getuservalue('string')");
+            // Non-userdata produces one nil result. The 5.4 boolean result only describes
+            // a user-value slot on actual userdata.
+            LuaValue result = script.DoString(
+                @"
+                local results = table.pack(debug.getuservalue('string'))
+                return results.n, results[1], results[2]
+                "
+            );
 
             LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
-            await Assert.That(tuple.Length).IsEqualTo(2);
-            await Assert.That(tuple[0].IsNil).IsTrue();
-            await Assert.That(tuple[1].CastToBool()).IsFalse();
+            await Assert.That(tuple[0].Number).IsEqualTo(1);
+            await Assert.That(tuple[1].IsNil).IsTrue();
+            await Assert.That(tuple[2].IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -547,14 +553,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             LuaValue result = script.DoString(
                 @"
-                local ok, err = pcall(function() debug.setuservalue(ud, 'not a table') end)
-                return ok, err
+                local ok, result = pcall(function()
+                    return debug.setuservalue(ud, 'not a table')
+                end)
+                local value = debug.getuservalue(ud)
+                return ok, result, value
                 "
             );
 
             LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
-            await Assert.That(tuple[0].CastToBool()).IsFalse();
-            await Assert.That(tuple[1].String).Contains("table expected");
+            if (version <= LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(tuple[0].CastToBool()).IsFalse();
+                await Assert.That(tuple[1].String).Contains("table expected");
+                await Assert.That(tuple[2].IsNil).IsTrue();
+            }
+            else
+            {
+                await Assert.That(tuple[0].CastToBool()).IsTrue();
+                await Assert.That(tuple[1].UserData.Object).IsSameReferenceAs(obj);
+                await Assert.That(tuple[2].String).IsEqualTo("not a table");
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -572,14 +591,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             LuaValue result = script.DoString(
                 @"
-                local ok, err = pcall(function() debug.setuservalue(ud) end)
-                return ok, err
+                local seeded = { value = 42 }
+                debug.setuservalue(ud, seeded)
+                local ok, valueOrError = pcall(function()
+                    return debug.setuservalue(ud)
+                end)
+                return ok, valueOrError, debug.getuservalue(ud), seeded
                 "
             );
 
             LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
-            await Assert.That(tuple[0].CastToBool()).IsFalse();
-            await Assert.That(tuple[1].String).Contains("bad argument #2");
+            if (version <= LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(tuple[0].CastToBool()).IsTrue();
+                await Assert.That(tuple[1].UserData.Object).IsSameReferenceAs(obj);
+                await Assert.That(tuple[2].IsNil).IsTrue();
+            }
+            else
+            {
+                await Assert.That(tuple[0].CastToBool()).IsFalse();
+                await Assert.That(tuple[1].String).Contains("bad argument #2");
+                await Assert.That(tuple[1].String).Contains("value expected");
+                await Assert.That(tuple[2].Table).IsSameReferenceAs(tuple[3].Table);
+            }
         }
 
         // ========================
@@ -630,14 +664,84 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             LuaValue result = script.DoString(
                 @"
                 local val, hasVal = debug.getuservalue(ud, 2)
-                return val, hasVal
+                local stringVal, stringHasVal = debug.getuservalue(ud, ""1"")
+                local fractionOk, fractionError = pcall(debug.getuservalue, ud, 1.5)
+                local infinityOk, infinityError = pcall(debug.getuservalue, ud, math.huge)
+                local nanOk, nanError = pcall(debug.getuservalue, ud, 0 / 0)
+                local preciseVal, preciseHasVal = debug.getuservalue(
+                    ud,
+                    ""9007199254740993""
+                )
+                local maxIntegerOk, maxIntegerVal, maxIntegerHasVal = pcall(
+                    debug.getuservalue,
+                    ud,
+                    ""9223372036854775807""
+                )
+                local hexVal, hexHasVal = debug.getuservalue(ud, ""0x100000001"")
+                local signedHexVal, signedHexHasVal = debug.getuservalue(
+                    ud,
+                    ""-0xffffffff""
+                )
+                local hexFloatVal, hexFloatHasVal = debug.getuservalue(ud, ""0x1p0"")
+                local fullMaskOk, fullMaskVal, fullMaskHasVal = pcall(
+                    debug.getuservalue,
+                    ud,
+                    ""0xffffffffffffffff""
+                )
+                local negativeFullMaskVal, negativeFullMaskHasVal = debug.getuservalue(
+                    ud,
+                    ""-0xffffffffffffffff""
+                )
+                local thousandsOk, thousandsError = pcall(
+                    debug.getuservalue,
+                    ud,
+                    ""1,000""
+                )
+                return val, hasVal, stringVal, stringHasVal,
+                    fractionOk, fractionError,
+                    infinityOk, infinityError,
+                    nanOk, nanError,
+                    preciseVal, preciseHasVal,
+                    maxIntegerOk, maxIntegerVal, maxIntegerHasVal,
+                    hexVal, hexHasVal,
+                    signedHexVal, signedHexHasVal,
+                    hexFloatVal, hexFloatHasVal,
+                    fullMaskOk, fullMaskVal, fullMaskHasVal,
+                    negativeFullMaskVal, negativeFullMaskHasVal,
+                    thousandsOk, thousandsError
                 "
             );
 
             LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
-            await Assert.That(tuple.Length).IsEqualTo(2);
+            await Assert.That(tuple.Length).IsEqualTo(28);
             await Assert.That(tuple[0].IsNil).IsTrue();
             await Assert.That(tuple[1].CastToBool()).IsFalse();
+            await Assert.That(tuple[2].IsNil).IsTrue();
+            await Assert.That(tuple[3].CastToBool()).IsTrue();
+            for (int index = 4; index <= 8; index += 2)
+            {
+                await Assert.That(tuple[index].CastToBool()).IsFalse();
+                await Assert.That(tuple[index + 1].String).Contains("integer representation");
+            }
+
+            await Assert.That(tuple[10].IsNil).IsTrue();
+            await Assert.That(tuple[11].CastToBool()).IsTrue();
+            await Assert.That(tuple[12].CastToBool()).IsTrue();
+            await Assert.That(tuple[13].IsNil).IsTrue();
+            await Assert.That(tuple[14].CastToBool()).IsFalse();
+            await Assert.That(tuple[15].IsNil).IsTrue();
+            await Assert.That(tuple[16].CastToBool()).IsTrue();
+            await Assert.That(tuple[17].IsNil).IsTrue();
+            await Assert.That(tuple[18].CastToBool()).IsTrue();
+            await Assert.That(tuple[19].IsNil).IsTrue();
+            await Assert.That(tuple[20].CastToBool()).IsTrue();
+            await Assert.That(tuple[21].CastToBool()).IsTrue();
+            await Assert.That(tuple[22].IsNil).IsTrue();
+            await Assert.That(tuple[23].CastToBool()).IsFalse();
+            await Assert.That(tuple[24].IsNil).IsTrue();
+            await Assert.That(tuple[25].CastToBool()).IsTrue();
+            await Assert.That(tuple[26].CastToBool()).IsFalse();
+            await Assert.That(tuple[27].String).Contains("number expected");
         }
 
         [global::TUnit.Core.Test]
@@ -649,18 +753,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            // In Lua 5.4+, non-userdata returns (nil, false)
+            // Non-userdata returns one nil; n is still parsed before the type check.
             LuaValue result = script.DoString(
                 @"
                 local val, hasVal = debug.getuservalue('not userdata', 1)
-                return val, hasVal
+                local stringOk, stringVal, stringHasVal = pcall(
+                    debug.getuservalue,
+                    'not userdata',
+                    ""1""
+                )
+                local fractionOk, fractionError = pcall(
+                    debug.getuservalue,
+                    'not userdata',
+                    1.5
+                )
+                return val, hasVal, stringOk, stringVal, stringHasVal,
+                    fractionOk, fractionError
                 "
             );
 
             LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
-            await Assert.That(tuple.Length).IsEqualTo(2);
+            await Assert.That(tuple.Length).IsEqualTo(7);
             await Assert.That(tuple[0].IsNil).IsTrue();
-            await Assert.That(tuple[1].CastToBool()).IsFalse();
+            await Assert.That(tuple[1].IsNil).IsTrue();
+            await Assert.That(tuple[2].CastToBool()).IsTrue();
+            await Assert.That(tuple[3].IsNil).IsTrue();
+            await Assert.That(tuple[4].IsNil).IsTrue();
+            await Assert.That(tuple[5].CastToBool()).IsFalse();
+            await Assert.That(tuple[6].String).Contains("bad argument #2");
+            await Assert.That(tuple[6].String).Contains("integer representation");
         }
 
         [global::TUnit.Core.Test]
@@ -675,10 +796,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             LuaValue result = script.DoString(
                 @"
-                local payload = { test = 'value' }
-                local ret = debug.setuservalue(ud, payload, 1)
+                local ret = debug.setuservalue(ud, 'value', ""1"")
                 local val, hasVal = debug.getuservalue(ud, 1)
-                return ret == ud, val and val.test, hasVal
+                local fractionOk, fractionError = pcall(
+                    debug.setuservalue,
+                    ud,
+                    'mutated',
+                    1.5
+                )
+                local infinityOk, infinityError = pcall(
+                    debug.setuservalue,
+                    ud,
+                    'mutated',
+                    math.huge
+                )
+                local nanOk, nanError = pcall(
+                    debug.setuservalue,
+                    ud,
+                    'mutated',
+                    0 / 0
+                )
+                local after = debug.getuservalue(ud, 1)
+                local thousandsOk, thousandsError = pcall(
+                    debug.setuservalue,
+                    ud,
+                    'mutated',
+                    ""1,000""
+                )
+                return ret == ud, val, hasVal,
+                    fractionOk, fractionError,
+                    infinityOk, infinityError,
+                    nanOk, nanError,
+                    after,
+                    thousandsOk, thousandsError
                 "
             );
 
@@ -686,6 +836,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(tuple[0].CastToBool()).IsTrue();
             await Assert.That(tuple[1].String).IsEqualTo("value");
             await Assert.That(tuple[2].CastToBool()).IsTrue();
+            for (int index = 3; index <= 7; index += 2)
+            {
+                await Assert.That(tuple[index].CastToBool()).IsFalse();
+                await Assert.That(tuple[index + 1].String).Contains("integer representation");
+            }
+
+            await Assert.That(tuple[9].String).IsEqualTo("value");
+            await Assert.That(tuple[10].CastToBool()).IsFalse();
+            await Assert.That(tuple[11].String).Contains("number expected");
         }
 
         [global::TUnit.Core.Test]
@@ -703,12 +862,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // NovaSharp only supports slot 1; slot 2 should return nil (fail)
             LuaValue result = script.DoString(
                 @"
-                local ret = debug.setuservalue(ud, { test = 'value' }, 2)
-                return ret
+                local ret = debug.setuservalue(ud, { test = 'value' }, ""2"")
+                local orderOk, orderError = pcall(
+                    debug.setuservalue,
+                    'not userdata',
+                    {},
+                    1.5
+                )
+                return ret, orderOk, orderError
                 "
             );
 
-            await Assert.That(result.IsNil).IsTrue();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
+            await Assert.That(tuple[0].IsNil).IsTrue();
+            await Assert.That(tuple[1].CastToBool()).IsFalse();
+            await Assert.That(tuple[2].String).Contains("bad argument #3");
+            await Assert.That(tuple[2].String).Contains("integer representation");
         }
 
         [global::TUnit.Core.Test]

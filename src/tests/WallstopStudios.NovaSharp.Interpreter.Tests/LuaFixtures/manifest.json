@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1965,
+  "total_snippets": 1967,
   "novasharp_only": 484,
-  "comparable": 1481,
+  "comparable": 1483,
   "by_version": {
-    "5.1": 1000,
-    "5.2": 682,
-    "5.3": 921,
-    "5.4": 974,
-    "5.5": 1016
+    "5.1": 1002,
+    "5.2": 685,
+    "5.3": 925,
+    "5.4": 978,
+    "5.5": 1020
   },
   "snippets": [
     {
@@ -1235,11 +1235,15 @@
     },
     {
       "path": "StringPackModuleTUnitTests/UnpackWithPosition.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/StringPackModuleTUnitTests.cs:264",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/StringPackModuleTUnitTests.cs:265",
       "test": "StringPackModuleTUnitTests.UnpackWithPosition",
-      "lua_versions": [],
+      "lua_versions": [
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
       "novasharp_only": false,
-      "expects_error": true
+      "expects_error": false
     },
     {
       "path": "StringPackModuleTUnitTests/PackUnavailableInLua51And52.lua",
@@ -4340,7 +4344,7 @@
     },
     {
       "path": "SimpleTUnitTests/HexFloats2.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/SimpleTUnitTests.cs:1772",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/SimpleTUnitTests.cs:1777",
       "test": "SimpleTUnitTests.HexFloats2",
       "lua_versions": [
         "5.2",
@@ -7690,6 +7694,20 @@
       "path": "StringArithmeticCoercionTUnitTests/StringAdditionWorksInAllVersions.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs:108",
       "test": "StringArithmeticCoercionTUnitTests.StringAdditionWorksInAllVersions",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringArithmeticCoercionTUnitTests/string_arithmetic_basic.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs:123",
+      "test": "StringArithmeticCoercionTUnitTests.AllArithmeticOperationsWorkWithStrings",
       "lua_versions": [
         "5.1",
         "5.2",
@@ -11518,7 +11536,7 @@
     },
     {
       "path": "StreamFileUserDataBaseTUnitTests/ReadParsesHexFloatLiteralWithSignedExponent.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StreamFileUserDataBaseTUnitTests.cs:622",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StreamFileUserDataBaseTUnitTests.cs:635",
       "test": "StreamFileUserDataBaseTUnitTests.ReadParsesHexFloatLiteralWithSignedExponent",
       "lua_versions": [],
       "novasharp_only": true,
@@ -13849,6 +13867,20 @@
       "expects_error": true
     },
     {
+      "path": "BasicModuleTUnitTests/ToNumberReturnsNilForInvalidHexString.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:548",
+      "test": "BasicModuleTUnitTests.ToNumberReturnsNilForInvalidHexString",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
       "path": "BasicModuleTUnitTests/SelectErrorsOnNonIntegerIndexLua53Plus.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1001",
       "test": "BasicModuleTUnitTests.SelectErrorsOnNonIntegerIndexLua53Plus",
@@ -16005,9 +16037,14 @@
     },
     {
       "path": "DebugModuleTUnitTests/SetUserValueThrowsWhenNoValueProvided.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:572",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:585",
       "test": "DebugModuleTUnitTests.SetUserValueThrowsWhenNoValueProvided",
-      "lua_versions": [],
+      "lua_versions": [
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
       "novasharp_only": false,
       "expects_error": false
     },

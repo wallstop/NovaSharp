@@ -264,13 +264,146 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             Script script = CreateScript(version);
             LuaValue result = script.DoString(
                 @"
-                local packed = string.pack('i4 i4', 10, 20)
-                local b = string.unpack('i4', packed, 5)
-                return b
+                local data = string.char(10, 20, 30)
+                local last = string.unpack('B', data, -1)
+                local first = string.unpack('B', data, -3)
+                local numericString = string.unpack('B', data, ""2"")
+                local hexString = string.unpack('B', data, ""0x2"")
+                local signedHexString = string.unpack('B', data, ""-0x1"")
+                local hexFloatString = string.unpack('B', data, ""0x1p0"")
+                local fullMaskString = string.unpack('B', data, ""0xffffffffffffffff"")
+                local negativeFullMaskString = string.unpack(
+                    'B',
+                    data,
+                    ""-0xffffffffffffffff""
+                )
+                local integralFloat = string.unpack('B', data, 1.0)
+                local zeroOk, zeroResult = pcall(string.unpack, 'B', data, 0)
+                local beforeOk, beforeResult = pcall(string.unpack, 'B', data, -4)
+                local fractionOk, fractionError = pcall(string.unpack, 'B', data, 1.5)
+                local infinityOk, infinityError = pcall(string.unpack, 'B', data, math.huge)
+                local nanOk, nanError = pcall(string.unpack, 'B', data, 0 / 0)
+                local thousandsOk, thousandsError = pcall(
+                    string.unpack,
+                    'B',
+                    data,
+                    ""1,000""
+                )
+                local endOk, endError = pcall(string.unpack, 'B', data, 4)
+                local beyondOk, beyondError = pcall(string.unpack, 'B', data, 5)
+                local preciseOk, preciseError = pcall(
+                    string.unpack,
+                    'B',
+                    data,
+                    ""9007199254740993""
+                )
+                local maxIntegerOk, maxIntegerError = pcall(
+                    string.unpack,
+                    'B',
+                    data,
+                    ""9223372036854775807""
+                )
+                print(
+                    'relative',
+                    last,
+                    first,
+                    numericString,
+                    hexString,
+                    signedHexString,
+                    hexFloatString,
+                    fullMaskString,
+                    negativeFullMaskString,
+                    integralFloat
+                )
+                print(
+                    'zero-before',
+                    zeroOk,
+                    zeroOk and zeroResult or string.find(zeroResult, 'initial position') ~= nil,
+                    beforeOk,
+                    beforeOk and beforeResult or string.find(beforeResult, 'initial position') ~= nil
+                )
+                print(
+                    'integer-errors',
+                    fractionOk,
+                    string.find(fractionError, 'integer representation') ~= nil,
+                    infinityOk,
+                    string.find(infinityError, 'integer representation') ~= nil,
+                    nanOk,
+                    string.find(nanError, 'integer representation') ~= nil,
+                    thousandsOk,
+                    string.find(thousandsError, 'number expected') ~= nil
+                )
+                print(
+                    'bounds',
+                    endOk,
+                    string.find(endError, 'data string too short') ~= nil,
+                    beyondOk,
+                    string.find(beyondError, 'initial position') ~= nil
+                )
+                print(
+                    'precise-bounds',
+                    preciseOk,
+                    string.find(preciseError, 'initial position') ~= nil,
+                    maxIntegerOk,
+                    string.find(maxIntegerError, 'initial position') ~= nil
+                )
+                return last, first, numericString, hexString,
+                    signedHexString, hexFloatString,
+                    fullMaskString, negativeFullMaskString, integralFloat,
+                    zeroOk, zeroResult,
+                    beforeOk, beforeResult,
+                    fractionOk, fractionError,
+                    infinityOk, infinityError,
+                    nanOk, nanError,
+                    thousandsOk, thousandsError,
+                    endOk, endError,
+                    beyondOk, beyondError,
+                    preciseOk, preciseError,
+                    maxIntegerOk, maxIntegerError
                 "
             );
 
-            await Assert.That(result.Number).IsEqualTo(20);
+            LuaValue[] tuple = result.Tuple ?? System.Array.Empty<LuaValue>();
+            await Assert.That(tuple[0].Number).IsEqualTo(30);
+            await Assert.That(tuple[1].Number).IsEqualTo(10);
+            await Assert.That(tuple[2].Number).IsEqualTo(20);
+            await Assert.That(tuple[3].Number).IsEqualTo(20);
+            await Assert.That(tuple[4].Number).IsEqualTo(30);
+            await Assert.That(tuple[5].Number).IsEqualTo(10);
+            await Assert.That(tuple[6].Number).IsEqualTo(30);
+            await Assert.That(tuple[7].Number).IsEqualTo(10);
+            await Assert.That(tuple[8].Number).IsEqualTo(10);
+
+            bool clampsToFirst = version >= LuaCompatibilityVersion.Lua54;
+            await Assert.That(tuple[9].CastToBool()).IsEqualTo(clampsToFirst);
+            await Assert.That(tuple[11].CastToBool()).IsEqualTo(clampsToFirst);
+            if (clampsToFirst)
+            {
+                await Assert.That(tuple[10].Number).IsEqualTo(10);
+                await Assert.That(tuple[12].Number).IsEqualTo(10);
+            }
+            else
+            {
+                await Assert.That(tuple[10].String).Contains("initial position out of string");
+                await Assert.That(tuple[12].String).Contains("initial position out of string");
+            }
+
+            for (int index = 13; index <= 17; index += 2)
+            {
+                await Assert.That(tuple[index].CastToBool()).IsFalse();
+                await Assert.That(tuple[index + 1].String).Contains("integer representation");
+            }
+
+            await Assert.That(tuple[19].CastToBool()).IsFalse();
+            await Assert.That(tuple[20].String).Contains("number expected");
+            await Assert.That(tuple[21].CastToBool()).IsFalse();
+            await Assert.That(tuple[22].String).Contains("data string too short");
+            await Assert.That(tuple[23].CastToBool()).IsFalse();
+            await Assert.That(tuple[24].String).Contains("initial position out of string");
+            await Assert.That(tuple[25].CastToBool()).IsFalse();
+            await Assert.That(tuple[26].String).Contains("initial position out of string");
+            await Assert.That(tuple[27].CastToBool()).IsFalse();
+            await Assert.That(tuple[28].String).Contains("initial position out of string");
         }
 
         [Test]
