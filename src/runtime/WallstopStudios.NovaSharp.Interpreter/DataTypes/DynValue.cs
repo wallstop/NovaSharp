@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Globalization;
     using System.Runtime.InteropServices;
     using System.Text;
+    using global::NovaSharp;
     using Compatibility;
     using Cysharp.Text;
     using DataStructs;
@@ -55,6 +56,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             get { return _type; }
         }
+
+        /// <summary>
+        /// Gets the public Lua value kind.
+        /// </summary>
+        public LuaKind Kind
+        {
+            get { return ToFacadeKind(this); }
+        }
+
+        /// <summary>
+        /// Gets whether this value is a number.
+        /// </summary>
+        public bool IsNumber => _type == DataType.Number;
+
+        /// <summary>
+        /// Gets whether this value is a string.
+        /// </summary>
+        public bool IsString => _type == DataType.String;
+
+        /// <summary>
+        /// Gets whether this value is a table.
+        /// </summary>
+        public bool IsTable => _type == DataType.Table;
+
+        /// <summary>
+        /// Gets whether this value is callable directly.
+        /// </summary>
+        public bool IsFunction => _type == DataType.Function || _type == DataType.ClrFunction;
 
         /// <summary>
         /// Gets the reference payload with no type test, or <c>null</c> for values that carry none.
@@ -230,6 +259,138 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Gets the Lua number as a double.
+        /// </summary>
+        public double AsNumber()
+        {
+            if (_type != DataType.Number)
+            {
+                throw NewFacadeKindException(nameof(AsNumber), "Number", Kind);
+            }
+
+            return Number;
+        }
+
+        /// <summary>
+        /// Gets the Lua number as a 64-bit integer.
+        /// </summary>
+        public long AsInteger()
+        {
+            if (_type != DataType.Number || !IsInteger)
+            {
+                throw NewFacadeKindException(nameof(AsInteger), LuaKind.Integer, Kind);
+            }
+
+            return _number.AsInteger;
+        }
+
+        /// <summary>
+        /// Gets the Lua value as a string.
+        /// </summary>
+        public string AsString()
+        {
+            return RequireFacadeType(DataType.String, nameof(AsString)).String;
+        }
+
+        /// <summary>
+        /// Gets the Lua value as a Boolean.
+        /// </summary>
+        public bool AsBoolean()
+        {
+            return RequireFacadeType(DataType.Boolean, nameof(AsBoolean)).Boolean;
+        }
+
+        /// <summary>
+        /// Gets the Lua value as a table wrapper.
+        /// </summary>
+        public LuaTable AsTable()
+        {
+            DynValue value = RequireFacadeType(DataType.Table, nameof(AsTable));
+            return new LuaTable(GetFacadeOwnerOrThrow(), value.Table);
+        }
+
+        /// <summary>
+        /// Gets the Lua value as a function wrapper.
+        /// </summary>
+        public LuaFunction AsFunction()
+        {
+            if (!IsFunction)
+            {
+                throw NewFacadeKindException(nameof(AsFunction), LuaKind.Function, Kind);
+            }
+
+            return new LuaFunction(GetFacadeOwnerOrThrow(), this);
+        }
+
+        /// <summary>
+        /// Gets the Lua value as a coroutine wrapper.
+        /// </summary>
+        public LuaCoroutine AsCoroutine()
+        {
+            DynValue value = RequireFacadeType(DataType.Thread, nameof(AsCoroutine));
+            return new LuaCoroutine(GetFacadeOwnerOrThrow(), value);
+        }
+
+        /// <summary>
+        /// Gets a copy of the Lua tuple values.
+        /// </summary>
+        public DynValue[] AsTuple()
+        {
+            DynValue[] tuple = GetTupleValuesForFacade();
+            DynValue[] result = new DynValue[tuple.Length];
+            Array.Copy(tuple, result, tuple.Length);
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the tuple backing values after applying public facade validation.
+        /// </summary>
+        internal DynValue[] GetTupleValuesForFacade()
+        {
+            DynValue value = RequireFacadeType(DataType.Tuple, nameof(AsTuple));
+            value.GetOwnerScript()?.ThrowIfDisposed();
+            return value.Tuple;
+        }
+
+        /// <summary>
+        /// Reads the value as a CLR type through the existing converter pipeline.
+        /// </summary>
+        public T Read<T>()
+        {
+            try
+            {
+                this.GetOwnerScript()?.ThrowIfDisposed();
+                return ToObject<T>();
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
+        }
+
+        /// <summary>
+        /// Attempts to read the value as a CLR type through the existing converter pipeline.
+        /// </summary>
+        public bool TryRead<T>(out T value)
+        {
+            try
+            {
+                value = Read<T>();
+                return true;
+            }
+            catch (InvalidCastException)
+            {
+                value = default(T);
+                return false;
+            }
+            catch (LuaException)
+            {
+                value = default(T);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Returns the nil value.
         /// </summary>
         public static DynValue NewNil()
@@ -326,6 +487,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public static DynValue NewString(string str)
         {
             return new DynValue(DataType.String, str);
+        }
+
+        /// <summary>
+        /// Returns a string value, or nil when the CLR string is null.
+        /// </summary>
+        public static DynValue FromString(string value)
+        {
+            return value == null ? Nil : NewString(value);
         }
 
         /// <summary>
@@ -1620,6 +1789,85 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             );
         }
 #endif
+
+        private DynValue RequireFacadeType(DataType expected, string methodName)
+        {
+            if (_type != expected)
+            {
+                throw NewFacadeKindException(methodName, ToFacadeKind(expected, this), Kind);
+            }
+
+            return this;
+        }
+
+        private Script GetFacadeOwnerOrThrow()
+        {
+            Script ownerScript = this.GetOwnerScript();
+            if (ownerScript == null)
+            {
+                throw new InvalidOperationException(
+                    "Lua value is not owned by a LuaEngine instance."
+                );
+            }
+
+            ownerScript.ThrowIfDisposed();
+            return ownerScript;
+        }
+
+        private static InvalidOperationException NewFacadeKindException(
+            string methodName,
+            LuaKind expected,
+            LuaKind actual
+        )
+        {
+            return NewFacadeKindException(methodName, expected.ToString(), actual);
+        }
+
+        private static InvalidOperationException NewFacadeKindException(
+            string methodName,
+            string expected,
+            LuaKind actual
+        )
+        {
+            return new InvalidOperationException(
+                string.Concat(methodName, " requires ", expected, " but found ", actual, ".")
+            );
+        }
+
+        private static LuaKind ToFacadeKind(DynValue value)
+        {
+            return ToFacadeKind(value.Type, value);
+        }
+
+        private static LuaKind ToFacadeKind(DataType type, DynValue value)
+        {
+            switch (type)
+            {
+                case DataType.Boolean:
+                    return LuaKind.Boolean;
+                case DataType.Number:
+                    return value.IsInteger ? LuaKind.Integer : LuaKind.Float;
+                case DataType.String:
+                    return LuaKind.String;
+                case DataType.Function:
+                case DataType.ClrFunction:
+                    return LuaKind.Function;
+                case DataType.Table:
+                    return LuaKind.Table;
+                case DataType.Tuple:
+                    return LuaKind.Tuple;
+                case DataType.UserData:
+                    return LuaKind.UserData;
+                case DataType.Thread:
+                    return LuaKind.Thread;
+                case DataType.Nil:
+                case DataType.Void:
+                case DataType.TailCallRequest:
+                case DataType.YieldRequest:
+                default:
+                    return LuaKind.Nil;
+            }
+        }
 
         /// <summary>
         /// Checks the type of this value corresponds to the desired type. A property ScriptRuntimeException is thrown

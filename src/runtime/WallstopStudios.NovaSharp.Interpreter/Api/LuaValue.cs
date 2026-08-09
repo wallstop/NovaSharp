@@ -5,7 +5,6 @@ namespace NovaSharp
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
-    using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     /// <summary>
     /// Public Lua value wrapper over the VM-native <see cref="DynValue"/> value type.
@@ -41,36 +40,7 @@ namespace NovaSharp
         /// </summary>
         public LuaKind Kind
         {
-            get
-            {
-                DynValue value = GetValueOrNil();
-                switch (value.Type)
-                {
-                    case DataType.Boolean:
-                        return LuaKind.Boolean;
-                    case DataType.Number:
-                        return value.IsInteger ? LuaKind.Integer : LuaKind.Float;
-                    case DataType.String:
-                        return LuaKind.String;
-                    case DataType.Function:
-                    case DataType.ClrFunction:
-                        return LuaKind.Function;
-                    case DataType.Table:
-                        return LuaKind.Table;
-                    case DataType.Tuple:
-                        return LuaKind.Tuple;
-                    case DataType.UserData:
-                        return LuaKind.UserData;
-                    case DataType.Thread:
-                        return LuaKind.Thread;
-                    case DataType.Nil:
-                    case DataType.Void:
-                    case DataType.TailCallRequest:
-                    case DataType.YieldRequest:
-                    default:
-                        return LuaKind.Nil;
-                }
-            }
+            get { return GetValueOrNil().Kind; }
         }
 
         /// <summary>
@@ -83,7 +53,7 @@ namespace NovaSharp
         /// </summary>
         public bool IsNumber
         {
-            get { return GetValueOrNil().Type == DataType.Number; }
+            get { return GetValueOrNil().IsNumber; }
         }
 
         /// <summary>
@@ -91,7 +61,7 @@ namespace NovaSharp
         /// </summary>
         public bool IsString
         {
-            get { return GetValueOrNil().Type == DataType.String; }
+            get { return GetValueOrNil().IsString; }
         }
 
         /// <summary>
@@ -99,7 +69,7 @@ namespace NovaSharp
         /// </summary>
         public bool IsTable
         {
-            get { return GetValueOrNil().Type == DataType.Table; }
+            get { return GetValueOrNil().IsTable; }
         }
 
         /// <summary>
@@ -107,11 +77,7 @@ namespace NovaSharp
         /// </summary>
         public bool IsFunction
         {
-            get
-            {
-                DynValue value = GetValueOrNil();
-                return value.Type == DataType.Function || value.Type == DataType.ClrFunction;
-            }
+            get { return GetValueOrNil().IsFunction; }
         }
 
         /// <summary>
@@ -119,13 +85,7 @@ namespace NovaSharp
         /// </summary>
         public double AsNumber()
         {
-            DynValue value = GetValueOrNil();
-            if (value.Type != DataType.Number)
-            {
-                throw NewKindException(nameof(AsNumber), "Number", Kind);
-            }
-
-            return value.Number;
+            return GetValueOrNil().AsNumber();
         }
 
         /// <summary>
@@ -133,13 +93,7 @@ namespace NovaSharp
         /// </summary>
         public long AsInteger()
         {
-            DynValue value = GetValueOrNil();
-            if (value.Type != DataType.Number || !value.IsInteger)
-            {
-                throw NewKindException(nameof(AsInteger), LuaKind.Integer, Kind);
-            }
-
-            return value.LuaNumber.AsInteger;
+            return GetValueOrNil().AsInteger();
         }
 
         /// <summary>
@@ -147,8 +101,7 @@ namespace NovaSharp
         /// </summary>
         public string AsString()
         {
-            DynValue value = RequireType(DataType.String, nameof(AsString));
-            return value.String;
+            return GetValueOrNil().AsString();
         }
 
         /// <summary>
@@ -156,8 +109,7 @@ namespace NovaSharp
         /// </summary>
         public bool AsBoolean()
         {
-            DynValue value = RequireType(DataType.Boolean, nameof(AsBoolean));
-            return value.Boolean;
+            return GetValueOrNil().AsBoolean();
         }
 
         /// <summary>
@@ -165,8 +117,7 @@ namespace NovaSharp
         /// </summary>
         public LuaTable AsTable()
         {
-            DynValue value = RequireType(DataType.Table, nameof(AsTable));
-            return new LuaTable(GetOwnerOrThrow(), value.Table);
+            return GetValueOrNil().AsTable();
         }
 
         /// <summary>
@@ -174,13 +125,7 @@ namespace NovaSharp
         /// </summary>
         public LuaFunction AsFunction()
         {
-            DynValue value = GetValueOrNil();
-            if (value.Type != DataType.Function && value.Type != DataType.ClrFunction)
-            {
-                throw NewKindException(nameof(AsFunction), LuaKind.Function, Kind);
-            }
-
-            return new LuaFunction(GetOwnerOrThrow(), value);
+            return GetValueOrNil().AsFunction();
         }
 
         /// <summary>
@@ -188,8 +133,7 @@ namespace NovaSharp
         /// </summary>
         public LuaCoroutine AsCoroutine()
         {
-            DynValue value = RequireType(DataType.Thread, nameof(AsCoroutine));
-            return new LuaCoroutine(GetOwnerOrThrow(), value);
+            return GetValueOrNil().AsCoroutine();
         }
 
         /// <summary>
@@ -197,15 +141,11 @@ namespace NovaSharp
         /// </summary>
         public LuaValue[] AsTuple()
         {
-            DynValue value = RequireType(DataType.Tuple, nameof(AsTuple));
-            Script tupleOwner = value.GetOwnerScript();
-            tupleOwner?.ThrowIfDisposed();
-            DynValue[] tuple = value.Tuple;
+            DynValue[] tuple = GetValueOrNil().GetTupleValuesForFacade();
             LuaValue[] values = new LuaValue[tuple.Length];
             for (int i = 0; i < tuple.Length; i++)
             {
-                Script itemOwner = tuple[i].GetOwnerScript();
-                values[i] = new LuaValue(itemOwner, tuple[i]);
+                values[i] = new LuaValue(tuple[i].GetOwnerScript(), tuple[i]);
             }
 
             return values;
@@ -216,17 +156,7 @@ namespace NovaSharp
         /// </summary>
         public T Read<T>()
         {
-            try
-            {
-                DynValue value = GetValueOrNil();
-                value.GetOwnerScript()?.ThrowIfDisposed();
-
-                return value.ToObject<T>();
-            }
-            catch (InterpreterException exception)
-            {
-                throw LuaException.Wrap(exception);
-            }
+            return GetValueOrNil().Read<T>();
         }
 
         /// <summary>
@@ -234,21 +164,7 @@ namespace NovaSharp
         /// </summary>
         public bool TryRead<T>(out T value)
         {
-            try
-            {
-                value = Read<T>();
-                return true;
-            }
-            catch (InvalidCastException)
-            {
-                value = default(T);
-                return false;
-            }
-            catch (LuaException)
-            {
-                value = default(T);
-                return false;
-            }
+            return GetValueOrNil().TryRead(out value);
         }
 
         /// <summary>
@@ -280,7 +196,7 @@ namespace NovaSharp
         /// </summary>
         public static LuaValue FromString(string value)
         {
-            return new LuaValue(null, value == null ? DynValue.Nil : DynValue.NewString(value));
+            return new LuaValue(null, DynValue.FromString(value));
         }
 
         /// <summary>
@@ -453,87 +369,9 @@ namespace NovaSharp
             return value;
         }
 
-        private DynValue RequireType(DataType expected, string methodName)
-        {
-            DynValue value = GetValueOrNil();
-            if (value.Type != expected)
-            {
-                throw NewKindException(methodName, ToKind(expected, value), Kind);
-            }
-
-            return value;
-        }
-
-        private Script GetOwnerOrThrow()
-        {
-            Script ownerScript = GetValueOrNil().GetOwnerScript();
-            if (ownerScript == null)
-            {
-                throw new InvalidOperationException(
-                    "Lua value is not owned by a LuaEngine instance."
-                );
-            }
-
-            ownerScript.ThrowIfDisposed();
-            return ownerScript;
-        }
-
         private DynValue GetValueOrNil()
         {
             return _value;
-        }
-
-        private static InvalidOperationException NewKindException(
-            string methodName,
-            LuaKind expected,
-            LuaKind actual
-        )
-        {
-            return NewKindException(methodName, expected.ToString(), actual);
-        }
-
-        private static InvalidOperationException NewKindException(
-            string methodName,
-            string expected,
-            LuaKind actual
-        )
-        {
-            return new InvalidOperationException(
-                string.Concat(methodName, " requires ", expected, " but found ", actual, ".")
-            );
-        }
-
-        private static LuaKind ToKind(DataType expected, DynValue value)
-        {
-            if (expected == DataType.Number)
-            {
-                return value.IsInteger ? LuaKind.Integer : LuaKind.Float;
-            }
-
-            switch (expected)
-            {
-                case DataType.Boolean:
-                    return LuaKind.Boolean;
-                case DataType.String:
-                    return LuaKind.String;
-                case DataType.Function:
-                case DataType.ClrFunction:
-                    return LuaKind.Function;
-                case DataType.Table:
-                    return LuaKind.Table;
-                case DataType.Tuple:
-                    return LuaKind.Tuple;
-                case DataType.UserData:
-                    return LuaKind.UserData;
-                case DataType.Thread:
-                    return LuaKind.Thread;
-                case DataType.Nil:
-                case DataType.Void:
-                case DataType.TailCallRequest:
-                case DataType.YieldRequest:
-                default:
-                    return LuaKind.Nil;
-            }
         }
     }
 }

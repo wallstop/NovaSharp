@@ -159,6 +159,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(result.Tuple[0]).IsEqualTo(first).ConfigureAwait(false);
 
             await Assert.That(result.Tuple[1]).IsEqualTo(second).ConfigureAwait(false);
+
+            DynValue[] copied = result.AsTuple();
+            copied[0] = DynValue.Nil;
+
+            await Assert.That(result.Tuple[0]).IsEqualTo(first).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

@@ -201,6 +201,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
             await Assert.That(closeValues[0].OwnerScript).IsNull().ConfigureAwait(false);
             await Assert.That(closeValues[1].OwnerScript).IsNull().ConfigureAwait(false);
 
+            closeValues[0] = LuaValue.FromBoolean(true);
+
+            await Assert.That(closeResult.AsTuple()[0].AsBoolean()).IsFalse().ConfigureAwait(false);
+
             lua.Dispose();
 
             await Assert.That(closeResult.AsTuple().Length).IsEqualTo(2).ConfigureAwait(false);
