@@ -32,6 +32,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             object first;
             using (pool.Get(out first)) { }
 
+            MeasureGenericPoolGetAllocations(pool, iterations: 8);
+            long allocated = MeasureGenericPoolGetAllocations(pool, iterations: 1_024);
+
             PoolStatistics before = pool.GetStatistics();
             PoolTrimResult early = pool.Trim(PoolTrimLevel.Idle);
             clock.Advance(TimeSpan.FromSeconds(61));
@@ -42,6 +45,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             await Assert.That(early.TrimmedCount).IsEqualTo(0).ConfigureAwait(false);
             await Assert.That(afterIdle.TrimmedCount).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(after.RetainedCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert
+                .That(allocated)
+                .IsEqualTo(0)
+                .Because(
+                    $"Warmed GenericPool.Get/Dispose cycles allocated {allocated} bytes across 1024 iterations."
+                )
+                .ConfigureAwait(false);
         }
 
         [Test]
@@ -365,16 +375,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
 
             await Assert.That(trimWhileRented.TrimmedCount).IsEqualTo(0).ConfigureAwait(false);
             await Assert.That(next).IsSameReferenceAs(rented).ConfigureAwait(false);
+
+            const int allocationIterations = 1_024;
+            MeasureManualCollectionPoolAllocations(iterations: 8);
+            long allocated = MeasureManualCollectionPoolAllocations(allocationIterations);
+
+            await Assert
+                .That(allocated)
+                .IsEqualTo(0)
+                .Because(
+                    $"Warmed manual ListPool/HashSetPool rent-return cycles allocated {allocated} bytes across {allocationIterations} iterations."
+                )
+                .ConfigureAwait(false);
         }
 
         [Test]
         public async Task DynValueArrayPoolCriticalTrimClearsSmallBucket()
         {
-            DynValue[] first = DynValueArrayPool.Rent(3);
+            LuaValue[] first = DynValueArrayPool.Rent(3);
             DynValueArrayPool.Return(first);
 
             DynValueArrayPool.Trim(PoolTrimLevel.Critical);
-            DynValue[] second = DynValueArrayPool.Rent(3);
+            LuaValue[] second = DynValueArrayPool.Rent(3);
             using DeferredActionScope cleanup = DeferredActionScope.Run(() =>
                 DynValueArrayPool.Return(second)
             );
@@ -403,9 +425,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             DynValueArrayPool.Trim(PoolTrimLevel.Critical);
             ObjectArrayPool.Trim(PoolTrimLevel.Critical);
 
-            DynValueArrayPool.Return(new DynValue[3]);
-            DynValueArrayPool.Return(new DynValue[3]);
-            DynValueArrayPool.Return(new DynValue[4]);
+            DynValueArrayPool.Return(new LuaValue[3]);
+            DynValueArrayPool.Return(new LuaValue[3]);
+            DynValueArrayPool.Return(new LuaValue[4]);
 
             ObjectArrayPool.Return(new object[3]);
             ObjectArrayPool.Return(new object[3]);
@@ -429,8 +451,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         {
             using ManualResetEventSlim returned = new(false);
             using ManualResetEventSlim trimmed = new(false);
-            DynValue[] first = null;
-            DynValue[] second = null;
+            LuaValue[] first = null;
+            LuaValue[] second = null;
 
             Task worker = Task.Run(() =>
             {
@@ -464,7 +486,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             CallStackItemPool.Trim(PoolTrimLevel.Critical);
             CallStackItem first = CallStackItemPool.Rent();
             CallStackItem second = CallStackItemPool.Rent();
+            first.SetErrorHandlerBeforeUnwind(LuaValue.Void, hasHandler: true);
+            bool hadHandlerBeforeReturn = first.HasErrorHandlerBeforeUnwind;
             CallStackItemPool.Return(first);
+            bool hasHandlerAfterReturn = first.HasErrorHandlerBeforeUnwind;
+            DataType handlerTypeAfterReturn = first.ErrorHandlerBeforeUnwind.Type;
             CallStackItemPool.Return(second);
 
             CallStackItemPool.Trim(PoolTrimLevel.Critical);
@@ -482,6 +508,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
                 || ReferenceEquals(afterSecond, first)
                 || ReferenceEquals(afterSecond, second);
 
+            await Assert.That(hadHandlerBeforeReturn).IsTrue().ConfigureAwait(false);
+            await Assert.That(hasHandlerAfterReturn).IsFalse().ConfigureAwait(false);
+            await Assert.That(handlerTypeAfterReturn).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(reused).IsFalse().ConfigureAwait(false);
         }
 
@@ -600,7 +629,7 @@ return recurse(80)
         public async Task CoroutineMemoryStatisticsTrackingPrunesDeadReferencesOnRegistration()
         {
             Script script = new();
-            DynValue function = script.LoadFunction(
+            LuaValue function = script.LoadFunction(
                 "function() return 1 end",
                 funcFriendlyName: "coroutine_ref"
             );
@@ -608,10 +637,10 @@ return recurse(80)
             // Hold the first batch strongly alive so the tracked count reflects every one of them,
             // independent of GC timing. Transient coroutines can be collected (and pruned) mid-creation,
             // which made the "before" count nondeterministic and this test flaky on some runners.
-            DynValue[] retained = new DynValue[300];
+            LuaValue[] retained = new LuaValue[300];
             for (int i = 0; i < retained.Length; i++)
             {
-                retained[i] = script.CreateCoroutine(function);
+                retained[i] = script.CreateCoroutineValue(function);
             }
             int before = script.GetTrackedCoroutineCountForMemoryStatisticsForTests();
 
@@ -632,13 +661,13 @@ return recurse(80)
         public async Task ScriptLocalMemoryStatisticsIncludeCoroutineStackRetention()
         {
             Script script = new();
-            DynValue function = script.LoadFunction(
+            LuaValue function = script.LoadFunction(
                 "function() coroutine.yield(1); return 2 end",
                 funcFriendlyName: "coroutine_stack"
             );
 
             long before = script.GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests();
-            DynValue coroutineValue = script.CreateCoroutine(function);
+            LuaValue coroutineValue = script.CreateCoroutineValue(function);
             long afterCreate = script.GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests();
 
             coroutineValue.Coroutine.Resume();
@@ -650,13 +679,49 @@ return recurse(80)
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void CreateTransientCoroutines(Script script, DynValue function, int count)
+        private static void CreateTransientCoroutines(Script script, LuaValue function, int count)
         {
             for (int i = 0; i < count; i++)
             {
-                DynValue coroutine = script.CreateCoroutine(function);
+                LuaValue coroutine = script.CreateCoroutineValue(function);
                 GC.KeepAlive(coroutine);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static long MeasureGenericPoolGetAllocations(
+            GenericPool<object> pool,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+            {
+                using PooledResource<object> pooled = pool.Get(out object value);
+                GC.KeepAlive(value);
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static long MeasureManualCollectionPoolAllocations(int iterations)
+        {
+            List<RentedProbe> warmList = ListPool<RentedProbe>.Rent();
+            ListPool<RentedProbe>.Return(warmList);
+            HashSet<RentedProbe> warmSet = HashSetPool<RentedProbe>.Rent();
+            HashSetPool<RentedProbe>.Return(warmSet);
+
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+            {
+                List<RentedProbe> list = ListPool<RentedProbe>.Rent();
+                ListPool<RentedProbe>.Return(list);
+                HashSet<RentedProbe> set = HashSetPool<RentedProbe>.Rent();
+                HashSetPool<RentedProbe>.Return(set);
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
         }
 
         private static void ForceFullCollection()

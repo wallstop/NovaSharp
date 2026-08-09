@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
@@ -13,17 +14,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Normalizes a list of return values so trailing tuples are expanded per Lua rules.
         /// </summary>
-        private static DynValue[] InternalAdjustTuple(IList<DynValue> values)
+        private static LuaValue[] InternalAdjustTuple(IList<LuaValue> values)
         {
             if (values == null || values.Count == 0)
             {
-                return Array.Empty<DynValue>();
+                return Array.Empty<LuaValue>();
             }
 
             if (values[^1].Type == DataType.Tuple)
             {
                 int baseLen = values.Count - 1 + values[^1].Tuple.Length;
-                DynValue[] result = new DynValue[baseLen];
+                LuaValue[] result = new LuaValue[baseLen];
 
                 for (int i = 0; i < values.Count - 1; i++)
                 {
@@ -46,7 +47,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                DynValue[] result = new DynValue[values.Count];
+                LuaValue[] result = new LuaValue[values.Count];
 
                 for (int i = 0; i < values.Count; i++)
                 {
@@ -61,81 +62,93 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// Pushes a unary metamethod on the stack and schedules its execution.
         /// </summary>
         private int InternalInvokeUnaryMetaMethod(
-            DynValue op1,
+            LuaValue op1,
             string eventName,
             int instructionPtr
         )
         {
-            DynValue m = null;
-
-            if (op1.Type == DataType.UserData)
+            if (TryGetMetamethod(op1, eventName, out LuaValue metamethod))
             {
-                m = op1.UserData.Descriptor.MetaIndex(_script, op1.UserData.Object, eventName);
-            }
-
-            if (m == null)
-            {
-                Table op1MetaTable = GetMetatable(op1);
-
-                if (op1MetaTable != null)
-                {
-                    DynValue meta1 = op1MetaTable.RawGet(eventName);
-                    if (meta1 != null && meta1.IsNotNil())
-                    {
-                        m = meta1;
-                    }
-                }
-            }
-
-            if (m != null)
-            {
-                _valueStack.Push(m);
+                _valueStack.Push(metamethod);
                 _valueStack.Push(op1);
                 return InternalExecCall(1, instructionPtr);
             }
-            else
-            {
-                return -1;
-            }
+
+            return -1;
         }
 
         /// <summary>
         /// Pushes a binary metamethod on the stack and schedules its execution.
         /// </summary>
         private int InternalInvokeBinaryMetaMethod(
-            DynValue l,
-            DynValue r,
+            LuaValue l,
+            LuaValue r,
             string eventName,
-            int instructionPtr,
-            DynValue extraPush = null
+            int instructionPtr
         )
         {
-            DynValue m = GetBinaryMetamethod(l, r, eventName);
+            return InternalInvokeBinaryMetaMethodCore(
+                l,
+                r,
+                eventName,
+                instructionPtr,
+                hasExtraPush: false,
+                LuaValue.Nil
+            );
+        }
 
-            if (m != null)
+        /// <summary>
+        /// Pushes an additional explicit Lua value before scheduling a binary metamethod.
+        /// </summary>
+        private int InternalInvokeBinaryMetaMethod(
+            LuaValue l,
+            LuaValue r,
+            string eventName,
+            int instructionPtr,
+            LuaValue extraPush
+        )
+        {
+            return InternalInvokeBinaryMetaMethodCore(
+                l,
+                r,
+                eventName,
+                instructionPtr,
+                hasExtraPush: true,
+                extraPush
+            );
+        }
+
+        private int InternalInvokeBinaryMetaMethodCore(
+            LuaValue l,
+            LuaValue r,
+            string eventName,
+            int instructionPtr,
+            bool hasExtraPush,
+            LuaValue extraPush
+        )
+        {
+            if (TryGetBinaryMetamethod(l, r, eventName, out LuaValue metamethod))
             {
-                if (extraPush != null)
+                if (hasExtraPush)
                 {
                     _valueStack.Push(extraPush);
                 }
 
-                _valueStack.Push(m);
+                _valueStack.Push(metamethod);
                 _valueStack.Push(l);
                 _valueStack.Push(r);
                 return InternalExecCall(2, instructionPtr);
             }
-            else
-            {
-                return -1;
-            }
+
+            return -1;
         }
 
         /// <summary>
         /// Copies or pops the top <paramref name="items"/> entries from the value stack.
         /// </summary>
-        private DynValue[] StackTopToArray(int items, bool pop)
+        private LuaValue[] StackTopToArray(int items, bool pop)
         {
-            DynValue[] values = DynValueArrayPool.Rent(items);
+            LuaValue[] values = DynValueArrayPool.Rent(items);
 
             if (pop)
             {
@@ -163,13 +176,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="pop">If true, pops items from stack; otherwise copies without removing.</param>
         /// <param name="values">The pooled array containing the values.</param>
         /// <returns>A pooled resource that automatically returns the array when disposed.</returns>
-        private PooledResource<DynValue[]> StackTopToArrayPooled(
+        private PooledResource<LuaValue[]> StackTopToArrayPooled(
             int items,
             bool pop,
-            out DynValue[] values
+            out LuaValue[] values
         )
         {
-            PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(items, out values);
+            PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(items, out values);
 
             if (pop)
             {
@@ -192,9 +205,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Copies or pops the top <paramref name="items"/> entries from the value stack in reverse order.
         /// </summary>
-        private DynValue[] StackTopToArrayReverse(int items, bool pop)
+        private LuaValue[] StackTopToArrayReverse(int items, bool pop)
         {
-            DynValue[] values = DynValueArrayPool.Rent(items);
+            LuaValue[] values = DynValueArrayPool.Rent(items);
 
             if (pop)
             {
@@ -222,13 +235,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="pop">If true, pops items from stack; otherwise copies without removing.</param>
         /// <param name="values">The pooled array containing the values.</param>
         /// <returns>A pooled resource that automatically returns the array when disposed.</returns>
-        private PooledResource<DynValue[]> StackTopToArrayReversePooled(
+        private PooledResource<LuaValue[]> StackTopToArrayReversePooled(
             int items,
             bool pop,
-            out DynValue[] values
+            out LuaValue[] values
         )
         {
-            PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(items, out values);
+            PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(items, out values);
 
             if (pop)
             {

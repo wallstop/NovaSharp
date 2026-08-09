@@ -67,10 +67,9 @@ SAFE_PATTERNS = [
     # Test files often need raw access for verification
     r"\.Number\s*\)\s*\.Is",  # Assert.That(x.Number).Is...
     r"result\.Number",  # Comparing test results
-    # DynValue constructors which correctly handle the conversion
-    r"DynValue\.NewNumber",
-    r"DynValue\.FromLuaNumber",
-    r"DynValue\.FromNumber",
+    # LuaValue constructors which correctly handle the conversion
+    r"LuaValue\.NewNumber",
+    r"LuaValue\.FromNumber",
     # These patterns are using proper validation helpers
     r"ToLongWithValidation",
     r"ToIntegerStrict",
@@ -176,6 +175,22 @@ def is_safe_pattern(line: str, file_path: str = "") -> bool:
             return True
 
     return False
+
+
+def run_self_tests() -> None:
+    safe_lines = [
+        "return LuaValue.NewNumber(Math.Abs(arg.Number));",
+        "return LuaValue.FromNumber(arg.Number + 1);",
+    ]
+    for line in safe_lines:
+        if not is_safe_pattern(line):
+            raise AssertionError(f"lint self-test failed to recognize safe line: {line}")
+
+    unsafe_line = "return Math.Abs(arg.Number);"
+    if is_safe_pattern(unsafe_line):
+        raise AssertionError(
+            f"lint self-test incorrectly recognized unsafe line: {unsafe_line}"
+        )
 
 
 def should_skip_path(file_path: str) -> bool:
@@ -290,6 +305,8 @@ def print_report(issues: list[Issue], detailed: bool = False) -> None:
 
 
 def main():
+    run_self_tests()
+
     parser = argparse.ArgumentParser(
         description="Lint C# files for problematic LuaNumber usage"
     )

@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Hardwire.Generators
     using System.CodeDom;
     using System.Collections.Generic;
     using System.Linq;
+    using global::NovaSharp;
     using Utils;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -271,7 +272,7 @@ namespace WallstopStudios.NovaSharp.Hardwire.Generators
             int refparCount
         )
         {
-            string arrayCtorType = table.Get("arraytype").IsNil()
+            string arrayCtorType = table.Get("arraytype").IsNil
                 ? null
                 : table.Get("arraytype").String;
 
@@ -326,8 +327,12 @@ namespace WallstopStudios.NovaSharp.Hardwire.Generators
                 {
                     coll.Add(new CodeExpressionStatement(retVal));
                     retVal = new CodePropertyReferenceExpression(
-                        new CodeTypeReferenceExpression(typeof(DynValue)),
-                        (refparCount == 0) ? "Void" : "Nil"
+                        new CodeTypeReferenceExpression(
+                            refparCount == 0
+                                ? typeof(HardwiredMethodMemberDescriptor)
+                                : typeof(LuaValue)
+                        ),
+                        refparCount == 0 ? "NoValue" : "Nil"
                     );
                 }
 
@@ -352,11 +357,11 @@ namespace WallstopStudios.NovaSharp.Hardwire.Generators
                         );
                     }
 
-                    CodeArrayCreateExpression arrayExp = new(typeof(DynValue), retVals.ToArray());
+                    CodeArrayCreateExpression arrayExp = new(typeof(LuaValue), retVals.ToArray());
 
                     CodeMethodInvokeExpression tupleExp = new(
-                        new CodeTypeReferenceExpression(typeof(DynValue)),
-                        "NewTuple",
+                        new CodeTypeReferenceExpression(typeof(HardwiredMethodMemberDescriptor)),
+                        "PackReturnValues",
                         arrayExp
                     );
 
@@ -371,8 +376,8 @@ namespace WallstopStudios.NovaSharp.Hardwire.Generators
         {
             CodeVariableReferenceExpression script = new("script");
             return new CodeMethodInvokeExpression(
-                new CodeTypeReferenceExpression(typeof(DynValue)),
-                "FromObject",
+                new CodeTypeReferenceExpression(typeof(HardwiredMethodMemberDescriptor)),
+                "ConvertFromClrObject",
                 script,
                 retVal
             );

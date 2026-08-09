@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -13,7 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
     public sealed class ObjectCallbackMemberDescriptorTUnitTests
     {
         private static readonly CallbackArguments NoOpArgs = new CallbackArguments(
-            new List<DynValue> { DynValue.NewNumber(1), DynValue.NewNumber(2) },
+            new List<LuaValue> { LuaValue.NewNumber(1), LuaValue.NewNumber(2) },
             false
         );
 
@@ -31,11 +32,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                     invocationCount++;
                     capturedObject = obj;
                     capturedArgCount = args?.Count ?? 0;
-                    return DynValue.NewNumber(42);
+                    return LuaValue.NewNumber(42);
                 }
             );
 
-            DynValue result = descriptor.Execute(script, "host", context: null, NoOpArgs);
+            LuaValue result = descriptor.Execute(script, "host", context: null, NoOpArgs);
 
             await Assert.That(invocationCount).IsEqualTo(1);
             await Assert.That(capturedObject).IsEqualTo("host");
@@ -54,7 +55,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 parameters: Array.Empty<ParameterDescriptor>()
             );
 
-            DynValue result = descriptor.Execute(script, new object(), null, NoOpArgs);
+            LuaValue result = descriptor.Execute(script, new object(), null, NoOpArgs);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Void);
         }

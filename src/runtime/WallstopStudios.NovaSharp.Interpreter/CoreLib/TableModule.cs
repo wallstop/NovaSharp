@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -21,18 +22,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Struct-based comparer for table.sort to avoid closure allocations (Initiative 12 Phase 4).
         /// </summary>
-        private readonly struct LuaSortComparer : IComparer<DynValue>
+        private readonly struct LuaSortComparer : IComparer<LuaValue>
         {
             private readonly ScriptExecutionContext _ctx;
-            private readonly DynValue _lt;
+            private readonly LuaValue _lt;
 
-            public LuaSortComparer(ScriptExecutionContext ctx, DynValue lt)
+            public LuaSortComparer(ScriptExecutionContext ctx, LuaValue lt)
             {
                 _ctx = ctx;
                 _lt = lt;
             }
 
-            public int Compare(DynValue a, DynValue b) => SortComparer(_ctx, a, b, _lt);
+            public int Compare(LuaValue a, LuaValue b) => SortComparer(_ctx, a, b, _lt);
         }
 
         /// <summary>
@@ -41,7 +42,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         [LuaCompatibility(LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "unpack")]
-        public static DynValue Unpack(
+        public static LuaValue Unpack(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -52,17 +53,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue s = args.AsType(0, "unpack", DataType.Table, false);
-            DynValue vi = args.AsType(1, "unpack", DataType.Number, true);
-            DynValue vj = args.AsType(2, "unpack", DataType.Number, true);
+            LuaValue s = args.AsType(0, "unpack", DataType.Table, false);
+            LuaValue vi = args.AsType(1, "unpack", DataType.Number, true);
+            LuaValue vj = args.AsType(2, "unpack", DataType.Number, true);
 
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
             // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
-            int ii = vi.IsNil()
+            int ii = vi.IsNil
                 ? 1
                 : (int)Utilities.LuaNumberHelpers.ToLongWithValidation(version, vi, "unpack", 2);
-            int ij = vj.IsNil()
+            int ij = vj.IsNil
                 ? GetTableLength(executionContext, s)
                 : (int)Utilities.LuaNumberHelpers.ToLongWithValidation(version, vj, "unpack", 3);
 
@@ -72,7 +73,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // Fast path for empty range
             if (count <= 0)
             {
-                return DynValue.Void;
+                return LuaValue.Void;
             }
 
             // Fast path for single element - avoid array allocation
@@ -81,7 +82,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return t.Get(ii);
             }
 
-            DynValue[] v = new DynValue[count];
+            LuaValue[] v = new LuaValue[count];
 
             int tidx = 0;
             for (int i = ii; i <= ij; i++)
@@ -89,7 +90,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 v[tidx++] = t.Get(i);
             }
 
-            return DynValue.NewTuple(v);
+            return LuaValue.NewTuple(v);
         }
 
         /// <summary>
@@ -105,7 +106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <returns>The largest positive numeric key, or 0 if none exist.</returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "maxn")]
-        public static DynValue MaxN(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue MaxN(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -113,7 +114,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue vTable = args.AsType(0, "maxn", DataType.Table, false);
+            LuaValue vTable = args.AsType(0, "maxn", DataType.Table, false);
             Table table = vTable.Table;
 
             double maxKey = 0;
@@ -130,7 +131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
             }
 
-            return DynValue.NewNumber(maxKey);
+            return LuaValue.NewNumber(maxKey);
         }
 
         /// <summary>
@@ -139,7 +140,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         [LuaCompatibility(LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "pack")]
-        public static DynValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -148,14 +149,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             Table t = new(executionContext.Script);
-            DynValue v = DynValue.NewTable(t);
+            LuaValue v = LuaValue.NewTable(t);
 
             for (int i = 0; i < args.Count; i++)
             {
                 t.Set(i + 1, args[i]);
             }
 
-            t.Set("n", DynValue.FromNumber(args.Count));
+            t.Set("n", LuaValue.FromNumber(args.Count));
 
             return v;
         }
@@ -164,7 +165,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `table.sort`, sorting the array portion with an optional comparator (§6.6).
         /// </summary>
         [NovaSharpModuleMethod(Name = "sort")]
-        public static DynValue Sort(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Sort(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -172,8 +173,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue vlist = args.AsType(0, "sort", DataType.Table, false);
-            DynValue lt = args[1];
+            LuaValue vlist = args.AsType(0, "sort", DataType.Table, false);
+            LuaValue lt = args[1];
 
             if (lt.Type != DataType.Function && lt.Type != DataType.ClrFunction && lt.IsNotNil())
             {
@@ -182,7 +183,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             int end = GetTableLength(executionContext, vlist);
 
-            using (ListPool<DynValue>.Get(end, out List<DynValue> values))
+            using (ListPool<LuaValue>.Get(end, out List<LuaValue> values))
             {
                 for (int i = 1; i <= end; i++)
                 {
@@ -192,7 +193,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 try
                 {
                     // Use struct comparer with boxing-free pdqsort (Initiative 16)
-                    values.Sort<DynValue, LuaSortComparer>(
+                    values.Sort<LuaValue, LuaSortComparer>(
                         new LuaSortComparer(executionContext, lt)
                     );
                 }
@@ -215,16 +216,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         private static int SortComparer(
             ScriptExecutionContext executionContext,
-            DynValue a,
-            DynValue b,
-            DynValue lt
+            LuaValue a,
+            LuaValue b,
+            LuaValue lt
         )
         {
-            if (lt == null || lt.IsNil())
+            if (lt.IsNil)
             {
-                lt = executionContext.GetBinaryMetamethod(a, b, Metamethods.Lt);
-
-                if (lt == null || lt.IsNil())
+                if (
+                    !executionContext.TryGetBinaryMetamethod(a, b, Metamethods.Lt, out lt)
+                    || lt.IsNil
+                )
                 {
                     if (a.Type == DataType.Number && b.Type == DataType.Number)
                     {
@@ -241,22 +243,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 else
                 {
                     return LuaComparerToClrComparer(
-                        executionContext.Script.Call(lt, a, b),
-                        executionContext.Script.Call(lt, b, a)
+                        executionContext.Script.CallValues(lt, a, b),
+                        executionContext.Script.CallValues(lt, b, a)
                     );
                 }
             }
             else
             {
                 return LuaComparerToClrComparer(
-                    executionContext.Script.Call(lt, a, b),
-                    executionContext.Script.Call(lt, b, a)
+                    executionContext.Script.CallValues(lt, a, b),
+                    executionContext.Script.CallValues(lt, b, a)
                 );
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int LuaComparerToClrComparer(DynValue dynValue1, DynValue dynValue2)
+        private static int LuaComparerToClrComparer(LuaValue dynValue1, LuaValue dynValue2)
         {
             bool v1 = dynValue1.CastToBool();
             bool v2 = dynValue2.CastToBool();
@@ -283,7 +285,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `table.insert`, inserting a value at the specified position (§6.6).
         /// </summary>
         [NovaSharpModuleMethod(Name = "insert")]
-        public static DynValue Insert(
+        public static LuaValue Insert(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -294,9 +296,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue vlist = args.AsType(0, "table.insert", DataType.Table, false);
-            DynValue vpos = args[1];
-            DynValue vvalue = args[2];
+            LuaValue vlist = args.AsType(0, "table.insert", DataType.Table, false);
+            LuaValue vpos = args[1];
+            LuaValue vvalue = args[2];
 
             if (args.Count > 3)
             {
@@ -307,10 +309,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             Table list = vlist.Table;
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
-            if (vvalue.IsNil())
+            if (vvalue.IsNil)
             {
                 vvalue = vpos;
-                vpos = DynValue.FromNumber(len + 1);
+                vpos = LuaValue.FromNumber(len + 1);
             }
 
             if (vpos.Type != DataType.Number)
@@ -349,7 +351,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `table.remove`, removing and returning a value at the given position (§6.6).
         /// </summary>
         [NovaSharpModuleMethod(Name = "remove")]
-        public static DynValue Remove(
+        public static LuaValue Remove(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -360,9 +362,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue vlist = args.AsType(0, "table.remove", DataType.Table, false);
-            DynValue vpos = args.AsType(1, "table.remove", DataType.Number, true);
-            DynValue ret = DynValue.Nil;
+            LuaValue vlist = args.AsType(0, "table.remove", DataType.Table, false);
+            LuaValue vpos = args.AsType(1, "table.remove", DataType.Number, true);
+            LuaValue ret = LuaValue.Nil;
 
             // Note: Lua silently ignores extra arguments (does NOT throw an error)
             // This behavior is consistent across Lua 5.1, 5.2, 5.3, and 5.4
@@ -372,7 +374,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
             // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
-            int pos = vpos.IsNil()
+            int pos = vpos.IsNil
                 ? len
                 : (int)Utilities.LuaNumberHelpers.ToLongWithValidation(version, vpos, "remove", 2);
 
@@ -404,7 +406,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `table.concat`, concatenating array elements with an optional separator (§6.6).
         /// </summary>
         [NovaSharpModuleMethod(Name = "concat")]
-        public static DynValue Concat(
+        public static LuaValue Concat(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -415,13 +417,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue vlist = args.AsType(0, "concat", DataType.Table, false);
-            DynValue vsep = args.AsType(1, "concat", DataType.String, true);
-            DynValue vstart = args.AsType(2, "concat", DataType.Number, true);
-            DynValue vend = args.AsType(3, "concat", DataType.Number, true);
+            LuaValue vlist = args.AsType(0, "concat", DataType.Table, false);
+            LuaValue vsep = args.AsType(1, "concat", DataType.String, true);
+            LuaValue vstart = args.AsType(2, "concat", DataType.Number, true);
+            LuaValue vend = args.AsType(3, "concat", DataType.Number, true);
 
             Table list = vlist.Table;
-            string sep = vsep.IsNil() ? "" : vsep.String;
+            string sep = vsep.IsNil ? "" : vsep.String;
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
             // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
@@ -444,14 +446,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (end < start)
             {
-                return DynValue.NewString(string.Empty);
+                return LuaValue.NewString(string.Empty);
             }
 
             using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
 
             for (int i = start; i <= end; i++)
             {
-                DynValue v = list.Get(i);
+                LuaValue v = list.Get(i);
 
                 if (v.Type != DataType.Number && v.Type != DataType.String)
                 {
@@ -472,7 +474,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 sb.Append(s);
             }
 
-            return DynValue.NewString(sb.ToString());
+            return LuaValue.NewString(sb.ToString());
         }
 
         /// <summary>
@@ -480,7 +482,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
         [NovaSharpModuleMethod(Name = "move")]
-        public static DynValue Move(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Move(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -493,16 +495,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             Table source = args.AsType(0, func, DataType.Table, false).Table;
             // table.move is Lua 5.3+ only, so always require integer representation
-            DynValue vFrom = args.AsType(1, func, DataType.Number, false);
-            DynValue vTo = args.AsType(2, func, DataType.Number, false);
-            DynValue vTarget = args.AsType(3, func, DataType.Number, false);
+            LuaValue vFrom = args.AsType(1, func, DataType.Number, false);
+            LuaValue vTo = args.AsType(2, func, DataType.Number, false);
+            LuaValue vTarget = args.AsType(3, func, DataType.Number, false);
             int from = (int)
                 Utilities.LuaNumberHelpers.ToLongWithValidation(version, vFrom, func, 2);
             int to = (int)Utilities.LuaNumberHelpers.ToLongWithValidation(version, vTo, func, 3);
             int target = (int)
                 Utilities.LuaNumberHelpers.ToLongWithValidation(version, vTarget, func, 4);
             Table destination =
-                (args.Count >= 5 && !args[4].IsNil())
+                (args.Count >= 5 && !args[4].IsNil)
                     ? args.AsType(4, func, DataType.Table, false).Table
                     : source;
 
@@ -518,8 +520,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     {
                         int srcIndex = from + i;
                         int destIndex = srcIndex + offset;
-                        DynValue value = source.Get(srcIndex);
-                        destination.Set(destIndex, value ?? DynValue.Nil);
+                        LuaValue value = source.Get(srcIndex);
+                        destination.Set(destIndex, value);
                     }
                 }
                 else
@@ -528,22 +530,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     {
                         int srcIndex = from + i;
                         int destIndex = srcIndex + offset;
-                        DynValue value = source.Get(srcIndex);
-                        destination.Set(destIndex, value ?? DynValue.Nil);
+                        LuaValue value = source.Get(srcIndex);
+                        destination.Set(destIndex, value);
                     }
                 }
             }
 
-            return DynValue.NewTable(destination);
+            return LuaValue.NewTable(destination);
         }
 
-        private static int GetTableLength(ScriptExecutionContext executionContext, DynValue vlist)
+        private static int GetTableLength(ScriptExecutionContext executionContext, LuaValue vlist)
         {
-            DynValue len = executionContext.GetMetamethod(vlist, Metamethods.Len);
-
-            if (len != null)
+            if (
+                executionContext.TryGetMetamethod(
+                    vlist,
+                    Metamethods.Len,
+                    out LuaValue lengthMetamethod
+                )
+            )
             {
-                DynValue lenv = executionContext.Script.Call(len, vlist);
+                LuaValue lenv = executionContext.Script.CallValues(lengthMetamethod, vlist);
 
                 double? lengthValue = lenv.CastToNumber();
 
@@ -554,10 +560,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 return (int)lengthValue;
             }
-            else
-            {
-                return (int)vlist.Table.Length;
-            }
+            return (int)vlist.Table.Length;
         }
     }
 
@@ -583,7 +586,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
         [NovaSharpModuleMethod(Name = "unpack")]
-        public static DynValue Unpack(
+        public static LuaValue Unpack(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

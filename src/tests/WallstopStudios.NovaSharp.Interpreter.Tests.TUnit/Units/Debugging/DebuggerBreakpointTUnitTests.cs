@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -86,7 +87,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
             script.AttachDebugger(debugger);
             script.DebuggerEnabled = true;
 
-            DynValue result = script.Call(script.Globals.Get("target"));
+            LuaValue result = script.Call(script.Globals.Get("target"));
             await Assert.That(result.Number).IsEqualTo(5).ConfigureAwait(false);
 
             await Assert

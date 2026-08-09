@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -82,7 +83,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
             return builder.ToString();
         }
 
-        private static bool IsStringIdentifierValid(DynValue dynValue)
+        private static bool IsStringIdentifierValid(LuaValue dynValue)
         {
             if (dynValue.Type != DataType.String)
             {
@@ -121,13 +122,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
         /// <param name="dynValue">Value to serialize.</param>
         /// <param name="tabs">Indentation depth used when emitting nested tables.</param>
         /// <returns>Lua string representing the supplied value.</returns>
-        public static string SerializeValue(this DynValue dynValue, int tabs = 0)
+        public static string SerializeValue(this LuaValue dynValue, int tabs = 0)
         {
-            if (dynValue == null)
-            {
-                throw new ArgumentNullException(nameof(dynValue));
-            }
-
             if (dynValue.Type == DataType.Nil || dynValue.Type == DataType.Void)
             {
                 return LuaKeywords.Nil;

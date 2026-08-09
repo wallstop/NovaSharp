@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.REPL
 {
+    using global::NovaSharp;
 #if !(PCL || ENABLE_DOTNET || NETFX_CORE)
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using System;
@@ -73,9 +74,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.REPL
                 throw new ArgumentNullException(nameof(globalContext));
             }
 
-            DynValue s = globalContext.RawGet("LUA_PATH");
+            LuaValue s = globalContext.RawGet("LUA_PATH");
 
-            if (s != null && s.Type == DataType.String)
+            if (s.Type == DataType.String)
             {
                 return ResolveModuleName(modname, UnpackStringPaths(s.String));
             }

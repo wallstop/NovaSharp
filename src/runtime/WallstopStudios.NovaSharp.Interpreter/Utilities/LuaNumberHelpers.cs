@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Utilities
 {
     using System;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -122,9 +123,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
         }
 
         /// <summary>
-        /// Validates that a <see cref="DynValue"/> has an exact integer representation for Lua 5.3+ semantics.
+        /// Validates that a <see cref="LuaValue"/> has an exact integer representation for Lua 5.3+ semantics.
         /// </summary>
-        /// <param name="dynValue">The DynValue to validate (must be a number type).</param>
+        /// <param name="dynValue">The LuaValue to validate (must be a number type).</param>
         /// <param name="functionName">The function name for error messages.</param>
         /// <param name="argIndex">1-based argument index for error messages.</param>
         /// <exception cref="ScriptRuntimeException">
@@ -132,17 +133,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
         /// be exactly converted to an integer.
         /// </exception>
         /// <remarks>
-        /// This overload uses the <see cref="LuaNumber"/> from the DynValue to properly
+        /// This overload uses the <see cref="LuaNumber"/> from the LuaValue to properly
         /// distinguish between integer and float subtypes. Nil values are allowed and
         /// handled by the caller's default argument logic.
         /// </remarks>
         public static void RequireIntegerRepresentation(
-            DynValue dynValue,
+            LuaValue dynValue,
             string functionName,
             int argIndex
         )
         {
-            if (dynValue == null || dynValue.IsNil())
+            if (dynValue.IsNil)
             {
                 return; // Nil values are handled by default argument logic
             }
@@ -154,8 +155,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
         /// Validates string index arguments according to the script's Lua compatibility version.
         /// </summary>
         /// <param name="version">The Lua compatibility version of the script.</param>
-        /// <param name="startValue">The start index DynValue (may be nil).</param>
-        /// <param name="endValue">The end index DynValue (may be nil).</param>
+        /// <param name="startValue">The start index LuaValue (may be nil).</param>
+        /// <param name="endValue">The end index LuaValue (may be nil).</param>
         /// <param name="functionName">The function name for error messages.</param>
         /// <remarks>
         /// In Lua 5.3+, non-integer index arguments cause an error with the message
@@ -164,8 +165,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
         /// </remarks>
         public static void ValidateStringIndices(
             LuaCompatibilityVersion version,
-            DynValue startValue,
-            DynValue endValue,
+            LuaValue startValue,
+            LuaValue endValue,
             string functionName
         )
         {
@@ -176,12 +177,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
             }
 
             // Lua 5.3+: require exact integer representation
-            if (startValue != null && !startValue.IsNil())
+            if (!startValue.IsNil)
             {
                 RequireIntegerRepresentation(startValue.LuaNumber, functionName, 2);
             }
 
-            if (endValue != null && !endValue.IsNil())
+            if (!endValue.IsNil)
             {
                 RequireIntegerRepresentation(endValue.LuaNumber, functionName, 3);
             }
@@ -191,7 +192,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
         /// Validates a single numeric argument according to the script's Lua compatibility version.
         /// </summary>
         /// <param name="version">The Lua compatibility version of the script.</param>
-        /// <param name="value">The DynValue to validate (may be nil).</param>
+        /// <param name="value">The LuaValue to validate (may be nil).</param>
         /// <param name="functionName">The function name for error messages.</param>
         /// <param name="argIndex">1-based argument index for error messages.</param>
         /// <remarks>
@@ -201,7 +202,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
         /// </remarks>
         public static void ValidateIntegerArgument(
             LuaCompatibilityVersion version,
-            DynValue value,
+            LuaValue value,
             string functionName,
             int argIndex
         )
@@ -213,17 +214,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
             }
 
             // Lua 5.3+: require exact integer representation
-            if (value != null && !value.IsNil())
+            if (!value.IsNil)
             {
                 RequireIntegerRepresentation(value.LuaNumber, functionName, argIndex);
             }
         }
 
         /// <summary>
-        /// Extracts a long integer from a DynValue with version-aware validation.
+        /// Extracts a long integer from a LuaValue with version-aware validation.
         /// </summary>
         /// <param name="version">The Lua compatibility version of the script.</param>
-        /// <param name="value">The DynValue to extract (must be a number).</param>
+        /// <param name="value">The LuaValue to extract (must be a number).</param>
         /// <param name="functionName">The function name for error messages.</param>
         /// <param name="argIndex">1-based argument index for error messages.</param>
         /// <returns>The extracted long integer value.</returns>
@@ -241,7 +242,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
         /// </remarks>
         public static long ToLongWithValidation(
             LuaCompatibilityVersion version,
-            DynValue value,
+            LuaValue value,
             string functionName,
             int argIndex
         )

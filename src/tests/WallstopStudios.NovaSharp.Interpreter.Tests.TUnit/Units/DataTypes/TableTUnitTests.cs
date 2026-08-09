@@ -3,12 +3,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class TableTUnitTests
     {
@@ -23,7 +25,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version);
-            DynValue[] values = new[] { DynValue.NewNumber(10), DynValue.NewString("two") };
+            LuaValue[] values = new[] { LuaValue.NewNumber(10), LuaValue.NewString("two") };
 
             Table table = new(script, values);
 
@@ -41,14 +43,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ClearRemovesAllEntries(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
-            table.Set(1, DynValue.NewNumber(1));
-            table.Set("name", DynValue.NewString("value"));
+            table.Set(1, LuaValue.NewNumber(1));
+            table.Set("name", LuaValue.NewString("value"));
 
             table.Clear();
 
             await Assert.That(table.Length).IsEqualTo(0).ConfigureAwait(false);
-            await Assert.That(table.RawGet(1)).IsNull().ConfigureAwait(false);
-            await Assert.That(table.RawGet("name")).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet(1).Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("name").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -68,9 +73,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(script);
             long afterTableCreation = script.AllocationTracker.CurrentBytes;
 
-            table.Set(1, DynValue.NewNumber(1));
-            table.Set(2, DynValue.NewNumber(2));
-            table.Set(3, DynValue.Nil);
+            table.Set(1, LuaValue.NewNumber(1));
+            table.Set(2, LuaValue.NewNumber(2));
+            table.Set(3, LuaValue.Nil);
             await Assert
                 .That(script.AllocationTracker.CurrentBytes)
                 .IsGreaterThan(afterTableCreation)
@@ -82,7 +87,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .IsEqualTo(afterTableCreation)
                 .ConfigureAwait(false);
 
-            table.Set(1, DynValue.NewNumber(3));
+            table.Set(1, LuaValue.NewNumber(3));
             await Assert
                 .That(script.AllocationTracker.CurrentBytes)
                 .IsGreaterThan(afterTableCreation)
@@ -111,16 +116,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version);
             Table table = new(script);
-            table.Set(1, DynValue.NewNumber(10));
-            table.Set(2, DynValue.NewNumber(20));
-            table.Set(3, DynValue.NewNumber(30));
+            table.Set(1, LuaValue.NewNumber(10));
+            table.Set(2, LuaValue.NewNumber(20));
+            table.Set(3, LuaValue.NewNumber(30));
 
             await Assert.That(table.Length).IsEqualTo(3).ConfigureAwait(false);
 
-            table.Set(2, DynValue.Nil);
+            table.Set(2, LuaValue.Nil);
             await Assert.That(table.Length).IsEqualTo(1).ConfigureAwait(false);
 
-            table.Append(DynValue.NewNumber(40));
+            table.Append(LuaValue.NewNumber(40));
             await Assert.That(table.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(table.RawGet(2).Number).IsEqualTo(40).ConfigureAwait(false);
             await Assert.That(table.RawGet(3).Number).IsEqualTo(30).ConfigureAwait(false);
@@ -137,11 +142,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Table table = new(new Script());
-            table.Set("first", DynValue.Nil);
-            table.Set("second", DynValue.NewNumber(2));
-            table.Set(3, DynValue.NewNumber(3));
+            table.Set("first", LuaValue.Nil);
+            table.Set("second", LuaValue.NewNumber(2));
+            table.Set(3, LuaValue.NewNumber(3));
 
-            TablePair? first = table.NextKey(DynValue.Nil);
+            TablePair? first = table.NextKey(LuaValue.Nil);
             await Assert.That(first.HasValue).IsTrue().ConfigureAwait(false);
             await Assert.That(first.Value.Key.String).IsEqualTo("second").ConfigureAwait(false);
 
@@ -152,7 +157,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             TablePair? tail = table.NextKey(second.Value.Key);
             await Assert.That(tail).IsEqualTo(TablePair.Nil).ConfigureAwait(false);
 
-            TablePair? missing = table.NextKey(DynValue.NewString("missing"));
+            TablePair? missing = table.NextKey(LuaValue.NewString("missing"));
             await Assert.That(missing).IsNull().ConfigureAwait(false);
         }
 
@@ -165,9 +170,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task NextKeyReturnsNullWhenKeyUnknown(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
-            table.Set(1, DynValue.NewNumber(1));
+            table.Set(1, LuaValue.NewNumber(1));
 
-            TablePair? unknown = table.NextKey(DynValue.NewNumber(999));
+            TablePair? unknown = table.NextKey(LuaValue.NewNumber(999));
 
             await Assert.That(unknown).IsNull().ConfigureAwait(false);
         }
@@ -182,9 +187,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version);
             Table table = new(script);
-            DynValue fractionalKey = DynValue.NewNumber(2.5);
-            table.Set(fractionalKey, DynValue.NewString("head"));
-            table.Set("tail", DynValue.NewNumber(7));
+            LuaValue fractionalKey = LuaValue.NewNumber(2.5);
+            table.Set(fractionalKey, LuaValue.NewString("head"));
+            table.Set("tail", LuaValue.NewNumber(7));
 
             TablePair? next = table.NextKey(fractionalKey);
 
@@ -201,18 +206,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task CollectDeadKeysRemovesNilEntries(LuaCompatibilityVersion version)
         {
             Table table = new(new Script(version));
-            DynValue valueKey = DynValue.False;
-            table.Set(1, DynValue.NewNumber(10));
-            table.Set(3, DynValue.NewNumber(30));
-            table.Set(2, DynValue.Nil);
-            table.Set("dead", DynValue.Nil);
-            table.Set(valueKey, DynValue.Nil);
+            LuaValue valueKey = LuaValue.False;
+            table.Set(1, LuaValue.NewNumber(10));
+            table.Set(3, LuaValue.NewNumber(30));
+            table.Set(2, LuaValue.Nil);
+            table.Set("dead", LuaValue.Nil);
+            table.Set(valueKey, LuaValue.Nil);
             await Assert.That(table.Count).IsEqualTo(5).ConfigureAwait(false);
             table.CollectDeadKeys();
 
-            await Assert.That(table.RawGet(2)).IsNull().ConfigureAwait(false);
-            await Assert.That(table.RawGet("dead")).IsNull().ConfigureAwait(false);
-            await Assert.That(table.RawGet(valueKey)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet(2).Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("dead").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet(valueKey).Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
             await Assert.That(table.Count).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(table.Length).IsEqualTo(1).ConfigureAwait(false);
         }
@@ -230,7 +241,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Script scriptA = new();
             Script scriptB = new();
             Table table = new(scriptA);
-            DynValue foreignValue = DynValue.NewTable(scriptB);
+            LuaValue foreignValue = LuaValue.NewTable(scriptB);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 table.Append(foreignValue)
@@ -243,6 +254,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        public async Task MetaTableRejectsTableOwnedByDifferentScript()
+        {
+            Script owner = new();
+            Table table = new(owner);
+            Table foreignMetatable = new(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.MetaTable = foreignMetatable
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("resources owned by different scripts")
+                .ConfigureAwait(false);
+            await Assert.That(table.MetaTable).IsNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
@@ -251,10 +280,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task SetDynValueNaNThrows(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
-            DynValue nanKey = DynValue.NewNumber(double.NaN);
+            LuaValue nanKey = LuaValue.NewNumber(double.NaN);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                table.Set(nanKey, DynValue.NewNumber(1))
+                table.Set(nanKey, LuaValue.NewNumber(1))
             );
 
             await Assert
@@ -274,7 +303,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(new Script());
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                table.Set(new object[] { "missing", "child" }, DynValue.NewNumber(1))
+                table.Set(new object[] { "missing", "child" }, LuaValue.NewNumber(1))
             );
 
             await Assert
@@ -292,10 +321,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task SetKeysThrowsWhenIntermediateIsNotTable(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
-            table.Set("leaf", DynValue.NewNumber(5));
+            table.Set("leaf", LuaValue.NewNumber(5));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                table.Set(new object[] { "leaf", "child" }, DynValue.NewNumber(1))
+                table.Set(new object[] { "leaf", "child" }, LuaValue.NewNumber(1))
             );
 
             await Assert
@@ -316,7 +345,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(new Script());
             if (seedNonTable)
             {
-                table.Set(key, DynValue.NewNumber(5));
+                table.Set(key, LuaValue.NewNumber(5));
             }
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -339,7 +368,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(new Script());
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                table.Set((object[])null, DynValue.NewNumber(1))
+                table.Set((object[])null, LuaValue.NewNumber(1))
             );
 
             await Assert
@@ -359,7 +388,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(new Script());
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                table.Set(Array.Empty<object>(), DynValue.NewNumber(1))
+                table.Set(Array.Empty<object>(), LuaValue.NewNumber(1))
             );
 
             await Assert
@@ -379,11 +408,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Script script = new(version);
             Table table = new(script);
 
-            table.Set((object)"name", DynValue.NewString("nova"));
-            table.Set((object)4, DynValue.NewNumber(4));
+            table.Set((object)"name", LuaValue.NewString("nova"));
+            table.Set((object)4, LuaValue.NewNumber(4));
 
             double fractionalKey = 4.5;
-            table.Set((object)fractionalKey, DynValue.NewNumber(5));
+            table.Set((object)fractionalKey, LuaValue.NewNumber(5));
 
             await Assert.That(table.RawGet("name").String).IsEqualTo("nova").ConfigureAwait(false);
             await Assert.That(table.RawGet(4).Number).IsEqualTo(4).ConfigureAwait(false);
@@ -403,11 +432,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version);
             Table table = new(script);
-            DynValue fractionalKey = DynValue.NewNumber(3.25);
+            LuaValue fractionalKey = LuaValue.NewNumber(3.25);
 
-            table.Set(fractionalKey, DynValue.NewString("fractional"));
+            table.Set(fractionalKey, LuaValue.NewString("fractional"));
 
-            DynValue result = table.RawGet(fractionalKey);
+            LuaValue result = table.RawGet(fractionalKey);
             await Assert.That(result.String).IsEqualTo("fractional").ConfigureAwait(false);
         }
 
@@ -421,9 +450,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version);
             Table table = new(script);
-            table.Set("child", DynValue.NewTable(script));
+            table.Set("child", LuaValue.NewTable(script));
 
-            table.Set(new object[] { "child", "leaf" }, DynValue.NewString("value"));
+            table.Set(new object[] { "child", "leaf" }, LuaValue.NewString("value"));
 
             await Assert
                 .That(table.RawGet("child", "leaf").String)
@@ -446,11 +475,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table child = new(script);
             Table grandchild = new(script);
 
-            table.Set("child", DynValue.NewTable(child));
-            child.Set("grandchild", DynValue.NewTable(grandchild));
+            table.Set("child", LuaValue.NewTable(child));
+            child.Set("grandchild", LuaValue.NewTable(grandchild));
 
-            table.Set("child", "leaf", DynValue.NewString("two"));
-            table.Set("child", "grandchild", "leaf", DynValue.NewString("three"));
+            table.Set("child", "leaf", LuaValue.NewString("two"));
+            table.Set("child", "grandchild", "leaf", LuaValue.NewString("three"));
 
             await Assert.That(child.RawGet("leaf").String).IsEqualTo("two").ConfigureAwait(false);
             await Assert
@@ -470,8 +499,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Script scriptA = new();
             Script scriptB = new();
             Table table = new(scriptA);
-            table.Set("child", DynValue.NewTable(scriptA));
-            DynValue foreignValue = DynValue.NewTable(scriptB);
+            table.Set("child", LuaValue.NewTable(scriptA));
+            LuaValue foreignValue = LuaValue.NewTable(scriptB);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 table.Set("child", "leaf", foreignValue)
@@ -493,11 +522,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version);
             Table table = new(script);
-            DynValue child = DynValue.NewTable(script);
-            child.Table.Set(1, DynValue.NewString("inner"));
+            LuaValue child = LuaValue.NewTable(script);
+            child.Table.Set(1, LuaValue.NewString("inner"));
             table.Set("child", child);
 
-            DynValue value = table.Get("child", 1);
+            LuaValue value = table.Get("child", 1);
 
             await Assert.That(value.String).IsEqualTo("inner").ConfigureAwait(false);
         }
@@ -516,15 +545,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(script);
             Table child = new(script);
             Table grandchild = new(script);
-            table.Set("child", DynValue.NewTable(child));
-            child.Set("grandchild", DynValue.NewTable(grandchild));
-            child.Set("leaf", DynValue.NewString("two"));
-            grandchild.Set("leaf", DynValue.NewString("three"));
+            table.Set("child", LuaValue.NewTable(child));
+            child.Set("grandchild", LuaValue.NewTable(grandchild));
+            child.Set("leaf", LuaValue.NewString("two"));
+            grandchild.Set("leaf", LuaValue.NewString("three"));
 
-            DynValue twoKeyGet = table.Get("child", "leaf");
-            DynValue twoKeyRawGet = table.RawGet("child", "leaf");
-            DynValue threeKeyGet = table.Get("child", "grandchild", "leaf");
-            DynValue threeKeyRawGet = table.RawGet("child", "grandchild", "leaf");
+            LuaValue twoKeyGet = table.Get("child", "leaf");
+            LuaValue twoKeyRawGet = table.RawGet("child", "leaf");
+            LuaValue threeKeyGet = table.Get("child", "grandchild", "leaf");
+            LuaValue threeKeyRawGet = table.RawGet("child", "grandchild", "leaf");
 
             await Assert.That(twoKeyGet.String).IsEqualTo("two").ConfigureAwait(false);
             await Assert.That(twoKeyRawGet.String).IsEqualTo("two").ConfigureAwait(false);
@@ -544,8 +573,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(script);
             Table child = new(script);
             Table grandchild = new(script);
-            table.Set("child", DynValue.NewTable(child));
-            child.Set("grandchild", DynValue.NewTable(grandchild));
+            table.Set("child", LuaValue.NewTable(child));
+            child.Set("grandchild", LuaValue.NewTable(grandchild));
 
             table["child", "leaf"] = "two";
             table["child", "grandchild", "leaf"] = "three";
@@ -567,17 +596,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version);
             Table table = new(script);
-            table.Set("child", DynValue.NewTable(script));
+            table.Set("child", LuaValue.NewTable(script));
 
-            DynValue fixedGet = table.Get("child", (object)null);
-            DynValue fixedRawGet = table.RawGet("child", (object)null);
+            LuaValue fixedGet = table.Get("child", (object)null);
+            LuaValue fixedRawGet = table.RawGet("child", (object)null);
             bool removed = table.Remove("child", (object)null);
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                table.Set("child", (object)null, DynValue.NewNumber(1))
+                table.Set("child", (object)null, LuaValue.NewNumber(1))
             );
 
-            await Assert.That(fixedGet.IsNil()).IsTrue().ConfigureAwait(false);
-            await Assert.That(fixedRawGet).IsNull().ConfigureAwait(false);
+            await Assert.That(fixedGet.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(fixedRawGet.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(removed).IsFalse().ConfigureAwait(false);
             await Assert
                 .That(exception.Message)
@@ -595,19 +624,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version);
             Table table = new(script);
-            table.Set("child", DynValue.NewTable(script));
-            table.Set(new object[] { "child", "leaf" }, DynValue.NewString("array"));
+            table.Set("child", LuaValue.NewTable(script));
+            table.Set(new object[] { "child", "leaf" }, LuaValue.NewString("array"));
             object[] keys = new object[] { "child", "leaf" };
 
-            DynValue getValue = table.Get(keys);
-            DynValue rawValue = table.RawGet(keys);
-            DynValue castGetValue = table.Get((object)keys);
-            DynValue castRawValue = table.RawGet((object)keys);
+            LuaValue getValue = table.Get(keys);
+            LuaValue rawValue = table.RawGet(keys);
+            LuaValue castGetValue = table.Get((object)keys);
+            LuaValue castRawValue = table.RawGet((object)keys);
 
             await Assert.That(getValue.String).IsEqualTo("array").ConfigureAwait(false);
             await Assert.That(rawValue.String).IsEqualTo("array").ConfigureAwait(false);
-            await Assert.That(castGetValue.IsNil()).IsTrue().ConfigureAwait(false);
-            await Assert.That(castRawValue).IsNull().ConfigureAwait(false);
+            await Assert.That(castGetValue.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(castRawValue.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -770,9 +799,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Table table = new(new Script());
 
-            DynValue value = table.Get((object)"missing");
+            LuaValue value = table.Get((object)"missing");
 
-            await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(value.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -785,9 +814,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Table table = new(new Script());
 
-            DynValue value = table.Get(Array.Empty<object>());
+            LuaValue value = table.Get(Array.Empty<object>());
 
-            await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(value.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -800,9 +829,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Table table = new(new Script());
 
-            DynValue value = table.RawGet(Array.Empty<object>());
+            LuaValue value = table.RawGet(Array.Empty<object>());
 
-            await Assert.That(value).IsNull().ConfigureAwait(false);
+            await Assert.That(value.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -876,7 +905,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(new Script());
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                table.Set("missing", "child", DynValue.NewNumber(1))
+                table.Set("missing", "child", LuaValue.NewNumber(1))
             );
 
             await Assert
@@ -896,7 +925,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Table table = new(new Script());
-            table.Set("leaf", DynValue.NewNumber(5));
+            table.Set("leaf", LuaValue.NewNumber(5));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 table.RawGet("leaf", "child")
@@ -919,7 +948,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Table table = new(new Script());
-            table.Set("leaf", DynValue.NewNumber(5));
+            table.Set("leaf", LuaValue.NewNumber(5));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 table.RawGet("leaf", "child")
@@ -942,7 +971,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Table table = new(new Script());
-            table.Set("leaf", DynValue.NewNumber(5));
+            table.Set("leaf", LuaValue.NewNumber(5));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 table.Remove("leaf", "child")
@@ -977,7 +1006,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Table table = new(new Script());
 
-            await Assert.That(table.RawGet((object)null)).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet((object)null).Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -986,14 +1018,58 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [ScriptGlobalOptionsIsolation]
         public async Task RawGetObjectReturnsValueWhenKeyExists(LuaCompatibilityVersion version)
         {
-            Table table = new(new Script());
-            table.Set("existing", DynValue.NewNumber(42));
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
+                registry =>
+                {
+                    registry.SetClrToScriptCustomConversion<int>(
+                        (_, key) => LuaValue.NewString("custom-key:" + key)
+                    );
+                    registry.SetClrToScriptCustomConversion<string>(
+                        (_, key) => LuaValue.NewString("custom-string:" + key)
+                    );
+                }
+            );
+            Table table = new(new Script(version));
+            table.Set("existing", LuaValue.NewNumber(42));
+            table.Set(7, LuaValue.NewNumber(84));
+            table.Set((object)7, LuaValue.NewString("converted integer"));
+            table.Set((object)"key", LuaValue.NewString("converted string"));
+            table.Set((object)true, LuaValue.NewString("default conversion"));
 
-            DynValue value = table.RawGet((object)"existing");
+            bool foundInteger = table.TryRawGet((object)7, out LuaValue convertedInteger);
+            LuaValue convertedString = table.Get((object)"key");
+            LuaValue defaultConversion = table.RawGet((object)true);
 
-            await Assert.That(value.Number).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(table.RawGet("existing").Number).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(table.RawGet(7).Number).IsEqualTo(84).ConfigureAwait(false);
+            await Assert.That(foundInteger).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(convertedInteger.String)
+                .IsEqualTo("converted integer")
+                .ConfigureAwait(false);
+            await Assert
+                .That(convertedString.String)
+                .IsEqualTo("converted string")
+                .ConfigureAwait(false);
+            await Assert
+                .That(defaultConversion.String)
+                .IsEqualTo("default conversion")
+                .ConfigureAwait(false);
+            await Assert.That(table.Remove((object)7)).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.Remove((object)"key")).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.Remove((object)true)).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.RawGet("custom-key:7").IsNil).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("custom-string:key").IsNil)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(table.RawGetValue(LuaValue.True).IsNil)
+                .IsTrue()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1006,9 +1082,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Table table = new(new Script());
 
-            DynValue value = table.RawGet((object[])null);
+            LuaValue value = table.RawGet((object[])null);
 
-            await Assert.That(value).IsNull().ConfigureAwait(false);
+            await Assert.That(value.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1022,7 +1098,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(new Script());
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                table.Set((object)null, DynValue.NewNumber(1))
+                table.Set((object)null, LuaValue.NewNumber(1))
             );
 
             await Assert
@@ -1040,12 +1116,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task RemoveStringKeyDeletesEntry(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
-            table.Set("key", DynValue.NewNumber(12));
+            table.Set("key", LuaValue.NewNumber(12));
 
             bool removed = table.Remove("key");
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
-            await Assert.That(table.RawGet("key")).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("key").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1059,7 +1138,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version);
-            DynValue tableValue = script.DoString("return { nil, 1, x = 1 }");
+            LuaValue tableValue = script.DoString("return { nil, 1, x = 1 }");
             Table table = tableValue.Table;
             int expectedInitialLength = version == LuaCompatibilityVersion.Lua55 ? 0 : 2;
             await Assert.That(table.Length).IsEqualTo(expectedInitialLength).ConfigureAwait(false);
@@ -1087,7 +1166,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(script);
             long afterTableCreation = script.AllocationTracker.CurrentBytes;
 
-            table.Set("key", DynValue.NewNumber(12));
+            table.Set("key", LuaValue.NewNumber(12));
             await Assert
                 .That(script.AllocationTracker.CurrentBytes)
                 .IsGreaterThan(afterTableCreation)
@@ -1119,12 +1198,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task RemoveDynValueNumberUsesIntegralPath(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
-            table.Set(1, DynValue.NewNumber(42));
+            table.Set(1, LuaValue.NewNumber(42));
 
-            bool removed = table.Remove(DynValue.NewNumber(1));
+            bool removed = table.RemoveValue(LuaValue.NewNumber(1));
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
-            await Assert.That(table.RawGet(1)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet(1).Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1136,12 +1215,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task RemoveDynValueStringDeletesEntry(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
-            table.Set("value", DynValue.NewNumber(100));
+            table.Set("value", LuaValue.NewNumber(100));
 
-            bool removed = table.Remove(DynValue.NewString("value"));
+            bool removed = table.RemoveValue(LuaValue.NewString("value"));
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
-            await Assert.That(table.RawGet("value")).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("value").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1153,12 +1235,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task RemoveObjectTreatsBoxedStringAsStringKey(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
-            table.Set("boxed", DynValue.NewNumber(5));
+            table.Set("boxed", LuaValue.NewNumber(5));
 
             bool removed = table.Remove((object)"boxed");
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
-            await Assert.That(table.RawGet("boxed")).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("boxed").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1170,12 +1255,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task RemoveObjectTreatsBoxedIntAsArrayKey(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
-            table.Set(3, DynValue.NewNumber(9));
+            table.Set(3, LuaValue.NewNumber(9));
 
             bool removed = table.Remove((object)3);
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
-            await Assert.That(table.RawGet(3)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet(3).Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1190,13 +1275,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version);
             Table table = new(script);
-            DynValue fractionalKey = DynValue.NewNumber(8.5);
-            table.Set(fractionalKey, DynValue.NewString("value"));
+            LuaValue fractionalKey = LuaValue.NewNumber(8.5);
+            table.Set(fractionalKey, LuaValue.NewString("value"));
 
             bool removed = table.Remove((object)fractionalKey);
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
-            await Assert.That(table.RawGet(fractionalKey)).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet(fractionalKey).Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1209,15 +1297,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version);
             Table table = new(script);
-            table.Set("branch", DynValue.NewTable(script));
-            table.Set(new object[] { "branch", "leaf" }, DynValue.NewNumber(6));
+            table.Set("branch", LuaValue.NewTable(script));
+            table.Set(new object[] { "branch", "leaf" }, LuaValue.NewNumber(6));
 
             bool removed = table.Remove(new object[] { "branch", "leaf" });
 
-            DynValue value = table.Get("branch", "leaf") ?? DynValue.Nil;
+            LuaValue value = table.Get("branch", "leaf");
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
-            await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(value.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1234,18 +1322,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(script);
             Table child = new(script);
             Table grandchild = new(script);
-            table.Set("child", DynValue.NewTable(child));
-            child.Set("grandchild", DynValue.NewTable(grandchild));
-            child.Set("leaf", DynValue.NewNumber(2));
-            grandchild.Set("leaf", DynValue.NewNumber(3));
+            table.Set("child", LuaValue.NewTable(child));
+            child.Set("grandchild", LuaValue.NewTable(grandchild));
+            child.Set("leaf", LuaValue.NewNumber(2));
+            grandchild.Set("leaf", LuaValue.NewNumber(3));
 
             bool removedTwoKey = table.Remove("child", "leaf");
             bool removedThreeKey = table.Remove("child", "grandchild", "leaf");
 
             await Assert.That(removedTwoKey).IsTrue().ConfigureAwait(false);
             await Assert.That(removedThreeKey).IsTrue().ConfigureAwait(false);
-            await Assert.That(child.RawGet("leaf")).IsNull().ConfigureAwait(false);
-            await Assert.That(grandchild.RawGet("leaf")).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(child.RawGet("leaf").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(grandchild.RawGet("leaf").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1259,11 +1353,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Script script = new(version);
             Table table = new(script);
             Table inner = new(script);
-            inner.Set("leaf", DynValue.NewNumber(99));
-            table.Set("child", DynValue.NewTable(script));
-            table.Set(new object[] { "child", "leaf" }, DynValue.NewNumber(7));
+            inner.Set("leaf", LuaValue.NewNumber(99));
+            table.Set("child", LuaValue.NewTable(script));
+            table.Set(new object[] { "child", "leaf" }, LuaValue.NewNumber(7));
 
-            DynValue result = table.RawGet("child", "leaf");
+            LuaValue result = table.RawGet("child", "leaf");
 
             await Assert.That(result.Number).IsEqualTo(7).ConfigureAwait(false);
         }
@@ -1277,8 +1371,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task KeysEnumeratesInsertedEntries(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
-            table.Set("alpha", DynValue.NewNumber(1));
-            table.Set(2, DynValue.NewNumber(2));
+            table.Set("alpha", LuaValue.NewNumber(1));
+            table.Set(2, LuaValue.NewNumber(2));
 
             object[] keys = table.Keys.Select(key => key.ToObject()).ToArray();
 
@@ -1309,10 +1403,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(script);
             Table child = new(script);
             Table grandchild = new(script);
-            table.Set("child", DynValue.NewTable(child));
-            child.Set("grandchild", DynValue.NewTable(grandchild));
-            child.Set("leaf", DynValue.NewString("two"));
-            grandchild.Set("leaf", DynValue.NewString("three"));
+            table.Set("child", LuaValue.NewTable(child));
+            child.Set("grandchild", LuaValue.NewTable(grandchild));
+            child.Set("leaf", LuaValue.NewString("two"));
+            grandchild.Set("leaf", LuaValue.NewString("three"));
 
             object[] rootKey = new object[] { "root" };
             object[] twoKeys = new object[] { "child", "leaf" };
@@ -1327,23 +1421,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 "ignored",
             };
 
-            table.Set(rootKey.AsSpan(), DynValue.NewString("rooted"));
+            table.Set(rootKey.AsSpan(), LuaValue.NewString("rooted"));
             string rootGet = table.Get(rootKey.AsSpan()).String;
             bool rootRemoved = table.Remove(rootKey.AsSpan());
-            bool rootMissingAfterRemove = table.RawGet("root") == null;
+            bool rootMissingAfterRemove = table.RawGet("root").Type == DataType.Nil;
             string twoKeyGet = table.Get(twoKeys.AsSpan()).String;
             string twoKeySliceRawGet = table.RawGet(paddedTwoKeys.AsSpan(1, 2)).String;
             string threeKeySliceRawGet = table.RawGet(paddedThreeKeys.AsSpan(1, 3)).String;
 
-            table.Set(paddedTwoKeys.AsSpan(1, 2), DynValue.NewString("updated"));
+            table.Set(paddedTwoKeys.AsSpan(1, 2), LuaValue.NewString("updated"));
             string updatedLeaf = child.RawGet("leaf").String;
 
             bool removedTwoKey = table.Remove(twoKeys.AsSpan());
-            bool twoKeyMissingAfterRemove = child.RawGet("leaf") == null;
+            bool twoKeyMissingAfterRemove = child.RawGet("leaf").Type == DataType.Nil;
 
-            table.Set(threeKeys.AsSpan(), DynValue.NewString("reset"));
+            table.Set(threeKeys.AsSpan(), LuaValue.NewString("reset"));
             bool removedThreeKey = table.Remove(paddedThreeKeys.AsSpan(1, 3));
-            bool threeKeyMissingAfterRemove = grandchild.RawGet("leaf") == null;
+            bool threeKeyMissingAfterRemove = grandchild.RawGet("leaf").Type == DataType.Nil;
 
             return (
                 rootGet,
@@ -1375,10 +1469,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             ReadOnlySpan<object> defaultKeys = default;
 
             return (
-                table.Get(ReadOnlySpan<object>.Empty).IsNil(),
-                table.Get(defaultKeys).IsNil(),
-                table.RawGet(ReadOnlySpan<object>.Empty) == null,
-                table.RawGet(defaultKeys) == null,
+                table.Get(ReadOnlySpan<object>.Empty).IsNil,
+                table.Get(defaultKeys).IsNil,
+                table.RawGet(ReadOnlySpan<object>.Empty).Type == DataType.Nil,
+                table.RawGet(defaultKeys).Type == DataType.Nil,
                 table.Remove(ReadOnlySpan<object>.Empty),
                 table.Remove(defaultKeys),
                 CaptureSpanSetExceptionMessage(table, ReadOnlySpan<object>.Empty),
@@ -1395,12 +1489,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version);
             Table table = new(script);
-            table.Set("child", DynValue.NewTable(script));
+            table.Set("child", LuaValue.NewTable(script));
             object[] keys = new object[] { "child", null };
 
             return (
-                table.Get(keys.AsSpan()).IsNil(),
-                table.RawGet(keys.AsSpan()) == null,
+                table.Get(keys.AsSpan()).IsNil,
+                table.RawGet(keys.AsSpan()).Type == DataType.Nil,
                 table.Remove(keys.AsSpan()),
                 CaptureSpanSetExceptionMessage(table, keys.AsSpan())
             );
@@ -1416,7 +1510,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(new Script());
             if (seedNonTable)
             {
-                table.Set(key, DynValue.NewNumber(5));
+                table.Set(key, LuaValue.NewNumber(5));
             }
 
             object[] keys = new object[] { key, "child" };
@@ -1436,8 +1530,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Script scriptA = new(version);
             Script scriptB = new(version);
             Table table = new(scriptA);
-            table.Set("child", DynValue.NewTable(scriptA));
-            DynValue foreignValue = DynValue.NewTable(scriptB);
+            table.Set("child", LuaValue.NewTable(scriptA));
+            LuaValue foreignValue = LuaValue.NewTable(scriptB);
             object[] keys = new object[] { "child", "leaf" };
 
             return CaptureSpanSetExceptionMessage(table, keys.AsSpan(), foreignValue);
@@ -1474,12 +1568,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         private static string CaptureSpanSetExceptionMessage(
             Table table,
             ReadOnlySpan<object> keys
-        ) => CaptureSpanSetExceptionMessage(table, keys, DynValue.NewNumber(1));
+        ) => CaptureSpanSetExceptionMessage(table, keys, LuaValue.NewNumber(1));
 
         private static string CaptureSpanSetExceptionMessage(
             Table table,
             ReadOnlySpan<object> keys,
-            DynValue value
+            LuaValue value
         )
         {
             try

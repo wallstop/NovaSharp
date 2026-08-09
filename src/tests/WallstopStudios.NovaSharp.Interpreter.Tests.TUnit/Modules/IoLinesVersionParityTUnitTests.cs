@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -31,7 +32,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using TempFileScope temp = TempFileScope.CreateWithText("line1\nline2\nline3\n");
             string path = temp.EscapedPath;
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local a, b, c, d = io.lines('{path}')
                 -- a is callable (either function or userdata with __call)
@@ -43,10 +44,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             // First value should be callable
             await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
-            await Assert.That(result.Tuple[1].IsNil()).IsTrue().ConfigureAwait(false);
-            await Assert.That(result.Tuple[2].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].IsNil).IsTrue().ConfigureAwait(false);
             // In 5.1-5.3, 4th return value should be nil
-            await Assert.That(result.Tuple[3].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
@@ -57,7 +58,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using TempFileScope temp = TempFileScope.CreateWithText("line1\nline2\nline3\n");
             string path = temp.EscapedPath;
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local a, b, c, d = io.lines('{path}')
                 -- a is callable (either function or userdata with __call)
@@ -69,8 +70,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             // First value should be callable
             await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
-            await Assert.That(result.Tuple[1].IsNil()).IsTrue().ConfigureAwait(false);
-            await Assert.That(result.Tuple[2].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].IsNil).IsTrue().ConfigureAwait(false);
             // In 5.4+, 4th return value should be a file handle
             await Assert.That(result.Tuple[3].String).IsEqualTo("file").ConfigureAwait(false);
         }
@@ -87,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using TempFileScope temp = TempFileScope.CreateWithText("first\nsecond\nthird\n");
             string path = temp.EscapedPath;
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local lines = {{}}
                 for line in io.lines('{path}') do
@@ -112,7 +113,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string path = temp.EscapedPath;
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local count = 0
                 for line in io.lines('{path}') do
@@ -133,7 +134,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using TempFileScope temp = TempFileScope.CreateWithText("only line");
             string path = temp.EscapedPath;
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local lines = {{}}
                 for line in io.lines('{path}') do
@@ -162,7 +163,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using TempFileScope temp = TempFileScope.CreateWithText("line1\nline2\n");
             string path = temp.EscapedPath;
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local iter, a, b, fh = io.lines('{path}')
                 local typeBeforeClose = io.type(fh)
@@ -190,7 +191,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using TempFileScope temp = TempFileScope.CreateWithText("line1\nline2\nline3\n");
             string path = temp.EscapedPath;
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local iter, a, b, fh = io.lines('{path}')
                 local typesDuringIteration = {{}}

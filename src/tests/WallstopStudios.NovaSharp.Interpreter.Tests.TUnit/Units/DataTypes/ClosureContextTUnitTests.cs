@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
@@ -20,11 +21,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 SymbolRef.Global("beta", SymbolRef.DefaultEnv),
             };
 
-            ValueSlot[] values = new[]
-            {
-                new ValueSlot(DynValue.NewNumber(1)),
-                new ValueSlot(DynValue.NewString("two")),
-            };
+            ValueSlot firstSlot = new(LuaValue.NewNumber(1));
+            UpvalueCell firstCell = firstSlot.Capture();
+            UpvalueCell[] values = new[] { firstCell, new UpvalueCell(LuaValue.NewString("two")) };
 
             ClosureContext context = new(symbols, values);
 
@@ -35,6 +34,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(context.Count).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(context[0].Number).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(context[1].String).IsEqualTo("two").ConfigureAwait(false);
+            await Assert.That(firstSlot.Capture()).IsSameReferenceAs(firstCell);
+
+            firstSlot.Assign(LuaValue.NewNumber(3));
+            await Assert.That(context[0].Number).IsEqualTo(3).ConfigureAwait(false);
+
+            context.GetSlot(0).Value = LuaValue.NewNumber(4);
+            await Assert.That(firstSlot.Value.Number).IsEqualTo(4).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -52,7 +58,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task ConstructorThrowsOnNullSymbols()
         {
-            ValueSlot[] values = new[] { new ValueSlot(DynValue.NewNumber(1)) };
+            UpvalueCell[] values = new[] { new UpvalueCell(LuaValue.NewNumber(1)) };
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 _ = new ClosureContext(null, values)

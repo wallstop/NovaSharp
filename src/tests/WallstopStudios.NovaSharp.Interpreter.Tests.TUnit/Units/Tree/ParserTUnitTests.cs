@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -64,7 +65,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         public async Task HexFloatLiteralParsesToExpectedNumber(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString("return 0x1.fp3");
+            LuaValue result = script.DoString("return 0x1.fp3");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(result.Number).IsEqualTo(15.5d).ConfigureAwait(false);
@@ -75,7 +76,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         public async Task UnicodeEscapeSequenceIsDecoded(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString("return \"hi-\\u{1F40D}\"");
+            LuaValue result = script.DoString("return \"hi-\\u{1F40D}\"");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("hi-\U0001F40D").ConfigureAwait(false);
@@ -91,7 +92,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         {
             ScriptOptions options = new(Script.DefaultOptions) { CompatibilityVersion = version };
             Script script = new(CoreModulePresets.Complete, options);
-            DynValue result = script.DoString("return \"\\u{1F40D}\"");
+            LuaValue result = script.DoString("return \"\\u{1F40D}\"");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("\U0001F40D").ConfigureAwait(false);
@@ -112,7 +113,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
             // NOTE: This documents a known spec divergence. Standard Lua 5.1/5.2 would
             // throw "invalid escape sequence near '\u'" but NovaSharp accepts it.
             // When version-aware lexing is implemented, change this to Assert.Throws.
-            DynValue result = script.DoString("return \"\\u{1F40D}\"");
+            LuaValue result = script.DoString("return \"\\u{1F40D}\"");
 
             await Assert
                 .That(result.String)

@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -22,7 +23,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         )
         {
             Script script = new(version);
-            DynValue constant = DynValue.NewString("constant");
+            LuaValue constant = LuaValue.NewString("constant");
 
             DynamicExpression expression = script.CreateConstantDynamicExpression(
                 "constant",
@@ -30,7 +31,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             );
 
             await Assert.That(expression.IsConstant()).IsTrue().ConfigureAwait(false);
-            DynValue result = expression.Evaluate();
+            LuaValue result = expression.Evaluate();
             await Assert.That(result.String).IsEqualTo("constant").ConfigureAwait(false);
         }
 
@@ -45,13 +46,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             Script script = new() { Globals = { ["x"] = 21 } };
 
             DynamicExpression firstExpression = script.CreateDynamicExpression("x * 2");
-            DynValue result = firstExpression.Evaluate(script.CreateDynamicExecutionContext());
+            LuaValue result = firstExpression.Evaluate(script.CreateDynamicExecutionContext());
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
 
             script.Globals["x"] = 5;
             DynamicExpression secondExpression = script.CreateDynamicExpression("x + 10");
-            DynValue second = secondExpression.Evaluate(script.CreateDynamicExecutionContext());
+            LuaValue second = secondExpression.Evaluate(script.CreateDynamicExecutionContext());
             await Assert.That(second.Number).IsEqualTo(15d).ConfigureAwait(false);
         }
 
@@ -64,10 +65,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         public async Task EvaluateRespectsCustomEnvironment(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            Table env = new(script) { ["value"] = DynValue.NewNumber(3) };
+            Table env = new(script) { ["value"] = LuaValue.NewNumber(3) };
 
-            DynValue function = script.LoadString("return value * 5", env, "dynamic-expression");
-            DynValue result = script.Call(function);
+            LuaValue function = script.LoadString("return value * 5", env, "dynamic-expression");
+            LuaValue result = script.Call(function);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(result.Number).IsEqualTo(15d).ConfigureAwait(false);
@@ -82,7 +83,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         public async Task FindSymbolResolvesGlobalReferences(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            script.Globals["foo"] = DynValue.NewNumber(123);
+            script.Globals["foo"] = LuaValue.NewNumber(123);
 
             DynamicExpression expression = script.CreateDynamicExpression("foo");
             SymbolRef symbol = expression.FindSymbol(script.CreateDynamicExecutionContext());
@@ -171,7 +172,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             Script script = new(version);
             DynamicExpression constant = script.CreateConstantDynamicExpression(
                 "constant",
-                DynValue.NewString("value")
+                LuaValue.NewString("value")
             );
 
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
@@ -189,12 +190,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         )
         {
             Script script = new(version);
-            script.Globals["value"] = DynValue.NewNumber(7);
+            script.Globals["value"] = LuaValue.NewNumber(7);
 
             DynamicExpression expression = script.CreateDynamicExpression("value + 1");
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
-            DynValue result = expression.Evaluate(context);
+            LuaValue result = expression.Evaluate(context);
 
             await Assert.That(result.Number).IsEqualTo(8d).ConfigureAwait(false);
         }
@@ -226,7 +227,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         )
         {
             Script script = new(version);
-            DynamicExpression expression = new(script, null, DynValue.NewNumber(1));
+            DynamicExpression expression = new(script, null, LuaValue.NewNumber(1));
 
             await Assert.That(expression.GetHashCode()).IsEqualTo(0).ConfigureAwait(false);
         }

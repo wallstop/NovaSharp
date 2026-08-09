@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System;
     using System.Diagnostics.CodeAnalysis;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -44,7 +45,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             internal Table SomeTable { get; private set; }
 
             [NovaSharpProperty]
-            public DynValue NativeValue { get; private set; }
+            public LuaValue NativeValue { get; private set; }
 
             [NovaSharpProperty]
             public MySubclass SubObj { get; private set; }
@@ -100,7 +101,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static MyClass AssignFromLua(string tableDefinition)
         {
             Script script = new(default(CoreModules));
-            DynValue tableValue = script.DoString("return " + tableDefinition);
+            LuaValue tableValue = script.DoString("return " + tableDefinition);
             if (tableValue.Type != DataType.Table)
             {
                 throw new InvalidOperationException("Lua expression did not return a table.");

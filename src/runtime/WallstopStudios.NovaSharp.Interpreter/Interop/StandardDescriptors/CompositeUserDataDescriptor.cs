@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
@@ -12,7 +13,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
     /// Used, for example, for objects implementing multiple interfaces but for which no descriptor is
     /// specifically registered.
     /// </summary>
-    public class CompositeUserDataDescriptor : IUserDataDescriptor
+    public class CompositeUserDataDescriptor : IUserDataDescriptorTryAccess
     {
         private readonly IList<IUserDataDescriptor> _descriptors;
         private readonly Type _type;
@@ -60,18 +61,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <param name="index">The index.</param>
         /// <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
         /// <returns></returns>
-        public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+        public LuaValue? Index(Script script, object obj, LuaValue index, bool isDirectIndexing)
+        {
+            return TryIndex(script, obj, index, isDirectIndexing, out LuaValue value)
+                ? value
+                : (LuaValue?)null;
+        }
+
+        /// <inheritdoc/>
+        public bool TryIndex(
+            Script script,
+            object obj,
+            LuaValue index,
+            bool isDirectIndexing,
+            out LuaValue value
+        )
         {
             foreach (IUserDataDescriptor dd in _descriptors)
             {
-                DynValue v = dd.Index(script, obj, index, isDirectIndexing);
-
-                if (v != null)
+                if (UserDataAccess.TryIndex(dd, script, obj, index, isDirectIndexing, out value))
                 {
-                    return v;
+                    return true;
                 }
             }
-            return null;
+
+            value = LuaValue.Nil;
+            return false;
         }
 
         /// <summary>
@@ -86,8 +101,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         public bool SetIndex(
             Script script,
             object obj,
-            DynValue index,
-            DynValue value,
+            LuaValue index,
+            LuaValue value,
             bool isDirectIndexing
         )
         {
@@ -125,18 +140,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <param name="obj">The object (null if a static request is done)</param>
         /// <param name="metaname">The name of the metamember.</param>
         /// <returns></returns>
-        public DynValue MetaIndex(Script script, object obj, string metaname)
+        public LuaValue? MetaIndex(Script script, object obj, string metaname)
+        {
+            return TryMetaIndex(script, obj, metaname, out LuaValue value)
+                ? value
+                : (LuaValue?)null;
+        }
+
+        /// <inheritdoc/>
+        public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
         {
             foreach (IUserDataDescriptor dd in _descriptors)
             {
-                DynValue v = dd.MetaIndex(script, obj, metaname);
-
-                if (v != null)
+                if (UserDataAccess.TryMetaIndex(dd, script, obj, metaname, out value))
                 {
-                    return v;
+                    return true;
                 }
             }
-            return null;
+
+            value = LuaValue.Nil;
+            return false;
         }
 
         /// <summary>

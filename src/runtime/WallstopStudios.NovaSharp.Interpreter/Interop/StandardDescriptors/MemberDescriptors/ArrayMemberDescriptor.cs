@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
@@ -53,6 +54,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
             _isSetter = isSetter;
         }
 
+        /// <inheritdoc />
+        public override LuaValue Execute(
+            Script script,
+            object obj,
+            ScriptExecutionContext context,
+            CallbackArguments args
+        )
+        {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            // Returning LuaValue through ObjectCallbackMemberDescriptor's object callback boxes the
+            // readonly value. Setter results are already LuaValue.Void, so keep that hot path typed.
+            return _isSetter
+                ? ArrayIndexerSet(obj, context, args)
+                : base.Execute(script, obj, context, args);
+        }
+
         /// <summary>
         /// Prepares the descriptor for hard-wiring.
         /// The descriptor fills the passed table with all the needed data for hardwire generators to generate the appropriate code.
@@ -65,13 +91,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                 throw new ArgumentNullException(nameof(t));
             }
 
-            t.Set("class", DynValue.NewString(GetType().FullName));
-            t.Set("name", DynValue.NewString(Name));
-            t.Set("setter", DynValue.NewBoolean(_isSetter));
+            t.Set("class", LuaValue.NewString(GetType().FullName));
+            t.Set("name", LuaValue.NewString(Name));
+            t.Set("setter", LuaValue.NewBoolean(_isSetter));
 
             if (Parameters != null)
             {
-                DynValue pars = DynValue.NewPrimeTable();
+                LuaValue pars = LuaValue.NewPrimeTable();
 
                 t.Set("params", pars);
 
@@ -79,7 +105,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
 
                 foreach (ParameterDescriptor p in Parameters)
                 {
-                    DynValue pt = DynValue.NewPrimeTable();
+                    LuaValue pt = LuaValue.NewPrimeTable();
                     pars.Table.Set(++i, pt);
                     p.PrepareForWiring(pt.Table);
                 }
@@ -98,7 +124,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
             return indices;
         }
 
-        private static DynValue ArrayIndexerSet(
+        private static LuaValue ArrayIndexerSet(
             object arrayObj,
             ScriptExecutionContext ctx,
             CallbackArguments args
@@ -112,7 +138,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                 case 1 when array.Rank == 1:
                 {
                     int index0 = args.AsInt(0, "userdata_array_indexer");
-                    DynValue value = args[^1];
+                    LuaValue value = args[^1];
                     object objValue = ConvertArrayValue(array, value);
                     array.SetValue(objValue, index0);
                     break;
@@ -121,7 +147,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                 {
                     int index0 = args.AsInt(0, "userdata_array_indexer");
                     int index1 = args.AsInt(1, "userdata_array_indexer");
-                    DynValue value = args[^1];
+                    LuaValue value = args[^1];
                     object objValue = ConvertArrayValue(array, value);
                     array.SetValue(objValue, index0, index1);
                     break;
@@ -131,7 +157,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                     int index0 = args.AsInt(0, "userdata_array_indexer");
                     int index1 = args.AsInt(1, "userdata_array_indexer");
                     int index2 = args.AsInt(2, "userdata_array_indexer");
-                    DynValue value = args[^1];
+                    LuaValue value = args[^1];
                     object objValue = ConvertArrayValue(array, value);
                     array.SetValue(objValue, index0, index1, index2);
                     break;
@@ -139,17 +165,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                 default:
                 {
                     int[] indices = BuildArrayIndices(args, indexCount);
-                    DynValue value = args[^1];
+                    LuaValue value = args[^1];
                     object objValue = ConvertArrayValue(array, value);
                     array.SetValue(objValue, indices);
                     break;
                 }
             }
 
-            return DynValue.Void;
+            return LuaValue.Void;
         }
 
-        private static object ConvertArrayValue(Array array, DynValue value)
+        private static object ConvertArrayValue(Array array, LuaValue value)
         {
             Type elemType = array.GetType().GetElementType();
 

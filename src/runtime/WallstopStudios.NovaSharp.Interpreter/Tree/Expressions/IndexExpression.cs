@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -73,7 +74,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
             if (_name != null)
             {
-                bc.EmitIndex(DynValue.NewString(_name), true, baseName: baseName);
+                bc.EmitIndex(LuaValue.NewString(_name), true, baseName: baseName);
             }
             else if (_indexExp is LiteralExpression lit)
             {
@@ -103,7 +104,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 bc.EmitIndexSet(
                     stackofs,
                     tupleidx,
-                    DynValue.NewString(_name),
+                    LuaValue.NewString(_name),
                     isNameIndex: true,
                     baseName: baseName
                 );
@@ -128,15 +129,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// Evaluates the index at runtime and returns the referenced value from the table.
         /// </summary>
         /// <param name="context">Execution context providing the table and index values.</param>
-        /// <returns>The resolved value or <see cref="DynValue.Nil" /> when the entry is missing.</returns>
+        /// <returns>The resolved value or <see cref="LuaValue.Nil" /> when the entry is missing.</returns>
         /// <exception cref="DynamicExpressionException">
         /// Thrown when the base expression does not evaluate to a table or the key is invalid.
         /// </exception>
-        public override DynValue Eval(ScriptExecutionContext context)
+        public override LuaValue Eval(ScriptExecutionContext context)
         {
-            DynValue b = _baseExp.Eval(context).ToScalar();
-            DynValue i =
-                _indexExp != null ? _indexExp.Eval(context).ToScalar() : DynValue.NewString(_name);
+            LuaValue b = _baseExp.Eval(context).ToScalar();
+            LuaValue i =
+                _indexExp != null ? _indexExp.Eval(context).ToScalar() : LuaValue.NewString(_name);
 
             if (b.Type != DataType.Table)
             {
@@ -147,7 +148,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 throw new DynamicExpressionException("Attempt to index with nil or nan key.");
             }
 
-            return b.Table.Get(i) ?? DynValue.Nil;
+            return b.Table.GetValue(i);
         }
     }
 }

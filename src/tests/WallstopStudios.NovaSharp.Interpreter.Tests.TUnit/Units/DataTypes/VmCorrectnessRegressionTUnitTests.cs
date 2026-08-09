@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -29,7 +30,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 @"
                 local x = 10
                 return function()
@@ -51,10 +52,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             await Assert.That(xIndex).IsGreaterThanOrEqualTo(0).ConfigureAwait(false);
 
-            DynValue snapshot = closure.GetUpValue(xIndex);
+            LuaValue snapshot = closure.GetUpValue(xIndex);
             await Assert.That(snapshot.Number).IsEqualTo(10d).ConfigureAwait(false);
 
-            closure.SetUpValue(xIndex, DynValue.NewNumber(99));
+            closure.SetUpValue(xIndex, LuaValue.NewNumber(99));
 
             await Assert.That(snapshot.Number).IsEqualTo(10d).ConfigureAwait(false);
             await Assert
@@ -71,7 +72,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task SetUpValueModifiesClosureUpvalue(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 @"
                 local x = 10
                 return function()
@@ -94,10 +95,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(xIndex).IsGreaterThanOrEqualTo(0).ConfigureAwait(false);
 
             // Change the upvalue
-            closure.SetUpValue(xIndex, DynValue.NewNumber(42));
+            closure.SetUpValue(xIndex, LuaValue.NewNumber(42));
 
             // Verify the closure now returns the new value
-            DynValue result = closure.Call();
+            LuaValue result = closure.Call();
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
@@ -109,16 +110,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task SetUpValueThrowsForInvalidIndex(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function() return 1 end");
+            LuaValue function = script.DoString("return function() return 1 end");
             Closure closure = function.Function;
 
             await Assert
-                .That(() => closure.SetUpValue(-1, DynValue.NewNumber(1)))
+                .That(() => closure.SetUpValue(-1, LuaValue.NewNumber(1)))
                 .Throws<ArgumentOutOfRangeException>()
                 .ConfigureAwait(false);
 
             await Assert
-                .That(() => closure.SetUpValue(100, DynValue.NewNumber(1)))
+                .That(() => closure.SetUpValue(100, LuaValue.NewNumber(1)))
                 .Throws<ArgumentOutOfRangeException>()
                 .ConfigureAwait(false);
         }
@@ -134,7 +135,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version, CoreModulePresets.Complete);
             int xIndex = version == LuaCompatibilityVersion.Lua51 ? 2 : 1;
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local x = 10
                 local function f()
@@ -159,7 +160,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version, CoreModulePresets.Complete);
             // Just verify debug.setlocal function exists
-            DynValue result = script.DoString("return type(debug.setlocal)");
+            LuaValue result = script.DoString("return type(debug.setlocal)");
 
             await Assert.That(result.String).IsEqualTo("function").ConfigureAwait(false);
         }
@@ -174,16 +175,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             // Create a table as a key
             Table keyTable = new(script);
-            keyTable.Set("id", DynValue.NewNumber(1));
+            keyTable.Set("id", LuaValue.NewNumber(1));
 
-            DynValue key = DynValue.NewTable(keyTable);
+            LuaValue key = LuaValue.NewTable(keyTable);
             Table mainTable = new(script);
 
             // Set the table as a key
-            mainTable.Set(key, DynValue.NewString("value1"));
+            mainTable.Set(key, LuaValue.NewString("value1"));
 
             // Verify we can retrieve the value
-            DynValue retrieved = mainTable.Get(key);
+            LuaValue retrieved = mainTable.Get(key);
             await Assert.That(retrieved.String).IsEqualTo("value1").ConfigureAwait(false);
         }
 
@@ -199,12 +200,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Script script = new();
             Table table = new(script);
             MutableHashUserDataKey hostKey = new(11);
-            DynValue key = UserData.Create(hostKey);
+            bool created = UserData.TryCreate(hostKey, out LuaValue key);
+            await Assert.That(created).IsTrue().ConfigureAwait(false);
 
-            table.Set(key, DynValue.NewString("userdata"));
+            table.Set(key, LuaValue.NewString("userdata"));
             hostKey.Hash = 23;
 
-            DynValue retrieved = table.Get(key);
+            LuaValue retrieved = table.Get(key);
 
             await Assert.That(retrieved.String).IsEqualTo("userdata").ConfigureAwait(false);
         }
@@ -224,8 +226,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             TestUserDataObject1 obj1 = new();
             TestUserDataObject2 obj2 = new();
 
-            DynValue ud1 = UserData.Create(obj1);
-            DynValue ud2 = UserData.Create(obj2);
+            bool createdFirst = UserData.TryCreate(obj1, out LuaValue ud1);
+            bool createdSecond = UserData.TryCreate(obj2, out LuaValue ud2);
+            await Assert.That(createdFirst).IsTrue().ConfigureAwait(false);
+            await Assert.That(createdSecond).IsTrue().ConfigureAwait(false);
 
             // Verify they are UserData type
             await Assert.That(ud1.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
@@ -281,8 +285,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Script script = new(version);
 
             // Create two different coroutines
-            DynValue co1 = script.DoString("return coroutine.create(function() end)");
-            DynValue co2 = script.DoString("return coroutine.create(function() end)");
+            LuaValue co1 = script.DoString("return coroutine.create(function() end)");
+            LuaValue co2 = script.DoString("return coroutine.create(function() end)");
 
             // They should have different hash codes
             int hash1 = co1.GetHashCode();
@@ -303,7 +307,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ClosureUpValueSharingStillWorks(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local count = 0
                 local function inc() count = count + 1 end
@@ -327,7 +331,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version, CoreModulePresets.Complete);
             // Just verify debug.upvaluejoin function exists
-            DynValue result = script.DoString("return type(debug.upvaluejoin)");
+            LuaValue result = script.DoString("return type(debug.upvaluejoin)");
 
             await Assert.That(result.String).IsEqualTo("function").ConfigureAwait(false);
         }

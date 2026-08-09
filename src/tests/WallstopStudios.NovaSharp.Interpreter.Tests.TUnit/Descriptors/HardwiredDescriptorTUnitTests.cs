@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -30,7 +31,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
             object target = new object();
 
-            DynValue result = descriptor.GetValue(script, target);
+            LuaValue result = descriptor.GetValue(script, target);
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
@@ -48,7 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 typeof(int),
                 MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanWrite
             );
-            DynValue payload = DynValue.NewNumber(42);
+            LuaValue payload = LuaValue.NewNumber(42);
 
             descriptor.SetValue(script, new object(), payload);
 
@@ -72,7 +73,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             await Assert.That(readException).IsNotNull().ConfigureAwait(false);
 
             ScriptRuntimeException writeException = Assert.Throws<ScriptRuntimeException>(() =>
-                descriptor.SetValue(script, null, DynValue.NewString("data"))
+                descriptor.SetValue(script, null, LuaValue.NewString("data"))
             );
             await Assert.That(writeException).IsNotNull().ConfigureAwait(false);
         }
@@ -103,7 +104,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                descriptor.SetValue(script, new object(), DynValue.NewString("data"))
+                descriptor.SetValue(script, new object(), LuaValue.NewString("data"))
             );
             await Assert.That(exception).IsNotNull().ConfigureAwait(false);
             await Assert.That(descriptor.SetCallCount).IsEqualTo(0).ConfigureAwait(false);
@@ -116,11 +117,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             TrackingMethodDescriptor descriptor = new();
             object instance = "owner";
             CallbackArguments args = new(
-                new List<DynValue> { DynValue.NewNumber(7) },
+                new List<LuaValue> { LuaValue.NewNumber(7) },
                 isMethodCall: false
             );
 
-            DynValue result = descriptor.Execute(script, instance, context: null, args);
+            LuaValue result = descriptor.Execute(script, instance, context: null, args);
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("owner:7:fallback:2").ConfigureAwait(false);
@@ -142,7 +143,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = new();
             TrackingMethodDescriptor descriptor = new();
             CallbackArguments args = new(
-                new List<DynValue> { DynValue.NewNumber(1) },
+                new List<LuaValue> { LuaValue.NewNumber(1) },
                 isMethodCall: false
             );
 
@@ -183,7 +184,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             DefaultingMemberDescriptor descriptor = new(DefaultingMemberDescriptor.Mode.Write);
 
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
-                descriptor.SetValue(script, new object(), DynValue.NewNumber(1d))
+                descriptor.SetValue(script, new object(), LuaValue.NewNumber(1d))
             );
             await Assert
                 .That(exception.Message)
@@ -197,10 +198,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = new();
             TrackingMemberDescriptor descriptor = new(typeof(int), MemberDescriptorAccess.CanWrite);
 
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                descriptor.SetValue(script, new object(), value: null)
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.SetValue(script, new object(), value: default)
             );
-            await Assert.That(exception.ParamName).IsEqualTo("value").ConfigureAwait(false);
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -219,9 +220,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             LuaCompatibilityVersion version
         )
         {
-            DynValueMemberDescriptor descriptor = new("constant", DynValue.NewNumber(123));
+            DynValueMemberDescriptor descriptor = new("constant", LuaValue.NewNumber(123));
 
-            DynValue result = descriptor.GetValue(new Script(version), obj: null);
+            LuaValue result = descriptor.GetValue(new Script(version), obj: null);
 
             await Assert.That(descriptor.IsStatic).IsTrue().ConfigureAwait(false);
             await Assert.That(descriptor.Name).IsEqualTo("constant").ConfigureAwait(false);
@@ -238,7 +239,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             DynValueMemberDescriptor descriptor = new(
                 "callback",
-                DynValue.NewCallback((_, _) => DynValue.NewString("ok"), "cb")
+                LuaValue.NewCallback((_, _) => LuaValue.NewString("ok"), "cb")
             );
 
             await Assert
@@ -251,10 +252,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [AllLuaVersions]
         public async Task DynValueMemberDescriptorSetValueThrows(LuaCompatibilityVersion version)
         {
-            DynValueMemberDescriptor descriptor = new("number", DynValue.NewNumber(1));
+            DynValueMemberDescriptor descriptor = new("number", LuaValue.NewNumber(1));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                descriptor.SetValue(new Script(version), obj: null, DynValue.NewNumber(2))
+                descriptor.SetValue(new Script(version), obj: null, LuaValue.NewNumber(2))
             );
             await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
@@ -262,7 +263,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Test]
         public async Task DynValueMemberDescriptorPrepareForWiringSerializesPrimitive()
         {
-            DynValueMemberDescriptor descriptor = new("count", DynValue.NewNumber(7));
+            DynValueMemberDescriptor descriptor = new("count", LuaValue.NewNumber(7));
             Table wiring = new(null);
 
             descriptor.PrepareForWiring(wiring);
@@ -273,7 +274,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 .ConfigureAwait(false);
             await Assert.That(wiring.Get("name").String).IsEqualTo("count").ConfigureAwait(false);
             await Assert.That(wiring.Get("value").Number).IsEqualTo(7d).ConfigureAwait(false);
-            await Assert.That(wiring.Get("error").IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(wiring.Get("error").IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -281,8 +282,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             Script script = new();
             Table table = new(script);
-            table.Set(1, DynValue.NewString("inner"));
-            DynValueMemberDescriptor descriptor = new("table", DynValue.NewTable(table));
+            table.Set(1, LuaValue.NewString("inner"));
+            DynValueMemberDescriptor descriptor = new("table", LuaValue.NewTable(table));
             Table wiring = new(null);
 
             descriptor.PrepareForWiring(wiring);
@@ -291,7 +292,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 .That(wiring.Get("error").String)
                 .Contains("non-prime table")
                 .ConfigureAwait(false);
-            await Assert.That(wiring.Get("value").IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(wiring.Get("value").IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -302,7 +303,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             registrationScope.RegisterType<DummyStaticUserData>();
             DynValueMemberDescriptor descriptor = new(
                 "userdata",
-                UserData.CreateStatic<DummyStaticUserData>()
+                UserData.CreateStatic<DummyStaticUserData>().Value
             );
             Table wiring = new(null);
 
@@ -320,6 +321,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 .That(wiring.Get("visibility").String)
                 .IsEqualTo("internal")
                 .ConfigureAwait(false);
+
+            UserData.UnregisterType<DummyStaticUserData>();
+            MissingStaticValueDescriptor missingDescriptor = new();
+
+            await Assert.That(missingDescriptor.Value.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -328,7 +334,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<DummyInstanceUserData>(ensureUnregistered: true);
             registrationScope.RegisterType<DummyInstanceUserData>();
-            DynValue instance = UserData.Create(new DummyInstanceUserData());
+            LuaValue instance = UserData.Create(new DummyInstanceUserData()).Value;
             DynValueMemberDescriptor descriptor = new("userdata", instance);
             Table wiring = new(null);
 
@@ -338,7 +344,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 .That(wiring.Get("error").String)
                 .Contains("non-static userdata")
                 .ConfigureAwait(false);
-            await Assert.That(wiring.Get("type").IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(wiring.Get("type").IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -348,7 +354,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         )
         {
             Script script = new(version);
-            DynValue closure = script.DoString("return function() return 1 end");
+            LuaValue closure = script.DoString("return function() return 1 end");
             DynValueMemberDescriptor descriptor = new("closure", closure);
             Table wiring = new(null);
 
@@ -383,15 +389,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 .That(descriptor.MemberAccess)
                 .IsEqualTo(MemberDescriptorAccess.CanRead)
                 .ConfigureAwait(false);
-            await Assert.That(descriptor.Value).IsNull().ConfigureAwait(false);
+            await Assert.That(descriptor.Value.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task DynValueMemberDescriptorPrepareForWiringAllowsPrimeTable()
         {
             Table prime = new(null);
-            prime.Set(1, DynValue.NewString("inner"));
-            DynValueMemberDescriptor descriptor = new("table", DynValue.NewTable(prime));
+            prime.Set(1, LuaValue.NewString("inner"));
+            DynValueMemberDescriptor descriptor = new("table", LuaValue.NewTable(prime));
             Table wiring = new(null);
 
             descriptor.PrepareForWiring(wiring);
@@ -400,7 +406,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 .That(wiring.Get("value").Type)
                 .IsEqualTo(DataType.Table)
                 .ConfigureAwait(false);
-            await Assert.That(wiring.Get("error").IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(wiring.Get("error").IsNil).IsTrue().ConfigureAwait(false);
         }
 
         private sealed class TrackingMemberDescriptor : HardwiredMemberDescriptor
@@ -493,13 +499,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             public SerializedDynValueDescriptor(string name, string serialized)
                 : base(name, serialized) { }
 
-            public new DynValue Value => base.Value;
+            public new LuaValue Value => base.Value;
         }
 
         private sealed class NullValueDescriptor : DynValueMemberDescriptor
         {
             public NullValueDescriptor(string name)
                 : base(name) { }
+        }
+
+        private sealed class MissingStaticValueDescriptor : DynValueMemberDescriptor
+        {
+            public MissingStaticValueDescriptor()
+                : base("missing") { }
+
+            public override LuaValue Value =>
+                UserData.CreateStatic<DummyStaticUserData>().GetValueOrDefault();
         }
 
         internal sealed class DummyStaticUserData

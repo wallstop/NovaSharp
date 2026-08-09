@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
 {
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
@@ -11,8 +12,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Hard
     /// </summary>
     public abstract class HardwiredMethodMemberDescriptor : FunctionMemberDescriptorBase
     {
+        /// <summary>
+        /// Gets the explicit no-value result used by generated void method descriptors.
+        /// </summary>
+        protected static LuaValue NoValue => LuaValue.Void;
+
+        /// <summary>
+        /// Packs generated return and ref/out values into a Lua tuple.
+        /// </summary>
+        /// <param name="values">The values to pack.</param>
+        /// <returns>The packed tuple.</returns>
+        protected static LuaValue PackReturnValues(LuaValue[] values)
+        {
+            return LuaValue.NewTuple(values);
+        }
+
+        /// <summary>
+        /// Converts a generated CLR return value through the owning script's converter pipeline.
+        /// </summary>
+        /// <param name="script">The script receiving the value.</param>
+        /// <param name="value">The CLR value to convert.</param>
+        /// <returns>The converted Lua value.</returns>
+        protected static LuaValue ConvertFromClrObject(Script script, object value)
+        {
+            return LuaValue.FromObject(script, value);
+        }
+
         /// <inheritdoc />
-        public override DynValue Execute(
+        public override LuaValue Execute(
             Script script,
             object obj,
             ScriptExecutionContext context,
@@ -33,7 +60,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Hard
             );
             object retv = Invoke(script, obj, pars, CalcArgsCount(pars));
 
-            return DynValue.FromObject(script, retv);
+            return LuaValue.FromObject(script, retv);
         }
 
         /// <summary>

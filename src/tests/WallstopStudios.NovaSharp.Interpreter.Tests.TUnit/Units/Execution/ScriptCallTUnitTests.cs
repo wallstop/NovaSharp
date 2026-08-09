@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -11,6 +12,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ScriptCallTUnitTests
@@ -25,10 +27,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function noop() end");
-            DynValue function = script.Globals.Get("noop");
+            LuaValue function = script.Globals.Get("noop");
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                script.Call(function, (DynValue[])null)
+                script.Call(function, (LuaValue[])null)
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
@@ -44,7 +46,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function noop() end");
-            DynValue function = script.Globals.Get("noop");
+            LuaValue function = script.Globals.Get("noop");
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 script.Call(function, (object[])null)
@@ -63,11 +65,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version, CoreModulePresets.Complete);
 
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                script.Call((DynValue)null)
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                script.CallValues(LuaValue.Nil)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("function").ConfigureAwait(false);
+            await Assert.That(exception.Message).Contains("not a function").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -77,9 +79,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue function = script.DoString("return function() return 42 end");
+            LuaValue function = script.DoString("return function() return 42 end");
 
-            DynValue result = script.Call(function);
+            LuaValue result = script.CallValues(function);
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
@@ -91,7 +93,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 """
                 return function()
                     local info = debug.getinfo(1, "fS")
@@ -104,7 +106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             );
             script.Globals.Set("expected", function);
 
-            DynValue result = script.Call(function);
+            LuaValue result = script.CallValues(function);
 
             await Assert
                 .That(result.String)
@@ -119,7 +121,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 """
                 return function(...)
                     local info = debug.getinfo(1, "f")
@@ -131,8 +133,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             );
             script.Globals.Set("expected", function);
 
-            DynValue spanResult = CallWithSpan(script, function, Array.Empty<DynValue>());
-            DynValue paramsResult = CallWithParamsArray(script, function, Array.Empty<DynValue>());
+            LuaValue spanResult = CallWithSpan(script, function, Array.Empty<LuaValue>());
+            LuaValue paramsResult = CallWithParamsArray(script, function, Array.Empty<LuaValue>());
 
             await Assert.That(spanResult.Tuple[0].Number).IsEqualTo(0d).ConfigureAwait(false);
             await Assert.That(spanResult.Tuple[1].String).IsEqualTo("same").ConfigureAwait(false);
@@ -145,8 +147,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task DynValueCallSupportsLua51SetfenvFrame(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            script.Globals.Set("marker", DynValue.FromNumber(5));
-            DynValue function = script.DoString(
+            script.Globals.Set("marker", LuaValue.FromNumber(5));
+            LuaValue function = script.DoString(
                 """
                 return function()
                     local before = getfenv(1).marker
@@ -157,7 +159,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 codeFriendlyName: "call_setfenv.lua"
             );
 
-            DynValue result = script.Call(function);
+            LuaValue result = script.CallValues(function);
 
             await Assert.That(result.Number).IsEqualTo(599d).ConfigureAwait(false);
         }
@@ -181,8 +183,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             "
             );
 
-            DynValue callable = script.Globals.Get("callable");
-            DynValue result = script.Call(callable, DynValue.NewNumber(21));
+            LuaValue callable = script.Globals.Get("callable");
+            LuaValue result = script.CallValues(callable, LuaValue.NewNumber(21));
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
@@ -192,7 +194,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task DynValueArgumentsDoNotAliasHostValues(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 """
                 return function(a, ...)
                     local b, c = ...
@@ -203,11 +205,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 end
                 """
             );
-            DynValue first = DynValue.FromInteger(1);
-            DynValue second = DynValue.NewInteger(2);
-            DynValue third = DynValue.FromInteger(3);
+            LuaValue first = LuaValue.FromInteger(1);
+            LuaValue second = LuaValue.NewInteger(2);
+            LuaValue third = LuaValue.FromInteger(3);
 
-            DynValue result = script.Call(function, first, second, third);
+            LuaValue result = script.CallValues(function, first, second, third);
 
             await Assert.That(result.Tuple[0].Number).IsEqualTo(11d).ConfigureAwait(false);
             await Assert.That(result.Tuple[1].Number).IsEqualTo(22d).ConfigureAwait(false);
@@ -225,29 +227,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue returnVarargs = script.DoString("return function(...) return ... end");
-            DynValue captureTable = script.DoString("return function(...) return {...} end");
-            DynValue first = DynValue.NewNumber(1);
-            DynValue second = DynValue.NewString("two");
+            LuaValue returnVarargs = script.DoString("return function(...) return ... end");
+            LuaValue captureTable = script.DoString("return function(...) return {...} end");
+            LuaValue first = LuaValue.NewNumber(1);
+            LuaValue second = LuaValue.NewString("two");
 
-            DynValue returned = script.Call(returnVarargs, first, second);
+            LuaValue returned = script.CallValues(returnVarargs, first, second);
 
             await Assert.That(returned.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
             await Assert.That(returned.Tuple[1].String).IsEqualTo("two").ConfigureAwait(false);
 
-            DynValue third = DynValue.NewNumber(3);
-            DynValue fourth = DynValue.NewString("four");
-            DynValue captured = script.Call(captureTable, third, fourth);
+            LuaValue third = LuaValue.NewNumber(3);
+            LuaValue fourth = LuaValue.NewString("four");
+            LuaValue captured = script.CallValues(captureTable, third, fourth);
 
             await Assert.That(captured.Table.Get(1).Number).IsEqualTo(3d).ConfigureAwait(false);
             await Assert.That(captured.Table.Get(2).String).IsEqualTo("four").ConfigureAwait(false);
 
             Table table = new(script);
-            table.Set("field", DynValue.NewNumber(1));
-            DynValue tableArg = DynValue.NewTable(table);
-            DynValue tableCapture = script.Call(captureTable, tableArg, DynValue.NewNumber(0));
-            DynValue capturedTable = tableCapture.Table.Get(1);
-            capturedTable.Table.Set("field", DynValue.NewNumber(2));
+            table.Set("field", LuaValue.NewNumber(1));
+            LuaValue tableArg = LuaValue.NewTable(table);
+            LuaValue tableCapture = script.CallValues(
+                captureTable,
+                tableArg,
+                LuaValue.NewNumber(0)
+            );
+            LuaValue capturedTable = tableCapture.Table.Get(1);
+            capturedTable.Table.Set("field", LuaValue.NewNumber(2));
 
             await Assert.That(capturedTable.Table).IsSameReferenceAs(table).ConfigureAwait(false);
             await Assert.That(table.Get("field").Number).IsEqualTo(2d).ConfigureAwait(false);
@@ -258,11 +264,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task TablePackVarargsPreservesScalars(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue pack = script.DoString("return function(...) return table.pack(...) end");
-            DynValue first = DynValue.NewNumber(1);
-            DynValue second = DynValue.NewString("two");
+            LuaValue pack = script.DoString("return function(...) return table.pack(...) end");
+            LuaValue first = LuaValue.NewNumber(1);
+            LuaValue second = LuaValue.NewString("two");
 
-            DynValue packed = script.Call(pack, first, second);
+            LuaValue packed = script.CallValues(pack, first, second);
 
             await Assert.That(packed.Table.Get(1).Number).IsEqualTo(1d).ConfigureAwait(false);
             await Assert.That(packed.Table.Get(2).String).IsEqualTo("two").ConfigureAwait(false);
@@ -290,13 +296,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             "
             );
 
-            DynValue callable = script.Globals.Get("callable");
-            DynValue result = script.Call(
+            LuaValue callable = script.Globals.Get("callable");
+            LuaValue result = script.CallValues(
                 callable,
-                DynValue.NewNumber(10),
-                DynValue.NewNumber(20),
-                DynValue.NewNumber(30),
-                DynValue.NewNumber(40)
+                LuaValue.NewNumber(10),
+                LuaValue.NewNumber(20),
+                LuaValue.NewNumber(30),
+                LuaValue.NewNumber(40)
             );
 
             await Assert.That(result.Number).IsEqualTo(100d).ConfigureAwait(false);
@@ -311,17 +317,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task FiveDynValueCallInvokesLuaFunction(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 "return function(a, b, c, d, e) return a + b + c + d + e end"
             );
 
-            DynValue result = script.Call(
+            LuaValue result = script.CallValues(
                 function,
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
-                DynValue.NewNumber(4),
-                DynValue.NewNumber(5)
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
+                LuaValue.NewNumber(4),
+                LuaValue.NewNumber(5)
             );
 
             await Assert.That(result.Number).IsEqualTo(15d).ConfigureAwait(false);
@@ -344,14 +350,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             "
             );
 
-            DynValue callable = script.Globals.Get("callable");
-            DynValue result = script.Call(
+            LuaValue callable = script.Globals.Get("callable");
+            LuaValue result = script.CallValues(
                 callable,
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
-                DynValue.NewNumber(4),
-                DynValue.NewNumber(5)
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
+                LuaValue.NewNumber(4),
+                LuaValue.NewNumber(5)
             );
 
             await Assert.That(result.Number).IsEqualTo(115d).ConfigureAwait(false);
@@ -366,9 +372,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task CallExecutesClrFunction(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.NewString("clr"));
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.NewString("clr"));
 
-            DynValue result = script.Call(callback);
+            LuaValue result = script.CallValues(callback);
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("clr").ConfigureAwait(false);
@@ -383,9 +389,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task FourDynValueCallExecutesClrFunction(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallback(
+            LuaValue callback = LuaValue.NewCallback(
                 (_, args) =>
-                    DynValue.NewNumber(
+                    LuaValue.NewNumber(
                         args.Count
                             + args[0].Number
                             + args[1].Number
@@ -394,12 +400,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                     )
             );
 
-            DynValue result = script.Call(
+            LuaValue result = script.CallValues(
                 callback,
-                DynValue.NewNumber(10),
-                DynValue.NewNumber(20),
-                DynValue.NewNumber(30),
-                DynValue.NewNumber(40)
+                LuaValue.NewNumber(10),
+                LuaValue.NewNumber(20),
+                LuaValue.NewNumber(30),
+                LuaValue.NewNumber(40)
             );
 
             await Assert.That(result.Number).IsEqualTo(104d).ConfigureAwait(false);
@@ -414,9 +420,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task FiveDynValueCallExecutesClrFunction(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallback(
+            LuaValue callback = LuaValue.NewCallback(
                 (_, args) =>
-                    DynValue.NewNumber(
+                    LuaValue.NewNumber(
                         args.Count
                             + args[0].Number
                             + args[1].Number
@@ -426,13 +432,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                     )
             );
 
-            DynValue result = script.Call(
+            LuaValue result = script.CallValues(
                 callback,
-                DynValue.NewNumber(10),
-                DynValue.NewNumber(20),
-                DynValue.NewNumber(30),
-                DynValue.NewNumber(40),
-                DynValue.NewNumber(50)
+                LuaValue.NewNumber(10),
+                LuaValue.NewNumber(20),
+                LuaValue.NewNumber(30),
+                LuaValue.NewNumber(40),
+                LuaValue.NewNumber(50)
             );
 
             await Assert.That(result.Number).IsEqualTo(155d).ConfigureAwait(false);
@@ -447,9 +453,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task FourDynValueCallExecutesCallbackView(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue callback = LuaValue.NewCallbackView(
                 (_, args) =>
-                    DynValue.NewNumber(
+                    LuaValue.NewNumber(
                         args.Count
                             + args[0].Number
                             + args[1].Number
@@ -458,12 +464,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                     )
             );
 
-            DynValue result = script.Call(
+            LuaValue result = script.CallValues(
                 callback,
-                DynValue.NewNumber(10),
-                DynValue.NewNumber(20),
-                DynValue.NewNumber(30),
-                DynValue.NewNumber(40)
+                LuaValue.NewNumber(10),
+                LuaValue.NewNumber(20),
+                LuaValue.NewNumber(30),
+                LuaValue.NewNumber(40)
             );
 
             await Assert.That(result.Number).IsEqualTo(104d).ConfigureAwait(false);
@@ -480,12 +486,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new(version, CoreModulePresets.Complete);
             bool spanAvailable = true;
             int spanLength = -1;
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue callback = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
-                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
                     spanLength = span.Length;
-                    return DynValue.NewNumber(
+                    return LuaValue.NewNumber(
                         args.Count
                             + args[0].Number
                             + args[1].Number
@@ -496,13 +502,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 }
             );
 
-            DynValue result = script.Call(
+            LuaValue result = script.CallValues(
                 callback,
-                DynValue.NewNumber(10),
-                DynValue.NewNumber(20),
-                DynValue.NewNumber(30),
-                DynValue.NewNumber(40),
-                DynValue.NewNumber(50)
+                LuaValue.NewNumber(10),
+                LuaValue.NewNumber(20),
+                LuaValue.NewNumber(30),
+                LuaValue.NewNumber(40),
+                LuaValue.NewNumber(50)
             );
 
             await Assert.That(result.Number).IsEqualTo(155d).ConfigureAwait(false);
@@ -522,11 +528,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task FixedDynValueCallExecutesNoContextCallbackView(int arity)
         {
             Script script = new(CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue callback = LuaValue.NewCallbackView(
                 (CallbackArgumentsView args) => SummarizeArguments(args)
             );
 
-            DynValue result = CallLegacyCallbackWithSequentialArguments(script, callback, arity);
+            LuaValue result = CallLegacyCallbackWithSequentialArguments(script, callback, arity);
 
             await AssertArgumentSummary(
                     result,
@@ -548,17 +554,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue callback = LuaValue.NewCallbackView(
                 (_, args) =>
-                    DynValue.NewNumber(
+                    LuaValue.NewNumber(
                         args.Count + args[0].Number + args[1].Number + args[2].Number
                     )
             );
 
-            DynValue result = script.Call(
+            LuaValue result = script.CallValues(
                 callback,
-                DynValue.NewNumber(10),
-                DynValue.NewTuple(DynValue.NewNumber(20), DynValue.NewNumber(30))
+                LuaValue.NewNumber(10),
+                LuaValue.NewTuple(LuaValue.NewNumber(20), LuaValue.NewNumber(30))
             );
 
             await Assert.That(result.Number).IsEqualTo(63d).ConfigureAwait(false);
@@ -575,11 +581,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallbackView(
-                (_, args) => DynValue.NewNumber(args.Count + args[0].Number)
+            LuaValue callback = LuaValue.NewCallbackView(
+                (_, args) => LuaValue.NewNumber(args.Count + args[0].Number)
             );
 
-            DynValue result = script.Call(callback, DynValue.NewNumber(10), DynValue.Void);
+            LuaValue result = script.CallValues(callback, LuaValue.NewNumber(10), LuaValue.Void);
 
             await Assert.That(result.Number).IsEqualTo(11d).ConfigureAwait(false);
         }
@@ -600,10 +606,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             double first = -1;
             double third = -1;
 
-            script.Globals["callback"] = DynValue.NewCallbackView(
+            script.Globals["callback"] = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
-                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
                     spanLength = span.Length;
                     if (spanAvailable)
                     {
@@ -611,11 +617,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                         third = span[2].Number;
                     }
 
-                    return DynValue.NewNumber(args.Count);
+                    return LuaValue.NewNumber(args.Count);
                 }
             );
 
-            DynValue result = script.DoString("return callback(10, 20, 30)");
+            LuaValue result = script.DoString("return callback(10, 20, 30)");
 
             await Assert.That(result.Number).IsEqualTo(3d).ConfigureAwait(false);
             await Assert.That(spanAvailable).IsTrue().ConfigureAwait(false);
@@ -636,10 +642,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             double first = -1d;
             double third = -1d;
 
-            script.Globals["callback"] = DynValue.NewCallbackView(
+            script.Globals["callback"] = LuaValue.NewCallbackView(
                 (CallbackArgumentsView args) =>
                 {
-                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
                     spanLength = span.Length;
                     if (spanAvailable)
                     {
@@ -647,11 +653,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                         third = span[2].Number;
                     }
 
-                    return DynValue.NewNumber(args.Count);
+                    return LuaValue.NewNumber(args.Count);
                 }
             );
 
-            DynValue result = script.DoString("return callback(10, 20, 30)");
+            LuaValue result = script.DoString("return callback(10, 20, 30)");
 
             await Assert.That(result.Number).IsEqualTo(3d).ConfigureAwait(false);
             await Assert.That(spanAvailable).IsTrue().ConfigureAwait(false);
@@ -676,23 +682,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             bool manySpanAvailable = false;
             int manySpanLength = -1;
 
-            script.Globals["callback"] = DynValue.NewCallbackView(
+            script.Globals["callback"] = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
                     if (args.Count == 0)
                     {
                         zeroCount = args.Count;
-                        return DynValue.NewNumber(0);
+                        return LuaValue.NewNumber(0);
                     }
 
                     manyCount = args.Count;
-                    manySpanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    manySpanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
                     manySpanLength = span.Length;
-                    return DynValue.NewNumber(args[4].Number + args.Count);
+                    return LuaValue.NewNumber(args[4].Number + args.Count);
                 }
             );
 
-            DynValue result = script.DoString("callback(); return callback(1, 2, 3, 4, 5)");
+            LuaValue result = script.DoString("callback(); return callback(1, 2, 3, 4, 5)");
 
             await Assert.That(result.Number).IsEqualTo(10d).ConfigureAwait(false);
             await Assert.That(zeroCount).IsEqualTo(0).ConfigureAwait(false);
@@ -712,18 +718,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new(version, CoreModulePresets.Complete);
             bool spanAvailable = true;
 
-            script.Globals["callback"] = DynValue.NewCallbackView(
+            script.Globals["callback"] = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
-                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> ignored);
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> ignored);
                     spanAvailable = spanAvailable && ignored.Length >= 0;
-                    return DynValue.NewNumber(
+                    return LuaValue.NewNumber(
                         args.Count + args[0].Number + args[1].Number + args[2].Number
                     );
                 }
             );
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function values()
                     return 20, 30
@@ -751,16 +757,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             bool spanAvailable = true;
             int spanLength = -1;
 
-            script.Globals["callback"] = DynValue.NewCallbackView(
+            script.Globals["callback"] = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
-                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
                     spanLength = span.Length;
-                    return DynValue.NewNumber(args.Count + args[0].Number);
+                    return LuaValue.NewNumber(args.Count + args[0].Number);
                 }
             );
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function values()
                 end
@@ -788,16 +794,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             bool spanAvailable = true;
             int spanLength = -1;
 
-            script.Globals["callback"] = DynValue.NewCallbackView(
+            script.Globals["callback"] = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
-                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
                     spanLength = span.Length;
-                    return DynValue.NewNumber(args.Count + args[0].Number + args[1].Number);
+                    return LuaValue.NewNumber(args.Count + args[0].Number + args[1].Number);
                 }
             );
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function values()
                     return 20
@@ -825,17 +831,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new(version, CoreModulePresets.Complete);
             bool spanAvailable = true;
 
-            script.Globals["empty"] = DynValue.NewCallbackView((_, _) => DynValue.EmptyTuple);
-            script.Globals["callback"] = DynValue.NewCallbackView(
+            script.Globals["empty"] = LuaValue.NewCallbackView((_, _) => LuaValue.EmptyTuple);
+            script.Globals["callback"] = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
-                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
                     spanAvailable = spanAvailable && span.Length >= 0;
-                    return DynValue.NewNumber(args.Count + args[0].Number);
+                    return LuaValue.NewNumber(args.Count + args[0].Number);
                 }
             );
 
-            DynValue result = script.DoString("return callback(10, empty())");
+            LuaValue result = script.DoString("return callback(10, empty())");
 
             await Assert.That(result.Number).IsEqualTo(11d).ConfigureAwait(false);
             await Assert.That(spanAvailable).IsFalse().ConfigureAwait(false);
@@ -853,11 +859,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version, CoreModulePresets.Complete);
 
-            script.Globals["callback"] = DynValue.NewCallbackView(
-                (_, args) => DynValue.NewNumber(args.Count + args[0].Number + args[1].Number)
+            script.Globals["callback"] = LuaValue.NewCallbackView(
+                (_, args) => LuaValue.NewNumber(args.Count + args[0].Number + args[1].Number)
             );
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function values()
                     return 10, 20
@@ -882,18 +888,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             double first = -1d;
             double seventh = -1d;
 
-            script.Globals["callback"] = DynValue.NewCallback(
+            script.Globals["callback"] = LuaValue.NewCallback(
                 (_, args) =>
                 {
-                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
                     spanLength = span.Length;
                     first = args[0].Number;
                     seventh = args[6].Number;
-                    return DynValue.NewNumber(args.Count + first + seventh);
+                    return LuaValue.NewNumber(args.Count + first + seventh);
                 }
             );
 
-            DynValue result = script.DoString("return callback(1, 2, 3, 4, 5, 6, 7)");
+            LuaValue result = script.DoString("return callback(1, 2, 3, 4, 5, 6, 7)");
 
             await Assert.That(result.Number).IsEqualTo(15d).ConfigureAwait(false);
             await Assert.That(spanAvailable).IsTrue().ConfigureAwait(false);
@@ -909,11 +915,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            script.Globals["callback"] = DynValue.NewCallback(
+            script.Globals["callback"] = LuaValue.NewCallback(
                 (_, args) => SummarizeArguments(args)
             );
 
-            DynValue tupleResult = script.DoString(
+            LuaValue tupleResult = script.DoString(
                 @"
                 local function values()
                     return 20, 30
@@ -926,7 +932,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await AssertArgumentSummary(tupleResult, count: 3d, nilCount: 0d, sum: 60d)
                 .ConfigureAwait(false);
 
-            DynValue noReturnResult = script.DoString(
+            LuaValue noReturnResult = script.DoString(
                 @"
                 local function values()
                 end
@@ -946,25 +952,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            script.Globals["callback"] = DynValue.NewCallback(
+            script.Globals["callback"] = LuaValue.NewCallback(
                 (_, args) => SummarizeArguments(args)
             );
-            script.Globals["voidTuple"] = DynValue.NewCallback(
-                (_, _) => DynValue.NewTuple(DynValue.NewNumber(20), DynValue.Void)
+            script.Globals["voidTuple"] = LuaValue.NewCallback(
+                (_, _) => LuaValue.NewTuple(LuaValue.NewNumber(20), LuaValue.Void)
             );
-            script.Globals["nestedTuple"] = DynValue.NewCallback(
+            script.Globals["nestedTuple"] = LuaValue.NewCallback(
                 (_, _) =>
-                    DynValue.NewTuple(
-                        DynValue.NewNumber(20),
-                        DynValue.NewTuple(DynValue.NewNumber(30), DynValue.NewNumber(40))
+                    LuaValue.NewTuple(
+                        LuaValue.NewNumber(20),
+                        LuaValue.NewTuple(LuaValue.NewNumber(30), LuaValue.NewNumber(40))
                     )
             );
 
-            DynValue voidResult = script.DoString("return callback(10, voidTuple())");
+            LuaValue voidResult = script.DoString("return callback(10, voidTuple())");
             await AssertArgumentSummary(voidResult, count: 2d, nilCount: 0d, sum: 30d)
                 .ConfigureAwait(false);
 
-            DynValue nestedResult = script.DoString("return callback(10, nestedTuple())");
+            LuaValue nestedResult = script.DoString("return callback(10, nestedTuple())");
             await AssertArgumentSummary(nestedResult, count: 4d, nilCount: 0d, sum: 100d)
                 .ConfigureAwait(false);
         }
@@ -981,11 +987,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task FixedDynValueCallToLegacyClrFunctionExposesFixedStorageSpan(int arity)
         {
             Script script = new(CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallback(
+            LuaValue callback = LuaValue.NewCallback(
                 (_, args) =>
                 {
-                    bool success = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
-                    DynValue[] copied = new DynValue[args.Count];
+                    bool success = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
+                    LuaValue[] copied = new LuaValue[args.Count];
                     int copiedCount = args.CopyTo(copied);
                     double sum = 0d;
                     for (int i = 0; i < copiedCount; i++)
@@ -993,17 +999,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                         sum += copied[i].Number;
                     }
 
-                    return DynValue.NewTuple(
-                        DynValue.NewNumber(args.Count),
-                        DynValue.NewBoolean(success),
-                        DynValue.NewNumber(span.Length),
-                        DynValue.NewNumber(copiedCount),
-                        DynValue.NewNumber(sum)
+                    return LuaValue.NewTuple(
+                        LuaValue.NewNumber(args.Count),
+                        LuaValue.NewBoolean(success),
+                        LuaValue.NewNumber(span.Length),
+                        LuaValue.NewNumber(copiedCount),
+                        LuaValue.NewNumber(sum)
                     );
                 }
             );
 
-            DynValue result = CallLegacyCallbackWithSequentialArguments(script, callback, arity);
+            LuaValue result = CallLegacyCallbackWithSequentialArguments(script, callback, arity);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert
@@ -1036,7 +1042,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task FixedDynValueCallToLegacyClrFunctionPreservesArity(int arity)
         {
             Script script = new(CoreModulePresets.Complete);
-            DynValue inspect = DynValue.NewCallback(
+            LuaValue inspect = LuaValue.NewCallback(
                 (_, args) =>
                 {
                     double sum = 0d;
@@ -1045,14 +1051,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                         sum += args[i].Number;
                     }
 
-                    return DynValue.NewTuple(
-                        DynValue.NewNumber(args.Count),
-                        DynValue.NewNumber(sum)
+                    return LuaValue.NewTuple(
+                        LuaValue.NewNumber(args.Count),
+                        LuaValue.NewNumber(sum)
                     );
                 }
             );
 
-            DynValue result = CallLegacyCallbackWithSequentialArguments(script, inspect, arity);
+            LuaValue result = CallLegacyCallbackWithSequentialArguments(script, inspect, arity);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert
@@ -1074,32 +1080,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task FixedDynValueCallToLegacyClrFunctionPreservesSpecialArguments(int arity)
         {
             Script script = new(CoreModulePresets.Complete);
-            DynValue inspect = DynValue.NewCallback((_, args) => SummarizeArguments(args));
+            LuaValue inspect = LuaValue.NewCallback((_, args) => SummarizeArguments(args));
 
-            DynValue result = arity switch
+            LuaValue result = arity switch
             {
-                1 => script.Call(inspect, (DynValue)null),
-                2 => script.Call(inspect, DynValue.NewNumber(1), DynValue.Void),
-                3 => script.Call(
+                1 => script.CallValues(inspect, LuaValue.Nil),
+                2 => script.CallValues(inspect, LuaValue.NewNumber(1), LuaValue.Void),
+                3 => script.CallValues(
                     inspect,
-                    DynValue.NewNumber(1),
-                    DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
-                    DynValue.NewTuple(DynValue.NewNumber(3), null)
+                    LuaValue.NewNumber(1),
+                    LuaValue.NewTuple(LuaValue.NewNumber(2), LuaValue.NewNumber(20)),
+                    LuaValue.NewTuple(LuaValue.NewNumber(3), LuaValue.Nil)
                 ),
-                4 => script.Call(
+                4 => script.CallValues(
                     inspect,
-                    null,
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3),
-                    DynValue.NewTuple(DynValue.NewNumber(4), null)
+                    LuaValue.Nil,
+                    LuaValue.NewNumber(2),
+                    LuaValue.NewNumber(3),
+                    LuaValue.NewTuple(LuaValue.NewNumber(4), LuaValue.Nil)
                 ),
-                5 => script.Call(
+                5 => script.CallValues(
                     inspect,
-                    DynValue.NewNumber(1),
-                    null,
-                    DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
-                    DynValue.NewNumber(3),
-                    DynValue.NewTuple(DynValue.NewNumber(4), null)
+                    LuaValue.NewNumber(1),
+                    LuaValue.Nil,
+                    LuaValue.NewTuple(LuaValue.NewNumber(2), LuaValue.NewNumber(20)),
+                    LuaValue.NewNumber(3),
+                    LuaValue.NewTuple(LuaValue.NewNumber(4), LuaValue.Nil)
                 ),
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
@@ -1148,26 +1154,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task FixedDynValueCallToLegacyClrFunctionDoesNotExposeSpanWhenArgumentsNeedNormalization()
         {
             Script script = new(CoreModulePresets.Complete);
-            DynValue inspect = DynValue.NewCallback(
+            LuaValue inspect = LuaValue.NewCallback(
                 (_, args) =>
                 {
-                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
-                    return DynValue.NewTuple(
-                        DynValue.NewBoolean(spanAvailable),
-                        DynValue.NewNumber(span.Length),
-                        DynValue.NewNumber(args.Count),
+                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
+                    return LuaValue.NewTuple(
+                        LuaValue.NewBoolean(spanAvailable),
+                        LuaValue.NewNumber(span.Length),
+                        LuaValue.NewNumber(args.Count),
                         args[0]
                     );
                 }
             );
 
-            DynValue nonFinalTuple = script.Call(
+            LuaValue nonFinalTuple = script.CallValues(
                 inspect,
-                DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(10)),
-                DynValue.NewNumber(2)
+                LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewNumber(10)),
+                LuaValue.NewNumber(2)
             );
-            DynValue nonFinalVoid = script.Call(inspect, DynValue.Void, DynValue.NewNumber(2));
-            DynValue nonFinalNull = script.Call(inspect, null, DynValue.NewNumber(2));
+            LuaValue nonFinalVoid = script.CallValues(
+                inspect,
+                LuaValue.Void,
+                LuaValue.NewNumber(2)
+            );
 
             await Assert.That(nonFinalTuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert.That(nonFinalTuple.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
@@ -1180,49 +1189,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .That(nonFinalVoid.Tuple[3].Type)
                 .IsEqualTo(DataType.Nil)
                 .ConfigureAwait(false);
-            await Assert.That(nonFinalNull.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
-            await Assert.That(nonFinalNull.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
-            await Assert.That(nonFinalNull.Tuple[2].Number).IsEqualTo(2d).ConfigureAwait(false);
-            await Assert
-                .That(nonFinalNull.Tuple[3].Type)
-                .IsEqualTo(DataType.Nil)
-                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task FixedDynValueCallToLegacyClrFunctionPreservesTrailingExpansionEdges()
         {
             Script script = new(CoreModulePresets.Complete);
-            DynValue inspect = DynValue.NewCallback((_, args) => SummarizeArguments(args));
+            LuaValue inspect = LuaValue.NewCallback((_, args) => SummarizeArguments(args));
 
-            DynValue oneVoid = script.Call(inspect, DynValue.Void);
-            DynValue oneTuple = script.Call(
+            LuaValue oneVoid = script.CallValues(inspect, LuaValue.Void);
+            LuaValue oneTuple = script.CallValues(
                 inspect,
-                DynValue.NewTuple(DynValue.NewNumber(2), null)
+                LuaValue.NewTuple(LuaValue.NewNumber(2), LuaValue.Nil)
             );
-            DynValue twoTuple = script.Call(
+            LuaValue twoTuple = script.CallValues(
                 inspect,
-                DynValue.NewNumber(1),
-                DynValue.NewTuple(DynValue.NewNumber(2), null)
+                LuaValue.NewNumber(1),
+                LuaValue.NewTuple(LuaValue.NewNumber(2), LuaValue.Nil)
             );
-            DynValue threeVoid = script.Call(
+            LuaValue threeVoid = script.CallValues(
                 inspect,
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.Void
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.Void
             );
-            DynValue fourVoid = script.Call(
+            LuaValue fourVoid = script.CallValues(
                 inspect,
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
-                DynValue.Void
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
+                LuaValue.Void
             );
-            DynValue oneEmptyTuple = script.Call(inspect, DynValue.EmptyTuple);
-            DynValue twoEmptyTuple = script.Call(
+            LuaValue oneEmptyTuple = script.CallValues(inspect, LuaValue.EmptyTuple);
+            LuaValue twoEmptyTuple = script.CallValues(
                 inspect,
-                DynValue.NewNumber(1),
-                DynValue.EmptyTuple
+                LuaValue.NewNumber(1),
+                LuaValue.EmptyTuple
             );
 
             await AssertArgumentSummary(oneVoid, count: 0d, nilCount: 0d, sum: 0d)
@@ -1257,19 +1259,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             meta.Set(
                 "__call",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (_, args) =>
-                        DynValue.NewTuple(
-                            DynValue.NewBoolean(args.Count == 2),
-                            DynValue.NewBoolean(args.IsMethodCall),
-                            DynValue.NewBoolean(ReferenceEquals(args[0].Table, callable)),
+                        LuaValue.NewTuple(
+                            LuaValue.NewBoolean(args.Count == 2),
+                            LuaValue.NewBoolean(args.IsMethodCall),
+                            LuaValue.NewBoolean(ReferenceEquals(args[0].Table, callable)),
                             args[1]
                         )
                 )
             );
             callable.MetaTable = meta;
 
-            DynValue result = script.Call(DynValue.NewTable(callable), DynValue.NewNumber(42));
+            LuaValue result = script.CallValues(
+                LuaValue.NewTable(callable),
+                LuaValue.NewNumber(42)
+            );
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
@@ -1290,16 +1295,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Table targetMeta = new(script);
             Table proxyMeta = new(script);
 
-            targetMeta.Set("__call", DynValue.NewTable(proxy));
+            targetMeta.Set("__call", LuaValue.NewTable(proxy));
             proxyMeta.Set(
                 "__call",
-                DynValue.NewCallback((_, _) => DynValue.NewString("unexpected"))
+                LuaValue.NewCallback((_, _) => LuaValue.NewString("unexpected"))
             );
             target.MetaTable = targetMeta;
             proxy.MetaTable = proxyMeta;
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
-                script.Call(DynValue.NewTable(target))
+                script.CallValues(LuaValue.NewTable(target))
             );
 
             await Assert.That(exception.Message).Contains("__call").ConfigureAwait(false);
@@ -1327,9 +1332,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue target = CreateTableValuedCallChain(
+            LuaValue target = CreateTableValuedCallChain(
                 script,
-                (_, _, _) => DynValue.NewString("unexpected")
+                (_, _, _) => LuaValue.NewString("unexpected")
             );
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
@@ -1351,23 +1356,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Table targetMeta = new(script);
             Table proxyMeta = new(script);
 
-            targetMeta.Set("__call", DynValue.NewTable(proxy));
+            targetMeta.Set("__call", LuaValue.NewTable(proxy));
             proxyMeta.Set(
                 "__call",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (_, args) =>
-                        DynValue.NewTuple(
-                            DynValue.NewBoolean(args.Count == 2),
-                            DynValue.NewBoolean(ReferenceEquals(args[0].Table, proxy)),
-                            DynValue.NewBoolean(ReferenceEquals(args[1].Table, target)),
-                            DynValue.NewBoolean(args.IsMethodCall)
+                        LuaValue.NewTuple(
+                            LuaValue.NewBoolean(args.Count == 2),
+                            LuaValue.NewBoolean(ReferenceEquals(args[0].Table, proxy)),
+                            LuaValue.NewBoolean(ReferenceEquals(args[1].Table, target)),
+                            LuaValue.NewBoolean(args.IsMethodCall)
                         )
                 )
             );
             target.MetaTable = targetMeta;
             proxy.MetaTable = proxyMeta;
 
-            DynValue result = script.Call(DynValue.NewTable(target));
+            LuaValue result = script.CallValues(LuaValue.NewTable(target));
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
@@ -1393,13 +1398,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue target = CreateTableValuedCallChain(
+            LuaValue target = CreateTableValuedCallChain(
                 script,
                 (targetTable, proxyTable, args) =>
                     SummarizeChainedCallArguments(targetTable, proxyTable, args)
             );
 
-            DynValue result = CallLegacyCallbackWithSequentialArguments(script, target, arity);
+            LuaValue result = CallLegacyCallbackWithSequentialArguments(script, target, arity);
 
             await AssertChainedCallSummary(result, arity).ConfigureAwait(false);
         }
@@ -1415,13 +1420,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(CoreModulePresets.Complete);
-            DynValue target = CreateTableValuedCallChain(
+            LuaValue target = CreateTableValuedCallChain(
                 script,
                 (targetTable, proxyTable, args) =>
                     SummarizeChainedCallArguments(targetTable, proxyTable, args)
             );
 
-            DynValue result = CallLegacyCallbackWithSequentialArguments(script, target, arity);
+            LuaValue result = CallLegacyCallbackWithSequentialArguments(script, target, arity);
 
             await AssertChainedCallSummary(result, arity).ConfigureAwait(false);
         }
@@ -1440,13 +1445,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             {
                 Table next = new(script);
                 Table meta = new(script);
-                meta.Set("__call", DynValue.NewTable(next));
+                meta.Set("__call", LuaValue.NewTable(next));
                 current.MetaTable = meta;
                 current = next;
             }
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.Call(DynValue.NewTable(root))
+                script.CallValues(LuaValue.NewTable(root))
             );
 
             await Assert.That(exception.Message).Contains("loop").ConfigureAwait(false);
@@ -1457,10 +1462,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             const int iterations = 1024;
             Script script = new(CoreModulePresets.Complete);
-            DynValue first = DynValue.NewNumber(10);
-            DynValue second = DynValue.NewNumber(20);
-            DynValue third = DynValue.NewNumber(30);
-            DynValue noArgCallback = DynValue.NewCallback(
+            LuaValue first = LuaValue.NewNumber(10);
+            LuaValue second = LuaValue.NewNumber(20);
+            LuaValue third = LuaValue.NewNumber(30);
+            LuaValue noArgCallback = LuaValue.NewCallback(
                 (_, args) =>
                 {
                     if (args.Count != 0)
@@ -1468,10 +1473,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                         throw new InvalidOperationException("Unexpected no-arg callback arity.");
                     }
 
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
-            DynValue fixedCallback = DynValue.NewCallback(
+            LuaValue fixedCallback = LuaValue.NewCallback(
                 (_, args) =>
                 {
                     if (args.Count != 3)
@@ -1482,10 +1487,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                     return args[2];
                 }
             );
-            DynValue spanProbeCallback = DynValue.NewCallback(
+            LuaValue spanProbeCallback = LuaValue.NewCallback(
                 (_, args) =>
                 {
-                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
                     if (!spanAvailable || span.Length != 3)
                     {
                         throw new InvalidOperationException("Unexpected span probe state.");
@@ -1565,15 +1570,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.NotInParallel]
         public async Task FixedDynValueCallToNoContextCallbackViewAvoidsContextAllocation()
         {
             const int iterations = 1024;
             Script script = new(CoreModulePresets.Complete);
-            DynValue first = DynValue.NewNumber(10);
-            DynValue second = DynValue.NewNumber(20);
-            DynValue third = DynValue.NewNumber(30);
-            DynValue contextCallback = DynValue.NewCallbackView((_, args) => args[2]);
-            DynValue noContextCallback = DynValue.NewCallbackView(
+            LuaValue first = LuaValue.NewNumber(10);
+            LuaValue second = LuaValue.NewNumber(20);
+            LuaValue third = LuaValue.NewNumber(30);
+            LuaValue contextCallback = LuaValue.NewCallbackView((_, args) => args[2]);
+            LuaValue noContextCallback = LuaValue.NewCallbackView(
                 (CallbackArgumentsView args) => args[2]
             );
 
@@ -1627,6 +1633,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                     $"Contextful callback-view calls allocated {contextAllocated} bytes; no-context callback-view calls allocated {noContextAllocated} bytes."
                 )
                 .ConfigureAwait(false);
+
+            CompiledScript numericLoops = script.PrepareString(
+                NumericLoopsSource,
+                null,
+                "numeric_loops_callback_allocation.lua"
+            );
+            double expected = numericLoops.Execute().Number;
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long numericLoopsAllocated = MeasureNumericLoopsAllocations(
+                numericLoops,
+                expected,
+                iterations: 2
+            );
+            long numericLoopsAllocatedPerCall = numericLoopsAllocated / 2;
+
+            await Assert
+                .That(numericLoopsAllocatedPerCall)
+                .IsLessThan(1L)
+                .Because(
+                    $"Warmed NumericLoops allocated {numericLoopsAllocated} bytes across 2 executions ({numericLoopsAllocatedPerCall} bytes/execution). Registered contextless math callbacks must retain stack-only argument views."
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1636,12 +1668,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new(CoreModulePresets.Complete);
             Table callable = new(script);
             Table meta = new(script);
-            DynValue callableValue = DynValue.NewTable(callable);
-            DynValue first = DynValue.NewNumber(1);
-            DynValue second = DynValue.NewNumber(2);
-            DynValue third = DynValue.NewNumber(3);
-            DynValue fourth = DynValue.NewNumber(4);
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue callableValue = LuaValue.NewTable(callable);
+            LuaValue first = LuaValue.NewNumber(1);
+            LuaValue second = LuaValue.NewNumber(2);
+            LuaValue third = LuaValue.NewNumber(3);
+            LuaValue fourth = LuaValue.NewNumber(4);
+            LuaValue callback = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
                     if (
@@ -1658,7 +1690,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                         );
                     }
 
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
             meta.Set("__call", callback);
@@ -1724,13 +1756,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new(CoreModulePresets.Complete);
             Table callable = new(script);
             Table meta = new(script);
-            DynValue callableValue = DynValue.NewTable(callable);
-            DynValue first = DynValue.NewNumber(1);
-            DynValue second = DynValue.NewNumber(2);
-            DynValue third = DynValue.NewNumber(3);
-            DynValue fourth = DynValue.NewNumber(4);
-            DynValue fifth = DynValue.NewNumber(5);
-            DynValue fourArgumentCallback = DynValue.NewCallbackView(
+            LuaValue callableValue = LuaValue.NewTable(callable);
+            LuaValue first = LuaValue.NewNumber(1);
+            LuaValue second = LuaValue.NewNumber(2);
+            LuaValue third = LuaValue.NewNumber(3);
+            LuaValue fourth = LuaValue.NewNumber(4);
+            LuaValue fifth = LuaValue.NewNumber(5);
+            LuaValue fourArgumentCallback = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
                     if (
@@ -1747,10 +1779,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                         );
                     }
 
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
-            DynValue fiveArgumentCallback = DynValue.NewCallbackView(
+            LuaValue fiveArgumentCallback = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
                     if (
@@ -1768,7 +1800,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                         );
                     }
 
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
             callable.MetaTable = meta;
@@ -1839,12 +1871,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Table proxy = new(script);
             Table targetMeta = new(script);
             Table proxyMeta = new(script);
-            DynValue targetValue = DynValue.NewTable(target);
-            DynValue proxyValue = DynValue.NewTable(proxy);
-            DynValue first = DynValue.NewNumber(1);
-            DynValue second = DynValue.NewNumber(2);
-            DynValue third = DynValue.NewNumber(3);
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue targetValue = LuaValue.NewTable(target);
+            LuaValue proxyValue = LuaValue.NewTable(proxy);
+            LuaValue first = LuaValue.NewNumber(1);
+            LuaValue second = LuaValue.NewNumber(2);
+            LuaValue third = LuaValue.NewNumber(3);
+            LuaValue callback = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
                     if (
@@ -1861,7 +1893,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                         );
                     }
 
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
             targetMeta.Set("__call", proxyValue);
@@ -1930,14 +1962,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Table proxy = new(script);
             Table targetMeta = new(script);
             Table proxyMeta = new(script);
-            DynValue targetValue = DynValue.NewTable(target);
-            DynValue proxyValue = DynValue.NewTable(proxy);
-            DynValue first = DynValue.NewNumber(1);
-            DynValue second = DynValue.NewNumber(2);
-            DynValue third = DynValue.NewNumber(3);
-            DynValue fourth = DynValue.NewNumber(4);
-            DynValue fifth = DynValue.NewNumber(5);
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue targetValue = LuaValue.NewTable(target);
+            LuaValue proxyValue = LuaValue.NewTable(proxy);
+            LuaValue first = LuaValue.NewNumber(1);
+            LuaValue second = LuaValue.NewNumber(2);
+            LuaValue third = LuaValue.NewNumber(3);
+            LuaValue fourth = LuaValue.NewNumber(4);
+            LuaValue fifth = LuaValue.NewNumber(5);
+            LuaValue callback = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
                     if (
@@ -1961,7 +1993,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                         }
                     }
 
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
             targetMeta.Set("__call", proxyValue);
@@ -2039,22 +2071,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Table proxy = new(script);
             Table targetMeta = new(script);
             Table proxyMeta = new(script);
-            DynValue targetValue = DynValue.NewTable(target);
-            DynValue proxyValue = DynValue.NewTable(proxy);
-            DynValue first = DynValue.NewNumber(1);
-            DynValue second = DynValue.NewNumber(2);
-            DynValue third = DynValue.NewNumber(3);
-            DynValue fourth = DynValue.NewNumber(4);
-            DynValue fifth = DynValue.NewNumber(5);
-            DynValue sixth = DynValue.NewNumber(6);
+            LuaValue targetValue = LuaValue.NewTable(target);
+            LuaValue proxyValue = LuaValue.NewTable(proxy);
+            LuaValue first = LuaValue.NewNumber(1);
+            LuaValue second = LuaValue.NewNumber(2);
+            LuaValue third = LuaValue.NewNumber(3);
+            LuaValue fourth = LuaValue.NewNumber(4);
+            LuaValue fifth = LuaValue.NewNumber(5);
+            LuaValue sixth = LuaValue.NewNumber(6);
             int expectedCount = 0;
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue callback = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
                     if (expectedCount == 8)
                     {
                         if (
-                            !args.TryGetSpan(out ReadOnlySpan<DynValue> span)
+                            !args.TryGetSpan(out ReadOnlySpan<LuaValue> span)
                             || span.Length != expectedCount
                             || !ReferenceEquals(span[0].Table, proxy)
                             || !ReferenceEquals(span[1].Table, target)
@@ -2098,7 +2130,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                         }
                     }
 
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
             targetMeta.Set("__call", proxyValue);
@@ -2182,15 +2214,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new(CoreModulePresets.Complete);
             Table callable = new(script);
             Table meta = new(script);
-            DynValue callableValue = DynValue.NewTable(callable);
-            DynValue[] args =
+            LuaValue callableValue = LuaValue.NewTable(callable);
+            LuaValue[] args =
             {
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
-                DynValue.NewNumber(4),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
+                LuaValue.NewNumber(4),
             };
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue callback = LuaValue.NewCallbackView(
                 (_, callbackArgs) =>
                 {
                     if (
@@ -2207,7 +2239,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                         );
                     }
 
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
             meta.Set("__call", callback);
@@ -2285,28 +2317,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new(CoreModulePresets.Complete);
             Table callable = new(script);
             Table meta = new(script);
-            DynValue callableValue = DynValue.NewTable(callable);
-            DynValue inspect = DynValue.NewCallback((_, args) => SummarizeArguments(args));
+            LuaValue callableValue = LuaValue.NewTable(callable);
+            LuaValue inspect = LuaValue.NewCallback((_, args) => SummarizeArguments(args));
             meta.Set("__call", inspect);
             callable.MetaTable = meta;
-            DynValue[] spanArgs =
+            LuaValue[] spanArgs =
             {
-                null,
-                DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
-                DynValue.NewNumber(3),
-                DynValue.NewTuple(DynValue.NewNumber(4), null),
+                LuaValue.Nil,
+                LuaValue.NewTuple(LuaValue.NewNumber(2), LuaValue.NewNumber(20)),
+                LuaValue.NewNumber(3),
+                LuaValue.NewTuple(LuaValue.NewNumber(4), LuaValue.Nil),
             };
-            DynValue[] arrayArgs =
+            LuaValue[] arrayArgs =
             {
-                DynValue.NewNumber(1),
-                null,
-                DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
-                DynValue.NewNumber(3),
-                DynValue.Void,
+                LuaValue.NewNumber(1),
+                LuaValue.Nil,
+                LuaValue.NewTuple(LuaValue.NewNumber(2), LuaValue.NewNumber(20)),
+                LuaValue.NewNumber(3),
+                LuaValue.Void,
             };
 
-            DynValue spanResult = script.Call(callableValue, spanArgs.AsSpan());
-            DynValue arrayResult = script.Call(callableValue, arrayArgs);
+            LuaValue spanResult = script.Call(callableValue, spanArgs.AsSpan());
+            LuaValue arrayResult = script.Call(callableValue, arrayArgs);
 
             await AssertArgumentSummary(spanResult, count: 6d, nilCount: 2d, sum: 9d)
                 .ConfigureAwait(false);
@@ -2320,22 +2352,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new(CoreModulePresets.Complete);
             Table callable = new(script);
             Table meta = new(script);
-            DynValue callableValue = DynValue.NewTable(callable);
-            DynValue[] values =
+            LuaValue callableValue = LuaValue.NewTable(callable);
+            LuaValue[] values =
             {
-                DynValue.NewNumber(1),
-                null,
-                DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
-                DynValue.NewNumber(3),
-                DynValue.NewTuple(DynValue.NewNumber(4), null),
+                LuaValue.NewNumber(1),
+                LuaValue.Nil,
+                LuaValue.NewTuple(LuaValue.NewNumber(2), LuaValue.NewNumber(20)),
+                LuaValue.NewNumber(3),
+                LuaValue.NewTuple(LuaValue.NewNumber(4), LuaValue.Nil),
             };
 
             meta.Set(
                 "__call",
-                DynValue.NewCallback((_, args) => SummarizeArgumentsSkippingFirst(args))
+                LuaValue.NewCallback((_, args) => SummarizeArgumentsSkippingFirst(args))
             );
             callable.MetaTable = meta;
-            DynValue legacyResult = script.Call(
+            LuaValue legacyResult = script.CallValues(
                 callableValue,
                 values[0],
                 values[1],
@@ -2346,9 +2378,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             meta.Set(
                 "__call",
-                DynValue.NewCallbackView((_, args) => SummarizeArgumentsSkippingFirst(args))
+                LuaValue.NewCallbackView((_, args) => SummarizeArgumentsSkippingFirst(args))
             );
-            DynValue viewResult = script.Call(
+            LuaValue viewResult = script.CallValues(
                 callableValue,
                 values[0],
                 values[1],
@@ -2380,17 +2412,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             meta.Set(
                 "__call",
-                DynValue.NewCallbackView(
+                LuaValue.NewCallbackView(
                     (_, args) =>
                     {
                         sawSelf = args.Count == 2 && ReferenceEquals(args[0].Table, callable);
-                        return DynValue.NewNumber(args[1].Number + args.Count);
+                        return LuaValue.NewNumber(args[1].Number + args.Count);
                     }
                 )
             );
             callable.MetaTable = meta;
 
-            DynValue result = script.Call(DynValue.NewTable(callable), DynValue.NewNumber(40));
+            LuaValue result = script.CallValues(
+                LuaValue.NewTable(callable),
+                LuaValue.NewNumber(40)
+            );
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
             await Assert.That(sawSelf).IsTrue().ConfigureAwait(false);
@@ -2414,7 +2449,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             meta.Set(
                 "__call",
-                DynValue.NewCallbackView(
+                LuaValue.NewCallbackView(
                     (_, args) =>
                     {
                         sawSelf = args.Count == 5 && ReferenceEquals(args[0].Table, callable);
@@ -2423,18 +2458,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                             sum += args[i].Number;
                         }
 
-                        return DynValue.NewNumber(args.Count);
+                        return LuaValue.NewNumber(args.Count);
                     }
                 )
             );
             callable.MetaTable = meta;
 
-            DynValue result = script.Call(
-                DynValue.NewTable(callable),
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
-                DynValue.NewNumber(4)
+            LuaValue result = script.CallValues(
+                LuaValue.NewTable(callable),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
+                LuaValue.NewNumber(4)
             );
 
             await Assert.That(result.Number).IsEqualTo(5d).ConfigureAwait(false);
@@ -2449,12 +2484,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 "return function(a, b, c, d, e) return a + b + c + d + e end"
             );
-            DynValue[] args = CreateSequentialArguments(5);
+            LuaValue[] args = CreateSequentialArguments(5);
 
-            DynValue result = script.Call(function, args.AsSpan());
+            LuaValue result = script.Call(function, args.AsSpan());
 
             await Assert.That(result.Number).IsEqualTo(15d).ConfigureAwait(false);
         }
@@ -2466,7 +2501,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue inspect = script.DoString(
+            LuaValue inspect = script.DoString(
                 @"
                 return function(...)
                     local count = select('#', ...)
@@ -2485,16 +2520,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 end
                 "
             );
-            DynValue[] args =
+            LuaValue[] args =
             {
-                DynValue.NewNumber(1),
-                null,
-                DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
-                DynValue.NewNumber(3),
-                DynValue.NewTuple(DynValue.NewNumber(4), null),
+                LuaValue.NewNumber(1),
+                LuaValue.Nil,
+                LuaValue.NewTuple(LuaValue.NewNumber(2), LuaValue.NewNumber(20)),
+                LuaValue.NewNumber(3),
+                LuaValue.NewTuple(LuaValue.NewNumber(4), LuaValue.Nil),
             };
 
-            DynValue result = script.Call(inspect, args.AsSpan());
+            LuaValue result = script.Call(inspect, args.AsSpan());
 
             await AssertArgumentSummary(result, count: 6d, nilCount: 2d, sum: 10d)
                 .ConfigureAwait(false);
@@ -2510,27 +2545,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task CallWithReadOnlySpanDynValuesExposesSpanToCallbackView(int arity)
         {
             Script script = new(CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue callback = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
-                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
                     double sum = 0d;
                     for (int i = 0; i < span.Length; i++)
                     {
                         sum += span[i].Number;
                     }
 
-                    return DynValue.NewTuple(
-                        DynValue.NewBoolean(spanAvailable),
-                        DynValue.NewNumber(span.Length),
-                        DynValue.NewNumber(args.Count),
-                        DynValue.NewNumber(sum)
+                    return LuaValue.NewTuple(
+                        LuaValue.NewBoolean(spanAvailable),
+                        LuaValue.NewNumber(span.Length),
+                        LuaValue.NewNumber(args.Count),
+                        LuaValue.NewNumber(sum)
                     );
                 }
             );
-            DynValue[] values = CreateSequentialArguments(arity);
+            LuaValue[] values = CreateSequentialArguments(arity);
 
-            DynValue result = script.Call(callback, values.AsSpan());
+            LuaValue result = script.Call(callback, values.AsSpan());
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
@@ -2558,27 +2593,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task CallWithReadOnlySpanDynValuesExposesSpanToNoContextCallbackView(int arity)
         {
             Script script = new(CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue callback = LuaValue.NewCallbackView(
                 (CallbackArgumentsView args) =>
                 {
-                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
                     double sum = 0d;
                     for (int i = 0; i < span.Length; i++)
                     {
                         sum += span[i].Number;
                     }
 
-                    return DynValue.NewTuple(
-                        DynValue.NewBoolean(spanAvailable),
-                        DynValue.NewNumber(span.Length),
-                        DynValue.NewNumber(args.Count),
-                        DynValue.NewNumber(sum)
+                    return LuaValue.NewTuple(
+                        LuaValue.NewBoolean(spanAvailable),
+                        LuaValue.NewNumber(span.Length),
+                        LuaValue.NewNumber(args.Count),
+                        LuaValue.NewNumber(sum)
                     );
                 }
             );
-            DynValue[] values = CreateSequentialArguments(arity);
+            LuaValue[] values = CreateSequentialArguments(arity);
 
-            DynValue result = script.Call(callback, values.AsSpan());
+            LuaValue result = script.Call(callback, values.AsSpan());
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
@@ -2603,29 +2638,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue callback = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
-                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
-                    return DynValue.NewTuple(
-                        DynValue.NewBoolean(spanAvailable),
-                        DynValue.NewNumber(span.Length),
-                        DynValue.NewNumber(args.Count),
+                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
+                    return LuaValue.NewTuple(
+                        LuaValue.NewBoolean(spanAvailable),
+                        LuaValue.NewNumber(span.Length),
+                        LuaValue.NewNumber(args.Count),
                         args[0],
                         args[5]
                     );
                 }
             );
-            DynValue[] values =
+            LuaValue[] values =
             {
-                null,
-                DynValue.NewNumber(2),
-                DynValue.NewTuple(DynValue.NewNumber(3), DynValue.NewNumber(30)),
-                DynValue.NewNumber(4),
-                DynValue.NewTuple(DynValue.NewNumber(5), null),
+                LuaValue.Nil,
+                LuaValue.NewNumber(2),
+                LuaValue.NewTuple(LuaValue.NewNumber(3), LuaValue.NewNumber(30)),
+                LuaValue.NewNumber(4),
+                LuaValue.NewTuple(LuaValue.NewNumber(5), LuaValue.Nil),
             };
 
-            DynValue result = script.Call(callback, values.AsSpan());
+            LuaValue result = script.Call(callback, values.AsSpan());
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
@@ -2642,17 +2677,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue inspect = DynValue.NewCallback((_, args) => SummarizeArguments(args));
-            DynValue[] values =
+            LuaValue inspect = LuaValue.NewCallback((_, args) => SummarizeArguments(args));
+            LuaValue[] values =
             {
-                DynValue.NewNumber(1),
-                null,
-                DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
-                DynValue.NewNumber(3),
-                DynValue.NewTuple(DynValue.NewNumber(4), null),
+                LuaValue.NewNumber(1),
+                LuaValue.Nil,
+                LuaValue.NewTuple(LuaValue.NewNumber(2), LuaValue.NewNumber(20)),
+                LuaValue.NewNumber(3),
+                LuaValue.NewTuple(LuaValue.NewNumber(4), LuaValue.Nil),
             };
 
-            DynValue result = script.Call(inspect, values.AsSpan());
+            LuaValue result = script.Call(inspect, values.AsSpan());
 
             await AssertArgumentSummary(result, count: 6d, nilCount: 2d, sum: 10d)
                 .ConfigureAwait(false);
@@ -2675,9 +2710,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 callable = setmetatable({ marker = 100 }, mt)
                 "
             );
-            DynValue[] args = CreateSequentialArguments(5);
+            LuaValue[] args = CreateSequentialArguments(5);
 
-            DynValue result = script.Call(script.Globals.Get("callable"), args.AsSpan());
+            LuaValue result = script.Call(script.Globals.Get("callable"), args.AsSpan());
 
             await Assert.That(result.Number).IsEqualTo(115d).ConfigureAwait(false);
         }
@@ -2689,11 +2724,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue target = CreateTableValuedCallChain(
+            LuaValue target = CreateTableValuedCallChain(
                 script,
-                (_, _, _) => DynValue.NewString("unexpected")
+                (_, _, _) => LuaValue.NewString("unexpected")
             );
-            DynValue[] args = CreateSequentialArguments(5);
+            LuaValue[] args = CreateSequentialArguments(5);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 script.Call(target, args.AsSpan())
@@ -2709,14 +2744,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue target = CreateTableValuedCallChain(
+            LuaValue target = CreateTableValuedCallChain(
                 script,
                 (targetTable, proxyTable, args) =>
                     SummarizeChainedCallArguments(targetTable, proxyTable, args)
             );
-            DynValue[] args = CreateSequentialArguments(5);
+            LuaValue[] args = CreateSequentialArguments(5);
 
-            DynValue result = script.Call(target, args.AsSpan());
+            LuaValue result = script.Call(target, args.AsSpan());
 
             await AssertChainedCallSummary(result, userArity: 5).ConfigureAwait(false);
         }
@@ -2730,10 +2765,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task CallRejectsNonCallableValues(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue notCallable = DynValue.NewString("nope");
+            LuaValue notCallable = LuaValue.NewString("nope");
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
-                script.Call(notCallable)
+                script.CallValues(notCallable)
             );
 
             await Assert
@@ -2752,9 +2787,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function add(a, b) return a + b end");
-            DynValue function = script.Globals.Get("add");
+            LuaValue function = script.Globals.Get("add");
 
-            DynValue result = script.Call(function, 30, 12);
+            LuaValue result = script.Call(function, 30, 12);
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
@@ -2765,16 +2800,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [ScriptGlobalOptionsIsolation]
         public async Task FixedObjectCallOverloadsPreserveNilAndArity(
             LuaCompatibilityVersion version
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue capture = script.DoString(
+            LuaValue capture = script.DoString(
                 "return function(...) return select('#', ...), ... end"
             );
 
-            DynValue oneArgResult = script.Call(capture, (object)null);
+            LuaValue oneArgResult = script.Call(capture, (object)null);
             await Assert.That(oneArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(oneArgResult.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(oneArgResult.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
@@ -2783,7 +2819,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .IsEqualTo(DataType.Nil)
                 .ConfigureAwait(false);
 
-            DynValue threeArgResult = script.Call(capture, (object)null, "value", 42);
+            LuaValue threeArgResult = script.Call(capture, (object)null, "value", 42);
             await Assert.That(threeArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(threeArgResult.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
             await Assert.That(threeArgResult.Tuple[0].Number).IsEqualTo(3d).ConfigureAwait(false);
@@ -2797,7 +2833,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
             await Assert.That(threeArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
 
-            DynValue fourArgResult = script.Call(capture, (object)null, "value", 42, true);
+            LuaValue fourArgResult = script.Call(capture, (object)null, "value", 42, true);
             await Assert.That(fourArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(fourArgResult.Tuple.Length).IsEqualTo(5).ConfigureAwait(false);
             await Assert.That(fourArgResult.Tuple[0].Number).IsEqualTo(4d).ConfigureAwait(false);
@@ -2812,7 +2848,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(fourArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
             await Assert.That(fourArgResult.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
 
-            DynValue sixArgResult = script.Call(capture, (object)null, "value", 42, true, 5d, 6d);
+            LuaValue sixArgResult = script.Call(capture, (object)null, "value", 42, true, 5d, 6d);
             await Assert.That(sixArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(sixArgResult.Tuple.Length).IsEqualTo(7).ConfigureAwait(false);
             await Assert.That(sixArgResult.Tuple[0].Number).IsEqualTo(6d).ConfigureAwait(false);
@@ -2829,7 +2865,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(sixArgResult.Tuple[5].Number).IsEqualTo(5d).ConfigureAwait(false);
             await Assert.That(sixArgResult.Tuple[6].Number).IsEqualTo(6d).ConfigureAwait(false);
 
-            DynValue sevenArgResult = script.Call(
+            LuaValue sevenArgResult = script.Call(
                 capture,
                 (object)null,
                 "value",
@@ -2855,6 +2891,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(sevenArgResult.Tuple[5].Number).IsEqualTo(5d).ConfigureAwait(false);
             await Assert.That(sevenArgResult.Tuple[6].Number).IsEqualTo(6d).ConfigureAwait(false);
             await Assert.That(sevenArgResult.Tuple[7].Number).IsEqualTo(7d).ConfigureAwait(false);
+
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
+                registry =>
+                {
+                    registry.SetClrToScriptCustomConversion<int>(
+                        (_, value) => LuaValue.NewString("custom-int:" + value)
+                    );
+                    registry.SetClrToScriptCustomConversion<string>(
+                        (_, value) => LuaValue.NewString("custom-string:" + value)
+                    );
+                }
+            );
+
+            LuaValue bareInteger = script.Call(capture, 42);
+            LuaValue bareString = script.Call(capture, "value");
+            LuaValue exactInteger = script.Call(capture, LuaValue.FromInteger(42));
+
+            await Assert.That(bareInteger.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert
+                .That(bareInteger.Tuple[1].String)
+                .IsEqualTo("custom-int:42")
+                .ConfigureAwait(false);
+            await Assert.That(bareString.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert
+                .That(bareString.Tuple[1].String)
+                .IsEqualTo("custom-string:value")
+                .ConfigureAwait(false);
+            await Assert.That(exactInteger.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(exactInteger.Tuple[1].Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -2874,12 +2939,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue capture = script.DoString(
+            LuaValue capture = script.DoString(
                 "return function(...) return select('#', ...), ... end"
             );
-            DynValue[] args = CreateSequentialArguments(arity);
+            LuaValue[] args = CreateSequentialArguments(arity);
 
-            DynValue result = CallFunctionWithFixedArguments(script, capture, args);
+            LuaValue result = CallFunctionWithFixedArguments(script, capture, args);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple.Length).IsEqualTo(arity + 1).ConfigureAwait(false);
@@ -2907,11 +2972,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue capture = script.DoString(
+            LuaValue capture = script.DoString(
                 "return function(...) return select('#', ...), ... end"
             );
 
-            DynValue fixedResult = script.Call(capture, (DynValue)null, DynValue.NewString("tail"));
+            LuaValue fixedResult = script.CallValues(
+                capture,
+                LuaValue.Nil,
+                LuaValue.NewString("tail")
+            );
             await Assert.That(fixedResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(fixedResult.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(fixedResult.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
@@ -2921,9 +2990,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
             await Assert.That(fixedResult.Tuple[2].String).IsEqualTo("tail").ConfigureAwait(false);
 
-            DynValue arrayResult = script.Call(
+            LuaValue arrayResult = script.Call(
                 capture,
-                new DynValue[] { null, DynValue.NewString("middle"), null }
+                new LuaValue[] { LuaValue.Nil, LuaValue.NewString("middle"), LuaValue.Nil }
             );
             await Assert.That(arrayResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(arrayResult.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
@@ -2941,10 +3010,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .IsEqualTo(DataType.Nil)
                 .ConfigureAwait(false);
 
-            DynValue tupleResult = script.Call(
+            LuaValue tupleResult = script.CallValues(
                 capture,
-                DynValue.NewString("head"),
-                DynValue.NewTuple(null, DynValue.NewString("tail"))
+                LuaValue.NewString("head"),
+                LuaValue.NewTuple(LuaValue.Nil, LuaValue.NewString("tail"))
             );
             await Assert.That(tupleResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(tupleResult.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
@@ -2966,12 +3035,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task ObjectArrayCallStillUsesParamsExpansion(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue capture = script.DoString(
+            LuaValue capture = script.DoString(
                 "return function(...) return select('#', ...), ... end"
             );
             object[] args = new object[] { 1, 2, 3 };
 
-            DynValue result = script.Call(capture, args);
+            LuaValue result = script.Call(capture, args);
 
             await AssertTupleNumbers(result, 3d, 1d, 2d, 3d).ConfigureAwait(false);
         }
@@ -2987,12 +3056,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue capture = script.DoString(
+            LuaValue capture = script.DoString(
                 "return function(value) return type(value), #value, value[1], value[2] end"
             );
             object[] args = new object[] { 1, 2 };
 
-            DynValue result = script.Call(capture, (object)args);
+            LuaValue result = script.Call(capture, (object)args);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
@@ -3008,17 +3077,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task FixedObjectCallOverloadsValidateFunctionBeforeArguments(
+        public async Task FixedObjectCallOverloadsConvertArgumentsBeforeRejectingNilFunction(
             LuaCompatibilityVersion version
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
 
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                script.Call((DynValue)null, new UnregisteredHostObject())
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.CallObjectArgumentsCore(LuaValue.Nil, new UnregisteredHostObject())
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("function").ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("cannot convert clr type")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -3032,61 +3104,61 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue capture = script.DoString(
+            LuaValue capture = script.DoString(
                 "return function(...) return select('#', ...), ... end"
             );
 
-            DynValue oneArgResult = script.Call(
+            LuaValue oneArgResult = script.CallValues(
                 capture,
-                DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2))
+                LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewNumber(2))
             );
             await AssertTupleNumbers(oneArgResult, 2d, 1d, 2d).ConfigureAwait(false);
 
-            DynValue twoArgResult = script.Call(
+            LuaValue twoArgResult = script.CallValues(
                 capture,
-                DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2)),
-                DynValue.NewNumber(3)
+                LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewNumber(2)),
+                LuaValue.NewNumber(3)
             );
             await AssertTupleNumbers(twoArgResult, 2d, 1d, 3d).ConfigureAwait(false);
 
-            DynValue nestedTail = DynValue.NewTuple(
-                DynValue.NewNumber(3),
-                DynValue.NewTuple(DynValue.NewNumber(4), DynValue.NewNumber(5))
+            LuaValue nestedTail = LuaValue.NewTuple(
+                LuaValue.NewNumber(3),
+                LuaValue.NewTuple(LuaValue.NewNumber(4), LuaValue.NewNumber(5))
             );
-            DynValue threeArgResult = script.Call(
+            LuaValue threeArgResult = script.CallValues(
                 capture,
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
                 nestedTail
             );
             await AssertTupleNumbers(threeArgResult, 5d, 1d, 2d, 3d, 4d, 5d).ConfigureAwait(false);
 
-            DynValue fourArgTail = DynValue.NewTuple(
-                DynValue.NewNumber(4),
-                DynValue.NewTuple(DynValue.NewNumber(5), DynValue.NewNumber(6))
+            LuaValue fourArgTail = LuaValue.NewTuple(
+                LuaValue.NewNumber(4),
+                LuaValue.NewTuple(LuaValue.NewNumber(5), LuaValue.NewNumber(6))
             );
-            DynValue fourArgResult = script.Call(
+            LuaValue fourArgResult = script.CallValues(
                 capture,
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
                 fourArgTail
             );
             await AssertTupleNumbers(fourArgResult, 6d, 1d, 2d, 3d, 4d, 5d, 6d)
                 .ConfigureAwait(false);
 
-            DynValue nonTrailingTuple = DynValue.NewTuple(
-                DynValue.NewNumber(4),
-                DynValue.NewNumber(5)
+            LuaValue nonTrailingTuple = LuaValue.NewTuple(
+                LuaValue.NewNumber(4),
+                LuaValue.NewNumber(5)
             );
-            DynValue trailingTuple = DynValue.NewTuple(
-                DynValue.NewNumber(6),
-                DynValue.NewTuple(DynValue.NewNumber(7), DynValue.NewNumber(8))
+            LuaValue trailingTuple = LuaValue.NewTuple(
+                LuaValue.NewNumber(6),
+                LuaValue.NewTuple(LuaValue.NewNumber(7), LuaValue.NewNumber(8))
             );
-            DynValue mixedTupleResult = script.Call(
+            LuaValue mixedTupleResult = script.CallValues(
                 capture,
-                DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2)),
-                DynValue.NewNumber(3),
+                LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewNumber(2)),
+                LuaValue.NewNumber(3),
                 nonTrailingTuple,
                 trailingTuple
             );
@@ -3105,29 +3177,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue capture = script.DoString(
+            LuaValue capture = script.DoString(
                 "return function(...) return select('#', ...), ... end"
             );
 
-            DynValue oneVoid = script.Call(capture, DynValue.Void);
-            DynValue twoVoid = script.Call(capture, DynValue.NewNumber(1), DynValue.Void);
-            DynValue threeVoid = script.Call(
+            LuaValue oneVoid = script.CallValues(capture, LuaValue.Void);
+            LuaValue twoVoid = script.CallValues(capture, LuaValue.NewNumber(1), LuaValue.Void);
+            LuaValue threeVoid = script.CallValues(
                 capture,
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.Void
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.Void
             );
-            DynValue fourVoid = script.Call(
+            LuaValue fourVoid = script.CallValues(
                 capture,
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
-                DynValue.Void
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
+                LuaValue.Void
             );
-            DynValue trailingTupleVoid = script.Call(
+            LuaValue trailingTupleVoid = script.CallValues(
                 capture,
-                DynValue.NewNumber(1),
-                DynValue.NewTuple(DynValue.NewNumber(2), DynValue.Void)
+                LuaValue.NewNumber(1),
+                LuaValue.NewTuple(LuaValue.NewNumber(2), LuaValue.Void)
             );
 
             await Assert.That(oneVoid.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -3152,7 +3224,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             script.DoString("function mul(a, b, c, d) return a * b + c + d end");
             object closure = script.Globals.Get("mul").Function;
 
-            DynValue result = script.Call(closure, 6, 7, -1, 1);
+            LuaValue result = script.Call(closure, 6, 7, -1, 1);
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
@@ -3166,10 +3238,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task CallObjectOverloadInvokesDelegateCallback(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = (ctx, args) =>
-                DynValue.NewNumber(args[0].Number * 2d);
+            Func<ScriptExecutionContext, CallbackArguments, LuaValue> callback = (ctx, args) =>
+                LuaValue.NewNumber(args[0].Number * 2d);
 
-            DynValue result = script.Call(callback, 21);
+            LuaValue result = script.Call(callback, 21);
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
@@ -3225,13 +3297,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task CreateCoroutineValidatesInputs(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.NewString("done"));
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.NewString("done"));
 
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
             await Assert.That(coroutine.Type).IsEqualTo(DataType.Thread).ConfigureAwait(false);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
-                script.CreateCoroutine(DynValue.NewNumber(1))
+                script.CreateCoroutineValue(LuaValue.NewNumber(1))
             );
 
             await Assert
@@ -3250,11 +3322,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version, CoreModulePresets.Complete);
 
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                script.CreateCoroutine((DynValue)null)
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                script.CreateCoroutineValue(LuaValue.Nil)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("function").ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("DataType.Function")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -3273,7 +3348,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             ScriptOptions options = new() { ScriptLoader = loader, DebugPrint = messages.Add };
             Script script = new(CoreModulePresets.Complete, options);
 
-            DynValue result = script.RequireModule("bit32");
+            LuaValue result = script.RequireModule("bit32");
 
             await Assert.That(loader.ResolveCalls).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(loader.LoadCalls).IsEqualTo(1).ConfigureAwait(false);
@@ -3433,11 +3508,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script scriptA = new(CoreModulePresets.Complete);
             Script scriptB = new(CoreModulePresets.Complete);
 
-            DynValue foreignTable = scriptA.DoString("return {}");
+            LuaValue foreignTable = scriptA.DoString("return {}");
             scriptB.DoString("function echo(value) return value end");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                scriptB.Call(scriptB.Globals.Get("echo"), foreignTable)
+                scriptB.CallValues(scriptB.Globals.Get("echo"), foreignTable)
             );
 
             await Assert
@@ -3459,15 +3534,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script scriptA = new(CoreModulePresets.Complete);
             Script scriptB = new(CoreModulePresets.Complete);
 
-            DynValue foreignTable = scriptA.DoString("return {}");
+            LuaValue foreignTable = scriptA.DoString("return {}");
             scriptB.DoString("function echo(a, b, c, d) return d end");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                scriptB.Call(
+                scriptB.CallValues(
                     scriptB.Globals.Get("echo"),
-                    DynValue.Nil,
-                    DynValue.Nil,
-                    DynValue.Nil,
+                    LuaValue.Nil,
+                    LuaValue.Nil,
+                    LuaValue.Nil,
                     foreignTable
                 )
             );
@@ -3514,10 +3589,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script scriptA = new(CoreModulePresets.Complete);
             Script scriptB = new(CoreModulePresets.Complete);
-            DynValue foreignFunction = scriptA.DoString("return function() end");
+            LuaValue foreignFunction = scriptA.DoString("return function() end");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                scriptB.CreateCoroutine(foreignFunction)
+                scriptB.CreateCoroutineValue(foreignFunction)
             );
 
             await Assert
@@ -3545,10 +3620,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             );
 
             object closure = script.Globals.Get("generator").Function;
-            DynValue coroutine = script.CreateCoroutine(closure);
+            LuaValue coroutine = script.CreateCoroutine(closure);
 
-            DynValue first = coroutine.Coroutine.Resume();
-            DynValue second = coroutine.Coroutine.Resume();
+            LuaValue first = coroutine.Coroutine.Resume();
+            LuaValue second = coroutine.Coroutine.Resume();
 
             await Assert.That(first.Number).IsEqualTo(5d).ConfigureAwait(false);
             await Assert.That(second.Number).IsEqualTo(6d).ConfigureAwait(false);
@@ -3565,14 +3640,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = (ctx, _) =>
-                DynValue.NewNumber(99d);
+            Func<ScriptExecutionContext, CallbackArguments, LuaValue> callback = (ctx, _) =>
+                LuaValue.NewNumber(99d);
 
-            DynValue coroutineValue = script.CreateCoroutine(callback);
+            LuaValue coroutineValue = script.CreateCoroutine(callback);
             coroutineValue.Coroutine.OwnerScript = script;
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
-            DynValue result = coroutineValue.Coroutine.Resume(context);
+            LuaValue result = coroutineValue.Coroutine.Resume(context);
 
             await Assert.That(result.Number).IsEqualTo(99d).ConfigureAwait(false);
             await Assert
@@ -3629,7 +3704,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
         }
 
-        private static async Task AssertTupleNumbers(DynValue value, params double[] expected)
+        private static async Task AssertTupleNumbers(LuaValue value, params double[] expected)
         {
             await Assert.That(value.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(value.Tuple.Length).IsEqualTo(expected.Length).ConfigureAwait(false);
@@ -3643,14 +3718,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             }
         }
 
-        private static DynValue SummarizeArguments(CallbackArguments args)
+        private static LuaValue SummarizeArguments(CallbackArguments args)
         {
             double nilCount = 0d;
             double sum = 0d;
 
             for (int i = 0; i < args.Count; i++)
             {
-                DynValue arg = args[i];
+                LuaValue arg = args[i];
                 if (arg.Type == DataType.Nil)
                 {
                     nilCount++;
@@ -3661,21 +3736,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 }
             }
 
-            return DynValue.NewTuple(
-                DynValue.NewNumber(args.Count),
-                DynValue.NewNumber(nilCount),
-                DynValue.NewNumber(sum)
+            return LuaValue.NewTuple(
+                LuaValue.NewNumber(args.Count),
+                LuaValue.NewNumber(nilCount),
+                LuaValue.NewNumber(sum)
             );
         }
 
-        private static DynValue SummarizeArguments(CallbackArgumentsView args)
+        private static LuaValue SummarizeArguments(CallbackArgumentsView args)
         {
             double nilCount = 0d;
             double sum = 0d;
 
             for (int i = 0; i < args.Count; i++)
             {
-                DynValue arg = args[i];
+                LuaValue arg = args[i];
                 if (arg.Type == DataType.Nil)
                 {
                     nilCount++;
@@ -3686,21 +3761,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 }
             }
 
-            return DynValue.NewTuple(
-                DynValue.NewNumber(args.Count),
-                DynValue.NewNumber(nilCount),
-                DynValue.NewNumber(sum)
+            return LuaValue.NewTuple(
+                LuaValue.NewNumber(args.Count),
+                LuaValue.NewNumber(nilCount),
+                LuaValue.NewNumber(sum)
             );
         }
 
-        private static DynValue SummarizeArgumentsSkippingFirst(CallbackArguments args)
+        private static LuaValue SummarizeArgumentsSkippingFirst(CallbackArguments args)
         {
             double nilCount = 0d;
             double sum = 0d;
 
             for (int i = 1; i < args.Count; i++)
             {
-                DynValue arg = args[i];
+                LuaValue arg = args[i];
                 if (arg.Type == DataType.Nil)
                 {
                     nilCount++;
@@ -3711,21 +3786,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 }
             }
 
-            return DynValue.NewTuple(
-                DynValue.NewNumber(Math.Max(args.Count - 1, 0)),
-                DynValue.NewNumber(nilCount),
-                DynValue.NewNumber(sum)
+            return LuaValue.NewTuple(
+                LuaValue.NewNumber(Math.Max(args.Count - 1, 0)),
+                LuaValue.NewNumber(nilCount),
+                LuaValue.NewNumber(sum)
             );
         }
 
-        private static DynValue SummarizeArgumentsSkippingFirst(CallbackArgumentsView args)
+        private static LuaValue SummarizeArgumentsSkippingFirst(CallbackArgumentsView args)
         {
             double nilCount = 0d;
             double sum = 0d;
 
             for (int i = 1; i < args.Count; i++)
             {
-                DynValue arg = args[i];
+                LuaValue arg = args[i];
                 if (arg.Type == DataType.Nil)
                 {
                     nilCount++;
@@ -3736,15 +3811,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 }
             }
 
-            return DynValue.NewTuple(
-                DynValue.NewNumber(Math.Max(args.Count - 1, 0)),
-                DynValue.NewNumber(nilCount),
-                DynValue.NewNumber(sum)
+            return LuaValue.NewTuple(
+                LuaValue.NewNumber(Math.Max(args.Count - 1, 0)),
+                LuaValue.NewNumber(nilCount),
+                LuaValue.NewNumber(sum)
             );
         }
 
         private static async Task AssertArgumentSummary(
-            DynValue value,
+            LuaValue value,
             double count,
             double nilCount,
             double sum
@@ -3757,9 +3832,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(value.Tuple[2].Number).IsEqualTo(sum).ConfigureAwait(false);
         }
 
-        private static DynValue CreateTableValuedCallChain(
+        private static LuaValue CreateTableValuedCallChain(
             Script script,
-            Func<Table, Table, CallbackArguments, DynValue> callback
+            Func<Table, Table, CallbackArguments, LuaValue> callback
         )
         {
             Table target = new(script);
@@ -3767,18 +3842,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Table targetMeta = new(script);
             Table proxyMeta = new(script);
 
-            targetMeta.Set("__call", DynValue.NewTable(proxy));
+            targetMeta.Set("__call", LuaValue.NewTable(proxy));
             proxyMeta.Set(
                 "__call",
-                DynValue.NewCallback((_, args) => callback(target, proxy, args))
+                LuaValue.NewCallback((_, args) => callback(target, proxy, args))
             );
             target.MetaTable = targetMeta;
             proxy.MetaTable = proxyMeta;
 
-            return DynValue.NewTable(target);
+            return LuaValue.NewTable(target);
         }
 
-        private static DynValue SummarizeChainedCallArguments(
+        private static LuaValue SummarizeChainedCallArguments(
             Table target,
             Table proxy,
             CallbackArguments args
@@ -3790,16 +3865,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 userArgumentSum += args[i].Number;
             }
 
-            return DynValue.NewTuple(
-                DynValue.NewNumber(args.Count),
-                DynValue.NewBoolean(args.Count >= 2 && ReferenceEquals(args[0].Table, proxy)),
-                DynValue.NewBoolean(args.Count >= 2 && ReferenceEquals(args[1].Table, target)),
-                DynValue.NewBoolean(args.IsMethodCall),
-                DynValue.NewNumber(userArgumentSum)
+            return LuaValue.NewTuple(
+                LuaValue.NewNumber(args.Count),
+                LuaValue.NewBoolean(args.Count >= 2 && ReferenceEquals(args[0].Table, proxy)),
+                LuaValue.NewBoolean(args.Count >= 2 && ReferenceEquals(args[1].Table, target)),
+                LuaValue.NewBoolean(args.IsMethodCall),
+                LuaValue.NewNumber(userArgumentSum)
             );
         }
 
-        private static async Task AssertChainedCallSummary(DynValue value, int userArity)
+        private static async Task AssertChainedCallSummary(LuaValue value, int userArity)
         {
             await Assert.That(value.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(value.Tuple.Length).IsEqualTo(5).ConfigureAwait(false);
@@ -3816,82 +3891,90 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
         }
 
-        private static DynValue CallLegacyCallbackWithSequentialArguments(
+        private static LuaValue CallLegacyCallbackWithSequentialArguments(
             Script script,
-            DynValue callback,
+            LuaValue callback,
             int arity
         )
         {
             return arity switch
             {
-                0 => script.Call(callback),
-                1 => script.Call(callback, DynValue.NewNumber(1)),
-                2 => script.Call(callback, DynValue.NewNumber(1), DynValue.NewNumber(2)),
-                3 => script.Call(
+                0 => script.CallValues(callback),
+                1 => script.CallValues(callback, LuaValue.NewNumber(1)),
+                2 => script.CallValues(callback, LuaValue.NewNumber(1), LuaValue.NewNumber(2)),
+                3 => script.CallValues(
                     callback,
-                    DynValue.NewNumber(1),
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3)
+                    LuaValue.NewNumber(1),
+                    LuaValue.NewNumber(2),
+                    LuaValue.NewNumber(3)
                 ),
-                4 => script.Call(
+                4 => script.CallValues(
                     callback,
-                    DynValue.NewNumber(1),
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3),
-                    DynValue.NewNumber(4)
+                    LuaValue.NewNumber(1),
+                    LuaValue.NewNumber(2),
+                    LuaValue.NewNumber(3),
+                    LuaValue.NewNumber(4)
                 ),
-                5 => script.Call(
+                5 => script.CallValues(
                     callback,
-                    DynValue.NewNumber(1),
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3),
-                    DynValue.NewNumber(4),
-                    DynValue.NewNumber(5)
+                    LuaValue.NewNumber(1),
+                    LuaValue.NewNumber(2),
+                    LuaValue.NewNumber(3),
+                    LuaValue.NewNumber(4),
+                    LuaValue.NewNumber(5)
                 ),
-                6 => script.Call(
+                6 => script.CallValues(
                     callback,
-                    DynValue.NewNumber(1),
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3),
-                    DynValue.NewNumber(4),
-                    DynValue.NewNumber(5),
-                    DynValue.NewNumber(6)
+                    LuaValue.NewNumber(1),
+                    LuaValue.NewNumber(2),
+                    LuaValue.NewNumber(3),
+                    LuaValue.NewNumber(4),
+                    LuaValue.NewNumber(5),
+                    LuaValue.NewNumber(6)
                 ),
-                7 => script.Call(
+                7 => script.CallValues(
                     callback,
-                    DynValue.NewNumber(1),
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3),
-                    DynValue.NewNumber(4),
-                    DynValue.NewNumber(5),
-                    DynValue.NewNumber(6),
-                    DynValue.NewNumber(7)
+                    LuaValue.NewNumber(1),
+                    LuaValue.NewNumber(2),
+                    LuaValue.NewNumber(3),
+                    LuaValue.NewNumber(4),
+                    LuaValue.NewNumber(5),
+                    LuaValue.NewNumber(6),
+                    LuaValue.NewNumber(7)
                 ),
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
         }
 
-        private static DynValue[] CreateSequentialArguments(int arity)
+        private static LuaValue[] CreateSequentialArguments(int arity)
         {
-            DynValue[] args = new DynValue[arity];
+            LuaValue[] args = new LuaValue[arity];
             for (int i = 0; i < args.Length; i++)
             {
-                args[i] = DynValue.NewNumber(i + 1d);
+                args[i] = LuaValue.NewNumber(i + 1d);
             }
 
             return args;
         }
 
-        private static DynValue CallFunctionWithFixedArguments(
+        private static LuaValue CallFunctionWithFixedArguments(
             Script script,
-            DynValue function,
-            DynValue[] args
+            LuaValue function,
+            LuaValue[] args
         )
         {
             return args.Length switch
             {
-                6 => script.Call(function, args[0], args[1], args[2], args[3], args[4], args[5]),
-                7 => script.Call(
+                6 => script.CallValues(
+                    function,
+                    args[0],
+                    args[1],
+                    args[2],
+                    args[3],
+                    args[4],
+                    args[5]
+                ),
+                7 => script.CallValues(
                     function,
                     args[0],
                     args[1],
@@ -3907,32 +3990,64 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         private static long MeasureNoArgumentLegacyCallbackAllocations(
             Script script,
-            DynValue callback,
+            LuaValue callback,
             int iterations
         )
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                script.Call(callback);
+                script.CallValues(callback);
             }
 
             return GC.GetAllocatedBytesForCurrentThread() - before;
         }
 
-        private static long MeasureFixedThreeArgumentLegacyCallbackAllocations(
-            Script script,
-            DynValue callback,
-            DynValue first,
-            DynValue second,
-            DynValue third,
+        private static long MeasureNumericLoopsAllocations(
+            CompiledScript numericLoops,
+            double expected,
             int iterations
         )
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                script.Call(callback, first, second, third);
+                LuaValue result = numericLoops.Execute();
+                if (result.Number != expected)
+                {
+                    throw new InvalidOperationException(
+                        "NumericLoops allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private const string NumericLoopsSource = """
+            local sum = 0.0
+            for i = 1, 2000 do
+                sum = sum + math.sin(i) * math.cos(i * 0.5)
+                if (i % 7) == 0 then
+                    sum = sum / 2.0
+                end
+            end
+            return sum
+            """;
+
+        private static long MeasureFixedThreeArgumentLegacyCallbackAllocations(
+            Script script,
+            LuaValue callback,
+            LuaValue first,
+            LuaValue second,
+            LuaValue third,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+            {
+                script.CallValues(callback, first, second, third);
             }
 
             return GC.GetAllocatedBytesForCurrentThread() - before;
@@ -3940,18 +4055,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         private static long MeasureFixedThreeArgumentCallbackViewAllocations(
             Script script,
-            DynValue callback,
-            DynValue first,
-            DynValue second,
-            DynValue third,
+            LuaValue callback,
+            LuaValue first,
+            LuaValue second,
+            LuaValue third,
             int iterations
         )
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = script.Call(callback, first, second, third);
-                if (!ReferenceEquals(result, third))
+                LuaValue result = script.CallValues(callback, first, second, third);
+                if (result != third)
                 {
                     throw new InvalidOperationException(
                         "Callback-view context allocation probe returned an unexpected value."
@@ -3964,19 +4079,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         private static long MeasureDirectFiveArgumentCallbackViewAllocations(
             Script script,
-            DynValue callback,
-            DynValue self,
-            DynValue first,
-            DynValue second,
-            DynValue third,
-            DynValue fourth,
+            LuaValue callback,
+            LuaValue self,
+            LuaValue first,
+            LuaValue second,
+            LuaValue third,
+            LuaValue fourth,
             int iterations
         )
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = script.Call(callback, self, first, second, third, fourth);
+                LuaValue result = script.CallValues(callback, self, first, second, third, fourth);
                 if (result.Type != DataType.Nil)
                 {
                     throw new InvalidOperationException(
@@ -3990,18 +4105,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         private static long MeasureFixedFourArgumentCallbackViewMetamethodAllocations(
             Script script,
-            DynValue callable,
-            DynValue first,
-            DynValue second,
-            DynValue third,
-            DynValue fourth,
+            LuaValue callable,
+            LuaValue first,
+            LuaValue second,
+            LuaValue third,
+            LuaValue fourth,
             int iterations
         )
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = script.Call(callable, first, second, third, fourth);
+                LuaValue result = script.CallValues(callable, first, second, third, fourth);
                 if (result.Type != DataType.Nil)
                 {
                     throw new InvalidOperationException(
@@ -4015,19 +4130,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         private static long MeasureFixedFiveArgumentCallbackViewMetamethodAllocations(
             Script script,
-            DynValue callable,
-            DynValue first,
-            DynValue second,
-            DynValue third,
-            DynValue fourth,
-            DynValue fifth,
+            LuaValue callable,
+            LuaValue first,
+            LuaValue second,
+            LuaValue third,
+            LuaValue fourth,
+            LuaValue fifth,
             int iterations
         )
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = script.Call(callable, first, second, third, fourth, fifth);
+                LuaValue result = script.CallValues(callable, first, second, third, fourth, fifth);
                 if (result.Type != DataType.Nil)
                 {
                     throw new InvalidOperationException(
@@ -4041,17 +4156,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         private static long MeasureFixedThreeArgumentCallbackViewChainedMetamethodAllocations(
             Script script,
-            DynValue callable,
-            DynValue first,
-            DynValue second,
-            DynValue third,
+            LuaValue callable,
+            LuaValue first,
+            LuaValue second,
+            LuaValue third,
             int iterations
         )
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = script.Call(callable, first, second, third);
+                LuaValue result = script.CallValues(callable, first, second, third);
                 if (result.Type != DataType.Nil)
                 {
                     throw new InvalidOperationException(
@@ -4065,18 +4180,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         private static long MeasureFixedFourArgumentCallbackViewChainedMetamethodAllocations(
             Script script,
-            DynValue callable,
-            DynValue first,
-            DynValue second,
-            DynValue third,
-            DynValue fourth,
+            LuaValue callable,
+            LuaValue first,
+            LuaValue second,
+            LuaValue third,
+            LuaValue fourth,
             int iterations
         )
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = script.Call(callable, first, second, third, fourth);
+                LuaValue result = script.CallValues(callable, first, second, third, fourth);
                 if (result.Type != DataType.Nil)
                 {
                     throw new InvalidOperationException(
@@ -4090,19 +4205,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         private static long MeasureFixedFiveArgumentCallbackViewChainedMetamethodAllocations(
             Script script,
-            DynValue callable,
-            DynValue first,
-            DynValue second,
-            DynValue third,
-            DynValue fourth,
-            DynValue fifth,
+            LuaValue callable,
+            LuaValue first,
+            LuaValue second,
+            LuaValue third,
+            LuaValue fourth,
+            LuaValue fifth,
             int iterations
         )
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = script.Call(callable, first, second, third, fourth, fifth);
+                LuaValue result = script.CallValues(callable, first, second, third, fourth, fifth);
                 if (result.Type != DataType.Nil)
                 {
                     throw new InvalidOperationException(
@@ -4116,20 +4231,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         private static long MeasureFixedSixArgumentCallbackViewChainedMetamethodAllocations(
             Script script,
-            DynValue callable,
-            DynValue first,
-            DynValue second,
-            DynValue third,
-            DynValue fourth,
-            DynValue fifth,
-            DynValue sixth,
+            LuaValue callable,
+            LuaValue first,
+            LuaValue second,
+            LuaValue third,
+            LuaValue fourth,
+            LuaValue fifth,
+            LuaValue sixth,
             int iterations
         )
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = script.Call(callable, first, second, third, fourth, fifth, sixth);
+                LuaValue result = script.CallValues(
+                    callable,
+                    first,
+                    second,
+                    third,
+                    fourth,
+                    fifth,
+                    sixth
+                );
                 if (result.Type != DataType.Nil)
                 {
                     throw new InvalidOperationException(
@@ -4143,15 +4266,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         private static long MeasureSpanCallbackViewMetamethodAllocations(
             Script script,
-            DynValue callable,
-            DynValue[] args,
+            LuaValue callable,
+            LuaValue[] args,
             int iterations
         )
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = script.Call(callable, args.AsSpan());
+                LuaValue result = script.CallValues(callable, args.AsSpan());
                 if (result.Type != DataType.Nil)
                 {
                     throw new InvalidOperationException(
@@ -4165,15 +4288,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         private static long MeasureArrayCallbackViewMetamethodAllocations(
             Script script,
-            DynValue callable,
-            DynValue[] args,
+            LuaValue callable,
+            LuaValue[] args,
             int iterations
         )
         {
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = script.Call(callable, args);
+                LuaValue result = script.CallValues(callable, args);
                 if (result.Type != DataType.Nil)
                 {
                     throw new InvalidOperationException(
@@ -4185,18 +4308,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             return GC.GetAllocatedBytesForCurrentThread() - before;
         }
 
-        private static DynValue CallWithSpan(Script script, DynValue function, DynValue[] args)
+        private static LuaValue CallWithSpan(Script script, LuaValue function, LuaValue[] args)
         {
-            return script.Call(function, args.AsSpan());
+            return script.CallValues(function, args.AsSpan());
         }
 
-        private static DynValue CallWithParamsArray(
+        private static LuaValue CallWithParamsArray(
             Script script,
-            DynValue function,
-            DynValue[] args
+            LuaValue function,
+            LuaValue[] args
         )
         {
-            return script.Call(function, args);
+            return script.CallValues(function, args);
         }
 
         private sealed class UnregisteredHostObject { }

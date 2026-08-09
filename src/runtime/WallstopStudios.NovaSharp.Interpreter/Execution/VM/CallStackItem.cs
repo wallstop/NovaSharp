@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System.Collections.Generic;
+    using global::NovaSharp;
     using Debugging;
     using Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -34,7 +35,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Lua function currently being executed, materialized on demand for debug APIs.
         /// </summary>
-        public DynValue Function { get; set; }
+        public LuaValue Function { get; set; }
 
         /// <summary>
         /// Continuation invoked after yielding or tail calls.
@@ -49,9 +50,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Error handler executed before unwinding (used for message decoration).
         /// </summary>
-        public DynValue ErrorHandlerBeforeUnwind { get; set; }
+        public LuaValue ErrorHandlerBeforeUnwind { get; private set; } = LuaValue.Nil;
+
+        internal bool HasErrorHandlerBeforeUnwind { get; private set; }
 
         internal bool ErrorHandlerBeforeUnwindInProgress { get; set; }
+
+        internal void SetErrorHandlerBeforeUnwind(LuaValue handler, bool hasHandler)
+        {
+            ErrorHandlerBeforeUnwind = hasHandler ? handler : LuaValue.Nil;
+            HasErrorHandlerBeforeUnwind = hasHandler;
+        }
 
         /// <summary>
         /// Stack index of the base pointer for the frame.
@@ -64,8 +73,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         public int ReturnAddress { get; set; }
 
         /// <summary>
-        /// Mutable cells holding this frame's locals. Entries are <c>null</c> until the local is
-        /// first assigned; closures capture the cell itself so later assignments stay visible.
+        /// Inline slots holding this frame's locals. Default entries are inactive until assigned or
+        /// captured; captured slots forward through a shared <see cref="UpvalueCell"/>.
         /// </summary>
         public ValueSlot[] LocalScope { get; set; }
 
@@ -98,10 +107,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DebugSymbols = null;
             CallingSourceRef = default;
             ClrFunction = null;
-            Function = null;
+            Function = LuaValue.Nil;
             Continuation = null;
             ErrorHandler = null;
-            ErrorHandlerBeforeUnwind = null;
+            SetErrorHandlerBeforeUnwind(LuaValue.Nil, hasHandler: false);
             ErrorHandlerBeforeUnwindInProgress = false;
             BasePointer = 0;
             ReturnAddress = 0;

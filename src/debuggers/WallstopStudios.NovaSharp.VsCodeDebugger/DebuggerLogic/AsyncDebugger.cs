@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
 {
+    using global::NovaSharp;
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
 
     using System;
@@ -193,7 +194,7 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
             catch (InterpreterException ex)
             {
                 string message = ex.DecoratedMessage ?? ex.Message;
-                return Script.CreateConstantDynamicExpression(code, DynValue.NewString(message));
+                return Script.CreateConstantDynamicExpression(code, LuaValue.NewString(message));
             }
         }
 
@@ -417,8 +418,8 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
         /// Evaluates an arbitrary Lua expression in the context of the running script.
         /// </summary>
         /// <param name="expression">Expression text.</param>
-        /// <returns>The resulting <see cref="DynValue"/>.</returns>
-        public DynValue Evaluate(string expression)
+        /// <returns>The resulting <see cref="LuaValue"/>.</returns>
+        public LuaValue Evaluate(string expression)
         {
             DynamicExpression expr = CreateDynExpr(expression);
             return expr.Evaluate();

@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
@@ -27,24 +28,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         public MemberDescriptorAccess MemberAccess { get; }
 
         /// <summary>
-        /// Gets the value of this member as a <see cref="DynValue"/> to be exposed to scripts.
+        /// Gets the value of this member as a <see cref="LuaValue"/> to be exposed to scripts.
         /// Implementers should raise exceptions if the value cannot be read or if access to an
         /// instance member through a static userdata is attempted.
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object owning this member, or null if static.</param>
-        /// <returns>The value of this member as a <see cref="DynValue"/>.</returns>
-        public DynValue GetValue(Script script, object obj);
+        /// <returns>The value of this member as a <see cref="LuaValue"/>.</returns>
+        public LuaValue GetValue(Script script, object obj);
 
         /// <summary>
-        /// Sets the value of this member from a <see cref="DynValue"/>.
+        /// Sets the value of this member from a <see cref="LuaValue"/>.
         /// Implementers should raise exceptions if the value cannot be read or if access to an
         /// instance member through a static userdata is attempted.
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object owning this member, or null if static.</param>
         /// <param name="value">The value to be set.</param>
-        public void SetValue(Script script, object obj, DynValue value);
+        public void SetValue(Script script, object obj, LuaValue value);
     }
 
     /// <summary>
@@ -112,13 +113,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         }
 
         /// <summary>
-        /// Gets the getter of the member as a DynValue containing a callback
+        /// Gets the getter of the member as a LuaValue containing a callback
         /// </summary>
         /// <param name="desc">The descriptor instance.</param>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
         /// <returns></returns>
-        public static DynValue GetGetterCallbackAsDynValue(
+        public static LuaValue GetGetterCallbackAsDynValue(
             this IMemberDescriptor desc,
             Script script,
             object obj
@@ -129,7 +130,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 throw new ArgumentNullException(nameof(desc));
             }
 
-            return DynValue.NewCallback((p1, p2) => desc.GetValue(script, obj));
+            return LuaValue.NewCallback(script, (p1, p2) => desc.GetValue(script, obj));
         }
 
         /// <summary>

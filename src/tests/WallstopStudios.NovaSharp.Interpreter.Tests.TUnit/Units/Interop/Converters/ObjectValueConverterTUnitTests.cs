@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
 {
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -13,15 +14,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         public async Task SerializeObjectToDynValueUsesCustomNullReplacement()
         {
             Script script = new();
-            DynValue fallback = DynValue.NewString("missing");
+            LuaValue fallback = LuaValue.NewString("missing");
 
-            DynValue result = ObjectValueConverter.SerializeObjectToDynValue(
+            LuaValue result = ObjectValueConverter.SerializeObjectToDynValue(
                 script,
                 null,
                 fallback
             );
+            LuaValue defaultResult = ObjectValueConverter.SerializeObjectToDynValue(script, null);
+            LuaValue explicitNil = ObjectValueConverter.SerializeObjectToDynValue(
+                script,
+                null,
+                LuaValue.Nil
+            );
+            LuaValue legacyNull = ObjectValueConverter.SerializeObjectToDynValue(
+                script,
+                null,
+                null
+            );
+            LuaValue explicitVoid = ObjectValueConverter.SerializeObjectToDynValue(
+                script,
+                null,
+                LuaValue.Void
+            );
 
-            await Assert.That(result).IsSameReferenceAs(fallback).ConfigureAwait(false);
+            await Assert.That(result).IsEqualTo(fallback).ConfigureAwait(false);
+            await Assert.That(defaultResult.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(explicitNil.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(legacyNull.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(explicitVoid.IsVoid()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -30,7 +51,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             Script script = new();
             SampleObject sample = new("value");
 
-            DynValue result = ObjectValueConverter.SerializeObjectToDynValue(script, sample);
+            LuaValue result = ObjectValueConverter.SerializeObjectToDynValue(script, sample);
             Table serialized = result.Table;
 
             await Assert
@@ -48,9 +69,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         {
             Script script = new();
             List<object> payload = new() { SampleEnum.Second, null, "tail" };
-            DynValue fallback = DynValue.NewString("missing");
+            LuaValue fallback = LuaValue.NewString("missing");
 
-            DynValue result = ObjectValueConverter.SerializeObjectToDynValue(
+            LuaValue result = ObjectValueConverter.SerializeObjectToDynValue(
                 script,
                 payload,
                 fallback

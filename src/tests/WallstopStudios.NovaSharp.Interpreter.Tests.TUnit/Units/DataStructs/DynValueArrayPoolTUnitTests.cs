@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -16,9 +17,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task GetReturnsEmptyArrayForZeroLength()
         {
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 0,
-                out DynValue[] array
+                out LuaValue[] array
             );
 
             await Assert.That(array).IsNotNull().ConfigureAwait(false);
@@ -28,9 +29,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task GetReturnsEmptyArrayForNegativeLength()
         {
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 -1,
-                out DynValue[] array
+                out LuaValue[] array
             );
 
             await Assert.That(array).IsNotNull().ConfigureAwait(false);
@@ -40,9 +41,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task GetReturnsArrayOfRequestedLengthForSmallArrays()
         {
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 5,
-                out DynValue[] array
+                out LuaValue[] array
             );
 
             await Assert.That(array).IsNotNull().ConfigureAwait(false);
@@ -52,9 +53,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task GetReturnsArrayOfAtLeastRequestedLengthForLargeArrays()
         {
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 100,
-                out DynValue[] array
+                out LuaValue[] array
             );
 
             await Assert.That(array).IsNotNull().ConfigureAwait(false);
@@ -64,9 +65,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task RentReturnsArrayOfRequestedLength()
         {
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 3,
-                out DynValue[] array
+                out LuaValue[] array
             );
 
             await Assert.That(array).IsNotNull().ConfigureAwait(false);
@@ -77,32 +78,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         public async Task ReturnedArrayIsReused()
         {
             // Get an array
-            DynValue[] first;
-            using (PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(4, out first))
+            LuaValue[] first;
+            using (PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(4, out first))
             {
-                first[0] = DynValue.NewNumber(42);
+                first[0] = LuaValue.NewNumber(42);
             }
 
             // Get another array of the same size
-            using PooledResource<DynValue[]> pooled2 = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled2 = DynValueArrayPool.Get(
                 4,
-                out DynValue[] second
+                out LuaValue[] second
             );
 
             // Should be the same array (from pool) and cleared
             await Assert.That(second).IsSameReferenceAs(first).ConfigureAwait(false);
-            await Assert.That(second[0]).IsNull().ConfigureAwait(false);
+            await Assert.That(second[0].IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
         public async Task ToArrayAndReturnCreatesExactCopy()
         {
-            DynValue[] rented = DynValueArrayPool.Rent(5);
-            rented[0] = DynValue.NewNumber(1);
-            rented[1] = DynValue.NewNumber(2);
-            rented[2] = DynValue.NewNumber(3);
+            LuaValue[] rented = DynValueArrayPool.Rent(5);
+            rented[0] = LuaValue.NewNumber(1);
+            rented[1] = LuaValue.NewNumber(2);
+            rented[2] = LuaValue.NewNumber(3);
 
-            DynValue[] result = DynValueArrayPool.ToArrayAndReturn(rented, 3);
+            LuaValue[] result = DynValueArrayPool.ToArrayAndReturn(rented, 3);
 
             await Assert.That(result.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(result[0].Number).IsEqualTo(1).ConfigureAwait(false);
@@ -113,7 +114,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task ToArrayAndReturnReturnsEmptyForNullArray()
         {
-            DynValue[] result = DynValueArrayPool.ToArrayAndReturn(null, 0);
+            LuaValue[] result = DynValueArrayPool.ToArrayAndReturn(null, 0);
 
             await Assert.That(result).IsNotNull().ConfigureAwait(false);
             await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
@@ -122,10 +123,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task ToArrayAndReturnReturnsEmptyForZeroLength()
         {
-            DynValue[] rented = DynValueArrayPool.Rent(3);
-            rented[0] = DynValue.NewNumber(1);
+            LuaValue[] rented = DynValueArrayPool.Rent(3);
+            rented[0] = LuaValue.NewNumber(1);
 
-            DynValue[] result = DynValueArrayPool.ToArrayAndReturn(rented, 0);
+            LuaValue[] result = DynValueArrayPool.ToArrayAndReturn(rented, 0);
 
             await Assert.That(result).IsNotNull().ConfigureAwait(false);
             await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
@@ -134,16 +135,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task PooledResourceDisposeReturnsArray()
         {
-            DynValue[] first;
+            LuaValue[] first;
             {
-                PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(6, out first);
+                PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(6, out first);
                 pooled.Dispose();
             }
 
             // Next get should return the same array
-            using PooledResource<DynValue[]> pooled2 = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled2 = DynValueArrayPool.Get(
                 6,
-                out DynValue[] second
+                out LuaValue[] second
             );
             await Assert.That(second).IsSameReferenceAs(first).ConfigureAwait(false);
         }
@@ -151,17 +152,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task SuppressReturnPreventsPoolReturn()
         {
-            DynValue[] first;
+            LuaValue[] first;
             {
-                PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(7, out first);
+                PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(7, out first);
                 pooled.SuppressReturn();
                 pooled.Dispose();
             }
 
             // Next get should NOT return the same array (it was suppressed)
-            using PooledResource<DynValue[]> pooled2 = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled2 = DynValueArrayPool.Get(
                 7,
-                out DynValue[] second
+                out LuaValue[] second
             );
             await Assert.That(second).IsNotSameReferenceAs(first).ConfigureAwait(false);
         }
@@ -173,26 +174,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             int oversizedLength =
                 (int)(
                     (DynValueArrayPool.MaxCachedLargeArrayBytes - IntPtr.Size)
-                    / PoolElementSize<DynValue>.EstimatedBytes
+                    / PoolElementSize<LuaValue>.EstimatedBytes
                 ) + 1;
-            DynValue[] first;
+            LuaValue[] first;
             using (
-                PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                     oversizedLength,
                     out first
                 )
             )
             {
-                first[0] = DynValue.NewString("retained");
+                first[0] = LuaValue.NewString("retained");
             }
 
-            using PooledResource<DynValue[]> pooled2 = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled2 = DynValueArrayPool.Get(
                 oversizedLength,
-                out DynValue[] second
+                out LuaValue[] second
             );
             // Large arrays are not pooled, so should be different instances
             await Assert.That(second).IsNotSameReferenceAs(first).ConfigureAwait(false);
-            await Assert.That(first[0]).IsNull().ConfigureAwait(false);
+            await Assert.That(first[0].IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
@@ -206,26 +207,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Arguments(8)]
         public async Task SmallArraySizesArePooled(int size)
         {
-            DynValue[] first;
-            using (PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(size, out first))
+            LuaValue[] first;
+            using (PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(size, out first))
             {
                 // Set some data
-                first[0] = DynValue.NewNumber(size);
+                first[0] = LuaValue.NewNumber(size);
             }
 
-            using PooledResource<DynValue[]> pooled2 = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled2 = DynValueArrayPool.Get(
                 size,
-                out DynValue[] second
+                out LuaValue[] second
             );
             await Assert.That(second).IsSameReferenceAs(first).ConfigureAwait(false);
             // Should be cleared
-            await Assert.That(second[0]).IsNull().ConfigureAwait(false);
+            await Assert.That(second[0].IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
         public async Task GetOverloadWithoutOutReturnsPooledResource()
         {
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(4);
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(4);
 
             await Assert.That(pooled.Resource).IsNotNull().ConfigureAwait(false);
             await Assert.That(pooled.Resource.Length).IsEqualTo(4).ConfigureAwait(false);
@@ -244,7 +245,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         public async Task ReturnHandlesEmptyArray()
         {
             // Should not throw
-            DynValueArrayPool.Return(Array.Empty<DynValue>());
+            DynValueArrayPool.Return(Array.Empty<LuaValue>());
             // Test passes if no exception is thrown
             await Task.CompletedTask.ConfigureAwait(false);
         }
@@ -252,15 +253,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task ClearArrayParameterWorks()
         {
-            DynValue[] array = DynValueArrayPool.Rent(3);
-            array[0] = DynValue.NewNumber(1);
-            array[1] = DynValue.NewNumber(2);
+            LuaValue[] array = DynValueArrayPool.Rent(3);
+            array[0] = LuaValue.NewNumber(1);
+            array[1] = LuaValue.NewNumber(2);
 
             // Return without clearing
             DynValueArrayPool.Return(array, clearArray: false);
 
             // Get the same array back
-            DynValue[] returned = DynValueArrayPool.Rent(3);
+            LuaValue[] returned = DynValueArrayPool.Rent(3);
             await Assert.That(returned).IsSameReferenceAs(array).ConfigureAwait(false);
             // Data should still be there (not cleared)
             await Assert.That(returned[0].Number).IsEqualTo(1).ConfigureAwait(false);

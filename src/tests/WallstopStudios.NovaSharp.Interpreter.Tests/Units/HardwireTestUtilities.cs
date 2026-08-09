@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.Units
 {
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Hardwire;
     using WallstopStudios.NovaSharp.Hardwire.Languages;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -30,14 +31,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.Units
             Table descriptor = new(script);
             descriptor.Set(
                 "class",
-                DynValue.NewString(typeof(StandardUserDataDescriptor).FullName)
+                LuaValue.NewString(typeof(StandardUserDataDescriptor).FullName)
             );
-            descriptor.Set("visibility", DynValue.NewString(visibility));
-            descriptor.Set("members", DynValue.NewTable(script));
-            descriptor.Set("metamembers", DynValue.NewTable(script));
+            descriptor.Set("visibility", LuaValue.NewString(visibility));
+            descriptor.Set("members", LuaValue.NewTable(script));
+            descriptor.Set("metamembers", LuaValue.NewTable(script));
 
             Table root = new(script);
-            root.Set("Sample", DynValue.NewTable(descriptor));
+            root.Set("Sample", LuaValue.NewTable(descriptor));
             return root;
         }
     }

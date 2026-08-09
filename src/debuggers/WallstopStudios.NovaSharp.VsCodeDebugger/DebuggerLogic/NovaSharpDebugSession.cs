@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
 {
+    using global::NovaSharp;
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
 
     using System;
@@ -23,7 +24,7 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
     {
         private readonly AsyncDebugger _debug;
         private readonly NovaSharpVsCodeDebugServer _server;
-        private readonly List<DynValue> _variables = new();
+        private readonly List<LuaValue> _variables = new();
         private bool _notifyExecutionEnd;
 
         private const int ScopeLocals = 65536;
@@ -176,7 +177,7 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
                 return;
             }
 
-            DynValue v = _debug.Evaluate(expression) ?? DynValue.Nil;
+            LuaValue v = _debug.Evaluate(expression);
             _variables.Add(v);
 
             SendResponse(
@@ -507,7 +508,7 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
 
         private static int GetInt(Table args, string propName, int defaultValue)
         {
-            DynValue jo = args.Get(propName);
+            LuaValue jo = args.Get(propName);
 
             if (jo.Type != DataType.Number)
             {
@@ -567,7 +568,7 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
 
             if (index == ScopeSelf)
             {
-                DynValue v = _debug.Evaluate("self");
+                LuaValue v = _debug.Evaluate("self");
                 VariableInspector.InspectVariable(v, variables);
             }
             else if (index == ScopeLocals)
@@ -575,7 +576,7 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
                 foreach (WatchItem w in _debug.GetWatches(WatchType.Locals))
                 {
                     variables.Add(
-                        new Variable(w.Name, (w.Value ?? DynValue.Void).ToDebugPrintString())
+                        new Variable(w.Name, (w.Value ?? LuaValue.Void).ToDebugPrintString())
                     );
                 }
             }

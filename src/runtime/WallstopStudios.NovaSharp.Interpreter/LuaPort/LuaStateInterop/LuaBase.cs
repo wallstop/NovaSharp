@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 #pragma warning disable IDE1006 // Mirrors upstream Lua C API naming (snake_case preserved intentionally).
 
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using lua_Integer = System.Int32;
@@ -36,13 +37,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         internal const string LuaIntegerFormatLength = "l";
 
-        internal static DynValue GetArgument(LuaState l, lua_Integer pos)
+        internal static LuaValue GetArgument(LuaState l, lua_Integer pos)
         {
             EnsureState(l, nameof(l));
             return l.At(pos);
         }
 
-        internal static DynValue ArgAsType(
+        internal static LuaValue ArgAsType(
             LuaState l,
             lua_Integer pos,
             DataType type,
@@ -103,7 +104,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
         internal static void LuaPushInteger(LuaState l, lua_Integer val)
         {
             EnsureState(l, nameof(l));
-            l.Push(DynValue.NewNumber(val));
+            l.Push(LuaValue.NewNumber(val));
         }
 
         internal static lua_Integer LuaToBoolean(LuaState l, lua_Integer p)
@@ -144,9 +145,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         internal static lua_Integer LuaLOptInteger(LuaState l, lua_Integer pos, lua_Integer def)
         {
-            DynValue v = ArgAsType(l, pos, DataType.Number, true);
+            LuaValue v = ArgAsType(l, pos, DataType.Number, true);
 
-            if (v.IsNil())
+            if (v.IsNil)
             {
                 return def;
             }
@@ -158,7 +159,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         internal static lua_Integer LuaLCheckInteger(LuaState l, lua_Integer pos)
         {
-            DynValue v = ArgAsType(l, pos, DataType.Number, false);
+            LuaValue v = ArgAsType(l, pos, DataType.Number, false);
             return (int)v.Number;
         }
 
@@ -207,7 +208,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
         {
             EnsureState(l, nameof(l));
             EnsureStringNotNull(literalString, nameof(literalString));
-            l.Push(DynValue.NewString(literalString));
+            l.Push(LuaValue.NewString(literalString));
         }
 
         internal static void LuaLPushResult(LuaLBuffer b)
@@ -221,7 +222,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             EnsureState(l, nameof(l));
             EnsurePointer(s, nameof(s));
             string ss = s.ToString((int)len);
-            l.Push(DynValue.NewString(ss));
+            l.Push(LuaValue.NewString(ss));
         }
 
         internal static void LuaLCheckStack(LuaState l, lua_Integer n, string message)
@@ -237,7 +238,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
         internal static void LuaPushNil(LuaState l)
         {
             EnsureState(l, nameof(l));
-            l.Push(DynValue.Nil);
+            l.Push(LuaValue.Nil);
         }
 
         internal static void LuaAssert(bool p)
@@ -258,7 +259,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
         internal static lua_Integer LuaIsString(LuaState l, lua_Integer p)
         {
             EnsureState(l, nameof(l));
-            DynValue v = l.At(p);
+            LuaValue v = l.At(p);
             return (v.Type == DataType.String || v.Type == DataType.Number) ? 1 : 0;
         }
 
@@ -275,15 +276,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
         {
             EnsureState(l, nameof(l));
             // DEBT: this should call metamethods, now it performs raw access
-            DynValue key = l.Pop();
-            DynValue table = l.At(p);
+            LuaValue key = l.Pop();
+            LuaValue table = l.At(p);
 
             if (table.Type != DataType.Table)
             {
                 throw new NotImplementedException();
             }
 
-            DynValue v = table.Table.Get(key);
+            LuaValue v = table.Table.GetValue(key);
             l.Push(v);
         }
 
@@ -312,7 +313,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         internal static double LuaLCheckNumber(LuaState l, lua_Integer pos)
         {
-            DynValue v = ArgAsType(l, pos, DataType.Number, false);
+            LuaValue v = ArgAsType(l, pos, DataType.Number, false);
             return v.Number;
         }
 
@@ -326,14 +327,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
         /// </remarks>
         internal static LuaNumber LuaLCheckLuaNumber(LuaState l, lua_Integer pos)
         {
-            DynValue v = ArgAsType(l, pos, DataType.Number, false);
+            LuaValue v = ArgAsType(l, pos, DataType.Number, false);
             return v.LuaNumber;
         }
 
         internal static void LuaPushValue(LuaState l, lua_Integer arg)
         {
             EnsureState(l, nameof(l));
-            DynValue v = l.At(arg);
+            LuaValue v = l.At(arg);
             l.Push(v);
         }
 
@@ -359,13 +360,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
         )
         {
             EnsureState(l, nameof(l));
-            DynValue[] args = l.GetTopArray(nargs);
+            LuaValue[] args = l.GetTopArray(nargs);
 
             l.Discard(nargs);
 
-            DynValue func = l.Pop();
+            LuaValue func = l.Pop();
 
-            DynValue ret = l.ExecutionContext.Call(func, args);
+            LuaValue ret = l.ExecutionContext.Call(func, args);
 
             if (nresults != 0)
             {
@@ -374,8 +375,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                     nresults = (ret.Type == DataType.Tuple) ? ret.Tuple.Length : 1;
                 }
 
-                DynValue[] vals =
-                    (ret.Type == DataType.Tuple) ? ret.Tuple : new DynValue[1] { ret };
+                LuaValue[] vals =
+                    (ret.Type == DataType.Tuple) ? ret.Tuple : new LuaValue[1] { ret };
 
                 int copied = 0;
 
@@ -386,7 +387,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
                 while (copied < nresults)
                 {
-                    l.Push(DynValue.Nil);
+                    l.Push(LuaValue.Nil);
                     copied++;
                 }
             }

@@ -39,7 +39,7 @@ ______________________________________________________________________
 | `new T[]` with variable size      | Array allocation               | `SystemArrayPool<T>.Get()`     |
 | Boxing struct to object           | Box allocation                 | Generic methods                |
 
-VM opcode and ordinary Lua-call paths are stricter than general runtime code: they must be allocation-free after warmup. Use inline `LuaValue`, stack windows, spans, and explicit slow-path allowlists; do not add `new DynValue`, `DynValue.NewNumber`, `DynValue.NewInteger`, `new DynValue[]`, `new List<DynValue>`, or `new ScriptExecutionContext` to hot processor/call paths without updating the VM allocation guard and documenting why it is not hot.
+VM opcode and ordinary Lua-call paths are stricter than general runtime code: they must be allocation-free after warmup. Scalar `LuaValue` construction, `default`, `FromNumber`, and `FromInteger` are inline and allocation-free. Use stack windows, spans, and explicit slow-path allowlists; do not add `new LuaValue[]`, `new List<LuaValue>`, or `new ScriptExecutionContext` to hot processor/call paths without updating the VM allocation guard and documenting why it is not hot.
 
 ______________________________________________________________________
 
@@ -59,7 +59,7 @@ ______________________________________________________________________
 ```text
 What kind of buffer do you need?
 |
-+-- DynValue array? --> DynValueArrayPool.Get(exactSize, out array)
++-- LuaValue array? --> DynValueArrayPool.Get(exactSize, out array)
 +-- Object array?   --> ObjectArrayPool.Get(exactSize, out array)
 +-- Variable size?  --> SystemArrayPool<T>.Get(size, out array)
 +-- List/Set/Dict?  --> ListPool<T>.Get(), HashSetPool<T>.Get(), etc.
@@ -190,11 +190,11 @@ Use `IListSortExtensions` with struct comparers to avoid boxing:
 
 ```csharp
 // BAD: Boxes struct comparer
-list.Sort(new DynValueComparer(script));
+list.Sort(new LuaValueComparer(script));
 
 // GOOD: Zero-allocation with struct comparer
-readonly struct DynValueComparer : IComparer<DynValue> { /* ... */ }
-list.Sort(new DynValueComparer(script));  // Extension method, no boxing
+readonly struct LuaValueComparer : IComparer<LuaValue> { /* ... */ }
+list.Sort(new LuaValueComparer(script));  // Extension method, no boxing
 ```
 
 ______________________________________________________________________
@@ -237,7 +237,7 @@ public void Method_ShouldNotAllocate()
 | ---------------------- | --------------- | -------- |
 | VM execution loop      | Millions/second | Critical |
 | Opcode handlers        | Millions/second | Critical |
-| DynValue operations    | Very frequent   | Critical |
+| LuaValue operations    | Very frequent   | Critical |
 | Table get/set          | Very frequent   | High     |
 | Function call dispatch | Per call        | High     |
 | String operations      | Per string op   | Medium   |

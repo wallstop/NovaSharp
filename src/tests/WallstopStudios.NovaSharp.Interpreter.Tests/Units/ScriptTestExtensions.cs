@@ -1,13 +1,14 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.Units
 {
     using System;
+    using global::NovaSharp;
     using Execution;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     internal static class ScriptTestExtensions
     {
-        public static DynValue Evaluate(this Script script, string expression)
+        public static LuaValue Evaluate(this Script script, string expression)
         {
             ArgumentNullException.ThrowIfNull(script);
             ArgumentNullException.ThrowIfNull(expression);

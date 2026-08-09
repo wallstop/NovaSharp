@@ -42,11 +42,11 @@ ______________________________________________________________________
 | Source                | Example                              | Allocation Type          |
 | --------------------- | ------------------------------------ | ------------------------ |
 | LINQ methods          | `.Where()`, `.Select()`, `.ToList()` | Iterator + result        |
-| `new List<T>()`       | `new List<DynValue>()`               | List + backing array     |
+| `new List<T>()`       | `new List<LuaValue>()`               | List + backing array     |
 | `new Dictionary<K,V>` | `new Dictionary<string, int>()`      | Dictionary + buckets     |
 | String interpolation  | `$"Error: {msg}"`                    | Intermediate strings     |
 | Lambda closures       | `list.Find(x => x.Id == targetId)`   | Closure class + delegate |
-| `new T[]`             | `new DynValue[count]`                | Array                    |
+| `new T[]`             | `new LuaValue[count]`                | Array                    |
 | `.ToArray()`          | `list.ToArray()`                     | New array copy           |
 
 ### Regex Search Patterns
@@ -171,7 +171,7 @@ ______________________________________________________________________
 
 | Scenario                                | Pool                 |
 | --------------------------------------- | -------------------- |
-| DynValue arrays in VM hot path          | `DynValueArrayPool`  |
+| LuaValue arrays in VM hot path          | `DynValueArrayPool`  |
 | Object arrays for reflection/interop    | `ObjectArrayPool`    |
 | Variable-size temporary buffers         | `SystemArrayPool<T>` |
 | Small fixed-size buffers (\<=256 bytes) | `stackalloc`         |

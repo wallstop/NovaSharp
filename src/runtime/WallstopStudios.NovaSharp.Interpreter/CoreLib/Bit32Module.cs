@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -62,10 +63,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         private const double Mod32 = 4294967296.0; // 2^32
 
         /// <summary>
-        /// Validates and extracts an unsigned 32-bit integer from a DynValue with version-aware semantics.
+        /// Validates and extracts an unsigned 32-bit integer from a LuaValue with version-aware semantics.
         /// </summary>
         /// <param name="version">The Lua compatibility version for validation.</param>
-        /// <param name="v">The DynValue to convert.</param>
+        /// <param name="v">The LuaValue to convert.</param>
         /// <param name="functionName">Function name for error messages.</param>
         /// <param name="argIndex">1-based argument index for error messages.</param>
         /// <returns>The converted unsigned 32-bit integer.</returns>
@@ -75,7 +76,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </remarks>
         private static uint ToUInt32(
             LuaCompatibilityVersion version,
-            DynValue v,
+            LuaValue v,
             string functionName,
             int argIndex
         )
@@ -112,7 +113,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// This overload is for internal use where version validation has already been performed.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static uint ToUInt32(DynValue v)
+        private static uint ToUInt32(LuaValue v)
         {
             // Use LuaNumber for proper value extraction
             LuaNumber luaNum = v.LuaNumber;
@@ -129,16 +130,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         }
 
         /// <summary>
-        /// Validates and extracts a signed 32-bit integer from a DynValue with version-aware semantics.
+        /// Validates and extracts a signed 32-bit integer from a LuaValue with version-aware semantics.
         /// </summary>
         /// <param name="version">The Lua compatibility version for validation.</param>
-        /// <param name="v">The DynValue to convert.</param>
+        /// <param name="v">The LuaValue to convert.</param>
         /// <param name="functionName">Function name for error messages.</param>
         /// <param name="argIndex">1-based argument index for error messages.</param>
         /// <returns>The converted signed 32-bit integer.</returns>
         private static int ToInt32(
             LuaCompatibilityVersion version,
-            DynValue v,
+            LuaValue v,
             string functionName,
             int argIndex
         )
@@ -176,7 +177,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// This overload is for internal use where version validation has already been performed.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int ToInt32(DynValue v)
+        private static int ToInt32(LuaValue v)
         {
             // Use LuaNumber for proper value extraction
             LuaNumber luaNum = v.LuaNumber;
@@ -240,12 +241,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw new ArgumentNullException(nameof(accumFunc));
             }
 
-            DynValue firstArg = args.AsType(0, funcName, DataType.Number, false);
+            LuaValue firstArg = args.AsType(0, funcName, DataType.Number, false);
             uint accum = ToUInt32(version, firstArg, funcName, 1);
 
             for (int i = 1; i < args.Count; i++)
             {
-                DynValue arg = args.AsType(i, funcName, DataType.Number, false);
+                LuaValue arg = args.AsType(i, funcName, DataType.Number, false);
                 uint vv = ToUInt32(version, arg, funcName, i + 1);
                 accum = accumFunc(accum, vv);
             }
@@ -258,9 +259,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current execution context.</param>
         /// <param name="args">Arguments (value, position, optional width).</param>
-        /// <returns>A <see cref="DynValue"/> containing the extracted unsigned integer.</returns>
+        /// <returns>A <see cref="LuaValue"/> containing the extracted unsigned integer.</returns>
         [NovaSharpModuleMethod(Name = "extract")]
-        public static DynValue Extract(
+        public static LuaValue Extract(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -273,11 +274,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
-            DynValue vV = args.AsType(0, "extract", DataType.Number);
+            LuaValue vV = args.AsType(0, "extract", DataType.Number);
             uint v = ToUInt32(version, vV, "extract", 1);
 
-            DynValue vPos = args.AsType(1, "extract", DataType.Number);
-            DynValue vWidth = args.AsType(2, "extract", DataType.Number, true);
+            LuaValue vPos = args.AsType(1, "extract", DataType.Number);
+            LuaValue vWidth = args.AsType(2, "extract", DataType.Number, true);
 
             // Validate position and width (Lua 5.3+ requires integer representation)
             LuaNumberHelpers.ValidateIntegerArgument(version, vPos, "extract", 2);
@@ -303,7 +304,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             ValidatePosWidth("extract", 2, pos, width);
 
             uint res = (v >> pos) & NBitMask(width);
-            return DynValue.NewNumber(res);
+            return LuaValue.NewNumber(res);
         }
 
         /// <summary>
@@ -311,9 +312,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current execution context.</param>
         /// <param name="args">Arguments (value, insert, position, optional width).</param>
-        /// <returns>A <see cref="DynValue"/> containing the modified unsigned integer.</returns>
+        /// <returns>A <see cref="LuaValue"/> containing the modified unsigned integer.</returns>
         [NovaSharpModuleMethod(Name = "replace")]
-        public static DynValue Replace(
+        public static LuaValue Replace(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -326,14 +327,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
-            DynValue vV = args.AsType(0, "replace", DataType.Number);
+            LuaValue vV = args.AsType(0, "replace", DataType.Number);
             uint v = ToUInt32(version, vV, "replace", 1);
 
-            DynValue vU = args.AsType(1, "replace", DataType.Number);
+            LuaValue vU = args.AsType(1, "replace", DataType.Number);
             uint u = ToUInt32(version, vU, "replace", 2);
 
-            DynValue vPos = args.AsType(2, "replace", DataType.Number);
-            DynValue vWidth = args.AsType(3, "replace", DataType.Number, true);
+            LuaValue vPos = args.AsType(2, "replace", DataType.Number);
+            LuaValue vWidth = args.AsType(3, "replace", DataType.Number, true);
 
             // Validate position and width (Lua 5.3+ requires integer representation)
             LuaNumberHelpers.ValidateIntegerArgument(version, vPos, "replace", 3);
@@ -363,7 +364,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             u = (u & NBitMask(width)) << pos;
             v = v | u;
 
-            return DynValue.NewNumber(v);
+            return LuaValue.NewNumber(v);
         }
 
         private static void ValidatePosWidth(string func, int argPos, int pos, int width)
@@ -397,9 +398,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current execution context.</param>
         /// <param name="args">Arguments (value, shift amount).</param>
-        /// <returns>The shifted integer wrapped in a <see cref="DynValue"/>.</returns>
+        /// <returns>The shifted integer wrapped in a <see cref="LuaValue"/>.</returns>
         [NovaSharpModuleMethod(Name = "arshift")]
-        public static DynValue ArithmeticShift(
+        public static LuaValue ArithmeticShift(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -412,10 +413,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
-            DynValue vV = args.AsType(0, "arshift", DataType.Number);
+            LuaValue vV = args.AsType(0, "arshift", DataType.Number);
             int v = ToInt32(version, vV, "arshift", 1);
 
-            DynValue vA = args.AsType(1, "arshift", DataType.Number);
+            LuaValue vA = args.AsType(1, "arshift", DataType.Number);
             LuaNumberHelpers.ValidateIntegerArgument(version, vA, "arshift", 2);
 
             LuaNumber aNum = vA.LuaNumber;
@@ -430,7 +431,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 v = v >> a;
             }
 
-            return DynValue.NewNumber(v);
+            return LuaValue.NewNumber(v);
         }
 
         /// <summary>
@@ -438,9 +439,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current execution context.</param>
         /// <param name="args">Arguments (value, shift amount).</param>
-        /// <returns>The shifted unsigned integer as a <see cref="DynValue"/>.</returns>
+        /// <returns>The shifted unsigned integer as a <see cref="LuaValue"/>.</returns>
         [NovaSharpModuleMethod(Name = "rshift")]
-        public static DynValue RightShift(
+        public static LuaValue RightShift(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -453,10 +454,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
-            DynValue vV = args.AsType(0, "rshift", DataType.Number);
+            LuaValue vV = args.AsType(0, "rshift", DataType.Number);
             uint v = ToUInt32(version, vV, "rshift", 1);
 
-            DynValue vA = args.AsType(1, "rshift", DataType.Number);
+            LuaValue vA = args.AsType(1, "rshift", DataType.Number);
             LuaNumberHelpers.ValidateIntegerArgument(version, vA, "rshift", 2);
 
             LuaNumber aNum = vA.LuaNumber;
@@ -471,7 +472,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 v = v >> a;
             }
 
-            return DynValue.NewNumber(v);
+            return LuaValue.NewNumber(v);
         }
 
         /// <summary>
@@ -479,9 +480,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current execution context.</param>
         /// <param name="args">Arguments (value, shift amount).</param>
-        /// <returns>The shifted unsigned integer as a <see cref="DynValue"/>.</returns>
+        /// <returns>The shifted unsigned integer as a <see cref="LuaValue"/>.</returns>
         [NovaSharpModuleMethod(Name = "lshift")]
-        public static DynValue LeftShift(
+        public static LuaValue LeftShift(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -494,10 +495,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
-            DynValue vV = args.AsType(0, "lshift", DataType.Number);
+            LuaValue vV = args.AsType(0, "lshift", DataType.Number);
             uint v = ToUInt32(version, vV, "lshift", 1);
 
-            DynValue vA = args.AsType(1, "lshift", DataType.Number);
+            LuaValue vA = args.AsType(1, "lshift", DataType.Number);
             LuaNumberHelpers.ValidateIntegerArgument(version, vA, "lshift", 2);
 
             LuaNumber aNum = vA.LuaNumber;
@@ -512,7 +513,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 v = v << a;
             }
 
-            return DynValue.NewNumber(v);
+            return LuaValue.NewNumber(v);
         }
 
         /// <summary>
@@ -522,7 +523,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments to combine.</param>
         /// <returns>The AND'd result.</returns>
         [NovaSharpModuleMethod(Name = "band")]
-        public static DynValue Band(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Band(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -530,7 +531,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            return DynValue.NewNumber(
+            return LuaValue.NewNumber(
                 Bitwise(executionContext.Script.CompatibilityVersion, "band", args, BitAndOp)
             );
         }
@@ -542,7 +543,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments to test.</param>
         /// <returns><c>true</c> when any bit overlaps; otherwise <c>false</c>.</returns>
         [NovaSharpModuleMethod(Name = "btest")]
-        public static DynValue BitTest(
+        public static LuaValue BitTest(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -553,7 +554,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            return DynValue.FromBoolean(
+            return LuaValue.FromBoolean(
                 0 != Bitwise(executionContext.Script.CompatibilityVersion, "btest", args, BitAndOp)
             );
         }
@@ -565,7 +566,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments to combine.</param>
         /// <returns>The OR'd result.</returns>
         [NovaSharpModuleMethod(Name = "bor")]
-        public static DynValue Bor(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Bor(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -573,7 +574,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            return DynValue.NewNumber(
+            return LuaValue.NewNumber(
                 Bitwise(executionContext.Script.CompatibilityVersion, "bor", args, BitOrOp)
             );
         }
@@ -585,7 +586,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments (single unsigned integer).</param>
         /// <returns>The ones-complement result.</returns>
         [NovaSharpModuleMethod(Name = "bnot")]
-        public static DynValue Bnot(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Bnot(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -594,9 +595,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
-            DynValue vV = args.AsType(0, "bnot", DataType.Number);
+            LuaValue vV = args.AsType(0, "bnot", DataType.Number);
             uint v = ToUInt32(version, vV, "bnot", 1);
-            return DynValue.NewNumber(~v);
+            return LuaValue.NewNumber(~v);
         }
 
         /// <summary>
@@ -606,7 +607,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments to combine.</param>
         /// <returns>The XOR'd result.</returns>
         [NovaSharpModuleMethod(Name = "bxor")]
-        public static DynValue Bxor(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Bxor(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -614,7 +615,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            return DynValue.NewNumber(
+            return LuaValue.NewNumber(
                 Bitwise(executionContext.Script.CompatibilityVersion, "bxor", args, BitXorOp)
             );
         }
@@ -626,7 +627,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments (value, rotation amount).</param>
         /// <returns>The rotated unsigned integer.</returns>
         [NovaSharpModuleMethod(Name = "lrotate")]
-        public static DynValue LeftRotate(
+        public static LuaValue LeftRotate(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -639,10 +640,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
-            DynValue vV = args.AsType(0, "lrotate", DataType.Number);
+            LuaValue vV = args.AsType(0, "lrotate", DataType.Number);
             uint v = ToUInt32(version, vV, "lrotate", 1);
 
-            DynValue vA = args.AsType(1, "lrotate", DataType.Number);
+            LuaValue vA = args.AsType(1, "lrotate", DataType.Number);
             LuaNumberHelpers.ValidateIntegerArgument(version, vA, "lrotate", 2);
 
             LuaNumber aNum = vA.LuaNumber;
@@ -658,7 +659,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 v = (v << a) | (v >> (32 - a));
             }
 
-            return DynValue.NewNumber(v);
+            return LuaValue.NewNumber(v);
         }
 
         /// <summary>
@@ -668,7 +669,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments (value, rotation amount).</param>
         /// <returns>The rotated unsigned integer.</returns>
         [NovaSharpModuleMethod(Name = "rrotate")]
-        public static DynValue RightRotate(
+        public static LuaValue RightRotate(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -681,10 +682,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
-            DynValue vV = args.AsType(0, "rrotate", DataType.Number);
+            LuaValue vV = args.AsType(0, "rrotate", DataType.Number);
             uint v = ToUInt32(version, vV, "rrotate", 1);
 
-            DynValue vA = args.AsType(1, "rrotate", DataType.Number);
+            LuaValue vA = args.AsType(1, "rrotate", DataType.Number);
             LuaNumberHelpers.ValidateIntegerArgument(version, vA, "rrotate", 2);
 
             LuaNumber aNum = vA.LuaNumber;
@@ -700,7 +701,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 v = (v >> a) | (v << (32 - a));
             }
 
-            return DynValue.NewNumber(v);
+            return LuaValue.NewNumber(v);
         }
     }
 }

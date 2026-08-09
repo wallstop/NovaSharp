@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Assertions.Extensions;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -59,14 +60,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             IUserDataDescriptor wrapper = CreateDescriptor(inner);
             Script script = new();
 
-            DynValue result = wrapper.Index(
+            bool found = wrapper.TryIndex(
                 script,
                 new object(),
-                DynValue.NewNumber(42),
-                isDirectIndexing: true
+                LuaValue.NewNumber(42),
+                isDirectIndexing: true,
+                out LuaValue result
             );
 
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(found).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -74,18 +78,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         {
             StubUserDataDescriptor inner = new("TestFile", typeof(object))
             {
-                IndexResult = DynValue.NewString("method-result"),
+                IndexResult = LuaValue.NewString("method-result"),
             };
             IUserDataDescriptor wrapper = CreateDescriptor(inner);
             Script script = new();
 
-            DynValue result = wrapper.Index(
+            bool found = wrapper.TryIndex(
                 script,
                 new object(),
-                DynValue.NewString("read"),
-                isDirectIndexing: true
+                LuaValue.NewString("read"),
+                isDirectIndexing: true,
+                out LuaValue result
             );
 
+            await Assert.That(found).IsTrue().ConfigureAwait(false);
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("method-result").ConfigureAwait(false);
         }
@@ -95,20 +101,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         {
             StubUserDataDescriptor inner = new("TestFile", typeof(object))
             {
-                IndexResult = DynValue.NewString("null-index-result"),
+                IndexResult = LuaValue.NewString("null-index-result"),
             };
             IUserDataDescriptor wrapper = CreateDescriptor(inner);
             Script script = new();
 
-            DynValue result = wrapper.Index(
+            bool found = wrapper.TryIndex(
                 script,
                 new object(),
-                index: null!,
-                isDirectIndexing: true
+                index: default,
+                isDirectIndexing: true,
+                out LuaValue result
             );
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-            await Assert.That(result.String).IsEqualTo("null-index-result").ConfigureAwait(false);
+            await Assert.That(found).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -122,8 +129,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 wrapper.SetIndex(
                     script,
                     new object(),
-                    DynValue.NewNumber(42),
-                    DynValue.NewString("value"),
+                    LuaValue.NewNumber(42),
+                    LuaValue.NewString("value"),
                     isDirectIndexing: true
                 )
             )!;
@@ -141,8 +148,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             bool result = wrapper.SetIndex(
                 script,
                 new object(),
-                DynValue.NewString("field"),
-                DynValue.NewString("value"),
+                LuaValue.NewString("field"),
+                LuaValue.NewString("value"),
                 isDirectIndexing: true
             );
 
@@ -157,16 +164,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             IUserDataDescriptor wrapper = CreateDescriptor(inner);
             Script script = new();
 
-            bool result = wrapper.SetIndex(
-                script,
-                new object(),
-                index: null!,
-                DynValue.NewString("value"),
-                isDirectIndexing: true
+            Assert.Throws<ScriptRuntimeException>(() =>
+                wrapper.SetIndex(
+                    script,
+                    new object(),
+                    index: default,
+                    LuaValue.NewString("value"),
+                    isDirectIndexing: true
+                )
             );
 
-            await Assert.That(result).IsTrue().ConfigureAwait(false);
-            await Assert.That(inner.SetIndexCallCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(inner.SetIndexCallCount).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -188,13 +196,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         {
             StubUserDataDescriptor inner = new("TestFile", typeof(object))
             {
-                MetaIndexResult = DynValue.NewString("__gc"),
+                MetaIndexResult = LuaValue.NewString("__gc"),
             };
             IUserDataDescriptor wrapper = CreateDescriptor(inner);
             Script script = new();
 
-            DynValue result = wrapper.MetaIndex(script, new object(), "__gc");
+            bool found = wrapper.TryMetaIndex(script, new object(), "__gc", out LuaValue result);
 
+            await Assert.That(found).IsTrue().ConfigureAwait(false);
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("__gc").ConfigureAwait(false);
         }
@@ -261,11 +270,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
             public Type Type { get; }
 
-            public DynValue IndexResult { get; set; } = DynValue.Nil;
+            public LuaValue IndexResult { get; set; } = LuaValue.Nil;
 
             public string AsStringResult { get; set; } = "stub";
 
-            public DynValue MetaIndexResult { get; set; } = DynValue.Nil;
+            public LuaValue MetaIndexResult { get; set; } = LuaValue.Nil;
 
             public bool IsTypeCompatibleResult { get; set; }
 
@@ -273,16 +282,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
             public int IsTypeCompatibleCallCount { get; private set; }
 
-            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+            public bool TryIndex(
+                Script script,
+                object obj,
+                LuaValue index,
+                bool isDirectIndexing,
+                out LuaValue value
+            )
             {
-                return IndexResult;
+                value = IndexResult;
+                return true;
             }
 
             public bool SetIndex(
                 Script script,
                 object obj,
-                DynValue index,
-                DynValue value,
+                LuaValue index,
+                LuaValue value,
                 bool isDirectIndexing
             )
             {
@@ -295,9 +311,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 return AsStringResult;
             }
 
-            public DynValue MetaIndex(Script script, object obj, string metaname)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
             {
-                return MetaIndexResult;
+                value = MetaIndexResult;
+                return true;
             }
 
             public bool IsTypeCompatible(Type type, object obj)

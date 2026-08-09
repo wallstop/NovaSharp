@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -16,7 +17,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task PackPreservesNilAndReportsCount(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = table.pack('a', nil, 42)
                 return t.n, t[1], t[2], t[3]
@@ -26,7 +27,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple.Length).IsEqualTo(4);
             await Assert.That(result.Tuple[0].Number).IsEqualTo(3);
             await Assert.That(result.Tuple[1].String).IsEqualTo("a");
-            await Assert.That(result.Tuple[2].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[2].IsNil).IsTrue();
             await Assert.That(result.Tuple[3].Number).IsEqualTo(42);
         }
 
@@ -35,7 +36,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task PackPreservesExpandedNilAndReportsCount(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function values()
                     return 'a', nil, 'c'
@@ -56,7 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[0].Number).IsEqualTo(4);
             await Assert.That(result.Tuple[1].String).IsEqualTo("head");
             await Assert.That(result.Tuple[2].String).IsEqualTo("a");
-            await Assert.That(result.Tuple[3].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[3].IsNil).IsTrue();
             await Assert.That(result.Tuple[4].String).IsEqualTo("c");
         }
 
@@ -65,7 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task UnpackHonorsExplicitBounds(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local values = { 10, 20, 30, 40 }
                 return table.unpack(values, 2, 3)
@@ -82,7 +83,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SortNumbersUsesDefaultComparer(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local values = { 4, 1, 3 }
                 table.sort(values)
@@ -118,7 +119,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SortUsesMetamethodWhenComparerMissing(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local mt = {}
                 function mt.__lt(left, right)
@@ -146,7 +147,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SortTreatsComparatorFalseResultsAsEqual(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local values = { 3, 1 }
                 table.sort(values, function(a, b)
@@ -235,7 +236,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Reference: Lua manual §6.6 (table.remove) - no argument count validation mentioned.
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local values = { 1, 2, 3, 4, 5 }
                 local removed = table.remove(values, 1, 'extra', 'args', 999)
@@ -258,7 +259,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task InsertUsesLenMetamethodWhenPresent(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local values = setmetatable({ [1] = 'seed' }, {
                     __len = function()
@@ -311,7 +312,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // table.insert({1,2,3}, 1.9, 'x') should truncate 1.9 to 1, inserting at position 1
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {1, 2, 3}
                 table.insert(t, 1.9, 'x')
@@ -421,7 +422,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Integral floats like 2.0 should be accepted
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {1, 2, 3}
                 table.insert(t, 2.0, 'x')  -- 2.0 is integral
@@ -444,7 +445,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task PackAvailableInLua52Plus(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return table.pack(1, 2, 3).n");
+            LuaValue result = script.DoString("return table.pack(1, 2, 3).n");
 
             await Assert
                 .That(result.Number)
@@ -462,10 +463,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task PackIsNilInLua51(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return table.pack");
+            LuaValue result = script.DoString("return table.pack");
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because(
                     $"table.pack was added in Lua 5.2. Actual type: {result.Type}, value: {result}"
@@ -487,7 +488,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return table.unpack({10, 20, 30})");
+            LuaValue result = script.DoString("return table.unpack({10, 20, 30})");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert
@@ -506,10 +507,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task TableUnpackIsNilInLua51(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return table.unpack");
+            LuaValue result = script.DoString("return table.unpack");
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because(
                     $"table.unpack was added in Lua 5.2. Use global unpack in 5.1. Actual type: {result.Type}, value: {result}"
@@ -525,7 +526,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GlobalUnpackAvailableInLua51(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return unpack({10, 20, 30})");
+            LuaValue result = script.DoString("return unpack({10, 20, 30})");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert
@@ -549,10 +550,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return unpack");
+            LuaValue result = script.DoString("return unpack");
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because(
                     $"Global unpack was moved to table.unpack in Lua 5.2+. Actual type: {result.Type}, value: {result}"
@@ -570,7 +571,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task MaxnAvailableInLua51And52(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return table.maxn({[5] = true, [3] = true})");
+            LuaValue result = script.DoString("return table.maxn({[5] = true, [3] = true})");
 
             await Assert
                 .That(result.Number)
@@ -590,10 +591,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task MaxnIsNilInLua53Plus(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return table.maxn");
+            LuaValue result = script.DoString("return table.maxn");
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because(
                     $"table.maxn was removed in Lua 5.3+. Actual type: {result.Type}, value: {result}"
@@ -622,7 +623,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task ConcatBasicUsage(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {'a', 'b', 'c', 'd'}
                 return table.concat(t)
@@ -654,7 +655,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local t = {{'a', 'b', 'c', 'd'}}
                 return table.concat(t, '{separator}')
@@ -688,7 +689,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local t = {{'a', 'b', 'c', 'd'}}
                 return table.concat(t, '-', {startIndex}, {endIndex})
@@ -710,7 +711,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task ConcatEmptyRangeEndBeforeStart(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {'a', 'b', 'c', 'd'}
                 return table.concat(t, '-', 3, 2)
@@ -734,7 +735,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task InsertAtEnd(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {1, 2, 3}
                 table.insert(t, 4)
@@ -771,7 +772,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local t = {{'a', 'b', 'c'}}
                 table.insert(t, {position}, '{value}')
@@ -804,7 +805,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local t = {{'a', 'b', 'c', 'd'}}
                 local removed = table.remove(t, {position})
@@ -836,7 +837,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task RemoveDefaultPosition(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {'a', 'b', 'c'}
                 local removed = table.remove(t)
@@ -869,7 +870,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SortDescendingOrder(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {3, 1, 4, 1, 5, 9, 2, 6}
                 table.sort(t, function(a, b) return a > b end)
@@ -892,7 +893,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SortStringElements(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {'banana', 'apple', 'cherry', 'date'}
                 table.sort(t)
@@ -915,7 +916,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SortByStringLength(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {'a', 'bbb', 'cc', 'dddd'}
                 table.sort(t, function(a, b) return #a < #b end)

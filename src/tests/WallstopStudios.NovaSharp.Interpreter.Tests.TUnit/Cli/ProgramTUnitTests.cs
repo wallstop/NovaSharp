@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
     using System;
     using System.IO;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Cli;
     using WallstopStudios.NovaSharp.Cli.Commands;
@@ -338,7 +339,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
             StubReplInterpreter interpreter = new()
             {
                 PendingCommand = true,
-                ReturnValue = DynValue.NewString("queued"),
+                ReturnValue = LuaValue.NewString("queued"),
             };
 
             await WithConsoleAsync(
@@ -365,7 +366,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task InterpreterLoopDoesNotPrintVoidResults()
         {
-            StubReplInterpreter interpreter = new() { ReturnValue = DynValue.Void };
+            StubReplInterpreter interpreter = new() { ReturnValue = LuaValue.Void };
 
             await WithConsoleAsync(
                     async console =>
@@ -495,7 +496,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
 
             public string LastInput { get; private set; } = string.Empty;
 
-            public DynValue ReturnValue { get; set; } = DynValue.NewNumber(1);
+            public LuaValue ReturnValue { get; set; } = LuaValue.NewNumber(1);
 
             public Exception ExceptionToThrow { get; set; }
 
@@ -509,7 +510,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
                 get { return ">"; }
             }
 
-            public override DynValue Evaluate(string input)
+            public override LuaValue? Evaluate(string input)
             {
                 EvaluateCalled = true;
                 LastInput = input;

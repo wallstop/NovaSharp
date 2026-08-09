@@ -2,8 +2,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
 {
     using System;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using DataTypes;
     using Errors;
+    using Interop;
 
     /// <summary>
     /// Represents a Lua/NovaSharp chunk or callable value that has already been resolved for a
@@ -19,18 +21,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
     public readonly struct CompiledScript : IEquatable<CompiledScript>
     {
         private readonly Script _script;
-        private readonly DynValue _function;
+        private readonly LuaValue _function;
 
-        internal CompiledScript(Script script, DynValue function)
+        internal CompiledScript(Script script, LuaValue function)
         {
             if (script == null)
             {
                 throw new ArgumentNullException(nameof(script));
-            }
-
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
             }
 
             script.ValidateCompiledScriptTarget(function);
@@ -53,19 +50,19 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="InvalidOperationException">
         /// Thrown when this value is the default, uninitialized <see cref="CompiledScript"/>.
         /// </exception>
-        public DynValue Function => GetFunction();
+        public LuaValue Function => GetFunction();
 
         /// <summary>
         /// Gets a value indicating whether this handle was created by a <see cref="Script"/>
         /// compile or function binding method.
         /// </summary>
-        public bool IsValid => _script != null && _function != null;
+        public bool IsValid => _script != null && !_function.IsNil;
 
         /// <summary>
         /// Executes the compiled chunk with no arguments.
         /// </summary>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute()
+        public LuaValue Execute()
         {
             return GetScript().ExecuteTrustedCompiledFunction(_function);
         }
@@ -75,7 +72,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(DynValue arg)
+        internal LuaValue ExecuteValues(LuaValue arg)
         {
             return GetScript().ExecuteTrustedCompiledFunction(_function, arg);
         }
@@ -86,7 +83,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(double arg)
+        public LuaValue Execute(double arg)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
@@ -101,7 +98,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(float arg)
+        public LuaValue Execute(float arg)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
@@ -116,7 +113,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(int arg)
+        public LuaValue Execute(int arg)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
@@ -131,7 +128,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(long arg)
+        public LuaValue Execute(long arg)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
@@ -146,7 +143,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(bool arg)
+        public LuaValue Execute(bool arg)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
@@ -161,7 +158,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(char arg)
+        public LuaValue Execute(char arg)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
@@ -176,7 +173,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(byte arg)
+        public LuaValue Execute(byte arg)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
@@ -191,7 +188,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(sbyte arg)
+        public LuaValue Execute(sbyte arg)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
@@ -206,7 +203,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(short arg)
+        public LuaValue Execute(short arg)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
@@ -221,7 +218,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(ushort arg)
+        public LuaValue Execute(ushort arg)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
@@ -236,7 +233,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(uint arg)
+        public LuaValue Execute(uint arg)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
@@ -251,7 +248,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(ulong arg)
+        public LuaValue Execute(ulong arg)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
@@ -266,7 +263,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg1">The first argument to pass to the chunk.</param>
         /// <param name="arg2">The second argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(DynValue arg1, DynValue arg2)
+        internal LuaValue ExecuteValues(LuaValue arg1, LuaValue arg2)
         {
             return GetScript().ExecuteTrustedCompiledFunction(_function, arg1, arg2);
         }
@@ -278,7 +275,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg2">The second argument to pass to the chunk.</param>
         /// <param name="arg3">The third argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(DynValue arg1, DynValue arg2, DynValue arg3)
+        internal LuaValue ExecuteValues(LuaValue arg1, LuaValue arg2, LuaValue arg3)
         {
             return GetScript().ExecuteTrustedCompiledFunction(_function, arg1, arg2, arg3);
         }
@@ -291,7 +288,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg3">The third argument to pass to the chunk.</param>
         /// <param name="arg4">The fourth argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+        internal LuaValue ExecuteValues(LuaValue arg1, LuaValue arg2, LuaValue arg3, LuaValue arg4)
         {
             return GetScript().ExecuteTrustedCompiledFunction(_function, arg1, arg2, arg3, arg4);
         }
@@ -305,12 +302,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg4">The fourth argument to pass to the chunk.</param>
         /// <param name="arg5">The fifth argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
+        internal LuaValue ExecuteValues(
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
         )
         {
             return GetScript()
@@ -327,13 +324,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg5">The fifth argument to pass to the chunk.</param>
         /// <param name="arg6">The sixth argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+        internal LuaValue ExecuteValues(
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
             return GetScript()
@@ -351,14 +348,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg6">The sixth argument to pass to the chunk.</param>
         /// <param name="arg7">The seventh argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+        internal LuaValue ExecuteValues(
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
             return GetScript()
@@ -380,15 +377,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
         /// <remarks>
-        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// For allocation-sensitive loops, prefer the <see cref="LuaValue"/> overloads with cached
         /// argument values.
         /// </remarks>
-        public DynValue Execute(object arg)
+        public LuaValue Execute(object arg)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
                 _function,
-                DynValue.FromObject(script, arg)
+                LuaValue.FromObject(script, arg)
             );
         }
 
@@ -399,16 +396,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg2">The second argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
         /// <remarks>
-        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// For allocation-sensitive loops, prefer the <see cref="LuaValue"/> overloads with cached
         /// argument values.
         /// </remarks>
-        public DynValue Execute(object arg1, object arg2)
+        public LuaValue Execute(object arg1, object arg2)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
                 _function,
-                DynValue.FromObject(script, arg1),
-                DynValue.FromObject(script, arg2)
+                LuaValue.FromObject(script, arg1),
+                LuaValue.FromObject(script, arg2)
             );
         }
 
@@ -420,17 +417,17 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg3">The third argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
         /// <remarks>
-        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// For allocation-sensitive loops, prefer the <see cref="LuaValue"/> overloads with cached
         /// argument values.
         /// </remarks>
-        public DynValue Execute(object arg1, object arg2, object arg3)
+        public LuaValue Execute(object arg1, object arg2, object arg3)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
                 _function,
-                DynValue.FromObject(script, arg1),
-                DynValue.FromObject(script, arg2),
-                DynValue.FromObject(script, arg3)
+                LuaValue.FromObject(script, arg1),
+                LuaValue.FromObject(script, arg2),
+                LuaValue.FromObject(script, arg3)
             );
         }
 
@@ -443,18 +440,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg4">The fourth argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
         /// <remarks>
-        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// For allocation-sensitive loops, prefer the <see cref="LuaValue"/> overloads with cached
         /// argument values.
         /// </remarks>
-        public DynValue Execute(object arg1, object arg2, object arg3, object arg4)
+        public LuaValue Execute(object arg1, object arg2, object arg3, object arg4)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
                 _function,
-                DynValue.FromObject(script, arg1),
-                DynValue.FromObject(script, arg2),
-                DynValue.FromObject(script, arg3),
-                DynValue.FromObject(script, arg4)
+                LuaValue.FromObject(script, arg1),
+                LuaValue.FromObject(script, arg2),
+                LuaValue.FromObject(script, arg3),
+                LuaValue.FromObject(script, arg4)
             );
         }
 
@@ -468,19 +465,19 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg5">The fifth argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
         /// <remarks>
-        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// For allocation-sensitive loops, prefer the <see cref="LuaValue"/> overloads with cached
         /// argument values.
         /// </remarks>
-        public DynValue Execute(object arg1, object arg2, object arg3, object arg4, object arg5)
+        public LuaValue Execute(object arg1, object arg2, object arg3, object arg4, object arg5)
         {
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
                 _function,
-                DynValue.FromObject(script, arg1),
-                DynValue.FromObject(script, arg2),
-                DynValue.FromObject(script, arg3),
-                DynValue.FromObject(script, arg4),
-                DynValue.FromObject(script, arg5)
+                LuaValue.FromObject(script, arg1),
+                LuaValue.FromObject(script, arg2),
+                LuaValue.FromObject(script, arg3),
+                LuaValue.FromObject(script, arg4),
+                LuaValue.FromObject(script, arg5)
             );
         }
 
@@ -495,10 +492,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg6">The sixth argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
         /// <remarks>
-        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// For allocation-sensitive loops, prefer the <see cref="LuaValue"/> overloads with cached
         /// argument values.
         /// </remarks>
-        public DynValue Execute(
+        public LuaValue Execute(
             object arg1,
             object arg2,
             object arg3,
@@ -510,12 +507,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
                 _function,
-                DynValue.FromObject(script, arg1),
-                DynValue.FromObject(script, arg2),
-                DynValue.FromObject(script, arg3),
-                DynValue.FromObject(script, arg4),
-                DynValue.FromObject(script, arg5),
-                DynValue.FromObject(script, arg6)
+                LuaValue.FromObject(script, arg1),
+                LuaValue.FromObject(script, arg2),
+                LuaValue.FromObject(script, arg3),
+                LuaValue.FromObject(script, arg4),
+                LuaValue.FromObject(script, arg5),
+                LuaValue.FromObject(script, arg6)
             );
         }
 
@@ -531,10 +528,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg7">The seventh argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
         /// <remarks>
-        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// For allocation-sensitive loops, prefer the <see cref="LuaValue"/> overloads with cached
         /// argument values.
         /// </remarks>
-        public DynValue Execute(
+        public LuaValue Execute(
             object arg1,
             object arg2,
             object arg3,
@@ -547,13 +544,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
             Script script = GetScript();
             return script.ExecuteTrustedCompiledFunction(
                 _function,
-                DynValue.FromObject(script, arg1),
-                DynValue.FromObject(script, arg2),
-                DynValue.FromObject(script, arg3),
-                DynValue.FromObject(script, arg4),
-                DynValue.FromObject(script, arg5),
-                DynValue.FromObject(script, arg6),
-                DynValue.FromObject(script, arg7)
+                LuaValue.FromObject(script, arg1),
+                LuaValue.FromObject(script, arg2),
+                LuaValue.FromObject(script, arg3),
+                LuaValue.FromObject(script, arg4),
+                LuaValue.FromObject(script, arg5),
+                LuaValue.FromObject(script, arg6),
+                LuaValue.FromObject(script, arg7)
             );
         }
 
@@ -563,17 +560,17 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="args">The arguments to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
         /// <remarks>
-        /// The array is treated as the argument list. Use <see cref="DynValue.Nil"/> for a Lua nil
+        /// The array is treated as the argument list. Use <see cref="LuaValue.Nil"/> for a Lua nil
         /// argument, or cast <c>null</c> to <see cref="object"/> when using the CLR object overload.
         /// </remarks>
-        public DynValue Execute(DynValue[] args)
+        public LuaValue Execute(LuaValue[] args)
         {
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
             }
 
-            return Execute(args.AsSpan());
+            return ExecuteValues(args.AsSpan());
         }
 
         /// <summary>
@@ -586,7 +583,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// one Lua argument, use the fixed <see cref="Execute(object)"/> overload and cast the
         /// array to <see cref="object"/>.
         /// </remarks>
-        public DynValue ExecuteObjectArguments(object[] args)
+        public LuaValue ExecuteObjectArguments(object[] args)
         {
             if (args == null)
             {
@@ -606,7 +603,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// one Lua argument, use the fixed <see cref="Execute(object)"/> overload and cast the
         /// array to <see cref="object"/>.
         /// </remarks>
-        public DynValue ExecuteObjectArguments(ReadOnlySpan<object> args)
+        public LuaValue ExecuteObjectArguments(ReadOnlySpan<object> args)
         {
             return GetScript().ExecuteTrustedCompiledFunction(_function, args);
         }
@@ -616,7 +613,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="args">The arguments to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
-        public DynValue Execute(ReadOnlySpan<DynValue> args)
+        public LuaValue Execute(ReadOnlySpan<LuaValue> args)
+        {
+            return ExecuteValues(args);
+        }
+
+        internal LuaValue ExecuteValues(ReadOnlySpan<LuaValue> args)
         {
             return GetScript().ExecuteTrustedCompiledFunction(_function, args);
         }
@@ -640,9 +642,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <typeparam name="T">The CLR result type.</typeparam>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The converted first scalar result.</returns>
-        public T ExecuteAs<T>(DynValue arg)
+        public T ExecuteAs<T>(LuaValue arg)
         {
-            return ConvertScalarResult<T>(Execute(arg));
+            return ConvertScalarResult<T>(ExecuteValues(arg));
         }
 
         /// <summary>
@@ -652,9 +654,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg1">The first argument to pass to the chunk.</param>
         /// <param name="arg2">The second argument to pass to the chunk.</param>
         /// <returns>The converted first scalar result.</returns>
-        public T ExecuteAs<T>(DynValue arg1, DynValue arg2)
+        public T ExecuteAs<T>(LuaValue arg1, LuaValue arg2)
         {
-            return ConvertScalarResult<T>(Execute(arg1, arg2));
+            return ConvertScalarResult<T>(ExecuteValues(arg1, arg2));
         }
 
         /// <summary>
@@ -665,9 +667,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg2">The second argument to pass to the chunk.</param>
         /// <param name="arg3">The third argument to pass to the chunk.</param>
         /// <returns>The converted first scalar result.</returns>
-        public T ExecuteAs<T>(DynValue arg1, DynValue arg2, DynValue arg3)
+        public T ExecuteAs<T>(LuaValue arg1, LuaValue arg2, LuaValue arg3)
         {
-            return ConvertScalarResult<T>(Execute(arg1, arg2, arg3));
+            return ConvertScalarResult<T>(ExecuteValues(arg1, arg2, arg3));
         }
 
         /// <summary>
@@ -679,9 +681,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg3">The third argument to pass to the chunk.</param>
         /// <param name="arg4">The fourth argument to pass to the chunk.</param>
         /// <returns>The converted first scalar result.</returns>
-        public T ExecuteAs<T>(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+        public T ExecuteAs<T>(LuaValue arg1, LuaValue arg2, LuaValue arg3, LuaValue arg4)
         {
-            return ConvertScalarResult<T>(Execute(arg1, arg2, arg3, arg4));
+            return ConvertScalarResult<T>(ExecuteValues(arg1, arg2, arg3, arg4));
         }
 
         /// <summary>
@@ -695,14 +697,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg5">The fifth argument to pass to the chunk.</param>
         /// <returns>The converted first scalar result.</returns>
         public T ExecuteAs<T>(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
         )
         {
-            return ConvertScalarResult<T>(Execute(arg1, arg2, arg3, arg4, arg5));
+            return ConvertScalarResult<T>(ExecuteValues(arg1, arg2, arg3, arg4, arg5));
         }
 
         /// <summary>
@@ -717,15 +719,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg6">The sixth argument to pass to the chunk.</param>
         /// <returns>The converted first scalar result.</returns>
         public T ExecuteAs<T>(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
-            return ConvertScalarResult<T>(Execute(arg1, arg2, arg3, arg4, arg5, arg6));
+            return ConvertScalarResult<T>(ExecuteValues(arg1, arg2, arg3, arg4, arg5, arg6));
         }
 
         /// <summary>
@@ -741,16 +743,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg7">The seventh argument to pass to the chunk.</param>
         /// <returns>The converted first scalar result.</returns>
         public T ExecuteAs<T>(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
-            return ConvertScalarResult<T>(Execute(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
+            return ConvertScalarResult<T>(ExecuteValues(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
         }
 
         /// <summary>
@@ -759,9 +761,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <typeparam name="T">The CLR result type.</typeparam>
         /// <param name="args">The arguments to pass to the chunk.</param>
         /// <returns>The converted first scalar result.</returns>
-        public T ExecuteAs<T>(ReadOnlySpan<DynValue> args)
+        public T ExecuteAs<T>(ReadOnlySpan<LuaValue> args)
         {
-            return ConvertScalarResult<T>(Execute(args));
+            return ConvertScalarResult<T>(ExecuteValues(args));
         }
 
         /// <summary>
@@ -778,9 +780,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR double.</returns>
-        public double ExecuteNumber(DynValue arg)
+        public double ExecuteNumber(LuaValue arg)
         {
-            return ConvertNumberResult(Execute(arg));
+            return ConvertNumberResult(ExecuteValues(arg));
         }
 
         /// <summary>
@@ -844,9 +846,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg1">The first argument to pass to the chunk.</param>
         /// <param name="arg2">The second argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR double.</returns>
-        public double ExecuteNumber(DynValue arg1, DynValue arg2)
+        public double ExecuteNumber(LuaValue arg1, LuaValue arg2)
         {
-            return ConvertNumberResult(Execute(arg1, arg2));
+            return ConvertNumberResult(ExecuteValues(arg1, arg2));
         }
 
         /// <summary>
@@ -856,9 +858,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg2">The second argument to pass to the chunk.</param>
         /// <param name="arg3">The third argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR double.</returns>
-        public double ExecuteNumber(DynValue arg1, DynValue arg2, DynValue arg3)
+        public double ExecuteNumber(LuaValue arg1, LuaValue arg2, LuaValue arg3)
         {
-            return ConvertNumberResult(Execute(arg1, arg2, arg3));
+            return ConvertNumberResult(ExecuteValues(arg1, arg2, arg3));
         }
 
         /// <summary>
@@ -869,9 +871,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg3">The third argument to pass to the chunk.</param>
         /// <param name="arg4">The fourth argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR double.</returns>
-        public double ExecuteNumber(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+        public double ExecuteNumber(LuaValue arg1, LuaValue arg2, LuaValue arg3, LuaValue arg4)
         {
-            return ConvertNumberResult(Execute(arg1, arg2, arg3, arg4));
+            return ConvertNumberResult(ExecuteValues(arg1, arg2, arg3, arg4));
         }
 
         /// <summary>
@@ -884,14 +886,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg5">The fifth argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR double.</returns>
         public double ExecuteNumber(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
         )
         {
-            return ConvertNumberResult(Execute(arg1, arg2, arg3, arg4, arg5));
+            return ConvertNumberResult(ExecuteValues(arg1, arg2, arg3, arg4, arg5));
         }
 
         /// <summary>
@@ -905,15 +907,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg6">The sixth argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR double.</returns>
         public double ExecuteNumber(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
-            return ConvertNumberResult(Execute(arg1, arg2, arg3, arg4, arg5, arg6));
+            return ConvertNumberResult(ExecuteValues(arg1, arg2, arg3, arg4, arg5, arg6));
         }
 
         /// <summary>
@@ -928,16 +930,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg7">The seventh argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR double.</returns>
         public double ExecuteNumber(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
-            return ConvertNumberResult(Execute(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
+            return ConvertNumberResult(ExecuteValues(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
         }
 
         /// <summary>
@@ -945,9 +947,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="args">The arguments to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR double.</returns>
-        public double ExecuteNumber(ReadOnlySpan<DynValue> args)
+        public double ExecuteNumber(ReadOnlySpan<LuaValue> args)
         {
-            return ConvertNumberResult(Execute(args));
+            return ConvertNumberResult(ExecuteValues(args));
         }
 
         /// <summary>
@@ -964,9 +966,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
-        public bool ExecuteBoolean(DynValue arg)
+        public bool ExecuteBoolean(LuaValue arg)
         {
-            return ConvertBooleanResult(Execute(arg));
+            return ConvertBooleanResult(ExecuteValues(arg));
         }
 
         /// <summary>
@@ -1030,9 +1032,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg1">The first argument to pass to the chunk.</param>
         /// <param name="arg2">The second argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
-        public bool ExecuteBoolean(DynValue arg1, DynValue arg2)
+        public bool ExecuteBoolean(LuaValue arg1, LuaValue arg2)
         {
-            return ConvertBooleanResult(Execute(arg1, arg2));
+            return ConvertBooleanResult(ExecuteValues(arg1, arg2));
         }
 
         /// <summary>
@@ -1042,9 +1044,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg2">The second argument to pass to the chunk.</param>
         /// <param name="arg3">The third argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
-        public bool ExecuteBoolean(DynValue arg1, DynValue arg2, DynValue arg3)
+        public bool ExecuteBoolean(LuaValue arg1, LuaValue arg2, LuaValue arg3)
         {
-            return ConvertBooleanResult(Execute(arg1, arg2, arg3));
+            return ConvertBooleanResult(ExecuteValues(arg1, arg2, arg3));
         }
 
         /// <summary>
@@ -1055,9 +1057,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg3">The third argument to pass to the chunk.</param>
         /// <param name="arg4">The fourth argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
-        public bool ExecuteBoolean(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+        public bool ExecuteBoolean(LuaValue arg1, LuaValue arg2, LuaValue arg3, LuaValue arg4)
         {
-            return ConvertBooleanResult(Execute(arg1, arg2, arg3, arg4));
+            return ConvertBooleanResult(ExecuteValues(arg1, arg2, arg3, arg4));
         }
 
         /// <summary>
@@ -1070,14 +1072,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg5">The fifth argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
         public bool ExecuteBoolean(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
         )
         {
-            return ConvertBooleanResult(Execute(arg1, arg2, arg3, arg4, arg5));
+            return ConvertBooleanResult(ExecuteValues(arg1, arg2, arg3, arg4, arg5));
         }
 
         /// <summary>
@@ -1091,15 +1093,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg6">The sixth argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
         public bool ExecuteBoolean(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
-            return ConvertBooleanResult(Execute(arg1, arg2, arg3, arg4, arg5, arg6));
+            return ConvertBooleanResult(ExecuteValues(arg1, arg2, arg3, arg4, arg5, arg6));
         }
 
         /// <summary>
@@ -1114,16 +1116,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg7">The seventh argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
         public bool ExecuteBoolean(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
-            return ConvertBooleanResult(Execute(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
+            return ConvertBooleanResult(ExecuteValues(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
         }
 
         /// <summary>
@@ -1131,16 +1133,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="args">The arguments to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
-        public bool ExecuteBoolean(ReadOnlySpan<DynValue> args)
+        public bool ExecuteBoolean(ReadOnlySpan<LuaValue> args)
         {
-            return ConvertBooleanResult(Execute(args));
+            return ConvertBooleanResult(ExecuteValues(args));
         }
 
         /// <inheritdoc />
         public bool Equals(CompiledScript other)
         {
             return ReferenceEquals(_script, other._script)
-                && ReferenceEquals(_function, other._function);
+                && _function.HasSameReferenceIdentity(other._function);
         }
 
         /// <inheritdoc />
@@ -1157,9 +1159,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 int hashCode = 17;
                 hashCode =
                     (hashCode * 31) + (_script == null ? 0 : RuntimeHelpers.GetHashCode(_script));
+                object functionPayload = _function.ReferencePayload;
                 hashCode =
                     (hashCode * 31)
-                    + (_function == null ? 0 : RuntimeHelpers.GetHashCode(_function));
+                    + (functionPayload == null ? 0 : RuntimeHelpers.GetHashCode(functionPayload));
                 return hashCode;
             }
         }
@@ -1192,9 +1195,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return _script;
         }
 
-        private DynValue GetFunction()
+        private LuaValue GetFunction()
         {
-            if (_function == null)
+            if (_function.IsNil)
             {
                 throw new InvalidOperationException(
                     "CompiledScript was not created by a Script compile or function binding method."
@@ -1204,159 +1207,152 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return _function;
         }
 
-        private static T ConvertScalarResult<T>(DynValue result)
+        private static T ConvertScalarResult<T>(LuaValue result)
         {
             return result.ToScalar().ToObject<T>();
         }
 
-        private static DynValue ConvertBoolArgument(Script script, bool arg)
+        private static LuaValue ConvertBoolArgument(Script script, bool arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out LuaValue converted))
             {
                 return converted;
             }
 
-            return DynValue.FromBoolean(arg);
+            return LuaValue.FromBoolean(arg);
         }
 
-        private static DynValue ConvertCharArgument(Script script, char arg)
+        private static LuaValue ConvertCharArgument(Script script, char arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out LuaValue converted))
             {
                 return converted;
             }
 
-            return DynValue.NewString(arg.ToString());
+            return LuaValue.NewString(arg.ToString());
         }
 
-        private static DynValue ConvertDoubleArgument(Script script, double arg)
+        private static LuaValue ConvertDoubleArgument(Script script, double arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out LuaValue converted))
             {
                 return converted;
             }
 
-            return DynValue.FromNumber(arg);
+            return LuaValue.FromNumber(arg);
         }
 
-        private static DynValue ConvertFloatArgument(Script script, float arg)
+        private static LuaValue ConvertFloatArgument(Script script, float arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out LuaValue converted))
             {
                 return converted;
             }
 
-            return DynValue.FromNumber(arg);
+            return LuaValue.FromNumber(arg);
         }
 
-        private static DynValue ConvertLongArgument(Script script, long arg)
+        private static LuaValue ConvertLongArgument(Script script, long arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out LuaValue converted))
             {
                 return converted;
             }
 
-            return DynValue.FromInteger(arg);
+            return LuaValue.FromInteger(arg);
         }
 
-        private static DynValue ConvertIntArgument(Script script, int arg)
+        private static LuaValue ConvertIntArgument(Script script, int arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out LuaValue converted))
             {
                 return converted;
             }
 
-            return DynValue.FromInteger(arg);
+            return LuaValue.FromInteger(arg);
         }
 
-        private static DynValue ConvertShortArgument(Script script, short arg)
+        private static LuaValue ConvertShortArgument(Script script, short arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out LuaValue converted))
             {
                 return converted;
             }
 
-            return DynValue.FromInteger(arg);
+            return LuaValue.FromInteger(arg);
         }
 
-        private static DynValue ConvertSByteArgument(Script script, sbyte arg)
+        private static LuaValue ConvertSByteArgument(Script script, sbyte arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out LuaValue converted))
             {
                 return converted;
             }
 
-            return DynValue.FromInteger(arg);
+            return LuaValue.FromInteger(arg);
         }
 
-        private static DynValue ConvertULongArgument(Script script, ulong arg)
+        private static LuaValue ConvertULongArgument(Script script, ulong arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out LuaValue converted))
             {
                 return converted;
             }
 
-            return DynValue.FromInteger(checked((long)arg));
+            return LuaValue.FromInteger(checked((long)arg));
         }
 
-        private static DynValue ConvertUIntArgument(Script script, uint arg)
+        private static LuaValue ConvertUIntArgument(Script script, uint arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out LuaValue converted))
             {
                 return converted;
             }
 
-            return DynValue.FromInteger(arg);
+            return LuaValue.FromInteger(arg);
         }
 
-        private static DynValue ConvertUShortArgument(Script script, ushort arg)
+        private static LuaValue ConvertUShortArgument(Script script, ushort arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out LuaValue converted))
             {
                 return converted;
             }
 
-            return DynValue.FromInteger(arg);
+            return LuaValue.FromInteger(arg);
         }
 
-        private static DynValue ConvertByteArgument(Script script, byte arg)
+        private static LuaValue ConvertByteArgument(Script script, byte arg)
         {
-            DynValue converted = TryCustomPrimitiveArgument(script, arg);
-            if (converted != null)
+            if (TryCustomPrimitiveArgument(script, arg, out LuaValue converted))
             {
                 return converted;
             }
 
-            return DynValue.FromInteger(arg);
+            return LuaValue.FromInteger(arg);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static DynValue TryCustomPrimitiveArgument<T>(Script script, T arg)
+        private static bool TryCustomPrimitiveArgument<T>(
+            Script script,
+            T arg,
+            out LuaValue converted
+        )
         {
-            Func<Script, object, DynValue> converter =
-                Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(typeof(T));
+            ClrToScriptTryConverter converter =
+                Script.GlobalOptions.CustomConverters.GetClrToScriptTryConversion(typeof(T));
             if (converter == null)
             {
-                return null;
+                converted = LuaValue.Nil;
+                return false;
             }
 
-            return converter(script, arg);
+            return converter(script, arg, out converted);
         }
 
-        private static double ConvertNumberResult(DynValue result)
+        private static double ConvertNumberResult(LuaValue result)
         {
-            DynValue scalar = result.ToScalar();
+            LuaValue scalar = result.ToScalar();
             if (scalar.Type != DataType.Number)
             {
                 throw ScriptRuntimeException.ConvertObjectFailed(scalar.Type, typeof(double));
@@ -1365,9 +1361,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return scalar.Number;
         }
 
-        private static bool ConvertBooleanResult(DynValue result)
+        private static bool ConvertBooleanResult(LuaValue result)
         {
-            DynValue scalar = result.ToScalar();
+            LuaValue scalar = result.ToScalar();
             if (scalar.Type != DataType.Boolean)
             {
                 throw ScriptRuntimeException.ConvertObjectFailed(scalar.Type, typeof(bool));

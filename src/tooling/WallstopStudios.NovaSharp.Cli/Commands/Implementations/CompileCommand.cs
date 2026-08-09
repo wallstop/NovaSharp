@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Cli.Commands.Implementations
 {
     using System;
     using System.IO;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Cli;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -54,7 +55,7 @@ namespace WallstopStudios.NovaSharp.Cli.Commands.Implementations
             Script s = new Script(CoreModulePresets.Default);
             try
             {
-                DynValue chunk = s.LoadFile(sourcePath);
+                LuaValue chunk = s.LoadFile(sourcePath);
 
                 using Stream stream = new FileStream(
                     targetFileName,

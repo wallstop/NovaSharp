@@ -1,8 +1,10 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 {
     using System;
+    using System.Reflection;
     using System.Threading;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -10,6 +12,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
@@ -27,8 +30,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
             globals.RegisterCoreModules(CoreModules.Basic);
 
-            DynValue warn = globals.RawGet("warn");
-            await Assert.That(warn.IsNil()).IsTrue();
+            LuaValue warn = globals.RawGet("warn");
+            await Assert.That(warn.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -43,9 +46,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
             globals.RegisterCoreModules(CoreModules.Table);
 
-            DynValue tableNamespace = globals.RawGet("table");
+            LuaValue tableNamespace = globals.RawGet("table");
             await Assert.That(tableNamespace.Type).IsEqualTo(DataType.Table);
-            await Assert.That(tableNamespace.Table.RawGet("move").IsNil()).IsTrue();
+            await Assert.That(tableNamespace.Table.RawGet("move").IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -88,10 +91,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
             globals.RegisterModuleType(typeof(Bit32Module));
 
-            DynValue namespaceValue = globals.RawGet("bit32");
-            DynValue package = globals.RawGet("package");
-            DynValue loaded = package.Table.RawGet("loaded");
-            DynValue loadedNamespace = loaded.Table.RawGet("bit32");
+            LuaValue namespaceValue = globals.RawGet("bit32");
+            LuaValue package = globals.RawGet("package");
+            LuaValue loaded = package.Table.RawGet("loaded");
+            LuaValue loadedNamespace = loaded.Table.RawGet("bit32");
 
             await Assert.That(namespaceValue.Type).IsEqualTo(DataType.Table);
             await Assert.That(package.Type).IsEqualTo(DataType.Table);
@@ -111,7 +114,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
             globals.RegisterModuleType(typeof(ArgumentViewModule));
 
-            DynValue result = script.DoString("return argument_view_probe.count(1, 2, 3)");
+            LuaValue result = script.DoString("return argument_view_probe.count(1, 2, 3)");
 
             await Assert.That(result.Number).IsEqualTo(3d);
         }
@@ -127,11 +130,162 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
             globals.RegisterModuleType(typeof(ArgumentViewNoContextModule));
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "return argument_view_no_context_probe.count(1, 2, 3, 4)"
             );
 
             await Assert.That(result.Number).IsEqualTo(4d);
+
+            globals.RegisterModuleType(typeof(MathModule));
+            Table math = globals.RawGet("math").Table;
+            CallbackFunction sin = math.RawGet("sin").Callback;
+            CallbackFunction ceil = math.RawGet("ceil").Callback;
+            MethodInfo legacySin = typeof(MathModule).GetMethod(
+                nameof(MathModule.Sin),
+                new[] { typeof(ScriptExecutionContext), typeof(CallbackArguments) }
+            );
+            MethodInfo viewSin = typeof(MathModule).GetMethod(
+                nameof(MathModule.Sin),
+                BindingFlags.NonPublic | BindingFlags.Static,
+                binder: null,
+                new[] { typeof(CallbackArgumentsView) },
+                modifiers: null
+            );
+            await Assert.That(sin.HasArgumentViewNoContextCallback).IsTrue();
+            await Assert.That(ceil.HasArgumentViewCallback).IsTrue();
+            await Assert.That(ceil.HasArgumentViewNoContextCallback).IsFalse();
+            await Assert.That(legacySin).IsNotNull();
+            await Assert.That(viewSin).IsNotNull();
+            await Assert
+                .That(legacySin.GetCustomAttribute<NovaSharpModuleMethodAttribute>())
+                .IsNotNull();
+            await Assert.That(ValidateMathRegistrationPairs()).IsEqualTo(32);
+
+            MethodInfo[] selected = ModuleRegister.SelectPreferredBuiltInModuleMethods(
+                new[] { viewSin, legacySin }
+            );
+            await Assert.That(selected.Length).IsEqualTo(1);
+            await Assert.That(selected[0]).IsSameReferenceAs(viewSin);
+
+            MethodInfo[] ambiguousMethods = typeof(AmbiguousArgumentViewModule).GetMethods(
+                BindingFlags.Public | BindingFlags.Static
+            );
+            Assert.Throws<InvalidOperationException>(() =>
+                ModuleRegister.SelectPreferredBuiltInModuleMethods(ambiguousMethods)
+            );
+
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments legacyArguments = new(
+                new[] { LuaValue.NewNumber(0) },
+                isMethodCall: false
+            );
+            LuaValue legacyResult = MathModule.Sin(context, legacyArguments);
+            await Assert.That(legacyResult.Number).IsEqualTo(0d);
+
+            bool modExpected = version == LuaCompatibilityVersion.Lua51;
+            await Assert.That(math.RawGet("mod").IsNil).IsEqualTo(!modExpected);
+            await Assert.That(math.RawGet("Mod").IsNil).IsEqualTo(!modExpected);
+        }
+
+        private static int ValidateMathRegistrationPairs()
+        {
+            MethodInfo[] methods = typeof(MathModule).GetMethods(
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static
+            );
+            int legacyCount = 0;
+
+            for (int i = 0; i < methods.Length; i++)
+            {
+                MethodInfo legacy = methods[i];
+                ParameterInfo[] legacyParameters = legacy.GetParameters();
+                NovaSharpModuleMethodAttribute legacyAttribute =
+                    legacy.GetCustomAttribute<NovaSharpModuleMethodAttribute>();
+                if (
+                    !legacy.IsPublic
+                    || legacyAttribute == null
+                    || legacyParameters.Length != 2
+                    || legacyParameters[0].ParameterType != typeof(ScriptExecutionContext)
+                    || legacyParameters[1].ParameterType != typeof(CallbackArguments)
+                )
+                {
+                    continue;
+                }
+
+                legacyCount++;
+                MethodInfo view = null;
+                for (int j = 0; j < methods.Length; j++)
+                {
+                    MethodInfo candidate = methods[j];
+                    if (
+                        candidate.Name != legacy.Name
+                        || candidate.IsPublic
+                        || candidate.GetCustomAttribute<NovaSharpModuleMethodAttribute>() == null
+                        || (
+                            !CallbackFunction.CheckArgumentViewCallbackSignature(candidate, true)
+                            && !CallbackFunction.CheckArgumentViewNoContextCallbackSignature(
+                                candidate,
+                                true
+                            )
+                        )
+                    )
+                    {
+                        continue;
+                    }
+
+                    if (view != null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Math module method '{legacy.Name}' has multiple view overloads."
+                        );
+                    }
+
+                    view = candidate;
+                }
+
+                if (view == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Math module method '{legacy.Name}' has no internal view overload."
+                    );
+                }
+
+                NovaSharpModuleMethodAttribute viewAttribute =
+                    view.GetCustomAttribute<NovaSharpModuleMethodAttribute>();
+                if (
+                    !string.Equals(
+                        legacyAttribute.Name,
+                        viewAttribute.Name,
+                        StringComparison.Ordinal
+                    )
+                )
+                {
+                    throw new InvalidOperationException(
+                        $"Math module method '{legacy.Name}' changed its Lua alias."
+                    );
+                }
+
+                LuaCompatibilityAttribute legacyCompatibility =
+                    legacy.GetCustomAttribute<LuaCompatibilityAttribute>();
+                LuaCompatibilityAttribute viewCompatibility =
+                    view.GetCustomAttribute<LuaCompatibilityAttribute>();
+                if (
+                    (legacyCompatibility == null) != (viewCompatibility == null)
+                    || (
+                        legacyCompatibility != null
+                        && (
+                            legacyCompatibility.MinVersion != viewCompatibility.MinVersion
+                            || legacyCompatibility.MaxVersion != viewCompatibility.MaxVersion
+                        )
+                    )
+                )
+                {
+                    throw new InvalidOperationException(
+                        $"Math module method '{legacy.Name}' changed its compatibility metadata."
+                    );
+                }
+            }
+
+            return legacyCount;
         }
 
         [global::TUnit.Core.Test]
@@ -159,7 +313,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return " + expression);
+            LuaValue result = script.DoString("return " + expression);
 
             await Assert.That(result.Boolean).IsEqualTo(expected);
         }
@@ -170,8 +324,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             Script firstScript = new Script(LuaCompatibilityVersion.Lua54, CoreModules.Basic);
             Script secondScript = new Script(LuaCompatibilityVersion.Lua54, CoreModules.Basic);
 
-            DynValue firstPrint = firstScript.Globals.RawGet("print");
-            DynValue secondPrint = secondScript.Globals.RawGet("print");
+            LuaValue firstPrint = firstScript.Globals.RawGet("print");
+            LuaValue secondPrint = secondScript.Globals.RawGet("print");
 
             await Assert.That(firstPrint.Type).IsEqualTo(DataType.ClrFunction);
             await Assert.That(secondPrint.Type).IsEqualTo(DataType.ClrFunction);
@@ -194,15 +348,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             Script firstScript = new Script(version, CoreModulePresets.Complete);
             Script secondScript = new Script(version, CoreModulePresets.Complete);
 
-            DynValue firstPackage = firstScript.Globals.RawGet("package");
-            DynValue secondPackage = secondScript.Globals.RawGet("package");
-            DynValue firstLoaded = firstPackage.Table.RawGet("loaded");
-            DynValue secondLoaded = secondPackage.Table.RawGet("loaded");
-            DynValue firstString = firstScript.Globals.RawGet("string");
-            DynValue secondString = secondScript.Globals.RawGet("string");
+            LuaValue firstPackage = firstScript.Globals.RawGet("package");
+            LuaValue secondPackage = secondScript.Globals.RawGet("package");
+            LuaValue firstLoaded = firstPackage.Table.RawGet("loaded");
+            LuaValue secondLoaded = secondPackage.Table.RawGet("loaded");
+            LuaValue firstString = firstScript.Globals.RawGet("string");
+            LuaValue secondString = secondScript.Globals.RawGet("string");
 
-            firstString.Table.Set("only_first_script", DynValue.True);
-            DynValue secondMarker = secondString.Table.RawGet("only_first_script");
+            firstString.Table.Set("only_first_script", LuaValue.True);
+            LuaValue secondMarker = secondString.Table.RawGet("only_first_script");
 
             await Assert
                 .That(firstPackage.Table)
@@ -240,8 +394,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             Script firstScript = new Script(version, CoreModulePresets.Complete);
             Script secondScript = new Script(version, CoreModulePresets.Complete);
 
-            DynValue firstRequire = firstScript.Globals.RawGet("require");
-            DynValue secondRequire = secondScript.Globals.RawGet("require");
+            LuaValue firstRequire = firstScript.Globals.RawGet("require");
+            LuaValue secondRequire = secondScript.Globals.RawGet("require");
 
             await Assert.That(firstRequire.Type).IsEqualTo(DataType.Function);
             await Assert.That(secondRequire.Type).IsEqualTo(DataType.Function);
@@ -276,9 +430,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
 
             script.Globals.RegisterModuleType(typeof(ScriptFieldCacheProbeModule));
-            DynValue module = script.Globals.RawGet("script_field_cache_probe");
-            DynValue answer = module.Table.RawGet("answer");
-            DynValue result = script.Call(answer);
+            LuaValue module = script.Globals.RawGet("script_field_cache_probe");
+            LuaValue answer = module.Table.RawGet("answer");
+            LuaValue result = script.Call(answer);
 
             await Assert.That(result.Number).IsEqualTo(77d).ConfigureAwait(false);
             await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
@@ -294,8 +448,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             firstScript.Globals.RegisterModuleType(typeof(InitProbeModule));
             secondScript.Globals.RegisterModuleType(typeof(InitProbeModule));
 
-            DynValue firstProbe = firstScript.Globals.RawGet("init_probe");
-            DynValue secondProbe = secondScript.Globals.RawGet("init_probe");
+            LuaValue firstProbe = firstScript.Globals.RawGet("init_probe");
+            LuaValue secondProbe = secondScript.Globals.RawGet("init_probe");
 
             await Assert.That(InitProbeModule.InitCount).IsEqualTo(2);
             await Assert.That(firstProbe.Table.RawGet("init_count").Number).IsEqualTo(1d);
@@ -316,9 +470,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             await Assert.That(exception.ParamName).IsEqualTo("table");
         }
 
-        private static bool IsNilOrMissing(DynValue value)
+        private static bool IsNilOrMissing(LuaValue value)
         {
-            return value == null || value.IsNil();
+            return value.IsNil;
         }
 
         [NovaSharpModule(Namespace = "script_field_cache_probe")]
@@ -332,9 +486,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         private static class ArgumentViewModule
         {
             [NovaSharpModuleMethod(Name = "count")]
-            public static DynValue Count(ScriptExecutionContext context, CallbackArgumentsView args)
+            public static LuaValue Count(ScriptExecutionContext context, CallbackArgumentsView args)
             {
-                return DynValue.NewNumber(args.Count);
+                return LuaValue.NewNumber(args.Count);
             }
         }
 
@@ -342,9 +496,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         private static class ArgumentViewNoContextModule
         {
             [NovaSharpModuleMethod(Name = "count")]
-            public static DynValue Count(CallbackArgumentsView args)
+            public static LuaValue Count(CallbackArgumentsView args)
             {
-                return DynValue.NewNumber(args.Count);
+                return LuaValue.NewNumber(args.Count);
+            }
+        }
+
+        private static class AmbiguousArgumentViewModule
+        {
+            [NovaSharpModuleMethod(Name = "probe")]
+            public static LuaValue Probe(ScriptExecutionContext context, CallbackArguments args)
+            {
+                return LuaValue.Nil;
+            }
+
+            [NovaSharpModuleMethod(Name = "probe")]
+            public static LuaValue Probe(ScriptExecutionContext context, CallbackArgumentsView args)
+            {
+                return LuaValue.Nil;
+            }
+
+            [NovaSharpModuleMethod(Name = "probe")]
+            public static LuaValue Probe(CallbackArgumentsView args)
+            {
+                return LuaValue.Nil;
             }
         }
 
@@ -366,7 +541,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             public static void NovaSharpInit(Table globalTable, Table moduleTable)
             {
                 int initCount = Interlocked.Increment(ref InitCountStorage);
-                moduleTable.Set("init_count", DynValue.NewNumber(initCount));
+                moduleTable.Set("init_count", LuaValue.NewNumber(initCount));
             }
         }
     }

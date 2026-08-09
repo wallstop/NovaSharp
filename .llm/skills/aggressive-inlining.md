@@ -62,7 +62,7 @@ ______________________________________________________________________
 | -------------------------------- | --------------------------------- | ------------------------ |
 | **Tiny methods** (\<20 IL bytes) | Property getters, arithmetic      | Call overhead dominates  |
 | **Hot path methods**             | VM instruction dispatch           | Called millions of times |
-| **Type checks**                  | `if (value.Type == X)`            | Simple branches benefit  |
+| **Type checks**                  | `if (value.IsNumber)`             | Simple branches benefit  |
 | **Simple property access**       | `public int Count => _count;`     | Eliminate indirection    |
 | **Forwarding methods**           | `void Do() => _inner.Do();`       | Pure overhead otherwise  |
 | **Math operations**              | `Max(a, b)`, `Clamp(x, min, max)` | Trivial computation      |
@@ -70,9 +70,9 @@ ______________________________________________________________________
 ```csharp
 // ✅ GOOD: Hot path type check in VM
 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-public static bool IsNumber(DynValue value)
+public static bool IsNumber(LuaValue value)
 {
-    return value.Type == DataType.Number;
+    return value.IsNumber;
 }
 
 // ✅ GOOD: Frequently called accessor

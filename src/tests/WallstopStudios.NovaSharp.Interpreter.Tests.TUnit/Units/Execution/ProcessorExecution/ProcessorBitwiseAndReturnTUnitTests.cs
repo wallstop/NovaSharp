@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -38,9 +39,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            FastStack<DynValue> stack = processor.GetValueStackForTests();
+            FastStack<LuaValue> stack = processor.GetValueStackForTests();
             stack.Clear();
-            stack.Push(DynValue.NewString("not-integer"));
+            stack.Push(LuaValue.NewString("not-integer"));
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 processor.ExecBitNotForTests(new Instruction(SourceRef.GetClrLocation()), 0)
@@ -54,10 +55,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            FastStack<DynValue> stack = processor.GetValueStackForTests();
+            FastStack<LuaValue> stack = processor.GetValueStackForTests();
             stack.Clear();
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewString("bad"));
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewString("bad"));
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 processor.ExecBitAndForTests(new Instruction(SourceRef.GetClrLocation()), 0)

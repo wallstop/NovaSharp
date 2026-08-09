@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -26,17 +27,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             RecordingDescriptor inner = new();
             ProxyUserDataDescriptor descriptor = new(factory, inner);
             object target = new Target("inner");
-            DynValue index = DynValue.NewString("Key");
-            DynValue expected = DynValue.NewString("result");
+            LuaValue index = LuaValue.NewString("Key");
+            LuaValue expected = LuaValue.NewString("result");
             inner.IndexResult = expected;
 
-            DynValue value = descriptor.Index(new Script(version), target, index, true);
+            LuaValue value = descriptor.Index(new Script(version), target, index, true).Value;
 
-            await Assert.That(value).IsSameReferenceAs(expected);
+            await Assert.That(value).IsEqualTo(expected);
             await Assert.That(factory.LastInput).IsSameReferenceAs(target);
             await Assert.That(inner.LastObject).IsTypeOf<Proxy>();
             await Assert.That(((Proxy)inner.LastObject).Target).IsSameReferenceAs(target);
-            await Assert.That(inner.LastIndex).IsSameReferenceAs(index);
+            await Assert.That(inner.LastIndex).IsEqualTo(index);
             await Assert.That(inner.LastIsDirectIndexing).IsTrue();
         }
 
@@ -48,8 +49,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             RecordingDescriptor inner = new();
             ProxyUserDataDescriptor descriptor = new(factory, inner);
             Target target = new("setter");
-            DynValue index = DynValue.NewString("name");
-            DynValue value = DynValue.NewNumber(5);
+            LuaValue index = LuaValue.NewString("name");
+            LuaValue value = LuaValue.NewNumber(5);
             inner.SetIndexResult = true;
 
             bool handled = descriptor.SetIndex(new Script(version), target, index, value, false);
@@ -57,7 +58,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             await Assert.That(handled).IsTrue();
             await Assert.That(inner.LastObject).IsTypeOf<Proxy>();
             await Assert.That(((Proxy)inner.LastObject).Target).IsSameReferenceAs(target);
-            await Assert.That(inner.LastValue).IsSameReferenceAs(value);
+            await Assert.That(inner.LastValue).IsEqualTo(value);
             await Assert.That(inner.LastIsDirectIndexing).IsFalse();
         }
 
@@ -70,10 +71,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             RecordingProxyFactory factory = new();
             RecordingDescriptor inner = new();
             ProxyUserDataDescriptor descriptor = new(factory, inner);
-            DynValue index = DynValue.NewString("noop");
-            inner.IndexResult = DynValue.NewString("result");
+            LuaValue index = LuaValue.NewString("noop");
+            inner.IndexResult = LuaValue.NewString("result");
 
-            DynValue value = descriptor.Index(new Script(version), null, index, true);
+            LuaValue value = descriptor.Index(new Script(version), null, index, true).Value;
 
             await Assert.That(value.String).IsEqualTo("result");
             await Assert.That(factory.LastInput).IsNull();
@@ -88,14 +89,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             RecordingDescriptor inner = new();
             ProxyUserDataDescriptor descriptor = new(factory, inner);
             Target target = new("meta");
-            DynValue expectedMeta = DynValue.NewString("meta-result");
+            LuaValue expectedMeta = LuaValue.NewString("meta-result");
             inner.MetaIndexResult = expectedMeta;
             inner.AsStringResult = "proxied-meta";
 
-            DynValue metaResult = descriptor.MetaIndex(new Script(version), target, "__tostring");
+            LuaValue metaResult = descriptor
+                .MetaIndex(new Script(version), target, "__tostring")
+                .Value;
             string asString = descriptor.AsString(target);
 
-            await Assert.That(metaResult).IsSameReferenceAs(expectedMeta);
+            await Assert.That(metaResult).IsEqualTo(expectedMeta);
             await Assert.That(asString).IsEqualTo("proxied-meta");
             await Assert.That(inner.MetaRequests.Length).IsEqualTo(ExpectedMetaRequests.Length);
             await Assert.That(inner.MetaRequests[0]).IsEqualTo(ExpectedMetaRequests[0]);
@@ -166,31 +169,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         private sealed class RecordingDescriptor : IUserDataDescriptor
         {
             internal object LastObject { get; private set; }
-            internal DynValue LastIndex { get; private set; }
-            internal DynValue LastValue { get; private set; }
+            internal LuaValue LastIndex { get; private set; }
+            internal LuaValue LastValue { get; private set; }
             internal bool LastIsDirectIndexing { get; private set; }
-            internal DynValue IndexResult { get; set; } = DynValue.Nil;
+            internal LuaValue IndexResult { get; set; } = LuaValue.Nil;
             internal bool SetIndexResult { get; set; }
-            internal DynValue MetaIndexResult { get; set; } = DynValue.Nil;
+            internal LuaValue MetaIndexResult { get; set; } = LuaValue.Nil;
             internal string AsStringResult { get; set; } = "<proxy>";
             internal string[] MetaRequests { get; private set; } = Array.Empty<string>();
 
             public string Name => "recording";
             public Type Type => typeof(Target);
 
-            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+            public bool TryIndex(
+                Script script,
+                object obj,
+                LuaValue index,
+                bool isDirectIndexing,
+                out LuaValue value
+            )
             {
                 LastObject = obj;
                 LastIndex = index;
                 LastIsDirectIndexing = isDirectIndexing;
-                return IndexResult;
+                value = IndexResult;
+                return true;
             }
 
             public bool SetIndex(
                 Script script,
                 object obj,
-                DynValue index,
-                DynValue value,
+                LuaValue index,
+                LuaValue value,
                 bool isDirectIndexing
             )
             {
@@ -207,11 +217,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 return AsStringResult;
             }
 
-            public DynValue MetaIndex(Script script, object obj, string metaname)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
             {
                 LastObject = obj;
                 MetaRequests = new[] { metaname };
-                return MetaIndexResult;
+                value = MetaIndexResult;
+                return true;
             }
 
             public bool IsTypeCompatible(Type type, object obj)

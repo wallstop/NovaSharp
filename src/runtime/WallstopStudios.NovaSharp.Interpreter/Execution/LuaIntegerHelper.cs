@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 {
     using System.Globalization;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -53,11 +54,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         private const double MaxDoubleIntegerValue = 9223372036854775808.0; // 2^63
 
         /// <summary>
-        /// Attempts to coerce a DynValue into a Lua integer (accepting numeric strings per Lua semantics).
+        /// Attempts to coerce a LuaValue into a Lua integer (accepting numeric strings per Lua semantics).
         /// </summary>
-        public static bool TryGetInteger(DynValue value, out long integer)
+        public static bool TryGetInteger(LuaValue value, out long integer)
         {
-            DynValue scalar = value.ToScalar();
+            LuaValue scalar = value.ToScalar();
 
             if (scalar.Type == DataType.Number)
             {

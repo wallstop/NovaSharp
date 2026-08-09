@@ -2,26 +2,63 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
+    /// Attempts to convert a CLR object to a script value.
+    /// </summary>
+    /// <param name="script">The script owning the converted value.</param>
+    /// <param name="value">The CLR value to convert.</param>
+    /// <param name="result">The converted value when the conversion is handled.</param>
+    /// <returns><see langword="true"/> when the converter handled the value; otherwise, <see langword="false"/>.</returns>
+    public delegate bool ClrToScriptTryConverter(Script script, object value, out LuaValue result);
+
+    /// <summary>
+    /// Attempts to convert a strongly typed CLR object to a script value.
+    /// </summary>
+    /// <typeparam name="T">The CLR type accepted by the converter.</typeparam>
+    /// <param name="script">The script owning the converted value.</param>
+    /// <param name="value">The CLR value to convert.</param>
+    /// <param name="result">The converted value when the conversion is handled.</param>
+    /// <returns><see langword="true"/> when the converter handled the value; otherwise, <see langword="false"/>.</returns>
+    public delegate bool ClrToScriptTryConverter<T>(Script script, T value, out LuaValue result);
+
+    /// <summary>
     /// A collection of custom converters between NovaSharp types and CLR types.
-    /// If a converter function is not specified or returns null, the standard conversion path applies.
+    /// If a converter function is not specified, returns null, or declines a try-conversion, the
+    /// standard conversion path applies.
     /// </summary>
     public class CustomConverterRegistry
     {
-        private readonly Dictionary<Type, Func<DynValue, object>>[] _script2Clr = new Dictionary<
+        private readonly Dictionary<Type, Func<LuaValue, object>>[] _script2Clr = new Dictionary<
             Type,
-            Func<DynValue, object>
+            Func<LuaValue, object>
         >[(int)LuaTypeExtensions.MaxConvertibleTypes + 1];
-        private readonly Dictionary<Type, Func<Script, object, DynValue>> _clr2Script = new();
+        private readonly Dictionary<Type, ClrToScriptConverterEntry> _clr2Script = new();
+
+        private readonly struct ClrToScriptConverterEntry
+        {
+            internal ClrToScriptConverterEntry(
+                Func<Script, object, LuaValue?> converter,
+                ClrToScriptTryConverter tryConverter
+            )
+            {
+                Converter = converter;
+                TryConverter = tryConverter;
+            }
+
+            internal Func<Script, object, LuaValue?> Converter { get; }
+
+            internal ClrToScriptTryConverter TryConverter { get; }
+        }
 
         internal CustomConverterRegistry()
         {
             for (int i = 0; i < _script2Clr.Length; i++)
             {
-                _script2Clr[i] = new Dictionary<Type, Func<DynValue, object>>();
+                _script2Clr[i] = new Dictionary<Type, Func<LuaValue, object>>();
             }
         }
 
@@ -37,7 +74,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         //	SetScriptToClrCustomConversion(DataType.UserData, destType, v => DispatchUserDataCustomConverter(destTypeMap, v));
         //}
 
-        //private object DispatchUserDataCustomConverter(Dictionary<Type, Func<object, object>> destTypeMap, DynValue v)
+        //private object DispatchUserDataCustomConverter(Dictionary<Type, Func<object, object>> destTypeMap, LuaValue v)
         //{
         //	if (v.Type != DataType.UserData)
         //		return null;
@@ -86,7 +123,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         public void SetScriptToClrCustomConversion(
             DataType scriptDataType,
             Type clrDataType,
-            Func<DynValue, object> converter = null
+            Func<LuaValue, object> converter = null
         )
         {
             if ((int)scriptDataType >= _script2Clr.Length)
@@ -97,7 +134,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
                 );
             }
 
-            Dictionary<Type, Func<DynValue, object>> map = _script2Clr[(int)scriptDataType];
+            Dictionary<Type, Func<LuaValue, object>> map = _script2Clr[(int)scriptDataType];
 
             if (converter == null)
             {
@@ -115,7 +152,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <param name="scriptDataType">The script data type</param>
         /// <param name="clrDataType">The CLR data type.</param>
         /// <returns>The converter function, or null if not found</returns>
-        public Func<DynValue, object> GetScriptToClrCustomConversion(
+        public Func<LuaValue, object> GetScriptToClrCustomConversion(
             DataType scriptDataType,
             Type clrDataType
         )
@@ -125,7 +162,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
                 return null;
             }
 
-            Dictionary<Type, Func<DynValue, object>> map = _script2Clr[(int)scriptDataType];
+            Dictionary<Type, Func<LuaValue, object>> map = _script2Clr[(int)scriptDataType];
             return map.GetOrDefault(clrDataType);
         }
 
@@ -136,7 +173,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <param name="converter">The converter, or null.</param>
         public void SetClrToScriptCustomConversion(
             Type clrDataType,
-            Func<Script, object, DynValue> converter = null
+            Func<Script, object, LuaValue?> converter = null
         )
         {
             if (converter == null)
@@ -145,7 +182,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
             }
             else
             {
-                _clr2Script[clrDataType] = converter;
+                ClrToScriptTryConverter tryConverter = (
+                    Script script,
+                    object value,
+                    out LuaValue result
+                ) =>
+                {
+                    LuaValue? converted = converter(script, value);
+                    if (!converted.HasValue)
+                    {
+                        result = LuaValue.Nil;
+                        return false;
+                    }
+
+                    result = converted.Value;
+                    return true;
+                };
+                _clr2Script[clrDataType] = new ClrToScriptConverterEntry(converter, tryConverter);
             }
         }
 
@@ -154,11 +207,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// </summary>
         /// <typeparam name="T">The CLR data type.</typeparam>
         /// <param name="converter">The converter, or null.</param>
-        public void SetClrToScriptCustomConversion<T>(Func<Script, T, DynValue> converter = null)
+        public void SetClrToScriptCustomConversion<T>(Func<Script, T, LuaValue?> converter = null)
         {
             if (converter == null)
             {
-                SetClrToScriptCustomConversion(typeof(T), (Func<Script, object, DynValue>)null);
+                SetClrToScriptCustomConversion(typeof(T), (Func<Script, object, LuaValue?>)null);
                 return;
             }
 
@@ -170,9 +223,96 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// </summary>
         /// <param name="clrDataType">Type of the color data.</param>
         /// <returns>The converter function, or null if not found</returns>
-        public Func<Script, object, DynValue> GetClrToScriptCustomConversion(Type clrDataType)
+        public Func<Script, object, LuaValue?> GetClrToScriptCustomConversion(Type clrDataType)
         {
-            return _clr2Script.GetOrDefault(clrDataType);
+            return _clr2Script.TryGetValue(clrDataType, out ClrToScriptConverterEntry entry)
+                ? entry.Converter
+                : null;
+        }
+
+        /// <summary>
+        /// Sets a custom try-converter from a CLR data type. Set null to remove a previous custom
+        /// converter. Returning false declines the conversion and normalizes the output to
+        /// <see cref="LuaValue.Nil"/>. Returning true preserves explicit nil, void, and
+        /// default-initialized nil results.
+        /// </summary>
+        /// <param name="clrDataType">The CLR data type.</param>
+        /// <param name="converter">The try-converter, or null.</param>
+        public void SetClrToScriptTryConversion(
+            Type clrDataType,
+            ClrToScriptTryConverter converter = null
+        )
+        {
+            if (converter == null)
+            {
+                _clr2Script.Remove(clrDataType);
+                return;
+            }
+
+            ClrToScriptTryConverter normalizedConverter = (
+                Script script,
+                object value,
+                out LuaValue result
+            ) => NormalizeTryConversion(converter, script, value, out result);
+            Func<Script, object, LuaValue?> legacyConverter = (script, value) =>
+                normalizedConverter(script, value, out LuaValue result) ? result : (LuaValue?)null;
+            _clr2Script[clrDataType] = new ClrToScriptConverterEntry(
+                legacyConverter,
+                normalizedConverter
+            );
+        }
+
+        /// <summary>
+        /// Sets a strongly typed custom try-converter from a CLR data type. Set null to remove a
+        /// previous custom converter.
+        /// </summary>
+        /// <typeparam name="T">The CLR data type.</typeparam>
+        /// <param name="converter">The try-converter, or null.</param>
+        public void SetClrToScriptTryConversion<T>(ClrToScriptTryConverter<T> converter = null)
+        {
+            if (converter == null)
+            {
+                SetClrToScriptTryConversion(typeof(T), null);
+                return;
+            }
+
+            SetClrToScriptTryConversion(
+                typeof(T),
+                (Script script, object value, out LuaValue result) =>
+                    converter(script, (T)value, out result)
+            );
+        }
+
+        /// <summary>
+        /// Gets a normalized custom try-converter from a CLR data type, or null when none is
+        /// registered. Legacy converters are adapted so a null result declines conversion.
+        /// </summary>
+        /// <param name="clrDataType">The CLR data type.</param>
+        /// <returns>The normalized try-converter, or null if not found.</returns>
+        public ClrToScriptTryConverter GetClrToScriptTryConversion(Type clrDataType)
+        {
+            return _clr2Script.TryGetValue(clrDataType, out ClrToScriptConverterEntry entry)
+                ? entry.TryConverter
+                : null;
+        }
+
+        /// <summary>
+        /// Attempts to convert a CLR value using its registered custom converter.
+        /// </summary>
+        internal bool TryConvertClrToScript(
+            Type clrDataType,
+            Script script,
+            object value,
+            out LuaValue result
+        )
+        {
+            if (_clr2Script.TryGetValue(clrDataType, out ClrToScriptConverterEntry entry))
+            {
+                return entry.TryConverter(script, value, out result);
+            }
+
+            result = LuaValue.Nil;
+            return false;
         }
 
         /// Sets a custom converter from a CLR data type. Set null to remove a previous custom converter.
@@ -184,9 +324,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         )]
         public void SetClrToScriptCustomConversion(
             Type clrDataType,
-            Func<object, DynValue> converter = null
+            Func<object, LuaValue?> converter = null
         )
         {
+            if (converter == null)
+            {
+                SetClrToScriptCustomConversion(clrDataType, (Func<Script, object, LuaValue?>)null);
+                return;
+            }
+
             SetClrToScriptCustomConversion(clrDataType, (s, o) => converter(o));
         }
 
@@ -198,11 +344,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         [Obsolete(
             "This method is deprecated. Use the overloads accepting functions with a Script argument."
         )]
-        public void SetClrToScriptCustomConversion<T>(Func<T, DynValue> converter = null)
+        public void SetClrToScriptCustomConversion<T>(Func<T, LuaValue?> converter = null)
         {
             if (converter == null)
             {
-                SetClrToScriptCustomConversion(typeof(T), (Func<object, DynValue>)null);
+                SetClrToScriptCustomConversion(typeof(T), (Func<Script, object, LuaValue?>)null);
                 return;
             }
 
@@ -232,18 +378,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
 
             for (int i = 0; i < _script2Clr.Length; i++)
             {
-                foreach (KeyValuePair<Type, Func<DynValue, object>> pair in _script2Clr[i])
+                foreach (KeyValuePair<Type, Func<LuaValue, object>> pair in _script2Clr[i])
                 {
                     clone._script2Clr[i][pair.Key] = pair.Value;
                 }
             }
 
-            foreach (KeyValuePair<Type, Func<Script, object, DynValue>> pair in _clr2Script)
+            foreach (KeyValuePair<Type, ClrToScriptConverterEntry> pair in _clr2Script)
             {
                 clone._clr2Script[pair.Key] = pair.Value;
             }
 
             return clone;
+        }
+
+        private static bool NormalizeTryConversion(
+            ClrToScriptTryConverter converter,
+            Script script,
+            object value,
+            out LuaValue result
+        )
+        {
+            if (!converter(script, value, out result))
+            {
+                result = LuaValue.Nil;
+                return false;
+            }
+
+            return true;
         }
     }
 }

@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -87,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// </summary>
         /// <param name="context">Execution context that owns the symbol tables.</param>
         /// <returns>The resolved value for the identifier.</returns>
-        public override DynValue Eval(ScriptExecutionContext context)
+        public override LuaValue Eval(ScriptExecutionContext context)
         {
             return context.EvaluateSymbolByName(_varName);
         }

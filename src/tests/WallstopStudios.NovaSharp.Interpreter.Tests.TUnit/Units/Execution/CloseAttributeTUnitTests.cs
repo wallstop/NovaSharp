@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -17,7 +18,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             // <close> attribute is Lua 5.4+
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local log = {}
 
@@ -56,7 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             // <close> attribute is Lua 5.4+
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local log = {}
 
@@ -94,7 +95,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             // <close> attribute is Lua 5.4+
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local captured = {}
 
@@ -130,7 +131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             // <close> attribute is Lua 5.4+
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local ok, err = pcall(function()
                     local _ <close> = {}
@@ -153,7 +154,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             // <close> attribute is Lua 5.4+
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local log = {}
 
@@ -192,7 +193,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             // <close> attribute is Lua 5.4+
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local log = {}
 
@@ -228,7 +229,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             // <close> attribute is Lua 5.4+
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local log = {}
 

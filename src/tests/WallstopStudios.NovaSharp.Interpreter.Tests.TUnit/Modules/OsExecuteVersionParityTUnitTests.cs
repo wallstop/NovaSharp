@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -37,7 +38,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('build')");
+            LuaValue result = script.DoString("return os.execute('build')");
 
             // Lua 5.1: Returns just the exit code as a number
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -55,7 +56,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('fail')");
+            LuaValue result = script.DoString("return os.execute('fail')");
 
             // Lua 5.1: Returns just the exit code as a number
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -73,7 +74,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('fail')");
+            LuaValue result = script.DoString("return os.execute('fail')");
 
             // Lua 5.1: Platform exceptions return -1
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -91,7 +92,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('build')");
+            LuaValue result = script.DoString("return os.execute('build')");
 
             // Lua 5.1: Platform not supported returns -1
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -111,7 +112,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('build')");
+            LuaValue result = script.DoString("return os.execute('build')");
 
             // Lua 5.2+: Returns (true, "exit", 0) on success
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
@@ -131,11 +132,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('fail')");
+            LuaValue result = script.DoString("return os.execute('fail')");
 
             // Lua 5.2+: Returns (nil, "exit", code) on non-zero exit
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].IsNil).IsTrue().ConfigureAwait(false);
             await Assert.That(result.Tuple[1].String).IsEqualTo("exit").ConfigureAwait(false);
             await Assert.That(result.Tuple[2].Number).IsEqualTo(7).ConfigureAwait(false);
         }
@@ -151,11 +152,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('terminate')");
+            LuaValue result = script.DoString("return os.execute('terminate')");
 
             // Lua 5.2+: Returns (nil, "signal", code) for negative exit codes (signals)
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].IsNil).IsTrue().ConfigureAwait(false);
             await Assert.That(result.Tuple[1].String).IsEqualTo("signal").ConfigureAwait(false);
             await Assert.That(result.Tuple[2].Number).IsEqualTo(9).ConfigureAwait(false);
         }
@@ -171,11 +172,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('fail')");
+            LuaValue result = script.DoString("return os.execute('fail')");
 
             // Lua 5.2+: Returns (nil, error_message) on platform exceptions
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].IsNil).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(result.Tuple[1].String)
                 .Contains("Command failed")
@@ -193,11 +194,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('build')");
+            LuaValue result = script.DoString("return os.execute('build')");
 
             // Lua 5.2+: Returns (nil, not_supported_message) on platform not supported
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].IsNil).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(result.Tuple[1].String)
                 .Contains("not supported")
@@ -216,7 +217,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute()");
+            LuaValue result = script.DoString("return os.execute()");
 
             // All versions: os.execute() with no args returns true (shell available)
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);

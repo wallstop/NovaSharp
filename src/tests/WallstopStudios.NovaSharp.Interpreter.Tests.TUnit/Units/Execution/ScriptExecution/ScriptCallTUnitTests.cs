@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -25,10 +26,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function noop() end");
-            DynValue function = script.Globals.Get("noop");
+            LuaValue function = script.Globals.Get("noop");
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                script.Call(function, (DynValue[])null)
+                script.Call(function, (LuaValue[])null)
             );
             await Assert.That(exception.ParamName).IsEqualTo("args");
         }
@@ -43,7 +44,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function noop() end");
-            DynValue function = script.Globals.Get("noop");
+            LuaValue function = script.Globals.Get("noop");
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
                 script.Call(function, (object[])null)
@@ -61,10 +62,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new(version, CoreModulePresets.Complete);
 
-            ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                script.Call((DynValue)null)
+            ArgumentException exception = ExpectException<ArgumentException>(() =>
+                script.CallValues(LuaValue.Nil)
             );
-            await Assert.That(exception.ParamName).IsEqualTo("function");
+            await Assert.That(exception.Message).Contains("not a function");
         }
 
         [global::TUnit.Core.Test]
@@ -86,8 +87,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             "
             );
 
-            DynValue callable = script.Globals.Get("callable");
-            DynValue result = script.Call(callable, DynValue.NewNumber(21));
+            LuaValue callable = script.Globals.Get("callable");
+            LuaValue result = script.CallValues(callable, LuaValue.NewNumber(21));
 
             await Assert.That(result.Number).IsEqualTo(42d);
         }
@@ -101,9 +102,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task CallExecutesClrFunction(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.NewString("clr"));
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.NewString("clr"));
 
-            DynValue result = script.Call(callback);
+            LuaValue result = script.CallValues(callback);
 
             await Assert.That(result.Type).IsEqualTo(DataType.String);
             await Assert.That(result.String).IsEqualTo("clr");
@@ -118,10 +119,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task CallRejectsNonCallableValues(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue notCallable = DynValue.NewString("nope");
+            LuaValue notCallable = LuaValue.NewString("nope");
 
             ArgumentException exception = ExpectException<ArgumentException>(() =>
-                script.Call(notCallable)
+                script.CallValues(notCallable)
             );
             await Assert.That(exception.Message).Contains("has no __call metamethod");
         }
@@ -136,9 +137,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function add(a, b) return a + b end");
-            DynValue function = script.Globals.Get("add");
+            LuaValue function = script.Globals.Get("add");
 
-            DynValue result = script.Call(function, 30, 12);
+            LuaValue result = script.Call(function, 30, 12);
 
             await Assert.That(result.Number).IsEqualTo(42d);
         }
@@ -157,7 +158,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             script.DoString("function mul(a, b) return a * b end");
             object closure = script.Globals.Get("mul").Function;
 
-            DynValue result = script.Call(closure, 6, 7);
+            LuaValue result = script.Call(closure, 6, 7);
             await Assert.That(result.Number).IsEqualTo(42d);
         }
 
@@ -170,10 +171,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task CallObjectOverloadInvokesDelegateCallback(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = (ctx, args) =>
-                DynValue.NewNumber(args[0].Number * 2);
+            Func<ScriptExecutionContext, CallbackArguments, LuaValue> callback = (ctx, args) =>
+                LuaValue.NewNumber(args[0].Number * 2);
 
-            DynValue result = script.Call(callback, 21);
+            LuaValue result = script.Call(callback, 21);
             await Assert.That(result.Number).IsEqualTo(42d);
         }
 
@@ -185,15 +186,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function capture(...) return select('#', ...), ... end");
-            DynValue function = script.Globals.Get("capture");
+            LuaValue function = script.Globals.Get("capture");
             object closure = function.Function;
             object[] args = { "padding", 1d, 2d, 3d, 4d, 5d, 6d, "padding" };
 
-            DynValue dynValueFunctionResult = script.CallObjectArguments(
+            LuaValue dynValueFunctionResult = script.CallObjectArguments(
                 function,
                 args.AsSpan(1, 6)
             );
-            DynValue objectFunctionResult = script.CallObjectArguments(closure, args.AsSpan(1, 6));
+            LuaValue objectFunctionResult = script.CallObjectArguments(closure, args.AsSpan(1, 6));
 
             await Assert
                 .That(dynValueFunctionResult.Tuple[0].Number)
@@ -221,13 +222,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function capture(...) return select('#', ...), ... end");
-            DynValue function = script.Globals.Get("capture");
+            LuaValue function = script.Globals.Get("capture");
             object closure = function.Function;
             object[] args = { "left", "right", 3d, 4d, 5d, 6d };
 
-            DynValue dynValueFunctionSpread = script.Call(function, args);
-            DynValue objectFunctionSpread = script.Call(closure, args);
-            DynValue singleArrayArgument = script.Call(function, (object)args);
+            LuaValue dynValueFunctionSpread = script.Call(function, args);
+            LuaValue objectFunctionSpread = script.Call(closure, args);
+            LuaValue singleArrayArgument = script.Call(function, (object)args);
 
             await Assert
                 .That(dynValueFunctionSpread.Tuple[0].Number)
@@ -268,7 +269,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new(CoreModulePresets.Complete);
             script.DoString("function noop() end");
-            DynValue function = script.Globals.Get("noop");
+            LuaValue function = script.Globals.Get("noop");
 
             ArgumentNullException dynValueFunctionException =
                 ExpectException<ArgumentNullException>(() =>
@@ -326,13 +327,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task CreateCoroutineValidatesInputs(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.NewString("done"));
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.NewString("done"));
 
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
             await Assert.That(coroutine.Type).IsEqualTo(DataType.Thread);
 
             ArgumentException exception = ExpectException<ArgumentException>(() =>
-                script.CreateCoroutine(DynValue.NewNumber(1))
+                script.CreateCoroutineValue(LuaValue.NewNumber(1))
             );
             await Assert.That(exception.Message).Contains("DataType.Function");
         }
@@ -347,10 +348,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new(version, CoreModulePresets.Complete);
 
-            ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                script.CreateCoroutine((DynValue)null)
+            ArgumentException exception = ExpectException<ArgumentException>(() =>
+                script.CreateCoroutineValue(LuaValue.Nil)
             );
-            await Assert.That(exception.ParamName).IsEqualTo("function");
+            await Assert.That(exception.Message).Contains("DataType.Function");
         }
 
         [global::TUnit.Core.Test]
@@ -369,7 +370,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             ScriptOptions options = new() { ScriptLoader = loader, DebugPrint = messages.Add };
             Script script = new(CoreModulePresets.Complete, options);
 
-            DynValue result = script.RequireModule("bit32");
+            LuaValue result = script.RequireModule("bit32");
 
             await Assert.That(loader.ResolveCalls).IsEqualTo(1);
             await Assert.That(loader.LoadCalls).IsEqualTo(1);
@@ -521,11 +522,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script scriptA = new(CoreModulePresets.Complete);
             Script scriptB = new(CoreModulePresets.Complete);
 
-            DynValue foreignTable = scriptA.DoString("return {}");
+            LuaValue foreignTable = scriptA.DoString("return {}");
             scriptB.DoString("function echo(value) return value end");
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
-                scriptB.Call(scriptB.Globals.Get("echo"), foreignTable)
+                scriptB.CallValues(scriptB.Globals.Get("echo"), foreignTable)
             );
             await Assert.That(exception.Message).Contains("different scripts");
         }
@@ -562,10 +563,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script scriptA = new(CoreModulePresets.Complete);
             Script scriptB = new(CoreModulePresets.Complete);
-            DynValue foreignFunction = scriptA.DoString("return function() end");
+            LuaValue foreignFunction = scriptA.DoString("return function() end");
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
-                scriptB.CreateCoroutine(foreignFunction)
+                scriptB.CreateCoroutineValue(foreignFunction)
             );
             await Assert.That(exception.Message).Contains("different scripts");
         }
@@ -589,10 +590,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             );
 
             object closure = script.Globals.Get("generator").Function;
-            DynValue coroutine = script.CreateCoroutine(closure);
+            LuaValue coroutine = script.CreateCoroutine(closure);
 
-            DynValue first = coroutine.Coroutine.Resume();
-            DynValue second = coroutine.Coroutine.Resume();
+            LuaValue first = coroutine.Coroutine.Resume();
+            LuaValue second = coroutine.Coroutine.Resume();
 
             await Assert.That(first.Number).IsEqualTo(5d);
             await Assert.That(second.Number).IsEqualTo(6d);
@@ -609,14 +610,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = (ctx, _) =>
-                DynValue.NewNumber(99);
+            Func<ScriptExecutionContext, CallbackArguments, LuaValue> callback = (ctx, _) =>
+                LuaValue.NewNumber(99);
 
-            DynValue coroutineValue = script.CreateCoroutine(callback);
+            LuaValue coroutineValue = script.CreateCoroutine(callback);
             coroutineValue.Coroutine.OwnerScript = script;
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
-            DynValue result = coroutineValue.Coroutine.Resume(context);
+            LuaValue result = coroutineValue.Coroutine.Resume(context);
 
             await Assert.That(result.Number).IsEqualTo(99d);
             await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Dead);

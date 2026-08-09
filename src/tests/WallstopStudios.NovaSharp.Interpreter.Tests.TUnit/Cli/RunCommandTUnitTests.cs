@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
     using System;
     using System.IO;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Cli;
     using WallstopStudios.NovaSharp.Cli.Commands.Implementations;
@@ -57,7 +58,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
                 })
                 .ConfigureAwait(false);
 
-            DynValue result = context.Script.Globals.Get("result");
+            LuaValue result = context.Script.Globals.Get("result");
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
         }

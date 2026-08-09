@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -25,19 +26,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            FastStack<DynValue> valueStack = processor.GetValueStackForTests();
+            FastStack<LuaValue> valueStack = processor.GetValueStackForTests();
             valueStack.Clear();
-            valueStack.Push(DynValue.NewNumber(1));
-            DynValue previousCounter = DynValue.NewNumber(2);
+            valueStack.Push(LuaValue.NewNumber(1));
+            LuaValue previousCounter = LuaValue.NewNumber(2);
             valueStack.Push(previousCounter);
 
             Instruction instruction = new(SourceRef.GetClrLocation()) { NumVal = 1 };
             processor.ExecIncrForTests(instruction);
 
-            DynValue result = valueStack.Peek();
+            LuaValue result = valueStack.Peek();
 
             await Assert.That(result.Number).IsEqualTo(3d);
-            await Assert.That(result).IsNotSameReferenceAs(previousCounter);
+            await Assert.That(result).IsNotEqualTo(previousCounter);
 
             // The prior counter may already have been stored into the loop variable's slot,
             // so incrementing must never write through it.
@@ -49,10 +50,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            FastStack<DynValue> valueStack = processor.GetValueStackForTests();
+            FastStack<LuaValue> valueStack = processor.GetValueStackForTests();
             valueStack.Clear();
-            valueStack.Push(DynValue.NewNumber(1));
-            DynValue readOnlyValue = DynValue.NewString("not-number");
+            valueStack.Push(LuaValue.NewNumber(1));
+            LuaValue readOnlyValue = LuaValue.NewString("not-number");
             valueStack.Push(readOnlyValue);
 
             Instruction instruction = new(SourceRef.GetClrLocation()) { NumVal = 1 };
@@ -61,7 +62,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             );
 
             await Assert.That(exception.Message).Contains("Can't assign number to type String");
-            await Assert.That(valueStack.Peek()).IsSameReferenceAs(readOnlyValue);
+            await Assert.That(valueStack.Peek()).IsEqualTo(readOnlyValue);
             await Assert.That(readOnlyValue.String).IsEqualTo("not-number");
         }
 
@@ -70,10 +71,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            FastStack<DynValue> valueStack = processor.GetValueStackForTests();
+            FastStack<LuaValue> valueStack = processor.GetValueStackForTests();
             valueStack.Clear();
-            valueStack.Push(DynValue.NewString("not-bool"));
-            valueStack.Push(DynValue.NewNumber(1));
+            valueStack.Push(LuaValue.NewString("not-bool"));
+            valueStack.Push(LuaValue.NewNumber(1));
 
             InternalErrorException exception = ExpectException<InternalErrorException>(() =>
                 processor.ExecCNotForTests(new Instruction(SourceRef.GetClrLocation()))
@@ -146,9 +147,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
                 Processor.SetGlobalSymbolForTests(
-                    DynValue.NewString("not-table"),
+                    LuaValue.NewString("not-table"),
                     "value",
-                    DynValue.NewNumber(1)
+                    LuaValue.NewNumber(1)
                 )
             );
 
@@ -162,13 +163,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script script = new(version);
-            DynValue env = DynValue.NewTable(script.Globals);
+            LuaValue env = LuaValue.NewTable(script.Globals);
 
-            Processor.SetGlobalSymbolForTests(env, "answer", DynValue.NewNumber(42));
+            Processor.SetGlobalSymbolForTests(env, "answer", LuaValue.NewNumber(42));
             await Assert.That(env.Table.Get("answer").Number).IsEqualTo(42d);
 
-            Processor.SetGlobalSymbolForTests(env, "cleared", null);
-            await Assert.That(env.Table.Get("cleared").IsNil()).IsTrue();
+            Processor.SetGlobalSymbolForTests(env, "cleared", LuaValue.Nil);
+            await Assert.That(env.Table.Get("cleared").IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -178,7 +179,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Processor processor = script.GetMainProcessorForTests();
 
             ExpectException<ArgumentException>(() =>
-                processor.AssignGenericSymbol(SymbolRef.DefaultEnv, DynValue.NewNumber(1))
+                processor.AssignGenericSymbol(SymbolRef.DefaultEnv, LuaValue.NewNumber(1))
             );
         }
 
@@ -190,7 +191,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Processor processor = script.GetMainProcessorForTests();
 
             SymbolRef global = SymbolRef.Global("greeting", SymbolRef.DefaultEnv);
-            processor.AssignGenericSymbol(global, DynValue.NewString("hello"));
+            processor.AssignGenericSymbol(global, LuaValue.NewString("hello"));
 
             await Assert.That(script.Globals.Get("greeting").String).IsEqualTo("hello");
         }
@@ -209,7 +210,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             };
             processor.PushCallStackFrameForTests(frame);
 
-            processor.AssignGenericSymbol(SymbolRef.Local("value", 0), DynValue.NewNumber(7));
+            processor.AssignGenericSymbol(SymbolRef.Local("value", 0), LuaValue.NewNumber(7));
             await Assert.That(frame.LocalScope[0].Value.Number).IsEqualTo(7d);
         }
 
@@ -222,7 +223,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             ClosureContext closure = new(
                 new[] { SymbolRef.UpValue("uv", 0) },
-                new[] { new ValueSlot() }
+                new[] { new UpvalueCell(LuaValue.Nil) }
             );
             CallStackItem frame = new()
             {
@@ -231,7 +232,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             };
             processor.PushCallStackFrameForTests(frame);
 
-            processor.AssignGenericSymbol(SymbolRef.UpValue("uv", 0), DynValue.NewNumber(11));
+            processor.AssignGenericSymbol(SymbolRef.UpValue("uv", 0), LuaValue.NewNumber(11));
             await Assert.That(frame.ClosureScope[0].Number).IsEqualTo(11d);
         }
 
@@ -245,7 +246,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             invalid.SymbolType = (SymbolRefType)999;
 
             ExpectException<InternalErrorException>(() =>
-                processor.AssignGenericSymbol(invalid, DynValue.NewNumber(1))
+                processor.AssignGenericSymbol(invalid, LuaValue.NewNumber(1))
             );
         }
 
@@ -266,20 +267,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            FastStack<DynValue> stack = processor.GetValueStackForTests();
+            FastStack<LuaValue> stack = processor.GetValueStackForTests();
             stack.Clear();
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewNumber(2));
-            stack.Push(DynValue.NewNumber(3));
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewNumber(2));
+            stack.Push(LuaValue.NewNumber(3));
 
-            DynValue[] peeked = processor.StackTopToArrayForTests(2, pop: false);
+            LuaValue[] peeked = processor.StackTopToArrayForTests(2, pop: false);
             double[] peekedNumbers = peeked.Select(v => v.Number).ToArray();
             await Assert.That(peekedNumbers.Length).IsEqualTo(DescendingPair.Length);
             await Assert.That(peekedNumbers[0]).IsEqualTo(DescendingPair[0]);
             await Assert.That(peekedNumbers[1]).IsEqualTo(DescendingPair[1]);
             await Assert.That(stack.Count).IsEqualTo(3);
 
-            DynValue[] popped = processor.StackTopToArrayForTests(2, pop: true);
+            LuaValue[] popped = processor.StackTopToArrayForTests(2, pop: true);
             double[] poppedNumbers = popped.Select(v => v.Number).ToArray();
             await Assert.That(poppedNumbers.Length).IsEqualTo(DescendingPair.Length);
             await Assert.That(poppedNumbers[0]).IsEqualTo(DescendingPair[0]);
@@ -292,14 +293,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            FastStack<DynValue> stack = processor.GetValueStackForTests();
+            FastStack<LuaValue> stack = processor.GetValueStackForTests();
             stack.Clear();
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewNumber(2));
-            stack.Push(DynValue.NewNumber(3));
-            stack.Push(DynValue.NewNumber(4));
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewNumber(2));
+            stack.Push(LuaValue.NewNumber(3));
+            stack.Push(LuaValue.NewNumber(4));
 
-            DynValue[] peeked = processor.StackTopToArrayReverseForTests(3, pop: false);
+            LuaValue[] peeked = processor.StackTopToArrayReverseForTests(3, pop: false);
             double[] peekedNumbers = peeked.Select(v => v.Number).ToArray();
             await Assert.That(peekedNumbers.Length).IsEqualTo(AscendingTriple.Length);
             await Assert.That(peekedNumbers[0]).IsEqualTo(AscendingTriple[0]);
@@ -307,7 +308,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(peekedNumbers[2]).IsEqualTo(AscendingTriple[2]);
             await Assert.That(stack.Count).IsEqualTo(4);
 
-            DynValue[] popped = processor.StackTopToArrayReverseForTests(3, pop: true);
+            LuaValue[] popped = processor.StackTopToArrayReverseForTests(3, pop: true);
             double[] poppedNumbers = popped.Select(v => v.Number).ToArray();
             await Assert.That(poppedNumbers.Length).IsEqualTo(AscendingTriple.Length);
             await Assert.That(poppedNumbers[0]).IsEqualTo(AscendingTriple[0]);

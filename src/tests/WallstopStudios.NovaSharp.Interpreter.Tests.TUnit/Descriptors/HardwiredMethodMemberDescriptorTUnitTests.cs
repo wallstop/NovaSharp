@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -18,10 +19,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            CallbackArguments args = TestHelpers.CreateArguments(DynValue.NewNumber(7));
+            CallbackArguments args = TestHelpers.CreateArguments(LuaValue.NewNumber(7));
             SampleHardwiredDescriptor descriptor = new();
 
-            DynValue result = descriptor.Execute(script, null, context, args);
+            LuaValue result = descriptor.Execute(script, null, context, args);
 
             await Assert.That(descriptor.InvocationCount).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(descriptor.LastArgCount).IsEqualTo(2).ConfigureAwait(false);
@@ -39,12 +40,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             CallbackArguments args = TestHelpers.CreateArguments(
-                DynValue.NewNumber(2),
-                DynValue.NewString("overridden")
+                LuaValue.NewNumber(2),
+                LuaValue.NewString("overridden")
             );
             SampleHardwiredDescriptor descriptor = new();
 
-            DynValue result = descriptor.Execute(script, null, context, args);
+            LuaValue result = descriptor.Execute(script, null, context, args);
 
             await Assert.That(descriptor.InvocationCount).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(descriptor.LastArgCount).IsEqualTo(2).ConfigureAwait(false);
@@ -60,10 +61,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            CallbackArguments args = TestHelpers.CreateArguments(DynValue.NewNumber(42));
+            CallbackArguments args = TestHelpers.CreateArguments(LuaValue.NewNumber(42));
             SentinelHardwiredDescriptor descriptor = new();
 
-            DynValue result = descriptor.Execute(script, null, context, args);
+            LuaValue result = descriptor.Execute(script, null, context, args);
 
             await Assert.That(descriptor.InvocationCount).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(descriptor.LastArgCount).IsEqualTo(1).ConfigureAwait(false);
@@ -80,12 +81,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             CallbackArguments args = TestHelpers.CreateArguments(
-                DynValue.NewNumber(10),
-                DynValue.NewString("custom")
+                LuaValue.NewNumber(10),
+                LuaValue.NewString("custom")
             );
             SentinelHardwiredDescriptor descriptor = new();
 
-            DynValue result = descriptor.Execute(script, null, context, args);
+            LuaValue result = descriptor.Execute(script, null, context, args);
 
             await Assert.That(descriptor.InvocationCount).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(descriptor.LastArgCount).IsEqualTo(2).ConfigureAwait(false);

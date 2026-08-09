@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Numerics;
     using System.Reflection;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -18,9 +19,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ExtractDefaultsWidthToOneWhenThirdArgumentIsNil()
         {
-            DynValue result = Bit32Module.Extract(
+            LuaValue result = Bit32Module.Extract(
                 CreateContext(),
-                CreateArgs(DynValue.NewNumber(0b_1111_0000), DynValue.NewNumber(4), DynValue.Nil)
+                CreateArgs(LuaValue.NewNumber(0b_1111_0000), LuaValue.NewNumber(4), LuaValue.Nil)
             );
 
             await Assert.That(result.Number).IsEqualTo(1d);
@@ -31,7 +32,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Replace bits 4-7 of 0 with 0b_1010 (10 decimal) = 0b_1010_0000 (160)
             // Per Lua spec: only the low `width` bits of u are used
-            DynValue result = Bit32Module.Replace(
+            LuaValue result = Bit32Module.Replace(
                 CreateContext(),
                 CreateNumberArgs(0, 0b_1010, 4, 4)
             );
@@ -63,7 +64,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task BandAggregatesAllArguments()
         {
-            DynValue result = Bit32Module.Band(CreateContext(), CreateNumberArgs(0xFF, 0x0F, 0xF0));
+            LuaValue result = Bit32Module.Band(CreateContext(), CreateNumberArgs(0xFF, 0x0F, 0xF0));
 
             await Assert.That(result.Number).IsEqualTo(0d);
         }
@@ -79,7 +80,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             foreach ((uint left, uint right, bool expected) in cases)
             {
-                DynValue result = Bit32Module.BitTest(
+                LuaValue result = Bit32Module.BitTest(
                     CreateContext(),
                     CreateNumberArgs(left, right)
                 );
@@ -90,7 +91,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task BnotInvertsAllBits()
         {
-            DynValue result = Bit32Module.Bnot(CreateContext(), CreateNumberArgs(0b_1111));
+            LuaValue result = Bit32Module.Bnot(CreateContext(), CreateNumberArgs(0b_1111));
 
             await Assert.That(result.Number).IsEqualTo(~0b_1111u);
         }
@@ -98,7 +99,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task BxorCombinesValues()
         {
-            DynValue result = Bit32Module.Bxor(CreateContext(), CreateNumberArgs(0b_1010, 0b_0101));
+            LuaValue result = Bit32Module.Bxor(CreateContext(), CreateNumberArgs(0b_1010, 0b_0101));
 
             await Assert.That(result.Number).IsEqualTo((double)0b_1111);
         }
@@ -160,7 +161,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             foreach ((uint value, int offset, uint expected) in cases)
             {
-                DynValue result = Bit32Module.RightShift(
+                LuaValue result = Bit32Module.RightShift(
                     CreateContext(),
                     CreateNumberArgs(value, offset)
                 );
@@ -176,7 +177,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             foreach ((uint value, int offset, uint expected) in cases)
             {
-                DynValue result = Bit32Module.LeftShift(
+                LuaValue result = Bit32Module.LeftShift(
                     CreateContext(),
                     CreateNumberArgs(value, offset)
                 );
@@ -192,7 +193,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             foreach ((int value, int offset, int expected) in cases)
             {
-                DynValue result = Bit32Module.ArithmeticShift(
+                LuaValue result = Bit32Module.ArithmeticShift(
                     CreateContext(),
                     CreateNumberArgs(value, offset)
                 );
@@ -221,7 +222,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             uint expected = BitOperations.RotateLeft(value, offset);
-            DynValue result = Bit32Module.LeftRotate(
+            LuaValue result = Bit32Module.LeftRotate(
                 CreateContext(),
                 CreateNumberArgs(value, offset)
             );
@@ -254,7 +255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             uint expected = BitOperations.RotateRight(value, offset);
-            DynValue result = Bit32Module.RightRotate(
+            LuaValue result = Bit32Module.RightRotate(
                 CreateContext(),
                 CreateNumberArgs(value, offset)
             );
@@ -282,7 +283,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // bit32.bnot(x) = 0xFFFFFFFF xor x
             // This exercises the ToUInt32 conversion
             uint expected = ~value;
-            DynValue result = Bit32Module.Bnot(CreateContext(), CreateNumberArgs(value));
+            LuaValue result = Bit32Module.Bnot(CreateContext(), CreateNumberArgs(value));
 
             await Assert
                 .That(Convert.ToUInt32(result.Number))
@@ -299,7 +300,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(0x80000000u, 0x80000000u, 0x80000000u)]
         public async Task BitwiseAndWorksWithHighBitValues(uint a, uint b, uint expected)
         {
-            DynValue result = Bit32Module.Band(CreateContext(), CreateNumberArgs(a, b));
+            LuaValue result = Bit32Module.Band(CreateContext(), CreateNumberArgs(a, b));
 
             await Assert
                 .That(Convert.ToUInt32(result.Number))
@@ -321,7 +322,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             // First verify the input converts correctly by checking bnot(bnot(x)) = x
-            DynValue result = Bit32Module.Bnot(CreateContext(), CreateNumberArgs(input));
+            LuaValue result = Bit32Module.Bnot(CreateContext(), CreateNumberArgs(input));
             uint notResult = Convert.ToUInt32(result.Number);
             uint expectedNotResult = ~expectedInput;
 
@@ -347,7 +348,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             string description
         )
         {
-            DynValue result = Bit32Module.LeftShift(
+            LuaValue result = Bit32Module.LeftShift(
                 CreateContext(),
                 CreateNumberArgs(value, shift)
             );
@@ -374,7 +375,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             string description
         )
         {
-            DynValue result = Bit32Module.RightShift(
+            LuaValue result = Bit32Module.RightShift(
                 CreateContext(),
                 CreateNumberArgs(value, shift)
             );
@@ -396,7 +397,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(0xF0F0F0F0u, 0x0F0F0F0Fu, 0xFFFFFFFFu)]
         public async Task BitwiseOrWorksWithHighBitValues(uint a, uint b, uint expected)
         {
-            DynValue result = Bit32Module.Bor(CreateContext(), CreateNumberArgs(a, b));
+            LuaValue result = Bit32Module.Bor(CreateContext(), CreateNumberArgs(a, b));
 
             await Assert
                 .That(Convert.ToUInt32(result.Number))
@@ -413,7 +414,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(0xAAAAAAAAu, 0x55555555u, 0xFFFFFFFFu)]
         public async Task BitwiseXorWorksWithHighBitValues(uint a, uint b, uint expected)
         {
-            DynValue result = Bit32Module.Bxor(CreateContext(), CreateNumberArgs(a, b));
+            LuaValue result = Bit32Module.Bxor(CreateContext(), CreateNumberArgs(a, b));
 
             await Assert
                 .That(Convert.ToUInt32(result.Number))
@@ -437,7 +438,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             string description
         )
         {
-            DynValue result = Bit32Module.Extract(
+            LuaValue result = Bit32Module.Extract(
                 CreateContext(),
                 CreateNumberArgs(value, field, width)
             );
@@ -479,7 +480,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             string description
         )
         {
-            DynValue result = Bit32Module.Extract(
+            LuaValue result = Bit32Module.Extract(
                 CreateContext(),
                 CreateNumberArgs(value, field, width)
             );
@@ -575,7 +576,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             string description
         )
         {
-            DynValue result = Bit32Module.Replace(
+            LuaValue result = Bit32Module.Replace(
                 CreateContext(),
                 CreateNumberArgs(value, insert, field, width)
             );
@@ -650,18 +651,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             return new Script(CoreModulePresets.Default).CreateDynamicExecutionContext();
         }
 
-        private static CallbackArguments CreateArgs(params DynValue[] values)
+        private static CallbackArguments CreateArgs(params LuaValue[] values)
         {
             return new CallbackArguments(values, false);
         }
 
         private static CallbackArguments CreateNumberArgs(params double[] numbers)
         {
-            DynValue[] values = new DynValue[numbers.Length];
+            LuaValue[] values = new LuaValue[numbers.Length];
 
             for (int i = 0; i < numbers.Length; i++)
             {
-                values[i] = DynValue.NewNumber(numbers[i]);
+                values[i] = LuaValue.NewNumber(numbers[i]);
             }
 
             return new CallbackArguments(values, false);
@@ -688,7 +689,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // bit32.band(5.7, 3) should truncate 5.7 to 5 and return 5 & 3 = 1
-            DynValue result = script.DoString("return bit32.band(5.7, 3)");
+            LuaValue result = script.DoString("return bit32.band(5.7, 3)");
 
             await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
         }
@@ -700,7 +701,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // bit32.band(5.7, 3) should truncate 5.7 to 5 and return 5 & 3 = 1
-            DynValue result = script.DoString("return bit32.band(5.7, 3)");
+            LuaValue result = script.DoString("return bit32.band(5.7, 3)");
 
             await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
         }
@@ -712,7 +713,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // bit32.band(5.0, 3.0) should work since 5.0 and 3.0 have integer representation
-            DynValue result = script.DoString("return bit32.band(5.0, 3.0)");
+            LuaValue result = script.DoString("return bit32.band(5.0, 3.0)");
 
             await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
         }
@@ -727,7 +728,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // bit32.lshift(1, 2.5) should truncate 2.5 to 2 and return 1 << 2 = 4
-            DynValue result = script.DoString("return bit32.lshift(1, 2.5)");
+            LuaValue result = script.DoString("return bit32.lshift(1, 2.5)");
 
             await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
         }
@@ -739,7 +740,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // bit32.lshift(1, 2.5) should truncate 2.5 to 2 and return 1 << 2 = 4
-            DynValue result = script.DoString("return bit32.lshift(1, 2.5)");
+            LuaValue result = script.DoString("return bit32.lshift(1, 2.5)");
 
             await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
         }
@@ -755,7 +756,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             // bit32.extract(0xFF, 1.5) in Lua 5.2 truncates 1.5 to 1 (default width=1)
             // Extract bit 1 from 0xFF (11111111) = 1
-            DynValue result = script.DoString("return bit32.extract(0xFF, 1.5)");
+            LuaValue result = script.DoString("return bit32.extract(0xFF, 1.5)");
 
             await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
         }

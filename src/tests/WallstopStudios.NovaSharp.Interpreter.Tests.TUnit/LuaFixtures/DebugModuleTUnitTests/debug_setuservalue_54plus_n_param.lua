@@ -8,11 +8,42 @@
 -- Reference: Lua 5.4 manual - setuservalue(udata, value, n) sets n-th user value
 -- n parameter is 1-based, n=1 is first user value slot
 
--- This test requires actual userdata; verify API shape with error case
--- For non-userdata, setuservalue should error
-local ok, err = pcall(function()
-    debug.setuservalue("not userdata", {}, 1)
-end)
-print("error:", not ok)
--- Should error because first arg is not userdata
-return not ok
+-- These calls use non-userdata so reference Lua can verify n coercion and
+-- validation order without requiring host-provided userdata.
+local stringOk, stringError = pcall(
+    debug.setuservalue,
+    "not userdata",
+    {},
+    "1"
+)
+local fractionOk, fractionError = pcall(
+    debug.setuservalue,
+    "not userdata",
+    {},
+    1.5
+)
+local thousandsOk, thousandsError = pcall(
+    debug.setuservalue,
+    "not userdata",
+    {},
+    "1,000"
+)
+
+print(
+    "numeric-string",
+    stringOk,
+    string.find(stringError, "bad argument #1") ~= nil
+)
+print(
+    "fraction",
+    fractionOk,
+    string.find(fractionError, "bad argument #3") ~= nil,
+    string.find(fractionError, "integer representation") ~= nil
+)
+print(
+    "thousands",
+    thousandsOk,
+    string.find(thousandsError, "bad argument #3") ~= nil,
+    string.find(thousandsError, "number expected") ~= nil
+)
+return not stringOk and not fractionOk and not thousandsOk

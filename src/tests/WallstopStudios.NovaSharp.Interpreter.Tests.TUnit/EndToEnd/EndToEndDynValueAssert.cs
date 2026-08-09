@@ -2,15 +2,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     internal static class EndToEndDynValueAssert
     {
-        public static async Task ExpectAsync(DynValue actual, params object[] expected)
+        public static async Task ExpectAsync(LuaValue actual, params object[] expected)
         {
-            ArgumentNullException.ThrowIfNull(actual);
-
             if (expected == null)
             {
                 expected = new object[] { null };
@@ -29,7 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             await AssertTupleAsync(actual, expected).ConfigureAwait(false);
         }
 
-        private static async Task AssertTupleAsync(DynValue value, object[] expected)
+        private static async Task AssertTupleAsync(LuaValue value, object[] expected)
         {
             await Assert.That(value.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(value.Tuple.Length).IsEqualTo(expected.Length).ConfigureAwait(false);
@@ -40,7 +39,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             }
         }
 
-        private static async Task AssertValueAsync(DynValue value, object expected)
+        private static async Task AssertValueAsync(LuaValue value, object expected)
         {
             if (expected is DataType dataType)
             {

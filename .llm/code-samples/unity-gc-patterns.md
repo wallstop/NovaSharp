@@ -86,7 +86,7 @@ T[] underlying = list.ToArray();  // One allocation, then work with array
 T[] array = ArrayPool<T>.Shared.Rent(capacity);
 
 // Option 3: For fixed-size pools, use NovaSharp's pooling
-using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(size, out DynValue[] array);
+using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(size, out LuaValue[] array);
 ```
 
 ______________________________________________________________________
@@ -95,7 +95,7 @@ ______________________________________________________________________
 
 ```csharp
 // BAD: Allocates 24 bytes in Unity Mono
-foreach (DynValue item in myList)
+foreach (LuaValue item in myList)
 {
     Process(item);
 }
@@ -107,7 +107,7 @@ for (int i = 0; i < myList.Count; i++)
 }
 
 // Arrays are optimized - foreach is safe
-foreach (DynValue item in myArray)  // Zero allocation
+foreach (LuaValue item in myArray)  // Zero allocation
 {
     Process(item);
 }

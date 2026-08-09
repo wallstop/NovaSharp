@@ -291,7 +291,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new();
                     SomeClass obj = new() { IntProp = 321 };
-                    script.Globals.Set("myobj", UserData.Create(obj));
+                    script.Globals.Set("myobj", UserData.Create(obj).Value);
                     return Task.FromResult(script.DoString("return myobj.IntProp;"));
                 },
                 async result =>
@@ -308,8 +308,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     Script script = new();
                     SomeClass first = new() { NIntProp = 321 };
                     SomeClass second = new() { NIntProp = null };
-                    script.Globals.Set("myobj1", UserData.Create(first));
-                    script.Globals.Set("myobj2", UserData.Create(second));
+                    script.Globals.Set("myobj1", UserData.Create(first).Value);
+                    script.Globals.Set("myobj2", UserData.Create(second).Value);
                     return Task.FromResult(
                         script.DoString("return myobj1.NIntProp, myobj2.NIntProp;")
                     );
@@ -330,8 +330,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     Script script = new();
                     SomeClass obj1 = new() { ObjProp = "ciao" };
                     SomeClass obj2 = new() { ObjProp = obj1 };
-                    script.Globals.Set("myobj1", UserData.Create(obj1));
-                    script.Globals.Set("myobj2", UserData.Create(obj2));
+                    script.Globals.Set("myobj1", UserData.Create(obj1).Value);
+                    script.Globals.Set("myobj2", UserData.Create(obj2).Value);
                     return Task.FromResult(
                         script.DoString(
                             "return myobj1.ObjProp, myobj2.ObjProp, myobj2.ObjProp.ObjProp;"
@@ -353,7 +353,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new();
                     SomeClass obj = new() { IntProp = 321 };
-                    script.Globals.Set("myobj", UserData.Create(obj));
+                    script.Globals.Set("myobj", UserData.Create(obj).Value);
                     script.DoString("myobj.IntProp = 19;");
                     return Task.FromResult(obj);
                 },
@@ -370,8 +370,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     Script script = new();
                     SomeClass first = new() { NIntProp = 321 };
                     SomeClass second = new() { NIntProp = null };
-                    script.Globals.Set("myobj1", UserData.Create(first));
-                    script.Globals.Set("myobj2", UserData.Create(second));
+                    script.Globals.Set("myobj1", UserData.Create(first).Value);
+                    script.Globals.Set("myobj2", UserData.Create(second).Value);
                     script.DoString("myobj1.NIntProp = nil; myobj2.NIntProp = 19;");
                     return Task.FromResult((first, second));
                 },
@@ -392,8 +392,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     Script script = new();
                     SomeClass first = new() { ObjProp = "ciao" };
                     SomeClass second = new() { ObjProp = first };
-                    script.Globals.Set("myobj1", UserData.Create(first));
-                    script.Globals.Set("myobj2", UserData.Create(second));
+                    script.Globals.Set("myobj1", UserData.Create(first).Value);
+                    script.Globals.Set("myobj2", UserData.Create(second).Value);
                     script.DoString("myobj1.ObjProp = myobj2; myobj2.ObjProp = 'hello';");
                     return Task.FromResult((first, second));
                 },
@@ -419,7 +419,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new();
                     SomeClass obj = new() { IntProp = 321 };
-                    script.Globals.Set("myobj", UserData.Create(obj));
+                    script.Globals.Set("myobj", UserData.Create(obj).Value);
                     await Assert
                         .That(() => script.DoString("myobj.IntProp = '19';"))
                         .ThrowsExactly<ScriptRuntimeException>()
@@ -438,7 +438,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new();
                     SomeClass.StaticProp = "qweqwe";
-                    script.Globals.Set("static", UserData.CreateStatic<SomeClass>());
+                    script.Globals.Set("static", UserData.CreateStatic<SomeClass>().Value);
                     script.DoString("static.StaticProp = 'asdasd' .. static.StaticProp;");
                     return Task.FromResult(SomeClass.StaticProp);
                 },
@@ -455,7 +455,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new();
                     SomeClass obj = new();
-                    script.Globals.Set("myobj", UserData.Create(obj));
+                    script.Globals.Set("myobj", UserData.Create(obj).Value);
                     return Task.FromResult(script.DoString("return myobj.ConstIntProp;"));
                 },
                 async result =>
@@ -471,7 +471,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new();
                     SomeClass obj = new();
-                    script.Globals.Set("myobj", UserData.Create(obj));
+                    script.Globals.Set("myobj", UserData.Create(obj).Value);
                     ScriptRuntimeException exception = await Assert
                         .That(() =>
                             script.DoString("myobj.ConstIntProp = 1; return myobj.ConstIntProp;")
@@ -492,7 +492,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new();
                     SomeClass obj = new();
-                    script.Globals.Set("myobj", UserData.Create(obj));
+                    script.Globals.Set("myobj", UserData.Create(obj).Value);
                     return Task.FromResult(script.DoString("return myobj.RoIntProp;"));
                 },
                 async result =>
@@ -508,7 +508,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new();
                     SomeClass obj = new();
-                    script.Globals.Set("myobj", UserData.Create(obj));
+                    script.Globals.Set("myobj", UserData.Create(obj).Value);
                     ScriptRuntimeException exception = await Assert
                         .That(() => script.DoString("myobj.RoIntProp = 1; return myobj.RoIntProp;"))
                         .ThrowsExactly<ScriptRuntimeException>()

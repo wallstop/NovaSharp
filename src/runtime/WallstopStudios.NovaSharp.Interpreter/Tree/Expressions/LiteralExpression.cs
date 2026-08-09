@@ -1,6 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
-    using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -11,20 +11,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
     /// </summary>
     internal class LiteralExpression : Expression
     {
-        private readonly DynValue _value;
+        private readonly LuaValue _value;
 
         /// <summary>
         /// Gets the constant value represented by this literal.
         /// </summary>
-        public DynValue Value
+        public LuaValue Value
         {
             get { return _value; }
         }
 
-        public LiteralExpression(ScriptLoadingContext lcontext, DynValue value)
+        public LiteralExpression(ScriptLoadingContext lcontext, LuaValue value)
             : base(lcontext)
         {
-            _value = value ?? throw new ArgumentNullException(nameof(value));
+            _value = value;
         }
 
         public LiteralExpression(ScriptLoadingContext lcontext, Token t)
@@ -40,41 +40,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                     if (t.IsFloatLiteralSyntax())
                     {
                         // Float literal syntax (contains . or e/E) - always create float subtype
-                        _value = DynValue.NewFloat(t.GetNumberValue());
+                        _value = LuaValue.NewFloat(t.GetNumberValue());
                     }
                     else if (t.TryGetIntegerValue(out long intVal))
                     {
                         // Successfully parsed as integer directly (without double intermediate)
-                        _value = DynValue.NewInteger(intVal);
+                        _value = LuaValue.NewInteger(intVal);
                     }
                     else
                     {
                         // Integer syntax but too large for long - use float
-                        _value = DynValue.NewFloat(t.GetNumberValue());
+                        _value = LuaValue.NewFloat(t.GetNumberValue());
                     }
                     break;
                 case TokenType.String:
                 case TokenType.StringLong:
-                    _value = DynValue.NewString(t.text);
+                    _value = LuaValue.NewString(t.text);
                     break;
                 case TokenType.True:
-                    _value = DynValue.True;
+                    _value = LuaValue.True;
                     break;
                 case TokenType.False:
-                    _value = DynValue.False;
+                    _value = LuaValue.False;
                     break;
                 case TokenType.Nil:
-                    _value = DynValue.Nil;
+                    _value = LuaValue.Nil;
                     break;
                 default:
                     throw new InternalErrorException("type mismatch");
             }
-
-            if (_value == null)
-            {
-                throw new SyntaxErrorException(t, "unknown literal format near '{0}'", t.text);
-            }
-
             lcontext.Lexer.Next();
         }
 
@@ -91,8 +85,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// Returns the literal value when executing a dynamic expression.
         /// </summary>
         /// <param name="context">Execution context (unused).</param>
-        /// <returns>The constant <see cref="DynValue" /> backing this expression.</returns>
-        public override DynValue Eval(ScriptExecutionContext context)
+        /// <returns>The constant <see cref="LuaValue" /> backing this expression.</returns>
+        public override LuaValue Eval(ScriptExecutionContext context)
         {
             return _value;
         }

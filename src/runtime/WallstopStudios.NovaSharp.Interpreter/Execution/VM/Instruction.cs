@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
+    using global::NovaSharp;
     using Cysharp.Text;
     using Debugging;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -14,6 +15,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     /// </summary>
     internal class Instruction
     {
+        private LuaValue _value;
+
         /// <summary>
         /// Gets or sets the operation code executed by the VM for this instruction.
         /// </summary>
@@ -37,7 +40,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Gets or sets the literal Lua value embedded in the instruction stream.
         /// </summary>
-        internal DynValue Value { get; set; }
+        internal LuaValue Value
+        {
+            get { return _value; }
+            set
+            {
+                _value = value;
+                HasValue = true;
+            }
+        }
+
+        /// <summary>
+        /// Gets whether this instruction carries a value operand. This must remain independent of
+        /// <see cref="Value"/> because nil is a valid literal operand.
+        /// </summary>
+        internal bool HasValue { get; private set; }
 
         /// <summary>
         /// Gets or sets the primary numeric operand (register index, jump target, etc.).
@@ -60,6 +77,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         internal Instruction(SourceRef sourceref)
         {
             SourceCodeRef = sourceref;
+            _value = LuaValue.Nil;
         }
 
         /// <summary>
@@ -108,7 +126,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 sb.Append(Name);
             }
 
-            if ((usage & ((int)InstructionFieldUsage.Value)) != 0)
+            if ((usage & ((int)InstructionFieldUsage.Value)) != 0 && HasValue)
             {
                 sb.Append(' ');
                 sb.Append(PurifyFromNewLines(Value));
@@ -136,14 +154,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return sb.ToString();
         }
 
-        private static string PurifyFromNewLines(DynValue value)
+        private static string PurifyFromNewLines(LuaValue value)
         {
-            if (value == null)
-            {
-                return "";
-            }
-
-            string str = value.ToString();
+            string str = value.ToRawString();
 
             // Short-circuit: check if any replacement is needed
             if (
@@ -203,7 +216,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if ((usage & ((int)InstructionFieldUsage.Value)) != 0)
             {
-                DumpValue(wr, Value);
+                DumpValue(wr, HasValue, Value);
             }
 
             if ((usage & ((int)InstructionFieldUsage.Symbol)) != 0)
@@ -288,7 +301,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if ((usage & ((int)InstructionFieldUsage.Value)) != 0)
             {
-                that.Value = ReadValue(rd, envTable);
+                if (TryReadValue(rd, envTable, out LuaValue value))
+                {
+                    that.Value = value;
+                }
             }
 
             if ((usage & ((int)InstructionFieldUsage.Symbol)) != 0)
@@ -310,13 +326,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return that;
         }
 
-        private static DynValue ReadValue(BinaryReader rd, Table envTable)
+        private static bool TryReadValue(BinaryReader rd, Table envTable, out LuaValue value)
         {
-            bool isnull = !rd.ReadBoolean();
+            bool isMissing = !rd.ReadBoolean();
 
-            if (isnull)
+            if (isMissing)
             {
-                return null;
+                value = LuaValue.Nil;
+                return false;
             }
 
             DataType dt = (DataType)rd.ReadByte();
@@ -324,38 +341,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             switch (dt)
             {
                 case DataType.Nil:
-                    return DynValue.Nil;
+                    value = LuaValue.Nil;
+                    break;
                 case DataType.Void:
-                    return DynValue.Void;
+                    value = LuaValue.Void;
+                    break;
                 case DataType.Boolean:
-                    return DynValue.FromBoolean(rd.ReadBoolean());
+                    value = LuaValue.FromBoolean(rd.ReadBoolean());
+                    break;
                 case DataType.Number:
                     // Read the integer/float subtype flag (0 = integer, 1 = float)
                     byte numSubtype = rd.ReadByte();
                     if (numSubtype == 0)
                     {
                         // Integer subtype - read as Int64 to preserve full precision
-                        return DynValue.FromInteger(rd.ReadInt64());
+                        value = LuaValue.FromInteger(rd.ReadInt64());
                     }
                     else
                     {
                         // Float subtype - read as double
-                        return DynValue.FromFloat(rd.ReadDouble());
+                        value = LuaValue.FromFloat(rd.ReadDouble());
                     }
+                    break;
                 case DataType.String:
-                    return DynValue.NewString(rd.ReadString());
+                    value = LuaValue.NewString(rd.ReadString());
+                    break;
                 case DataType.Table:
-                    return DynValue.NewTable(envTable);
+                    value = LuaValue.NewTable(envTable);
+                    break;
                 default:
                     throw new NotSupportedException(
                         ZString.Concat("Unsupported type in chunk dump : ", dt)
                     );
             }
+
+            return true;
         }
 
-        private static void DumpValue(BinaryWriter wr, DynValue value)
+        private static void DumpValue(BinaryWriter wr, bool hasValue, LuaValue value)
         {
-            if (value == null)
+            if (!hasValue)
             {
                 wr.Write(false);
                 return;

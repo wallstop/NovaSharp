@@ -54,6 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
     // THE SOFTWARE.
 
     using System;
+    using global::NovaSharp;
     using LuaPort.LuaStateInterop;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -882,7 +883,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             }
         }
 
-        private static DynValue gmatch_aux_2(
+        private static LuaValue gmatch_aux_2(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -896,7 +897,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
 
         public static int str_gmatch(LuaState l)
         {
-            CallbackFunction c = new(gmatch_aux_2, "gmatch");
+            CallbackFunction c = new(l.ExecutionContext.Script, gmatch_aux_2, "gmatch");
             string s = ArgAsType(l, 1, DataType.String, false).String;
             string p = PatchPattern(ArgAsType(l, 2, DataType.String, false).String);
 
@@ -929,7 +930,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                 pos = startPos,
             };
 
-            l.Push(DynValue.NewCallback(c));
+            l.Push(LuaValue.NewCallback(c));
 
             return 1;
         }
@@ -1845,7 +1846,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         {
                             // Lua 5.2+ converts non-string values via tostring
                             // Lua 5.1 requires string type
-                            DynValue argValue = GetArgument(l, arg);
+                            LuaValue argValue = GetArgument(l, arg);
                             string s;
                             if (argValue.Type == DataType.String)
                             {
@@ -1859,10 +1860,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                             else
                             {
                                 // Lua 5.1 coerces numbers to strings, but rejects other types
-                                // ArgAsType returns a NEW DynValue with the converted string
+                                // ArgAsType returns a NEW LuaValue with the converted string
                                 // when AutoConvert is enabled (which is the default).
                                 // For non-convertible types (table, function, etc.), it throws.
-                                DynValue converted = ArgAsType(l, arg, DataType.String, false);
+                                LuaValue converted = ArgAsType(l, arg, DataType.String, false);
                                 s = converted.String;
                             }
 

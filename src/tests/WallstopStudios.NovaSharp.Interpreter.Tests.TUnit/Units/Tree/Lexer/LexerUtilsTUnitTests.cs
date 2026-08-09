@@ -79,10 +79,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
         public async Task ParseHexFloatHandlesFractionAndExponent()
         {
             Token token = CreateToken(TokenType.NumberHexFloat, "0x1.fp+2");
+            Token overflowToken = CreateToken(TokenType.NumberHexFloat, "0x1p999999999999");
+            Token underflowToken = CreateToken(TokenType.NumberHexFloat, "0x1p-999999999999");
+            Token subnormalToken = CreateToken(
+                TokenType.NumberHexFloat,
+                "0xffffffffffffffffp-1138"
+            );
+            Token roundingToken = CreateToken(TokenType.NumberHexFloat, "0x220e087835b925585p376");
 
             double value = LexerUtils.ParseHexFloat(token);
+            double overflow = LexerUtils.ParseHexFloat(overflowToken);
+            double underflow = LexerUtils.ParseHexFloat(underflowToken);
+            double subnormal = LexerUtils.ParseHexFloat(subnormalToken);
+            double rounding = LexerUtils.ParseHexFloat(roundingToken);
 
             await Assert.That(value).IsEqualTo(7.75d).ConfigureAwait(false);
+            await Assert.That(double.IsPositiveInfinity(overflow)).IsTrue();
+            await Assert.That(underflow).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(subnormal).IsEqualTo(double.Epsilon).ConfigureAwait(false);
+            long expectedRoundingBits = ((long)(441 + 1023) << 52) | 0x107043C1ADC93L;
+            await Assert
+                .That(global::System.BitConverter.DoubleToInt64Bits(rounding))
+                .IsEqualTo(expectedRoundingBits)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

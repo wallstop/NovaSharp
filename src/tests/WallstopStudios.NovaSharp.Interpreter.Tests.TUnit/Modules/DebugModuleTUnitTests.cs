@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -27,7 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function sample() end
                 local info = debug.getinfo(sample)
@@ -48,7 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function probe()
                     local info = debug.getinfo(1)
@@ -58,7 +59,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple.Length).IsEqualTo(3);
             await Assert.That(tuple[0].String).IsNotNullOrEmpty();
             await Assert.That(tuple[1].Number).IsGreaterThan(0d);
@@ -77,9 +78,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString("return debug.getinfo(50)");
+            LuaValue result = script.DoString("return debug.getinfo(50)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -92,14 +93,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local ok, err = pcall(function() debug.getinfo('bad') end)
                 return ok, err
             "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple.Length).IsEqualTo(2);
             await Assert.That(tuple[0].CastToBool()).IsFalse();
             await Assert.That(tuple[1].String).Contains("bad argument #1");
@@ -115,14 +116,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local name, value = debug.getlocal(0, 1)
                 return type(name), value
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple.Length).IsEqualTo(2);
             await Assert.That(tuple[0].String).IsEqualTo("string");
             await Assert.That(tuple[1].Number).IsEqualTo(0d);
@@ -138,7 +139,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local assigned = debug.setlocal(0, 1, 0)
                 local missing = debug.setlocal(0, 42, 0)
@@ -146,9 +147,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].Type).IsEqualTo(DataType.String);
-            await Assert.That(tuple[1].IsNil()).IsTrue();
+            await Assert.That(tuple[1].IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -161,14 +162,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local ok, err = pcall(function() debug.getlocal(128, 1) end)
                 return ok, err
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsFalse();
             await Assert.That(tuple[1].String).Contains("level out of range");
         }
@@ -183,7 +184,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function hook() end
                 debug.sethook(hook, 'c', 42)
@@ -192,7 +193,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsTrue();
             await Assert.That(tuple[1].String).IsEqualTo("c");
             await Assert.That(tuple[2].Number).IsEqualTo(42d);
@@ -208,14 +209,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local ok, err = pcall(function() debug.setlocal(42, 1, true) end)
                 return ok, err
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsFalse();
             await Assert
                 .That(tuple[1].String)
@@ -233,9 +234,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString("return debug.getupvalue(print, 1)");
+            LuaValue result = script.DoString("return debug.getupvalue(print, 1)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -248,14 +249,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function f() end
                 return debug.getupvalue(f, 999)
                 "
             );
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -268,7 +269,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local x = 10
                 local function f() return x end
@@ -276,7 +277,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -289,9 +290,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Per Lua 5.4 spec, debug.upvalueid returns nil for CLR functions (no accessible upvalues)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString("return debug.upvalueid(print, 1)");
+            LuaValue result = script.DoString("return debug.upvalueid(print, 1)");
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -324,14 +325,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Per Lua 5.4 spec, debug.upvalueid returns nil for invalid indices
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function f() end
                 return debug.upvalueid(f, 999)
                 "
             );
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -367,7 +368,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Zero is an invalid index (Lua uses 1-based indexing for upvalues)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local x = 10
                 local function f() return x end
@@ -375,7 +376,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -413,7 +414,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Negative indices are invalid
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local x = 10
                 local function f() return x end
@@ -421,7 +422,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -459,9 +460,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString("return debug.setupvalue(print, 1, 'test')");
+            LuaValue result = script.DoString("return debug.setupvalue(print, 1, 'test')");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -474,14 +475,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function f() end
                 return debug.setupvalue(f, 999, 'test')
                 "
             );
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -494,9 +495,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString("return debug.getinfo(-1)");
+            LuaValue result = script.DoString("return debug.getinfo(-1)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -508,9 +509,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScriptWithVersion(version);
 
             // In Lua 5.1-5.3, getuservalue returns just nil for non-userdata
-            DynValue result = script.DoString("return debug.getuservalue('string')");
+            LuaValue result = script.DoString("return debug.getuservalue('string')");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -522,13 +523,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            // In Lua 5.4+, getuservalue returns (nil, false) for non-userdata
-            DynValue result = script.DoString("return debug.getuservalue('string')");
+            // Non-userdata produces one nil result. The 5.4 boolean result only describes
+            // a user-value slot on actual userdata.
+            LuaValue result = script.DoString(
+                @"
+                local results = table.pack(debug.getuservalue('string'))
+                return results.n, results[1], results[2]
+                "
+            );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
-            await Assert.That(tuple.Length).IsEqualTo(2);
-            await Assert.That(tuple[0].IsNil()).IsTrue();
-            await Assert.That(tuple[1].CastToBool()).IsFalse();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
+            await Assert.That(tuple[0].Number).IsEqualTo(1);
+            await Assert.That(tuple[1].IsNil).IsTrue();
+            await Assert.That(tuple[2].IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -544,16 +551,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DmTestUserDataClass obj = new();
             script.Globals["ud"] = UserData.Create(obj);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
-                local ok, err = pcall(function() debug.setuservalue(ud, 'not a table') end)
-                return ok, err
+                local ok, result = pcall(function()
+                    return debug.setuservalue(ud, 'not a table')
+                end)
+                local value = debug.getuservalue(ud)
+                return ok, result, value
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
-            await Assert.That(tuple[0].CastToBool()).IsFalse();
-            await Assert.That(tuple[1].String).Contains("table expected");
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
+            if (version <= LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(tuple[0].CastToBool()).IsFalse();
+                await Assert.That(tuple[1].String).Contains("table expected");
+                await Assert.That(tuple[2].IsNil).IsTrue();
+            }
+            else
+            {
+                await Assert.That(tuple[0].CastToBool()).IsTrue();
+                await Assert.That(tuple[1].UserData.Object).IsSameReferenceAs(obj);
+                await Assert.That(tuple[2].String).IsEqualTo("not a table");
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -569,16 +589,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DmTestUserDataClass obj = new();
             script.Globals["ud"] = UserData.Create(obj);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
-                local ok, err = pcall(function() debug.setuservalue(ud) end)
-                return ok, err
+                local seeded = { value = 42 }
+                debug.setuservalue(ud, seeded)
+                local ok, valueOrError = pcall(function()
+                    return debug.setuservalue(ud)
+                end)
+                return ok, valueOrError, debug.getuservalue(ud), seeded
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
-            await Assert.That(tuple[0].CastToBool()).IsFalse();
-            await Assert.That(tuple[1].String).Contains("bad argument #2");
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
+            if (version <= LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(tuple[0].CastToBool()).IsTrue();
+                await Assert.That(tuple[1].UserData.Object).IsSameReferenceAs(obj);
+                await Assert.That(tuple[2].IsNil).IsTrue();
+            }
+            else
+            {
+                await Assert.That(tuple[0].CastToBool()).IsFalse();
+                await Assert.That(tuple[1].String).Contains("bad argument #2");
+                await Assert.That(tuple[1].String).Contains("value expected");
+                await Assert.That(tuple[2].Table).IsSameReferenceAs(tuple[3].Table);
+            }
         }
 
         // ========================
@@ -598,17 +633,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             script.Globals["ud"] = UserData.Create(obj);
 
             // In Lua 5.4+, getuservalue returns (value, hasValue) tuple
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local val, hasVal = debug.getuservalue(ud, 1)
                 return val, hasVal
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple.Length).IsEqualTo(2);
             // Default user value is nil
-            await Assert.That(tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple[0].IsNil).IsTrue();
             // But the slot exists (hasValue = true)
             await Assert.That(tuple[1].CastToBool()).IsTrue();
         }
@@ -626,17 +661,87 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             script.Globals["ud"] = UserData.Create(obj);
 
             // NovaSharp only supports slot 1; slot 2 should return nil, false
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local val, hasVal = debug.getuservalue(ud, 2)
-                return val, hasVal
+                local stringVal, stringHasVal = debug.getuservalue(ud, ""1"")
+                local fractionOk, fractionError = pcall(debug.getuservalue, ud, 1.5)
+                local infinityOk, infinityError = pcall(debug.getuservalue, ud, math.huge)
+                local nanOk, nanError = pcall(debug.getuservalue, ud, 0 / 0)
+                local preciseVal, preciseHasVal = debug.getuservalue(
+                    ud,
+                    ""9007199254740993""
+                )
+                local maxIntegerOk, maxIntegerVal, maxIntegerHasVal = pcall(
+                    debug.getuservalue,
+                    ud,
+                    ""9223372036854775807""
+                )
+                local hexVal, hexHasVal = debug.getuservalue(ud, ""0x100000001"")
+                local signedHexVal, signedHexHasVal = debug.getuservalue(
+                    ud,
+                    ""-0xffffffff""
+                )
+                local hexFloatVal, hexFloatHasVal = debug.getuservalue(ud, ""0x1p0"")
+                local fullMaskOk, fullMaskVal, fullMaskHasVal = pcall(
+                    debug.getuservalue,
+                    ud,
+                    ""0xffffffffffffffff""
+                )
+                local negativeFullMaskVal, negativeFullMaskHasVal = debug.getuservalue(
+                    ud,
+                    ""-0xffffffffffffffff""
+                )
+                local thousandsOk, thousandsError = pcall(
+                    debug.getuservalue,
+                    ud,
+                    ""1,000""
+                )
+                return val, hasVal, stringVal, stringHasVal,
+                    fractionOk, fractionError,
+                    infinityOk, infinityError,
+                    nanOk, nanError,
+                    preciseVal, preciseHasVal,
+                    maxIntegerOk, maxIntegerVal, maxIntegerHasVal,
+                    hexVal, hexHasVal,
+                    signedHexVal, signedHexHasVal,
+                    hexFloatVal, hexFloatHasVal,
+                    fullMaskOk, fullMaskVal, fullMaskHasVal,
+                    negativeFullMaskVal, negativeFullMaskHasVal,
+                    thousandsOk, thousandsError
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
-            await Assert.That(tuple.Length).IsEqualTo(2);
-            await Assert.That(tuple[0].IsNil()).IsTrue();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
+            await Assert.That(tuple.Length).IsEqualTo(28);
+            await Assert.That(tuple[0].IsNil).IsTrue();
             await Assert.That(tuple[1].CastToBool()).IsFalse();
+            await Assert.That(tuple[2].IsNil).IsTrue();
+            await Assert.That(tuple[3].CastToBool()).IsTrue();
+            for (int index = 4; index <= 8; index += 2)
+            {
+                await Assert.That(tuple[index].CastToBool()).IsFalse();
+                await Assert.That(tuple[index + 1].String).Contains("integer representation");
+            }
+
+            await Assert.That(tuple[10].IsNil).IsTrue();
+            await Assert.That(tuple[11].CastToBool()).IsTrue();
+            await Assert.That(tuple[12].CastToBool()).IsTrue();
+            await Assert.That(tuple[13].IsNil).IsTrue();
+            await Assert.That(tuple[14].CastToBool()).IsFalse();
+            await Assert.That(tuple[15].IsNil).IsTrue();
+            await Assert.That(tuple[16].CastToBool()).IsTrue();
+            await Assert.That(tuple[17].IsNil).IsTrue();
+            await Assert.That(tuple[18].CastToBool()).IsTrue();
+            await Assert.That(tuple[19].IsNil).IsTrue();
+            await Assert.That(tuple[20].CastToBool()).IsTrue();
+            await Assert.That(tuple[21].CastToBool()).IsTrue();
+            await Assert.That(tuple[22].IsNil).IsTrue();
+            await Assert.That(tuple[23].CastToBool()).IsFalse();
+            await Assert.That(tuple[24].IsNil).IsTrue();
+            await Assert.That(tuple[25].CastToBool()).IsTrue();
+            await Assert.That(tuple[26].CastToBool()).IsFalse();
+            await Assert.That(tuple[27].String).Contains("number expected");
         }
 
         [global::TUnit.Core.Test]
@@ -648,18 +753,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            // In Lua 5.4+, non-userdata returns (nil, false)
-            DynValue result = script.DoString(
+            // Non-userdata returns one nil; n is still parsed before the type check.
+            LuaValue result = script.DoString(
                 @"
                 local val, hasVal = debug.getuservalue('not userdata', 1)
-                return val, hasVal
+                local stringOk, stringVal, stringHasVal = pcall(
+                    debug.getuservalue,
+                    'not userdata',
+                    ""1""
+                )
+                local fractionOk, fractionError = pcall(
+                    debug.getuservalue,
+                    'not userdata',
+                    1.5
+                )
+                return val, hasVal, stringOk, stringVal, stringHasVal,
+                    fractionOk, fractionError
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
-            await Assert.That(tuple.Length).IsEqualTo(2);
-            await Assert.That(tuple[0].IsNil()).IsTrue();
-            await Assert.That(tuple[1].CastToBool()).IsFalse();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
+            await Assert.That(tuple.Length).IsEqualTo(7);
+            await Assert.That(tuple[0].IsNil).IsTrue();
+            await Assert.That(tuple[1].IsNil).IsTrue();
+            await Assert.That(tuple[2].CastToBool()).IsTrue();
+            await Assert.That(tuple[3].IsNil).IsTrue();
+            await Assert.That(tuple[4].IsNil).IsTrue();
+            await Assert.That(tuple[5].CastToBool()).IsFalse();
+            await Assert.That(tuple[6].String).Contains("bad argument #2");
+            await Assert.That(tuple[6].String).Contains("integer representation");
         }
 
         [global::TUnit.Core.Test]
@@ -672,19 +794,57 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DmTestUserDataClass obj = new();
             script.Globals["ud"] = UserData.Create(obj);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
-                local payload = { test = 'value' }
-                local ret = debug.setuservalue(ud, payload, 1)
+                local ret = debug.setuservalue(ud, 'value', ""1"")
                 local val, hasVal = debug.getuservalue(ud, 1)
-                return ret == ud, val and val.test, hasVal
+                local fractionOk, fractionError = pcall(
+                    debug.setuservalue,
+                    ud,
+                    'mutated',
+                    1.5
+                )
+                local infinityOk, infinityError = pcall(
+                    debug.setuservalue,
+                    ud,
+                    'mutated',
+                    math.huge
+                )
+                local nanOk, nanError = pcall(
+                    debug.setuservalue,
+                    ud,
+                    'mutated',
+                    0 / 0
+                )
+                local after = debug.getuservalue(ud, 1)
+                local thousandsOk, thousandsError = pcall(
+                    debug.setuservalue,
+                    ud,
+                    'mutated',
+                    ""1,000""
+                )
+                return ret == ud, val, hasVal,
+                    fractionOk, fractionError,
+                    infinityOk, infinityError,
+                    nanOk, nanError,
+                    after,
+                    thousandsOk, thousandsError
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsTrue();
             await Assert.That(tuple[1].String).IsEqualTo("value");
             await Assert.That(tuple[2].CastToBool()).IsTrue();
+            for (int index = 3; index <= 7; index += 2)
+            {
+                await Assert.That(tuple[index].CastToBool()).IsFalse();
+                await Assert.That(tuple[index + 1].String).Contains("integer representation");
+            }
+
+            await Assert.That(tuple[9].String).IsEqualTo("value");
+            await Assert.That(tuple[10].CastToBool()).IsFalse();
+            await Assert.That(tuple[11].String).Contains("number expected");
         }
 
         [global::TUnit.Core.Test]
@@ -700,14 +860,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             script.Globals["ud"] = UserData.Create(obj);
 
             // NovaSharp only supports slot 1; slot 2 should return nil (fail)
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
-                local ret = debug.setuservalue(ud, { test = 'value' }, 2)
-                return ret
+                local ret = debug.setuservalue(ud, { test = 'value' }, ""2"")
+                local orderOk, orderError = pcall(
+                    debug.setuservalue,
+                    'not userdata',
+                    {},
+                    1.5
+                )
+                return ret, orderOk, orderError
                 "
             );
 
-            await Assert.That(result.IsNil()).IsTrue();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
+            await Assert.That(tuple[0].IsNil).IsTrue();
+            await Assert.That(tuple[1].CastToBool()).IsFalse();
+            await Assert.That(tuple[2].String).Contains("bad argument #3");
+            await Assert.That(tuple[2].String).Contains("integer representation");
         }
 
         [global::TUnit.Core.Test]
@@ -721,7 +891,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             script.Globals["ud"] = UserData.Create(obj);
 
             // Set a value, then get it without specifying n (should default to 1)
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 debug.setuservalue(ud, { label = 'default' })
                 local val, hasVal = debug.getuservalue(ud)
@@ -729,7 +899,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].String).IsEqualTo("default");
             await Assert.That(tuple[1].CastToBool()).IsTrue();
         }
@@ -746,7 +916,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             script.Globals["ud"] = UserData.Create(obj);
 
             // In Lua 5.1-5.3, getuservalue returns only one value
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 debug.setuservalue(ud, { value = 42 })
                 local results = {debug.getuservalue(ud)}
@@ -754,11 +924,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             // Should return only 1 value in Lua 5.3 and earlier
             await Assert.That(tuple[0].Number).IsEqualTo(1);
             await Assert.That(tuple[1].Number).IsEqualTo(42);
-            await Assert.That(tuple[2].IsNil()).IsTrue();
+            await Assert.That(tuple[2].IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -773,9 +943,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString("return debug.getmetatable(function() end)");
+            LuaValue result = script.DoString("return debug.getmetatable(function() end)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -788,14 +958,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local ok, err = pcall(function() debug.setmetatable({}) end)
                 return ok, err
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsFalse();
             await Assert.That(tuple[1].String).Contains("bad argument #2");
         }
@@ -810,14 +980,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local ok, err = pcall(function() debug.setmetatable({}, 'notatable') end)
                 return ok, err
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsFalse();
             await Assert.That(tuple[1].String).Contains("nil or table expected");
         }
@@ -833,7 +1003,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Functions can have metatables in NovaSharp
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local f = function() return 42 end
                 local mt = { __call = function() return 'called' end }
@@ -855,7 +1025,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function inner()
                     return debug.traceback()
@@ -883,7 +1053,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // This test verifies the function runs without error, not full Lua semantics.
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local x = 1
                 local y = 2
@@ -895,7 +1065,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             // Verify it runs without throwing
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple.Length).IsEqualTo(2);
         }
 
@@ -909,7 +1079,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function f() end
                 local ok, err = pcall(function() debug.upvaluejoin(f, 999, f, 1) end)
@@ -917,7 +1087,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsFalse();
         }
 
@@ -931,14 +1101,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local info = debug.getinfo(print)
                 return info.what, info.source
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].String).IsEqualTo("C");
             await Assert.That(tuple[1].String).IsEqualTo("=[C]");
         }
@@ -955,14 +1125,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             ScriptOptions options = new() { DebugInput = null, DebugPrint = _ => { } };
             Script script = new(CoreModulePresets.Complete, options);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local ok, err = pcall(function() debug.debug() end)
                 return ok, err
             "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
             await Assert.That(tuple[1].String).Contains("not supported").ConfigureAwait(false);
         }
@@ -980,10 +1150,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Default DebugInput returns null via Platform.DefaultInput - loop exits immediately
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString("return debug.debug()");
+            LuaValue result = script.DoString("return debug.debug()");
 
             // Should return nil without throwing
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         // NOTE: Tests for the debug.debug REPL loop (interactive input) are skipped because
@@ -1031,7 +1201,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // When using debug.getinfo with a function value, 'f' returns the function itself
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local info = debug.getinfo(print, 'f')
                 return info.func
@@ -1055,7 +1225,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // When using debug.getinfo with a function value, 'f' returns the function itself
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function sample() end
                 local info = debug.getinfo(sample, 'f')
@@ -1082,21 +1252,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals.Set(
                 "callback",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (ctx, args) =>
                     {
                         // Get info about self (level 0) with 'f' flag
-                        DynValue info = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getinfo");
-                        return ctx.Call(info, DynValue.NewNumber(0), DynValue.NewString("f"));
+                        LuaValue info = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getinfo");
+                        return ctx.Call(info, LuaValue.NewNumber(0), LuaValue.NewString("f"));
                     }
                 )
             );
 
-            DynValue result = script.DoString("return callback()");
+            LuaValue result = script.DoString("return callback()");
             Table infoTable = result.Table;
 
             await Assert.That(infoTable).IsNotNull().ConfigureAwait(false);
-            DynValue func = infoTable.Get("func");
+            LuaValue func = infoTable.Get("func");
             await Assert.That(func.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
 
@@ -1113,7 +1283,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Level 1 gets the Lua caller's frame (probe), level 0 is getinfo itself
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function probe()
                     local info = debug.getinfo(1, 'f')
@@ -1147,20 +1317,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals.Set(
                 "probe",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (ctx, args) =>
                     {
                         // Try to get local from the CLR frame (level 0)
-                        DynValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
-                        return ctx.Call(getlocal, DynValue.NewNumber(0), DynValue.NewNumber(1));
+                        LuaValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
+                        return ctx.Call(getlocal, LuaValue.NewNumber(0), LuaValue.NewNumber(1));
                     }
                 )
             );
 
-            DynValue result = script.DoString("return probe()");
+            LuaValue result = script.DoString("return probe()");
 
             // Level 0 at CLR boundary returns special placeholder locals
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             // The first placeholder is (*level)
             await Assert.That(tuple[0].String).IsEqualTo("(*level)").ConfigureAwait(false);
@@ -1181,20 +1351,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals.Set(
                 "probe",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (ctx, args) =>
                     {
                         // Try to get local index 10 (doesn't exist) from CLR frame
-                        DynValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
-                        return ctx.Call(getlocal, DynValue.NewNumber(0), DynValue.NewNumber(10));
+                        LuaValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
+                        return ctx.Call(getlocal, LuaValue.NewNumber(0), LuaValue.NewNumber(10));
                     }
                 )
             );
 
-            DynValue result = script.DoString("return probe()");
+            LuaValue result = script.DoString("return probe()");
 
             // Invalid index returns nil
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1212,22 +1382,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals.Set(
                 "probe",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (ctx, args) =>
                     {
                         // Try to set local on the CLR frame (level 0)
-                        DynValue setlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("setlocal");
+                        LuaValue setlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("setlocal");
                         return ctx.Call(
                             setlocal,
-                            DynValue.NewNumber(0),
-                            DynValue.NewNumber(1),
-                            DynValue.NewString("test")
+                            LuaValue.NewNumber(0),
+                            LuaValue.NewNumber(1),
+                            LuaValue.NewString("test")
                         );
                     }
                 )
             );
 
-            DynValue result = script.DoString("return probe()");
+            LuaValue result = script.DoString("return probe()");
 
             // Level 0 setlocal returns the placeholder name
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
@@ -1249,25 +1419,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals.Set(
                 "probe",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (ctx, args) =>
                     {
                         // Try to set local index 10 (doesn't exist) in CLR frame
-                        DynValue setlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("setlocal");
+                        LuaValue setlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("setlocal");
                         return ctx.Call(
                             setlocal,
-                            DynValue.NewNumber(0),
-                            DynValue.NewNumber(10),
-                            DynValue.NewString("test")
+                            LuaValue.NewNumber(0),
+                            LuaValue.NewNumber(10),
+                            LuaValue.NewString("test")
                         );
                     }
                 )
             );
 
-            DynValue result = script.DoString("return probe()");
+            LuaValue result = script.DoString("return probe()");
 
             // Invalid index returns nil
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1281,14 +1451,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests the CLR function path in getupvalue
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 return debug.getupvalue(print, 1)
                 "
             );
 
             // CLR functions have no upvalues
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1302,14 +1472,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests the CLR function path in setupvalue
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 return debug.setupvalue(print, 1, 'test')
                 "
             );
 
             // CLR functions have no upvalues
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1322,14 +1492,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local func, mask, count = debug.gethook()
                 return func == nil, mask == '', count == 0
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
             await Assert.That(tuple[1].CastToBool()).IsTrue().ConfigureAwait(false);
             await Assert.That(tuple[2].CastToBool()).IsTrue().ConfigureAwait(false);
@@ -1345,7 +1515,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local called = false
                 debug.sethook(function() called = true end, 'l')
@@ -1355,7 +1525,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
             await Assert.That(tuple[1].CastToBool()).IsTrue().ConfigureAwait(false);
         }
@@ -1370,7 +1540,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function sample() end
                 local info = debug.getinfo(sample, '')
@@ -1399,18 +1569,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals.Set(
                 "probe",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (ctx, args) =>
                     {
-                        DynValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
-                        return ctx.Call(getlocal, DynValue.NewNumber(0), DynValue.NewNumber(2));
+                        LuaValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
+                        return ctx.Call(getlocal, LuaValue.NewNumber(0), LuaValue.NewNumber(2));
                     }
                 )
             );
 
-            DynValue result = script.DoString("return probe()");
+            LuaValue result = script.DoString("return probe()");
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(tuple[0].String).IsEqualTo("(*index)").ConfigureAwait(false);
         }
@@ -1430,18 +1600,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals.Set(
                 "probe",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (ctx, args) =>
                     {
-                        DynValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
-                        return ctx.Call(getlocal, DynValue.NewNumber(0), DynValue.NewNumber(3));
+                        LuaValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
+                        return ctx.Call(getlocal, LuaValue.NewNumber(0), LuaValue.NewNumber(3));
                     }
                 )
             );
 
-            DynValue result = script.DoString("return probe()");
+            LuaValue result = script.DoString("return probe()");
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(tuple[0].String).IsEqualTo("(*value)").ConfigureAwait(false);
         }
@@ -1461,21 +1631,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals.Set(
                 "probe",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (ctx, args) =>
                     {
-                        DynValue setlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("setlocal");
+                        LuaValue setlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("setlocal");
                         return ctx.Call(
                             setlocal,
-                            DynValue.NewNumber(0),
-                            DynValue.NewNumber(2),
-                            DynValue.NewString("test")
+                            LuaValue.NewNumber(0),
+                            LuaValue.NewNumber(2),
+                            LuaValue.NewString("test")
                         );
                     }
                 )
             );
 
-            DynValue result = script.DoString("return probe()");
+            LuaValue result = script.DoString("return probe()");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("(*index)").ConfigureAwait(false);
@@ -1496,21 +1666,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals.Set(
                 "probe",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (ctx, args) =>
                     {
-                        DynValue setlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("setlocal");
+                        LuaValue setlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("setlocal");
                         return ctx.Call(
                             setlocal,
-                            DynValue.NewNumber(0),
-                            DynValue.NewNumber(3),
-                            DynValue.NewString("test")
+                            LuaValue.NewNumber(0),
+                            LuaValue.NewNumber(3),
+                            LuaValue.NewString("test")
                         );
                     }
                 )
             );
 
-            DynValue result = script.DoString("return probe()");
+            LuaValue result = script.DoString("return probe()");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("(*value)").ConfigureAwait(false);
@@ -1529,7 +1699,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests GetLocalFromFunction with upvalues (function locals)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local x = 10
                 local function closure()
@@ -1540,7 +1710,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             // For closures, getlocal returns upvalue placeholders
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             // Placeholder name like (*function-local 1)
             await Assert.That(tuple[0].String).Contains("function-local").ConfigureAwait(false);
@@ -1559,23 +1729,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests GetLocalFromFunction with index <= 0
             Script script = CreateScriptWithVersion(version);
 
-            DynValue zeroResult = script.DoString(
+            LuaValue zeroResult = script.DoString(
                 @"
                 local function sample() end
                 return debug.getlocal(sample, 0)
                 "
             );
 
-            await Assert.That(zeroResult.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(zeroResult.IsNil).IsTrue().ConfigureAwait(false);
 
-            DynValue negativeResult = script.DoString(
+            LuaValue negativeResult = script.DoString(
                 @"
                 local function sample() end
                 return debug.getlocal(sample, -1)
                 "
             );
 
-            await Assert.That(negativeResult.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(negativeResult.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1593,24 +1763,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals.Set(
                 "probe",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (ctx, args) =>
                     {
                         // Pass only level, not index, to test arg bounds
-                        DynValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
+                        LuaValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
                         // getlocal(0, 3) asks for (*value) which should pull args[2] - check if nil
-                        return ctx.Call(getlocal, DynValue.NewNumber(0), DynValue.NewNumber(3));
+                        return ctx.Call(getlocal, LuaValue.NewNumber(0), LuaValue.NewNumber(3));
                     }
                 )
             );
 
-            DynValue result = script.DoString("return probe()");
+            LuaValue result = script.DoString("return probe()");
 
             // The value for (*value) should be nil since no third arg was passed to callback
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(tuple[0].String).IsEqualTo("(*value)").ConfigureAwait(false);
-            await Assert.That(tuple[1].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple[1].IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1624,7 +1794,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.traceback with a thread (coroutine) argument (line 522-526)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function inner()
                     return debug.traceback(coroutine.running(), 'message')
@@ -1635,7 +1805,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
             await Assert.That(tuple[1].String).Contains("message").ConfigureAwait(false);
             await Assert.That(tuple[1].String).Contains("traceback").ConfigureAwait(false);
@@ -1654,7 +1824,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.traceback returning non-string/non-number message unchanged (line 531-536)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = { custom = 'value' }
                 return debug.traceback(t)
@@ -1679,7 +1849,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.sethook/gethook with a coroutine target (line 600-605)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function hookfn() end
                 local co = coroutine.create(function()
@@ -1692,7 +1862,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple.Length).IsGreaterThanOrEqualTo(4).ConfigureAwait(false);
             await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
             await Assert.That(tuple[1].CastToBool()).IsTrue().ConfigureAwait(false);
@@ -1711,7 +1881,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.sethook() with no args clears hook (line 605-608)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function hookfn() end
                 debug.sethook(hookfn, 'c', 5)
@@ -1722,7 +1892,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false); // Had hook before clear
             await Assert.That(tuple[1].CastToBool()).IsTrue().ConfigureAwait(false); // fn is nil after clear
             await Assert.That(tuple[2].String).IsEqualTo(string.Empty).ConfigureAwait(false);
@@ -1740,7 +1910,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.sethook(nil) clears hook (line 629-631)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function hookfn() end
                 debug.sethook(hookfn, 'c', 5)
@@ -1750,7 +1920,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
             await Assert.That(tuple[1].String).IsEqualTo(string.Empty).ConfigureAwait(false);
             await Assert.That(tuple[2].Number).IsEqualTo(0d).ConfigureAwait(false);
@@ -1767,14 +1937,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.sethook with invalid hook type (line 635-637)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local ok, err = pcall(function() debug.sethook('not a function', 'c') end)
                 return ok, err
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
             await Assert.That(tuple[1].String).Contains("function expected").ConfigureAwait(false);
         }
@@ -1790,7 +1960,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.gethook(coroutine) (line 663-666)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function hookfn() end
                 local co = coroutine.create(function()
@@ -1803,7 +1973,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
             await Assert.That(tuple[1].String).IsEqualTo("l").ConfigureAwait(false);
             await Assert.That(tuple[2].Number).IsEqualTo(3d).ConfigureAwait(false);
@@ -1821,7 +1991,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // This tests that debug.setmetatable on boolean works (line 315-317)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local mt = { __tostring = function(v) return 'custom_bool' end }
                 debug.setmetatable(true, mt)
@@ -1848,7 +2018,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Thread is at the boundary where CanHaveTypeMetatables returns false
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local co = coroutine.create(function() end)
                 local ok, err = pcall(function() debug.setmetatable(co, {}) end)
@@ -1856,7 +2026,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
             await Assert
                 .That(tuple[1].String)
@@ -1875,7 +2045,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.getmetatable for a table (line 269-271)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {}
                 local mt = { __index = function() return 42 end }
@@ -1885,7 +2055,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
             await Assert.That(tuple[1].Number).IsEqualTo(42d).ConfigureAwait(false);
         }
@@ -1903,14 +2073,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.getmetatable returning nil for table without metatable (line 269-271)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {}
                 return debug.getmetatable(t)
                 "
             );
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1924,7 +2094,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.setmetatable on a table (line 319-321)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {}
                 local mt = { __index = function() return 'found' end }
@@ -1946,7 +2116,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Per Lua 5.4 spec, debug.upvalueid returns nil when index is out of range
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function f()
                     -- Has _ENV as upvalue but nothing else
@@ -1956,7 +2126,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             // Index 999 is far beyond the available upvalues -> nil
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1997,18 +2167,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.upvalueid returns a userdata identifier for valid upvalue
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local x = 10
                 local function f()
                     return x
                 end
-                local id = debug.upvalueid(f, 1)
-                return type(id)
+                return debug.upvalueid(f, 1)
                 "
             );
 
-            await Assert.That(result.String).IsEqualTo("userdata").ConfigureAwait(false);
+            await Assert.That(result.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+            await Assert
+                .That(result.UserData.OwnerScript)
+                .IsSameReferenceAs(script)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -2022,7 +2195,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.upvaluejoin invalid index on second closure (line 487)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local x = 1
                 local function f1() return x end
@@ -2032,7 +2205,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
             await Assert
                 .That(tuple[1].String)
@@ -2051,7 +2224,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.traceback with a specific level to skip (line 543)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function deep()
                     return debug.traceback('trace', 2)
@@ -2081,7 +2254,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.traceback with nil level uses default skip=1
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function inner()
                     return debug.traceback('msg', nil)
@@ -2109,7 +2282,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Data-driven test: debug.upvalueid returns userdata for valid upvalues
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(luaCode);
+            LuaValue result = script.DoString(luaCode);
 
             await Assert.That(result.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
         }
@@ -2180,9 +2353,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Data-driven test: Lua 5.4+ returns nil for invalid upvalue indices
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(luaCode);
+            LuaValue result = script.DoString(luaCode);
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
@@ -2336,8 +2509,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             if (expectsNil)
             {
                 // Lua 5.4+ returns nil for CLR functions
-                DynValue result = script.DoString(luaCode);
-                await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+                LuaValue result = script.DoString(luaCode);
+                await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
             }
             else
             {
@@ -2418,7 +2591,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Data-driven test: debug.upvalueid returns same ID for shared upvalues
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local shared = 42
                 local function f1() return shared end
@@ -2463,7 +2636,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Data-driven test: debug.upvalueid returns different IDs for distinct upvalues
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local x = 1
                 local y = 2
@@ -2527,7 +2700,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 return info.{expectedField} ~= nil
             ";
 
-            DynValue result = script.DoString(luaCode);
+            LuaValue result = script.DoString(luaCode);
 
             await Assert
                 .That(result.CastToBool())
@@ -2707,9 +2880,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 return info.{field1} ~= nil, info.{field2} ~= nil
             ";
 
-            DynValue result = script.DoString(luaCode);
+            LuaValue result = script.DoString(luaCode);
 
-            DynValue[] tuple = result.Tuple ?? new[] { result };
+            LuaValue[] tuple = result.Tuple ?? new[] { result };
             await Assert
                 .That(tuple.Length)
                 .IsEqualTo(2)
@@ -2762,7 +2935,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 return level1()
             ";
 
-            DynValue result = script.DoString(luaCode);
+            LuaValue result = script.DoString(luaCode);
 
             await Assert
                 .That(result.Type)
@@ -2849,15 +3022,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 return sample('a', 'b', 'c')
             ";
 
-            DynValue result = script.DoString(luaCode);
+            LuaValue result = script.DoString(luaCode);
 
-            DynValue[] tuple = result.Tuple ?? new[] { result };
+            LuaValue[] tuple = result.Tuple ?? new[] { result };
 
             if (expectsNilName)
             {
                 // For invalid indices, the name should be nil (Lua returns nil for invalid index)
                 await Assert
-                    .That(tuple[0].IsNil())
+                    .That(tuple[0].IsNil)
                     .IsTrue()
                     .Because(
                         $"debug.getlocal with index {index} should return nil name ({description})"
@@ -2970,7 +3143,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Edge case: Only 'n' flag returns just name-related fields
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function sample() end
                 local info = debug.getinfo(sample, 'n')
@@ -2978,7 +3151,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
 
             await Assert
                 .That(tuple.Length)
@@ -2988,7 +3161,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             // source should be nil since 'S' flag was not specified
             await Assert
-                .That(tuple[1].IsNil())
+                .That(tuple[1].IsNil)
                 .IsTrue()
                 .Because("source should be nil when 'S' flag is not in 'what' string")
                 .ConfigureAwait(false);
@@ -3005,14 +3178,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Edge case: Level 0 should return info about getinfo itself (CLR function)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local info = debug.getinfo(0, 'nS')
                 return info.what, info.source
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert
                 .That(tuple.Length)
                 .IsEqualTo(2)
@@ -3046,7 +3219,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // For Lua 5.2+: _ENV is only included when the closure actually references global variables.
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local a, b, c = 1, 2, 3
                 local function noExplicitUpvalues() return 42 end
@@ -3061,7 +3234,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert
                 .That(tuple.Length)
                 .IsEqualTo(3)
@@ -3118,7 +3291,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function describe(value)
                     if value == nil then
@@ -3174,7 +3347,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Edge case: Empty string message
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function test()
                     return debug.traceback('')
@@ -3211,7 +3384,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Edge case: Number message is converted to string
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function test()
                     return debug.traceback(42, 1)
@@ -3244,7 +3417,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Edge case: Negative level should use default behavior
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function test()
                     return debug.traceback('msg', -1)
@@ -3281,7 +3454,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Edge case: Verify setlocal actually modifies the local variable
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function test()
                     local x = 'original'
@@ -3310,7 +3483,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Edge case: setlocal can change the type of a local variable
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function test()
                     local x = 42  -- number
@@ -3321,7 +3494,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert
                 .That(tuple.Length)
                 .IsEqualTo(2)
@@ -3357,7 +3530,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Note: _ENV is typically upvalue 1, so our captured variable is upvalue 2
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local captured = 'initial'
                 local function closure()
@@ -3395,7 +3568,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
 
             // Check if upvalue was not found
             await Assert
@@ -3459,7 +3632,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Note: Using only valid flags: n, S, l, u, f, L (not 't' which is unsupported)
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function sample(a, b)
                     local c = a + b
@@ -3481,7 +3654,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             string[] fieldDescriptions = new[]
             {
                 "name (string or nil)",
@@ -3522,7 +3695,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Diagnostic test: Verify all hook mask characters work
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local results = {}
                 local function hook() end
@@ -3553,7 +3726,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             string[] maskDescriptions = new[]
             {
                 "'c' mask for call events",

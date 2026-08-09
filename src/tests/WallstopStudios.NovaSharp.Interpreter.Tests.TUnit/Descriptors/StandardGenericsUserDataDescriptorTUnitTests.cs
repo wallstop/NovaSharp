@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -83,22 +84,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
             Script script = new();
 
-            DynValue indexResult = descriptor.Index(
+            LuaValue? indexResult = descriptor.Index(
                 script,
                 null,
-                DynValue.NewString("anything"),
+                LuaValue.NewString("anything"),
                 isDirectIndexing: true
             );
 
             bool setIndexResult = descriptor.SetIndex(
                 script,
                 null,
-                DynValue.NewString("anything"),
-                DynValue.NewNumber(1),
+                LuaValue.NewString("anything"),
+                LuaValue.NewNumber(1),
                 isDirectIndexing: true
             );
 
-            DynValue metaIndexResult = descriptor.MetaIndex(script, null, "__add");
+            LuaValue? metaIndexResult = descriptor.MetaIndex(script, null, "__add");
 
             await Assert.That(indexResult).IsNull().ConfigureAwait(false);
             await Assert.That(setIndexResult).IsFalse().ConfigureAwait(false);

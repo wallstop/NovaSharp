@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using global::NovaSharp;
 
     /// <summary>
     /// A struct-based enumerator for iterating over table key/value pairs without heap allocation.
@@ -87,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private readonly Table _table;
         private int _arrayIndex;
         private int _nodeIndex;
-        private DynValue _current;
+        private LuaValue _current;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TableKeysEnumerator"/> struct.
@@ -98,13 +99,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _table = table;
             _arrayIndex = 0;
             _nodeIndex = 0;
-            _current = null;
+            _current = LuaValue.Nil;
         }
 
         /// <summary>
         /// Gets the current key.
         /// </summary>
-        public DynValue Current => _current;
+        public LuaValue Current => _current;
 
         /// <summary>
         /// Advances the enumerator to the next element.
@@ -126,7 +127,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return true;
             }
 
-            _current = null;
+            _current = LuaValue.Nil;
             return false;
         }
 
@@ -137,7 +138,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             _arrayIndex = 0;
             _nodeIndex = 0;
-            _current = null;
+            _current = LuaValue.Nil;
         }
 
         /// <summary>
@@ -159,7 +160,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private readonly Table _table;
         private int _arrayIndex;
         private int _nodeIndex;
-        private DynValue _current;
+        private LuaValue _current;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TableValuesEnumerator"/> struct.
@@ -170,13 +171,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _table = table;
             _arrayIndex = 0;
             _nodeIndex = 0;
-            _current = null;
+            _current = LuaValue.Nil;
         }
 
         /// <summary>
         /// Gets the current value.
         /// </summary>
-        public DynValue Current => _current;
+        public LuaValue Current => _current;
 
         /// <summary>
         /// Advances the enumerator to the next element.
@@ -198,7 +199,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return true;
             }
 
-            _current = null;
+            _current = LuaValue.Nil;
             return false;
         }
 
@@ -209,7 +210,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             _arrayIndex = 0;
             _nodeIndex = 0;
-            _current = null;
+            _current = LuaValue.Nil;
         }
 
         /// <summary>

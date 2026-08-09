@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -529,9 +530,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         }
 
         /// <inheritdoc />
-        public override DynValue Eval(ScriptExecutionContext context)
+        public override LuaValue Eval(ScriptExecutionContext context)
         {
-            DynValue v1 = _exp1.Eval(context).ToScalar();
+            LuaValue v1 = _exp1.Eval(context).ToScalar();
 
             if (_operator == Operator.Or)
             {
@@ -557,21 +558,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 }
             }
 
-            DynValue v2 = _exp2.Eval(context).ToScalar();
+            LuaValue v2 = _exp2.Eval(context).ToScalar();
+            Compatibility.LuaCompatibilityVersion version = context
+                .Script
+                .Options
+                .CompatibilityVersion;
 
             if ((_operator & ComparisonOperators) != 0)
             {
-                return DynValue.FromBoolean(EvalComparison(v1, v2, _operator));
+                return LuaValue.FromBoolean(EvalComparison(v1, v2, _operator));
             }
             else if (_operator == Operator.StrConcat)
             {
                 // Use version-aware CastToString for correct number formatting
                 // Lua 5.1/5.2: integer-like floats format as "42"
                 // Lua 5.3+: integer-like floats format as "42.0"
-                Compatibility.LuaCompatibilityVersion version = context
-                    .Script
-                    .Options
-                    .CompatibilityVersion;
                 string s1 = v1.CastToString(version);
                 string s2 = v2.CastToString(version);
 
@@ -582,23 +583,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                     );
                 }
 
-                return DynValue.NewConcatenatedString(s1, s2);
+                return LuaValue.NewConcatenatedString(s1, s2);
             }
             else if ((_operator & BitwiseOperatorMask) != 0)
             {
-                return DynValue.NewNumber(EvalBitwise(v1, v2));
+                return LuaValue.NewNumber(EvalBitwise(v1, v2));
             }
             else if (_operator == Operator.FloorDiv)
             {
-                return DynValue.NewNumber(EvalFloorDivision(v1, v2));
+                return LuaValue.NewNumber(EvalFloorDivision(v1, v2, version));
             }
             else
             {
-                return DynValue.NewNumber(EvalArithmetic(v1, v2));
+                return LuaValue.NewNumber(EvalArithmetic(v1, v2, version));
             }
         }
 
-        private double EvalBitwise(DynValue v1, DynValue v2)
+        private double EvalBitwise(LuaValue v1, LuaValue v2)
         {
             if (
                 !LuaIntegerHelper.TryGetInteger(v1, out long left)
@@ -623,10 +624,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             return result;
         }
 
-        private static LuaNumber EvalFloorDivision(DynValue v1, DynValue v2)
+        private static LuaNumber EvalFloorDivision(
+            LuaValue v1,
+            LuaValue v2,
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            LuaNumber? nd1 = v1.CastToLuaNumber();
-            LuaNumber? nd2 = v2.CastToLuaNumber();
+            LuaNumber? nd1 = v1.CastToLuaNumber(version);
+            LuaNumber? nd2 = v2.CastToLuaNumber(version);
 
             if (nd1 == null || nd2 == null)
             {
@@ -640,10 +645,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             return LuaNumber.FloorDivide(nd1.Value, nd2.Value);
         }
 
-        private LuaNumber EvalArithmetic(DynValue v1, DynValue v2)
+        private LuaNumber EvalArithmetic(
+            LuaValue v1,
+            LuaValue v2,
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            LuaNumber? nd1 = v1.CastToLuaNumber();
-            LuaNumber? nd2 = v2.CastToLuaNumber();
+            LuaNumber? nd1 = v1.CastToLuaNumber(version);
+            LuaNumber? nd2 = v2.CastToLuaNumber(version);
 
             if (nd1 == null || nd2 == null)
             {
@@ -674,7 +683,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
-        private static bool EvalComparison(DynValue l, DynValue r, Operator op)
+        private static bool EvalComparison(LuaValue l, LuaValue r, Operator op)
         {
             switch (op)
             {
@@ -711,17 +720,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                         );
                     }
                 case Operator.Equal:
-                    // Identity implies equality for every Lua type except NaN, which is never equal
-                    // to itself - values are immutable and shared, so both sides of `x == x` can be
-                    // the very same wrapper instance.
-                    if (
-                        ReferenceEquals(r, l)
-                        && (r.Type != DataType.Number || !double.IsNaN(r.Number))
-                    )
+                    if (r.HasSameReferenceIdentity(l))
                     {
                         return true;
                     }
-                    else if (r.Type != l.Type)
+
+                    if (r.Type != l.Type)
                     {
                         if (
                             (l.Type == DataType.Nil && r.Type == DataType.Void)
@@ -735,10 +739,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                             return false;
                         }
                     }
-                    else
-                    {
-                        return r.Equals(l);
-                    }
+                    return r.Equals(l);
                 case Operator.Greater:
                     return !EvalComparison(l, r, Operator.LessOrEqual);
                 case Operator.GreaterOrEqual:

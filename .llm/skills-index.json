@@ -230,7 +230,7 @@
     {
       "name": "clr-interop",
       "file_path": ".llm/skills/clr-interop.md",
-      "line_count": 295,
+      "line_count": 296,
       "triggers": [
         "CLR interop",
         "C# interop",
@@ -344,7 +344,7 @@
     {
       "name": "defensive-programming",
       "file_path": ".llm/skills/defensive-programming.md",
-      "line_count": 261,
+      "line_count": 256,
       "triggers": [
         "defensive programming",
         "error handling",

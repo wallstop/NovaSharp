@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using Cysharp.Text;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -10,14 +11,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
-    /// Tests for ZString-based string operations in DynValue.
+    /// Tests for ZString-based string operations in LuaValue.
     /// </summary>
     public sealed class DynValueZStringTUnitTests
     {
         [global::TUnit.Core.Test]
         public async Task NewConcatenatedStringConcatenatesTwoStrings()
         {
-            DynValue result = DynValue.NewConcatenatedString("hello", " world");
+            LuaValue result = LuaValue.NewConcatenatedString("hello", " world");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("hello world").ConfigureAwait(false);
@@ -26,7 +27,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewConcatenatedStringConcatenatesEmptyStrings()
         {
-            DynValue result = DynValue.NewConcatenatedString("", "");
+            LuaValue result = LuaValue.NewConcatenatedString("", "");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("").ConfigureAwait(false);
@@ -35,7 +36,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewConcatenatedStringConcatenatesLeftEmptyString()
         {
-            DynValue result = DynValue.NewConcatenatedString("", "world");
+            LuaValue result = LuaValue.NewConcatenatedString("", "world");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("world").ConfigureAwait(false);
@@ -44,7 +45,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewConcatenatedStringConcatenatesRightEmptyString()
         {
-            DynValue result = DynValue.NewConcatenatedString("hello", "");
+            LuaValue result = LuaValue.NewConcatenatedString("hello", "");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("hello").ConfigureAwait(false);
@@ -53,7 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewConcatenatedStringThreeStringsConcatenatesCorrectly()
         {
-            DynValue result = DynValue.NewConcatenatedString("hello", " ", "world");
+            LuaValue result = LuaValue.NewConcatenatedString("hello", " ", "world");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("hello world").ConfigureAwait(false);
@@ -62,7 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewConcatenatedStringFourStringsConcatenatesCorrectly()
         {
-            DynValue result = DynValue.NewConcatenatedString("a", "b", "c", "d");
+            LuaValue result = LuaValue.NewConcatenatedString("a", "b", "c", "d");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("abcd").ConfigureAwait(false);
@@ -71,7 +72,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewConcatenatedStringHandlesSpecialCharacters()
         {
-            DynValue result = DynValue.NewConcatenatedString("hello\n", "world\t");
+            LuaValue result = LuaValue.NewConcatenatedString("hello\n", "world\t");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("hello\nworld\t").ConfigureAwait(false);
@@ -80,7 +81,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewConcatenatedStringHandlesUnicodeCharacters()
         {
-            DynValue result = DynValue.NewConcatenatedString("你好", "世界");
+            LuaValue result = LuaValue.NewConcatenatedString("你好", "世界");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("你好世界").ConfigureAwait(false);
@@ -94,7 +95,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             sb.Append(' ');
             sb.Append("world");
 
-            DynValue result = DynValue.NewStringFromBuilder(sb);
+            LuaValue result = LuaValue.NewStringFromBuilder(sb);
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("hello world").ConfigureAwait(false);
@@ -105,7 +106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
 
-            DynValue result = DynValue.NewStringFromBuilder(sb);
+            LuaValue result = LuaValue.NewStringFromBuilder(sb);
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("").ConfigureAwait(false);
@@ -120,7 +121,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             sb.Append(", ratio: ");
             sb.Append(3.14);
 
-            DynValue result = DynValue.NewStringFromBuilder(sb);
+            LuaValue result = LuaValue.NewStringFromBuilder(sb);
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).Contains("value: 42").ConfigureAwait(false);
@@ -134,7 +135,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             string left = "foo";
             string right = "bar";
 
-            DynValue result = DynValue.NewConcatenatedString(left, right);
+            LuaValue result = LuaValue.NewConcatenatedString(left, right);
 
             await Assert.That(result.String).IsEqualTo("foobar").ConfigureAwait(false);
         }
@@ -145,7 +146,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             string left = new string('a', 1000);
             string right = new string('b', 1000);
 
-            DynValue result = DynValue.NewConcatenatedString(left, right);
+            LuaValue result = LuaValue.NewConcatenatedString(left, right);
 
             await Assert.That(result.String.Length).IsEqualTo(2000).ConfigureAwait(false);
             await Assert.That(result.String).StartsWith("aaaa").ConfigureAwait(false);
@@ -158,7 +159,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             // This test verifies that string concatenation in Lua uses the ZString-based API
             Script script = new(version);
-            DynValue result = script.DoString("return 'hello' .. ' ' .. 'world'");
+            LuaValue result = script.DoString("return 'hello' .. ' ' .. 'world'");
 
             await Assert.That(result.String).IsEqualTo("hello world").ConfigureAwait(false);
         }
@@ -168,7 +169,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ScriptConcatenationWithNumbersUsesZString(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString("return 'value: ' .. 42");
+            LuaValue result = script.DoString("return 'value: ' .. 42");
 
             await Assert.That(result.String).IsEqualTo("value: 42").ConfigureAwait(false);
         }
@@ -178,7 +179,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ScriptConcatenationChainedUsesZString(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString("return 'a' .. 'b' .. 'c' .. 'd' .. 'e'");
+            LuaValue result = script.DoString("return 'a' .. 'b' .. 'c' .. 'd' .. 'e'");
 
             await Assert.That(result.String).IsEqualTo("abcde").ConfigureAwait(false);
         }
@@ -188,7 +189,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ScriptConcatenationInLoopUsesZString(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local s = ''
                 for i = 1, 10 do
@@ -206,7 +207,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task TableConcatUsesZStringInternally(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {'a', 'b', 'c', 'd'}
                 return table.concat(t)
@@ -221,7 +222,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task TableConcatWithSeparatorUsesZString(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local t = {'a', 'b', 'c', 'd'}
                 return table.concat(t, ', ')
@@ -236,7 +237,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task StringRepUsesZStringInternally(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString("return string.rep('ab', 5)");
+            LuaValue result = script.DoString("return string.rep('ab', 5)");
 
             await Assert.That(result.String).IsEqualTo("ababababab").ConfigureAwait(false);
         }
@@ -247,7 +248,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             // string.rep with separator is Lua 5.3+ only
             Script script = new(version);
-            DynValue result = script.DoString("return string.rep('ab', 3, '-')");
+            LuaValue result = script.DoString("return string.rep('ab', 3, '-')");
 
             await Assert.That(result.String).IsEqualTo("ab-ab-ab").ConfigureAwait(false);
         }
@@ -257,7 +258,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task StringCharUsesZStringInternally(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString("return string.char(72, 101, 108, 108, 111)");
+            LuaValue result = script.DoString("return string.char(72, 101, 108, 108, 111)");
 
             await Assert.That(result.String).IsEqualTo("Hello").ConfigureAwait(false);
         }

@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using System.Globalization;
     using System.Text;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -33,7 +34,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                     )
             );
 
-            object result = ScriptToClrConversions.DynValueToObject(DynValue.NewString("lua"));
+            object result = ScriptToClrConversions.DynValueToObject(LuaValue.NewString("lua"));
 
             await Assert.That(result).IsEqualTo("converted:lua");
         }
@@ -41,8 +42,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectPreservesIntegerSubtype()
         {
-            // When DynValue is an integer subtype, ToObject should return long (not double)
-            DynValue intValue = DynValue.NewInteger(9007199254740993L); // Beyond double precision
+            // When LuaValue is an integer subtype, ToObject should return long (not double)
+            LuaValue intValue = LuaValue.NewInteger(9007199254740993L); // Beyond double precision
 
             object result = ScriptToClrConversions.DynValueToObject(intValue);
 
@@ -53,8 +54,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectReturnsDoubleForFloatSubtype()
         {
-            // When DynValue is a float subtype, ToObject should return double
-            DynValue floatValue = DynValue.NewFloat(3.14159);
+            // When LuaValue is a float subtype, ToObject should return double
+            LuaValue floatValue = LuaValue.NewFloat(3.14159);
 
             object result = ScriptToClrConversions.DynValueToObject(floatValue);
 
@@ -66,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeLongPreservesIntegerPrecision()
         {
             // Large integer beyond double precision should be preserved when converting to long
-            DynValue intValue = DynValue.NewInteger(9007199254740993L);
+            LuaValue intValue = LuaValue.NewInteger(9007199254740993L);
 
             long result = ScriptToClrConversions.DynValueToObjectOfType<long>(intValue);
 
@@ -76,14 +77,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectReturnsNullForVoidValues()
         {
-            object result = ScriptToClrConversions.DynValueToObject(DynValue.Void);
+            object result = ScriptToClrConversions.DynValueToObject(LuaValue.Void);
             await Assert.That(result).IsNull();
         }
 
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectReturnsClosureReference()
         {
-            DynValue closure = CreateConstantClosure("return 41 + 1");
+            LuaValue closure = CreateConstantClosure("return 41 + 1");
 
             object result = ScriptToClrConversions.DynValueToObject(closure);
 
@@ -95,8 +96,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectReturnsTableReference()
         {
             Table table = new(null);
-            table.Set("language", DynValue.NewString("Lua"));
-            DynValue tableValue = DynValue.NewTable(table);
+            table.Set("language", LuaValue.NewString("Lua"));
+            LuaValue tableValue = LuaValue.NewTable(table);
 
             object result = ScriptToClrConversions.DynValueToObject(tableValue);
 
@@ -106,14 +107,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectReturnsTupleArray()
         {
-            DynValue first = DynValue.NewNumber(1);
-            DynValue second = DynValue.NewString("two");
-            DynValue tupleValue = DynValue.NewTuple(first, second);
+            LuaValue first = LuaValue.NewNumber(1);
+            LuaValue second = LuaValue.NewString("two");
+            LuaValue tupleValue = LuaValue.NewTuple(first, second);
 
             object result = ScriptToClrConversions.DynValueToObject(tupleValue);
 
-            await Assert.That(result is DynValue[]).IsTrue();
-            DynValue[] tuple = (DynValue[])result;
+            await Assert.That(result is LuaValue[]).IsTrue();
+            LuaValue[] tuple = (LuaValue[])result;
             await Assert.That(tuple.Length).IsEqualTo(2);
             await Assert.That(tuple[0]).IsEqualTo(first);
             await Assert.That(tuple[1]).IsEqualTo(second);
@@ -127,9 +128,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 isTypeCompatible: false,
                 stringValue: "<unused>"
             );
-            DynValue userData = UserData.CreateStatic(descriptor);
+            LuaValue? userData = UserData.CreateStatic(descriptor);
 
-            object result = ScriptToClrConversions.DynValueToObject(userData);
+            await Assert.That(userData.HasValue).IsTrue();
+            object result = ScriptToClrConversions.DynValueToObject(userData.Value);
 
             await Assert.That(result).IsEqualTo(descriptor.Type);
         }
@@ -137,7 +139,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectReturnsCallbackFunctionInstance()
         {
-            DynValue callback = DynValue.NewCallback((ctx, args) => DynValue.NewNumber(5));
+            LuaValue callback = LuaValue.NewCallback((ctx, args) => LuaValue.NewNumber(5));
 
             object result = ScriptToClrConversions.DynValueToObject(callback);
 
@@ -148,7 +150,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectThrowsForUnsupportedTypes()
         {
-            DynValue yieldRequest = DynValue.NewYieldReq(Array.Empty<DynValue>());
+            LuaValue yieldRequest = LuaValue.NewYieldReq(Array.Empty<LuaValue>());
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 ScriptToClrConversions.DynValueToObject(yieldRequest)
@@ -161,7 +163,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeReturnsDefaultForOptionalVoid()
         {
             int result = ScriptToClrConversions.DynValueToObjectOfType<int>(
-                DynValue.Void,
+                LuaValue.Void,
                 defaultValue: 77,
                 isOptional: true
             );
@@ -173,7 +175,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeConvertsNilToNullable()
         {
             int? result = ScriptToClrConversions.DynValueToObjectOfType<int?>(
-                DynValue.Nil,
+                LuaValue.Nil,
                 defaultValue: null,
                 isOptional: false
             );
@@ -185,7 +187,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeReturnsDefaultForOptionalNilValueType()
         {
             int result = ScriptToClrConversions.DynValueToObjectOfType<int>(
-                DynValue.Nil,
+                LuaValue.Nil,
                 defaultValue: 123,
                 isOptional: true
             );
@@ -197,7 +199,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeConvertsBooleanToStringBuilder()
         {
             StringBuilder result = ScriptToClrConversions.DynValueToObjectOfType<StringBuilder>(
-                DynValue.NewBoolean(true),
+                LuaValue.NewBoolean(true),
                 defaultValue: null,
                 isOptional: false
             );
@@ -209,7 +211,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeConvertsStringToChar()
         {
             char result = ScriptToClrConversions.DynValueToObjectOfType<char>(
-                DynValue.NewString("Nova"),
+                LuaValue.NewString("Nova"),
                 defaultValue: default(char),
                 isOptional: false
             );
@@ -221,7 +223,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeConvertsNumberToEnum()
         {
             SampleEnum result = ScriptToClrConversions.DynValueToObjectOfType<SampleEnum>(
-                DynValue.NewNumber((double)SampleEnum.Second),
+                LuaValue.NewNumber((double)SampleEnum.Second),
                 defaultValue: SampleEnum.First,
                 isOptional: false
             );
@@ -233,7 +235,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeGenericReturnsTypedValue()
         {
             int result = ScriptToClrConversions.DynValueToObjectOfType<int>(
-                DynValue.NewNumber(42),
+                LuaValue.NewNumber(42),
                 isOptional: false
             );
 
@@ -244,7 +246,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeGenericHonorsDefaultValue()
         {
             int result = ScriptToClrConversions.DynValueToObjectOfType<int>(
-                DynValue.Void,
+                LuaValue.Void,
                 defaultValue: 77,
                 isOptional: true
             );
@@ -255,7 +257,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeConvertsFunctionToClosure()
         {
-            DynValue functionValue = CreateConstantClosure("return 1337");
+            LuaValue functionValue = CreateConstantClosure("return 1337");
 
             Closure result = ScriptToClrConversions.DynValueToObjectOfType<Closure>(
                 functionValue,
@@ -269,7 +271,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeConvertsFunctionToScriptFunctionCallback()
         {
-            DynValue functionValue = CreateConstantClosure("return 21 + 21");
+            LuaValue functionValue = CreateConstantClosure("return 21 + 21");
 
             ScriptFunctionCallback result =
                 ScriptToClrConversions.DynValueToObjectOfType<ScriptFunctionCallback>(
@@ -289,9 +291,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeConvertsTableToGenericList()
         {
             Table table = new(null);
-            table.Append(DynValue.NewNumber(10));
-            table.Append(DynValue.NewNumber(20));
-            DynValue dynValueTable = DynValue.NewTable(table);
+            table.Append(LuaValue.NewNumber(10));
+            table.Append(LuaValue.NewNumber(20));
+            LuaValue dynValueTable = LuaValue.NewTable(table);
 
             List<int> result = ScriptToClrConversions.DynValueToObjectOfType<List<int>>(
                 dynValueTable,
@@ -313,7 +315,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 isTypeCompatible: true,
                 stringValue: null
             );
-            DynValue userData = UserData.Create(instance, descriptor);
+            LuaValue userData = UserData.Create(instance, descriptor);
 
             FakeUserData result = ScriptToClrConversions.DynValueToObjectOfType<FakeUserData>(
                 userData,
@@ -333,7 +335,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 isTypeCompatible: false,
                 stringValue: "<userdata>"
             );
-            DynValue userData = UserData.Create(instance, descriptor);
+            LuaValue userData = UserData.Create(instance, descriptor);
 
             string result = ScriptToClrConversions.DynValueToObjectOfType<string>(
                 userData,
@@ -347,8 +349,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeConvertsClrFunctionToCallbackFunction()
         {
-            DynValue callbackDynValue = DynValue.NewCallback(
-                (ctx, args) => DynValue.NewString("ok"),
+            LuaValue callbackDynValue = LuaValue.NewCallback(
+                (ctx, args) => LuaValue.NewString("ok"),
                 "cb"
             );
 
@@ -365,18 +367,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeConvertsCallbackFunctionToDelegate()
         {
-            DynValue callbackDynValue = DynValue.NewCallback(
-                (ctx, args) => DynValue.NewNumber(42),
+            LuaValue callbackDynValue = LuaValue.NewCallback(
+                (ctx, args) => LuaValue.NewNumber(42),
                 "answer"
             );
 
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> delegateResult =
+            Func<ScriptExecutionContext, CallbackArguments, LuaValue> delegateResult =
                 ScriptToClrConversions.DynValueToObjectOfType<
-                    Func<ScriptExecutionContext, CallbackArguments, DynValue>
+                    Func<ScriptExecutionContext, CallbackArguments, LuaValue>
                 >(callbackDynValue, defaultValue: null, isOptional: false);
-            DynValue invocationResult = delegateResult(
+            LuaValue invocationResult = delegateResult(
                 null,
-                new CallbackArguments(Array.Empty<DynValue>(), isMethodCall: false)
+                new CallbackArguments(Array.Empty<LuaValue>(), isMethodCall: false)
             );
 
             await Assert.That(invocationResult.Number).IsEqualTo(42);
@@ -387,9 +389,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new();
             Table table = new(script);
-            table.Set(DynValue.NewString("alpha"), DynValue.NewNumber(1));
-            table.Set(DynValue.NewNumber(2), DynValue.NewString("beta"));
-            DynValue tableValue = DynValue.NewTable(table);
+            table.SetValue(LuaValue.NewString("alpha"), LuaValue.NewNumber(1));
+            table.SetValue(LuaValue.NewNumber(2), LuaValue.NewString("beta"));
+            LuaValue tableValue = LuaValue.NewTable(table);
 
             Dictionary<object, object> result = ScriptToClrConversions.DynValueToObjectOfType<
                 Dictionary<object, object>
@@ -411,9 +413,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new();
             Table table = new(script);
-            table.Set(DynValue.NewString("one"), DynValue.NewNumber(1));
-            table.Set(DynValue.NewString("two"), DynValue.NewNumber(2));
-            DynValue tableValue = DynValue.NewTable(table);
+            table.SetValue(LuaValue.NewString("one"), LuaValue.NewNumber(1));
+            table.SetValue(LuaValue.NewString("two"), LuaValue.NewNumber(2));
+            LuaValue tableValue = LuaValue.NewTable(table);
 
             Dictionary<string, int> result = ScriptToClrConversions.DynValueToObjectOfType<
                 Dictionary<string, int>
@@ -430,8 +432,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         )
         {
             Table table = new(new Script(version));
-            table.Set(DynValue.NewString("key"), DynValue.NewNumber(42));
-            DynValue tableValue = DynValue.NewTable(table);
+            table.SetValue(LuaValue.NewString("key"), LuaValue.NewNumber(42));
+            LuaValue tableValue = LuaValue.NewTable(table);
 
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
                 tableValue,
@@ -445,7 +447,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeThrowsForTupleConversions()
         {
-            DynValue tupleValue = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
+            LuaValue tupleValue = LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewNumber(2));
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 ScriptToClrConversions.DynValueToObjectOfType<int>(
@@ -463,7 +465,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeThrowsForEmptyStringCharConversions()
         {
-            DynValue empty = DynValue.NewString(string.Empty);
+            LuaValue empty = LuaValue.NewString(string.Empty);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 ScriptToClrConversions.DynValueToObjectOfType<char>(
@@ -487,7 +489,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             );
 
             int result = ScriptToClrConversions.DynValueToObjectOfType<int>(
-                DynValue.NewNumber(1.23),
+                LuaValue.NewNumber(1.23),
                 defaultValue: 0,
                 isOptional: false
             );
@@ -500,7 +502,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 ScriptToClrConversions.DynValueToObjectOfType<DateTime>(
-                    DynValue.NewBoolean(true),
+                    LuaValue.NewBoolean(true),
                     defaultValue: default(DateTime),
                     isOptional: false
                 )
@@ -513,7 +515,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeWeightReturnsNilToNullableWeight()
         {
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
-                DynValue.Nil,
+                LuaValue.Nil,
                 typeof(int?),
                 isOptional: false
             );
@@ -525,7 +527,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeWeightReturnsNumberDowncastWeight()
         {
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
-                DynValue.NewNumber(3.14),
+                LuaValue.NewNumber(3.14),
                 typeof(int),
                 isOptional: false
             );
@@ -537,7 +539,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeWeightReturnsStringToCharWeight()
         {
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
-                DynValue.NewString("nova"),
+                LuaValue.NewString("nova"),
                 typeof(char),
                 isOptional: false
             );
@@ -549,8 +551,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeWeightReturnsTableConversionWeight()
         {
             Table table = new(null);
-            table.Append(DynValue.NewNumber(1));
-            DynValue tableValue = DynValue.NewTable(table);
+            table.Append(LuaValue.NewNumber(1));
+            LuaValue tableValue = LuaValue.NewTable(table);
 
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
                 tableValue,
@@ -574,7 +576,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             );
 
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
-                DynValue.NewBoolean(true),
+                LuaValue.NewBoolean(true),
                 typeof(string),
                 isOptional: false
             );
@@ -586,8 +588,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeWeightReturnsExactMatchForDynValueRequests()
         {
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
-                DynValue.NewNumber(0),
-                typeof(DynValue),
+                LuaValue.NewNumber(0),
+                typeof(LuaValue),
                 isOptional: false
             );
 
@@ -597,7 +599,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeWeightReturnsExactMatchForClosureConversions()
         {
-            DynValue functionValue = CreateConstantClosure("return 1");
+            LuaValue functionValue = CreateConstantClosure("return 1");
 
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
                 functionValue,
@@ -611,7 +613,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeWeightReturnsExactMatchForScriptFunctionCallbacks()
         {
-            DynValue functionValue = CreateConstantClosure("return 2");
+            LuaValue functionValue = CreateConstantClosure("return 2");
 
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
                 functionValue,
@@ -625,7 +627,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeWeightReturnsExactMatchForCallbackFunctions()
         {
-            DynValue callbackValue = DynValue.NewCallback((ctx, args) => DynValue.NewNumber(3));
+            LuaValue callbackValue = LuaValue.NewCallback((ctx, args) => LuaValue.NewNumber(3));
 
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
                 callbackValue,
@@ -639,11 +641,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeWeightReturnsExactMatchForCallbackDelegates()
         {
-            DynValue callbackValue = DynValue.NewCallback((ctx, args) => DynValue.NewNumber(4));
+            LuaValue callbackValue = LuaValue.NewCallback((ctx, args) => LuaValue.NewNumber(4));
 
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
                 callbackValue,
-                typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>),
+                typeof(Func<ScriptExecutionContext, CallbackArguments, LuaValue>),
                 isOptional: false
             );
 
@@ -654,7 +656,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectOfTypeWeightReturnsNilWithDefaultWeight()
         {
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
-                DynValue.Nil,
+                LuaValue.Nil,
                 typeof(int),
                 isOptional: true
             );
@@ -665,7 +667,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task DynValueToObjectOfTypeWeightReturnsExactMatchForTableType()
         {
-            DynValue table = DynValue.NewTable(new Table(null));
+            LuaValue table = LuaValue.NewTable(new Table(null));
 
             int weight = ScriptToClrConversions.DynValueToObjectOfTypeWeight(
                 table,
@@ -680,7 +682,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectReturnsLongForIntegerValues()
         {
             // Lua 5.3+ integer subtype compliance: integer values should convert to long
-            DynValue integerValue = DynValue.NewNumber(42);
+            LuaValue integerValue = LuaValue.NewNumber(42);
 
             object result = ScriptToClrConversions.DynValueToObject(integerValue);
 
@@ -696,7 +698,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DynValueToObjectReturnsDoubleForFloatValues()
         {
             // Float values should convert to double
-            DynValue floatValue = DynValue.NewNumber(3.14);
+            LuaValue floatValue = LuaValue.NewNumber(3.14);
 
             object result = ScriptToClrConversions.DynValueToObject(floatValue);
 
@@ -713,7 +715,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Arguments(int.MinValue)]
         public async Task DynValueToObjectReturnsLongForVariousIntegerLiterals(int expectedValue)
         {
-            DynValue integerValue = DynValue.NewNumber(expectedValue);
+            LuaValue integerValue = LuaValue.NewNumber(expectedValue);
 
             object result = ScriptToClrConversions.DynValueToObject(integerValue);
 
@@ -732,7 +734,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Arguments(double.Epsilon)]
         public async Task DynValueToObjectReturnsDoubleForVariousFloatLiterals(double expectedValue)
         {
-            DynValue floatValue = DynValue.NewNumber(expectedValue);
+            LuaValue floatValue = LuaValue.NewNumber(expectedValue);
 
             object result = ScriptToClrConversions.DynValueToObject(floatValue);
 
@@ -746,7 +748,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             }
         }
 
-        private static DynValue CreateConstantClosure(string code)
+        private static LuaValue CreateConstantClosure(string code)
         {
             Script script = new();
             return script.LoadString(code);
@@ -777,18 +779,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             public Type Type => _type;
 
-            public DynValue Index(
+            public bool TryIndex(
                 Script script,
                 object obj,
-                DynValue index,
-                bool isDirectIndexing
-            ) => DynValue.Nil;
+                LuaValue index,
+                bool isDirectIndexing,
+                out LuaValue value
+            )
+            {
+                value = LuaValue.Nil;
+                return true;
+            }
 
             public bool SetIndex(
                 Script script,
                 object obj,
-                DynValue index,
-                DynValue value,
+                LuaValue index,
+                LuaValue value,
                 bool isDirectIndexing
             )
             {
@@ -800,7 +807,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 return _stringValue ?? obj?.ToString();
             }
 
-            public DynValue MetaIndex(Script script, object obj, string metaname) => null;
+            public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
+            {
+                value = LuaValue.Nil;
+                return false;
+            }
 
             public bool IsTypeCompatible(Type type, object obj)
             {

@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System.IO;
     using System.Text;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -68,7 +69,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task DumpThrowsWhenMetaInstructionMissing(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue chunk = script.LoadString("return 1");
+            LuaValue chunk = script.LoadString("return 1");
             Processor processor = script.GetMainProcessorForTests();
             ByteCode byteCode = script.GetByteCodeForTests();
 

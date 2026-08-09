@@ -2,8 +2,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Collections.Generic;
-    using System.Globalization;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using Cysharp.Text;
     using Debugging;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -35,10 +35,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </param>
         /// <param name="args">Arguments passed to <c>type</c>; the first entry is inspected.</param>
         /// <returns>
-        /// A string <see cref="DynValue"/> representing the Lua type name (e.g., <c>"nil"</c>, <c>"table"</c>, <c>"function"</c>).
+        /// A string <see cref="LuaValue"/> representing the Lua type name (e.g., <c>"nil"</c>, <c>"table"</c>, <c>"function"</c>).
         /// </returns>
         [NovaSharpModuleMethod(Name = "type")]
-        public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             if (args == null)
             {
@@ -50,8 +50,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "type");
             }
 
-            DynValue v = args[0];
-            return DynValue.NewString(v.Type.ToLuaTypeString());
+            LuaValue v = args[0];
+            return LuaValue.NewString(v.Type.ToLuaTypeString());
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <returns>The original argument tuple when the assertion succeeds.</returns>
         /// <exception cref="ScriptRuntimeException">Thrown when the assertion fails.</exception>
         [NovaSharpModuleMethod(Name = "assert")]
-        public static DynValue Assert(
+        public static LuaValue Assert(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -79,12 +79,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw new ArgumentNullException(nameof(args));
             }
 
-            DynValue v = args[0];
-            DynValue message = args[1];
+            LuaValue v = args[0];
+            LuaValue message = args[1];
 
             if (!v.CastToBool())
             {
-                if (message.IsNil())
+                if (message.IsNil)
                 {
                     throw new ScriptRuntimeException("assertion failed!"); // { DoNotDecorateMessage = true };
                 }
@@ -94,7 +94,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
             }
 
-            return DynValue.NewTupleNested(args.GetArray());
+            return LuaValue.NewTupleNested(args.GetArray());
         }
 
         /// <summary>
@@ -102,9 +102,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Execution context supplied by the runtime.</param>
         /// <param name="args">Arguments describing the requested mode (nil/<c>"collect"</c>/<c>"restart"</c> trigger a GC).</param>
-        /// <returns><see cref="DynValue.Nil"/> to match Lua's API surface.</returns>
+        /// <returns><see cref="LuaValue.Nil"/> to match Lua's API surface.</returns>
         [NovaSharpModuleMethod(Name = "collectgarbage")]
-        public static DynValue CollectGarbage(
+        public static LuaValue CollectGarbage(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -114,7 +114,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw new ArgumentNullException(nameof(args));
             }
 
-            DynValue opt = args[0];
+            LuaValue opt = args[0];
 
             string mode = opt.CastToString();
 
@@ -127,7 +127,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 #endif
             }
 
-            return DynValue.Nil;
+            return LuaValue.Nil;
         }
 
         /// <summary>
@@ -141,7 +141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <returns>This method never returns because it always throws.</returns>
         /// <exception cref="ScriptRuntimeException">Always thrown to surface the Lua-visible error.</exception>
         [NovaSharpModuleMethod(Name = "error")]
-        public static DynValue Error(
+        public static LuaValue Error(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -152,8 +152,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue message = args.AsType(0, "error", DataType.String, false);
-            DynValue level = args.AsType(1, "error", DataType.Number, true);
+            LuaValue message = args.AsType(0, "error", DataType.String, false);
+            LuaValue level = args.AsType(1, "error", DataType.Number, true);
 
             // Lua 5.3+: level must have integer representation
             LuaNumberHelpers.ValidateIntegerArgument(
@@ -170,7 +170,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             ScriptRuntimeException e = new(message.String);
 
             long levelValue;
-            if (level.IsNil())
+            if (level.IsNil)
             {
                 levelValue = 1; // Default
             }
@@ -206,7 +206,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments passed to <c>tostring</c>; the first value is converted to a Lua string.</param>
         /// <returns>A string representation of the supplied value.</returns>
         [NovaSharpModuleMethod(Name = "tostring")]
-        public static DynValue ToString(
+        public static LuaValue ToString(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -226,14 +226,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "tostring");
             }
 
-            DynValue v = args[0];
-            DynValue tail = executionContext.GetMetamethodTailCall(v, Metamethods.ToStringMeta, v);
-
-            if (tail == null || tail.IsNil())
+            LuaValue v = args[0];
+            if (
+                !executionContext.TryGetMetamethodTailCall(
+                    v,
+                    Metamethods.ToStringMeta,
+                    out LuaValue tail,
+                    v
+                )
+            )
             {
                 // Use version-aware formatting for numbers
                 LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
-                return DynValue.NewString(v.ToPrintString(version));
+                return LuaValue.NewString(v.ToPrintString(version));
             }
 
             tail.TailCallData.Continuation = GetToStringContinuationCallback();
@@ -265,7 +270,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="executionContext">Execution context driving the metamethod invocation.</param>
         /// <param name="args">Arguments flowing out of the metamethod call.</param>
         /// <returns>The validated string result.</returns>
-        internal static DynValue ToStringContinuation(
+        internal static LuaValue ToStringContinuation(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -280,14 +285,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw new ArgumentNullException(nameof(args));
             }
 
-            DynValue b = args[0].ToScalar();
+            LuaValue b = args[0].ToScalar();
 
             // Lua 5.3+ requires __tostring to return a string; Lua 5.1-5.2 allows any return value
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
             LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
             bool requireStringReturn = resolved >= LuaCompatibilityVersion.Lua53;
 
-            if (b.IsNil())
+            if (b.IsNil)
             {
                 if (requireStringReturn)
                 {
@@ -320,7 +325,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </param>
         /// <returns>A tuple containing the requested slice or a number describing the argument count.</returns>
         [NovaSharpModuleMethod(Name = "select")]
-        public static DynValue Select(
+        public static LuaValue Select(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -332,11 +337,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 if (args[^1].Type == DataType.Tuple)
                 {
-                    return DynValue.FromNumber(args.Count - 1 + args[^1].Tuple.Length);
+                    return LuaValue.FromNumber(args.Count - 1 + args[^1].Tuple.Length);
                 }
                 else
                 {
-                    return DynValue.FromNumber(args.Count - 1);
+                    return LuaValue.FromNumber(args.Count - 1);
                 }
             }
 
@@ -346,7 +351,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
 
-            DynValue vNum = args.AsType(0, "select", DataType.Number, false);
+            LuaValue vNum = args.AsType(0, "select", DataType.Number, false);
 
             // Lua 5.3+: index must have integer representation
             LuaNumberHelpers.ValidateIntegerArgument(
@@ -384,24 +389,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // Fast path for empty result
             if (resultCount <= 0)
             {
-                return DynValue.Void;
+                return LuaValue.Void;
             }
 
             // Fast path for single element
             if (resultCount == 1)
             {
-                return DynValue.NewTupleNested(args[startIndex]);
+                return LuaValue.NewTupleNested(args[startIndex]);
             }
 
             // General case - use pooled list for tuple flattening
-            using (ListPool<DynValue>.Get(resultCount, out List<DynValue> values))
+            using (ListPool<LuaValue>.Get(resultCount, out List<LuaValue> values))
             {
                 for (int i = startIndex; i < args.Count; i++)
                 {
                     values.Add(args[i]);
                 }
 
-                return DynValue.NewTupleNested(ListPool<DynValue>.ToExactArray(values));
+                return LuaValue.NewTupleNested(ListPool<LuaValue>.ToExactArray(values));
             }
         }
 
@@ -413,10 +418,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Arguments describing the value to convert (index zero) and the optional numeric base (index one, 2-36).
         /// </param>
         /// <returns>
-        /// A numeric <see cref="DynValue"/> when conversion succeeds; otherwise <see cref="DynValue.Nil"/>.
+        /// A numeric <see cref="LuaValue"/> when conversion succeeds; otherwise <see cref="LuaValue.Nil"/>.
         /// </returns>
         [NovaSharpModuleMethod(Name = "tonumber")]
-        public static DynValue ToNumber(
+        public static LuaValue ToNumber(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -432,10 +437,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "tonumber");
             }
 
-            DynValue e = args[0];
-            DynValue b = args.AsType(1, "tonumber", DataType.Number, true);
+            LuaValue e = args[0];
+            LuaValue b = args.AsType(1, "tonumber", DataType.Number, true);
 
-            if (b.IsNil())
+            if (b.IsNil)
             {
                 if (e.Type == DataType.Number)
                 {
@@ -444,30 +449,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 if (e.Type != DataType.String)
                 {
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
 
                 // Lua 5.2+ tonumber without base parses hex literals (0x/0X prefix) per §3.1
                 // Lua 5.1 does NOT support hex parsing without explicit base
                 if (
-                    TryParseLuaNumeral(
+                    LuaNumber.TryParse(
                         e.String,
                         executionContext.Script.CompatibilityVersion,
                         out LuaNumber luaNum
                     )
                 )
                 {
-                    return DynValue.NewNumber(luaNum);
+                    return LuaValue.NewNumber(luaNum);
                 }
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
             else
             {
-                DynValue numeral =
+                LuaValue numeral =
                     args[0].Type != DataType.Number
                         ? args.AsType(0, "tonumber", DataType.String, false)
                         // Use LuaNumber.ToString() to properly format infinity as "inf" and NaN as "nan"
-                        : DynValue.NewString(args[0].LuaNumber.ToString());
+                        : LuaValue.NewString(args[0].LuaNumber.ToString());
 
                 double baseValue = b.Number;
                 if (double.IsNaN(baseValue) || double.IsInfinity(baseValue))
@@ -505,15 +510,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 if (numeralSpan.IsEmpty)
                 {
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
 
                 if (TryParseIntegerInBase(numeralSpan, bb, out double parsedValue))
                 {
-                    return DynValue.NewNumber(parsedValue);
+                    return LuaValue.NewNumber(parsedValue);
                 }
 
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
         }
 
@@ -583,452 +588,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         }
 
         /// <summary>
-        /// Parses a Lua numeral string (decimal, hexadecimal integer, or hexadecimal float) per §3.1.
-        /// </summary>
-        /// <param name="text">Input text to parse.</param>
-        /// <param name="version">Lua compatibility version for version-specific parsing rules.</param>
-        /// <param name="value">Outputs the parsed numeric value as a <see cref="LuaNumber"/> on success.</param>
-        /// <returns><c>true</c> if the text represents a valid Lua numeral; <c>false</c> otherwise.</returns>
-        /// <remarks>
-        /// <para>
-        /// Lua 5.1 does NOT support hex string parsing in tonumber without an explicit base.
-        /// Hex parsing (0x prefix) was added in Lua 5.2.
-        /// </para>
-        /// <para>
-        /// For Lua 5.3+, integers are parsed to full 64-bit precision and returned as integer subtypes.
-        /// Floats (including hex floats with 'p' exponent) are returned as float subtypes.
-        /// </para>
-        /// </remarks>
-        private static bool TryParseLuaNumeral(
-            string text,
-            LuaCompatibilityVersion version,
-            out LuaNumber value
-        )
-        {
-            value = LuaNumber.Zero;
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return false;
-            }
-
-            ReadOnlySpan<char> span = text.AsSpan().Trim();
-            if (span.IsEmpty)
-            {
-                return false;
-            }
-
-            int index = 0;
-            bool negative = false;
-
-            // Handle leading sign
-            if (span[index] == '+' || span[index] == '-')
-            {
-                negative = span[index] == '-';
-                index++;
-                if (index >= span.Length)
-                {
-                    return false;
-                }
-            }
-
-            // Check for hex prefix - only supported in Lua 5.2+
-            LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
-            if (
-                resolved >= LuaCompatibilityVersion.Lua52
-                && index + 1 < span.Length
-                && span[index] == '0'
-                && (span[index + 1] == 'x' || span[index + 1] == 'X')
-            )
-            {
-                // Parse as hex (integer or float) - Lua 5.2+ only
-                return TryParseHexLuaNumeral(span, index + 2, negative, out value);
-            }
-
-            // Handle "inf" string specially - .NET's double.TryParse doesn't recognize "inf",
-            // only "Infinity". Lua 5.1's strtod accepts "inf" via C runtime.
-            // Lua 5.2+ rejects all inf/nan strings, so we only enable this for Lua 5.1.
-            if (resolved == LuaCompatibilityVersion.Lua51)
-            {
-                ReadOnlySpan<char> remaining = span.Slice(index);
-                if (
-                    remaining.Equals("inf".AsSpan(), StringComparison.OrdinalIgnoreCase)
-                    || remaining.Equals("infinity".AsSpan(), StringComparison.OrdinalIgnoreCase)
-                )
-                {
-                    value = LuaNumber.FromDouble(
-                        negative ? double.NegativeInfinity : double.PositiveInfinity
-                    );
-                    return true;
-                }
-            }
-
-            // Decimal fallback using invariant culture
-            if (
-                double.TryParse(
-                    text,
-                    NumberStyles.Float | NumberStyles.AllowThousands,
-                    CultureInfo.InvariantCulture,
-                    out double doubleValue
-                )
-            )
-            {
-                // Lua 5.2+ does NOT accept "nan" or "inf" string literals (returns nil)
-                // Lua 5.1 accepts them via C's strtod
-                if (
-                    resolved >= LuaCompatibilityVersion.Lua52
-                    && (double.IsNaN(doubleValue) || double.IsInfinity(doubleValue))
-                )
-                {
-                    return false;
-                }
-
-                // Fix NaN sign bit: .NET's double.Parse("nan") always produces a negative NaN,
-                // but Lua 5.1's strtod("nan") produces a positive NaN (platform-dependent).
-                // We preserve the sign from the input string: "nan" → positive NaN, "-nan" → negative NaN.
-                if (double.IsNaN(doubleValue))
-                {
-                    // Create the correct NaN sign based on whether the input had a minus sign
-                    // Use bit manipulation to create a positive NaN (clear sign bit)
-                    if (!negative)
-                    {
-                        // Clear the sign bit (bit 63) to create positive NaN
-                        long bits = BitConverter.DoubleToInt64Bits(doubleValue);
-                        bits &= 0x7FFFFFFFFFFFFFFF; // Clear sign bit
-                        doubleValue = BitConverter.Int64BitsToDouble(bits);
-                    }
-                }
-
-                // Use LuaNumber.FromDouble to auto-promote whole numbers to integers
-                value = LuaNumber.FromDouble(doubleValue);
-                return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Parses a hexadecimal Lua numeral (integer or floating point with optional <c>p</c> exponent).
-        /// </summary>
-        /// <param name="span">Full span containing the original string (including optional sign and <c>0x</c> prefix).</param>
-        /// <param name="startIndex">Index where hex digits begin (after <c>0x</c>).</param>
-        /// <param name="negative">Whether a leading minus sign was present.</param>
-        /// <param name="value">Outputs the parsed value as a <see cref="LuaNumber"/> on success.</param>
-        /// <returns><c>true</c> when the hex literal is valid; <c>false</c> otherwise.</returns>
-        /// <remarks>
-        /// Hex integers are parsed with full 64-bit precision. Hex floats (with '.' or 'p' exponent)
-        /// are parsed as IEEE 754 doubles.
-        /// </remarks>
-        private static bool TryParseHexLuaNumeral(
-            ReadOnlySpan<char> span,
-            int startIndex,
-            bool negative,
-            out LuaNumber value
-        )
-        {
-            value = LuaNumber.Zero;
-            int index = startIndex;
-
-            // Track if this is an integer or float - integers get full 64-bit precision
-            bool isFloat = false;
-            bool digitsSeen = false;
-            int integerDigitStart = index;
-
-            // First pass: scan to determine structure and check validity
-            while (index < span.Length && IsHexDigit(span[index]))
-            {
-                index++;
-                digitsSeen = true;
-            }
-
-            int integerDigitEnd = index;
-
-            // Check for fractional part - makes this a float
-            if (index < span.Length && span[index] == '.')
-            {
-                isFloat = true;
-                index++;
-                while (index < span.Length && IsHexDigit(span[index]))
-                {
-                    index++;
-                    digitsSeen = true;
-                }
-            }
-
-            if (!digitsSeen)
-            {
-                return false;
-            }
-
-            // Check for binary exponent - makes this a float
-            int exponent = 0;
-            if (index < span.Length && (span[index] == 'p' || span[index] == 'P'))
-            {
-                isFloat = true;
-                index++;
-                if (index >= span.Length)
-                {
-                    return false;
-                }
-
-                int expSign = 1;
-                if (span[index] == '+' || span[index] == '-')
-                {
-                    if (span[index] == '-')
-                    {
-                        expSign = -1;
-                    }
-                    index++;
-                }
-
-                if (index >= span.Length || !char.IsDigit(span[index]))
-                {
-                    return false;
-                }
-
-                int expValue = 0;
-                while (index < span.Length && char.IsDigit(span[index]))
-                {
-                    expValue = (expValue * 10) + (span[index] - '0');
-                    index++;
-                }
-
-                exponent = expSign * expValue;
-            }
-
-            // Must have consumed entire input
-            if (index != span.Length)
-            {
-                return false;
-            }
-
-            if (isFloat)
-            {
-                // Parse as floating point with proper handling
-                return TryParseHexFloat(span, startIndex, negative, out value);
-            }
-            else
-            {
-                // Parse as integer with full 64-bit precision
-                return TryParseHexInteger(
-                    span.Slice(integerDigitStart, integerDigitEnd - integerDigitStart),
-                    negative,
-                    out value
-                );
-            }
-        }
-
-        /// <summary>
-        /// Parses a hexadecimal integer with full 64-bit precision.
-        /// </summary>
-        private static bool TryParseHexInteger(
-            ReadOnlySpan<char> hexDigits,
-            bool negative,
-            out LuaNumber value
-        )
-        {
-            value = LuaNumber.Zero;
-
-            if (hexDigits.IsEmpty)
-            {
-                return false;
-            }
-
-            // For very large numbers that would overflow long, fall back to double
-            // A long can hold up to 16 hex digits (64 bits / 4 bits per digit)
-            // But we need to be careful with overflow during accumulation
-            if (hexDigits.Length > 16)
-            {
-                // Too many digits - parse as double (will lose precision but won't overflow)
-                double doubleValue = 0;
-                foreach (char c in hexDigits)
-                {
-                    doubleValue = (doubleValue * 16.0) + HexDigitToValue(c);
-                }
-                if (negative)
-                {
-                    doubleValue = -doubleValue;
-                }
-                value = LuaNumber.FromFloat(doubleValue);
-                return true;
-            }
-
-            // Parse with overflow checking
-            ulong accumulator = 0;
-            foreach (char c in hexDigits)
-            {
-                int digit = HexDigitToValue(c);
-
-                // Check for overflow before multiplication
-                if (accumulator > (ulong.MaxValue / 16))
-                {
-                    // Would overflow - fall back to double
-                    double doubleValue = 0;
-                    foreach (char ch in hexDigits)
-                    {
-                        doubleValue = (doubleValue * 16.0) + HexDigitToValue(ch);
-                    }
-                    if (negative)
-                    {
-                        doubleValue = -doubleValue;
-                    }
-                    value = LuaNumber.FromFloat(doubleValue);
-                    return true;
-                }
-
-                accumulator = (accumulator * 16) + (ulong)digit;
-            }
-
-            // Convert to signed long with proper handling of negative numbers
-            if (negative)
-            {
-                // For negative numbers, check if value fits in long range
-                if (accumulator > (ulong)long.MaxValue + 1)
-                {
-                    // Too large for long - return as negative double
-                    value = LuaNumber.FromFloat(-(double)accumulator);
-                }
-                else if (accumulator == (ulong)long.MaxValue + 1)
-                {
-                    // Exactly long.MinValue
-                    value = LuaNumber.FromInteger(long.MinValue);
-                }
-                else
-                {
-                    value = LuaNumber.FromInteger(-(long)accumulator);
-                }
-            }
-            else
-            {
-                // Positive number
-                if (accumulator > (ulong)long.MaxValue)
-                {
-                    // Too large for long - return as double (loses precision but correct behavior)
-                    value = LuaNumber.FromFloat((double)accumulator);
-                }
-                else
-                {
-                    value = LuaNumber.FromInteger((long)accumulator);
-                }
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Parses a hexadecimal floating point number (with '.' or 'p' exponent).
-        /// </summary>
-        private static bool TryParseHexFloat(
-            ReadOnlySpan<char> span,
-            int startIndex,
-            bool negative,
-            out LuaNumber value
-        )
-        {
-            value = LuaNumber.Zero;
-            int index = startIndex;
-
-            double significand = 0;
-            bool digitsSeen = false;
-            int fractionalDigits = 0;
-
-            // Parse integer part
-            while (index < span.Length && IsHexDigit(span[index]))
-            {
-                significand = (significand * 16.0) + HexDigitToValue(span[index]);
-                index++;
-                digitsSeen = true;
-            }
-
-            // Parse fractional part
-            if (index < span.Length && span[index] == '.')
-            {
-                index++;
-                while (index < span.Length && IsHexDigit(span[index]))
-                {
-                    significand = (significand * 16.0) + HexDigitToValue(span[index]);
-                    index++;
-                    digitsSeen = true;
-                    fractionalDigits++;
-                }
-            }
-
-            if (!digitsSeen)
-            {
-                return false;
-            }
-
-            int exponent = -4 * fractionalDigits;
-
-            // Parse binary exponent (p/P)
-            if (index < span.Length && (span[index] == 'p' || span[index] == 'P'))
-            {
-                index++;
-                if (index >= span.Length)
-                {
-                    return false;
-                }
-
-                int expSign = 1;
-                if (span[index] == '+' || span[index] == '-')
-                {
-                    if (span[index] == '-')
-                    {
-                        expSign = -1;
-                    }
-                    index++;
-                }
-
-                if (index >= span.Length || !char.IsDigit(span[index]))
-                {
-                    return false;
-                }
-
-                int expValue = 0;
-                while (index < span.Length && char.IsDigit(span[index]))
-                {
-                    expValue = (expValue * 10) + (span[index] - '0');
-                    index++;
-                }
-
-                exponent += expSign * expValue;
-            }
-
-            // Must have consumed entire input
-            if (index != span.Length)
-            {
-                return false;
-            }
-
-            double result = significand * Math.Pow(2, exponent);
-            if (negative)
-            {
-                result = -result;
-            }
-            value = LuaNumber.FromFloat(result);
-            return true;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsHexDigit(char c)
-        {
-            return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int HexDigitToValue(char c)
-        {
-            if (c >= '0' && c <= '9')
-            {
-                return c - '0';
-            }
-            if (c >= 'a' && c <= 'f')
-            {
-                return c - 'a' + 10;
-            }
-            return c - 'A' + 10;
-        }
-
-        /// <summary>
         /// Implements Lua's <c>print</c> function (§6.1) by formatting the arguments with tabs and forwarding them to
         /// the host-provided debug sink.
         /// </summary>
@@ -1053,9 +612,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </remarks>
         /// <param name="executionContext">Current execution context, used to resolve the script's debug printer.</param>
         /// <param name="args">Arguments to format and print.</param>
-        /// <returns><see cref="DynValue.Nil"/>, matching Lua's return contract.</returns>
+        /// <returns><see cref="LuaValue.Nil"/>, matching Lua's return contract.</returns>
         [NovaSharpModuleMethod(Name = "print")]
-        public static DynValue Print(
+        public static LuaValue Print(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -1102,7 +661,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             script.Options.DebugPrint(sb.ToString());
 
-            return DynValue.Nil;
+            return LuaValue.Nil;
         }
 
         /// <summary>
@@ -1115,23 +674,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <returns>The string representation of the value.</returns>
         private static string CallGlobalTostring(
             Script script,
-            DynValue value,
+            LuaValue value,
             LuaCompatibilityVersion version
         )
         {
             // Get the global tostring function
-            DynValue tostringFunc = script.Globals.RawGet("tostring");
+            LuaValue tostringFunc = script.Globals.RawGet("tostring");
 
-            if (
-                tostringFunc != null
-                && (
-                    tostringFunc.Type == DataType.Function
-                    || tostringFunc.Type == DataType.ClrFunction
-                )
-            )
+            if (tostringFunc.Type == DataType.Function || tostringFunc.Type == DataType.ClrFunction)
             {
                 // Call the global tostring function (user-overridable, including CLR callbacks)
-                DynValue result = script.Call(tostringFunc, value);
+                LuaValue result = script.CallValues(tostringFunc, value);
 
                 if (result.Type == DataType.String)
                 {
@@ -1168,7 +721,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <exception cref="ScriptRuntimeException">Thrown if the stack level is invalid or negative.</exception>
         [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
         [NovaSharpModuleMethod(Name = "getfenv")]
-        public static DynValue GetFenv(
+        public static LuaValue GetFenv(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -1179,12 +732,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue arg = args.Count > 0 ? args[0] : DynValue.Nil;
+            LuaValue arg = args.Count > 0 ? args[0] : LuaValue.Nil;
 
             // If no argument or nil, default to level 1 (calling function)
-            if (arg.IsNil())
+            if (arg.IsNil)
             {
-                arg = DynValue.NewNumber(1);
+                arg = LuaValue.NewNumber(1);
             }
 
             // Handle function argument
@@ -1196,7 +749,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             else if (arg.Type == DataType.ClrFunction)
             {
                 // C functions always return the global environment
-                return DynValue.NewTable(executionContext.Script.Globals);
+                return LuaValue.NewTable(executionContext.Script.Globals);
             }
             else if (arg.Type == DataType.Number)
             {
@@ -1217,7 +770,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 // Level 0 returns the global environment (thread)
                 if (level == 0)
                 {
-                    return DynValue.NewTable(executionContext.Script.Globals);
+                    return LuaValue.NewTable(executionContext.Script.Globals);
                 }
 
                 // Find the Lua function at the given stack level
@@ -1270,7 +823,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <exception cref="ScriptRuntimeException">Thrown if arguments are invalid or trying to change a C function's environment.</exception>
         [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
         [NovaSharpModuleMethod(Name = "setfenv")]
-        public static DynValue SetFenv(
+        public static LuaValue SetFenv(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -1286,8 +839,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgumentNoValue(1, "setfenv", DataType.Table);
             }
 
-            DynValue arg = args[0];
-            DynValue envArg = args[1];
+            LuaValue arg = args[0];
+            LuaValue envArg = args[1];
 
             if (envArg.Type != DataType.Table)
             {
@@ -1337,9 +890,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     executionContext.Script.Globals.MetaTable = newEnv.MetaTable;
                     foreach (TablePair pair in newEnv.GetPairsEnumerator())
                     {
-                        executionContext.Script.Globals.Set(pair.Key, pair.Value);
+                        executionContext.Script.Globals.SetValue(pair.Key, pair.Value);
                     }
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
 
                 // Find the Lua function at the given stack level
@@ -1369,10 +922,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     && closureScope.Symbols[0] == WellKnownSymbols.ENV
                 )
                 {
-                    closureScope.GetSlot(0).Value = DynValue.NewTable(newEnv);
+                    closureScope.GetSlot(0).Value = LuaValue.NewTable(newEnv);
                     // Return nil for stack-level setfenv (matches Lua 5.1 behavior for level > 0)
                     // Actually, Lua 5.1 returns the function for level > 0, but we don't have easy access to it
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
                 else
                 {
@@ -1437,11 +990,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Gets the environment table from a closure's upvalues.
         /// </summary>
-        private static DynValue GetEnvironmentFromClosure(Closure closure, Script script)
+        private static LuaValue GetEnvironmentFromClosure(Closure closure, Script script)
         {
             if (closure.UpValuesCount > 0 && closure.GetUpValueName(0) == WellKnownSymbols.ENV)
             {
-                DynValue envValue = closure.GetUpValue(0);
+                LuaValue envValue = closure.GetUpValue(0);
                 if (envValue.Type == DataType.Table)
                 {
                     return envValue;
@@ -1449,13 +1002,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             // If no _ENV upvalue, return global environment
-            return DynValue.NewTable(script.Globals);
+            return LuaValue.NewTable(script.Globals);
         }
 
         /// <summary>
         /// Gets the environment table from a closure context.
         /// </summary>
-        private static DynValue GetEnvironmentFromClosureContext(
+        private static LuaValue GetEnvironmentFromClosureContext(
             ClosureContext context,
             Script script
         )
@@ -1467,7 +1020,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 && context.Symbols[0] == WellKnownSymbols.ENV
             )
             {
-                DynValue envValue = context[0];
+                LuaValue envValue = context[0];
                 if (envValue.Type == DataType.Table)
                 {
                     return envValue;
@@ -1475,7 +1028,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             // If no _ENV upvalue, return global environment
-            return DynValue.NewTable(script.Globals);
+            return LuaValue.NewTable(script.Globals);
         }
 
         /// <summary>
@@ -1485,7 +1038,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             if (closure.UpValuesCount > 0 && closure.GetUpValueName(0) == WellKnownSymbols.ENV)
             {
-                closure.GetUpValueSlot(0).Value = DynValue.NewTable(newEnv);
+                closure.GetUpValueSlot(0).Value = LuaValue.NewTable(newEnv);
             }
             else
             {
@@ -1500,10 +1053,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Execution context used to access the host script and debug sink.</param>
         /// <param name="args">Arguments to format before invoking <c>_WARN</c> or printing.</param>
-        /// <returns><see cref="DynValue.Nil"/>, matching Lua's return contract.</returns>
+        /// <returns><see cref="LuaValue.Nil"/>, matching Lua's return contract.</returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua54)]
         [NovaSharpModuleMethod(Name = "warn")]
-        public static DynValue Warn(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Warn(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -1525,17 +1078,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             string payload = sb.ToString();
             Script script = executionContext.Script;
-            DynValue warnHandler = script.Globals.RawGet("_WARN");
+            LuaValue warnHandler = script.Globals.RawGet("_WARN");
 
-            if (
-                warnHandler != null
-                && (
-                    warnHandler.Type == DataType.Function
-                    || warnHandler.Type == DataType.ClrFunction
-                )
-            )
+            if (warnHandler.Type == DataType.Function || warnHandler.Type == DataType.ClrFunction)
             {
-                script.Call(warnHandler, DynValue.NewString(payload));
+                script.CallValues(warnHandler, LuaValue.NewString(payload));
             }
             else
             {
@@ -1551,7 +1098,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
             }
 
-            return DynValue.Nil;
+            return LuaValue.Nil;
         }
     }
 }

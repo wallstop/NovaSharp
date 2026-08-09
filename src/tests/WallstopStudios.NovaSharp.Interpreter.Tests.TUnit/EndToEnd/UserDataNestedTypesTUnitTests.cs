@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System;
     using System.Diagnostics.CodeAnalysis;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -25,9 +26,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new(version);
 
-                    script.Globals.Set("o", UserData.CreateStatic<SomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<SomeType>().Value);
 
-                    DynValue result = script.DoString("return o:Get()");
+                    LuaValue result = script.DoString("return o:Get()");
 
                     await Assert
                         .That(result.Type)
@@ -45,9 +46,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new(version);
 
-                    script.Globals.Set("o", UserData.CreateStatic<SomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<SomeType>().Value);
 
-                    DynValue result = script.DoString("return o.SomeNestedType:Get()");
+                    LuaValue result = script.DoString("return o.SomeNestedType:Get()");
 
                     await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
                     await Assert
@@ -66,9 +67,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new(version);
 
-                    script.Globals.Set("o", UserData.CreateStatic<SomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<SomeType>().Value);
 
-                    DynValue result = script.DoString("return o.SomeNestedTypePrivate:Get()");
+                    LuaValue result = script.DoString("return o.SomeNestedTypePrivate:Get()");
 
                     await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
                     await Assert
@@ -87,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new(version);
 
-                    script.Globals.Set("o", UserData.CreateStatic<SomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<SomeType>().Value);
 
                     Assert.Throws<ScriptRuntimeException>(() =>
                         script.DoString("return o.SomeNestedTypePrivate2:Get()")
@@ -106,9 +107,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new(version);
 
-                    script.Globals.Set("o", UserData.CreateStatic<VSomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<VSomeType>().Value);
 
-                    DynValue result = script.DoString("return o.SomeNestedType:Get()");
+                    LuaValue result = script.DoString("return o.SomeNestedType:Get()");
 
                     await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
                     await Assert
@@ -127,9 +128,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new(version);
 
-                    script.Globals.Set("o", UserData.CreateStatic<VSomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<VSomeType>().Value);
 
-                    DynValue result = script.DoString("return o.SomeNestedTypePrivate:Get()");
+                    LuaValue result = script.DoString("return o.SomeNestedTypePrivate:Get()");
 
                     await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
                     await Assert
@@ -148,7 +149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 {
                     Script script = new(version);
 
-                    script.Globals.Set("o", UserData.CreateStatic<VSomeType>());
+                    script.Globals.Set("o", UserData.CreateStatic<VSomeType>().Value);
 
                     Assert.Throws<ScriptRuntimeException>(() =>
                         script.DoString("return o.SomeNestedTypePrivate2:Get()")

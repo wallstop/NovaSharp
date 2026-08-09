@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Runtime.InteropServices;
+    using global::NovaSharp;
 
     /// <summary>
     /// Class wrapping a request to yield a coroutine
@@ -11,43 +12,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// The return values of the coroutine
         /// </summary>
-        private DynValue[] _returnValues;
-        private DynValue _arg0;
-        private DynValue _arg1;
-        private DynValue _arg2;
-        private DynValue _arg3;
+        private LuaValue[] _returnValues;
+        private LuaValue _arg0;
+        private LuaValue _arg1;
+        private LuaValue _arg2;
+        private LuaValue _arg3;
         private int _count;
 
         /// <summary>
         /// Gets the returned values as a read-only memory block.
         /// </summary>
-        public ReadOnlyMemory<DynValue> ReturnValues
+        public ReadOnlyMemory<LuaValue> ReturnValues
         {
             get { return GetReturnValuesBuffer(); }
             internal set
             {
                 _returnValues = ExtractBackingArray(value);
                 _count = _returnValues.Length;
-                _arg0 = null;
-                _arg1 = null;
-                _arg2 = null;
-                _arg3 = null;
+                _arg0 = default;
+                _arg1 = default;
+                _arg2 = default;
+                _arg3 = default;
             }
         }
 
         /// <summary>
         /// Gets a span view over the return values for low-level consumers.
         /// </summary>
-        internal ReadOnlySpan<DynValue> ReturnValuesSpan => GetReturnValuesBuffer();
+        internal ReadOnlySpan<LuaValue> ReturnValuesSpan => GetReturnValuesBuffer();
 
         /// <summary>
         /// Creates a yield request storing one return value without allocating a return array.
         /// </summary>
         /// <param name="arg">The yielded return value.</param>
         /// <returns>A new <see cref="YieldRequest"/>.</returns>
-        internal static YieldRequest New(DynValue arg)
+        internal static YieldRequest New(LuaValue arg)
         {
-            return new YieldRequest { _count = 1, _arg0 = NormalizeReturnValue(arg) };
+            return new YieldRequest { _count = 1, _arg0 = arg };
         }
 
         /// <summary>
@@ -56,13 +57,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg0">The first yielded return value.</param>
         /// <param name="arg1">The second yielded return value.</param>
         /// <returns>A new <see cref="YieldRequest"/>.</returns>
-        internal static YieldRequest New(DynValue arg0, DynValue arg1)
+        internal static YieldRequest New(LuaValue arg0, LuaValue arg1)
         {
             return new YieldRequest
             {
                 _count = 2,
-                _arg0 = NormalizeReturnValue(arg0),
-                _arg1 = NormalizeReturnValue(arg1),
+                _arg0 = arg0,
+                _arg1 = arg1,
             };
         }
 
@@ -73,14 +74,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg1">The second yielded return value.</param>
         /// <param name="arg2">The third yielded return value.</param>
         /// <returns>A new <see cref="YieldRequest"/>.</returns>
-        internal static YieldRequest New(DynValue arg0, DynValue arg1, DynValue arg2)
+        internal static YieldRequest New(LuaValue arg0, LuaValue arg1, LuaValue arg2)
         {
             return new YieldRequest
             {
                 _count = 3,
-                _arg0 = NormalizeReturnValue(arg0),
-                _arg1 = NormalizeReturnValue(arg1),
-                _arg2 = NormalizeReturnValue(arg2),
+                _arg0 = arg0,
+                _arg1 = arg1,
+                _arg2 = arg2,
             };
         }
 
@@ -92,22 +93,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg2">The third yielded return value.</param>
         /// <param name="arg3">The fourth yielded return value.</param>
         /// <returns>A new <see cref="YieldRequest"/>.</returns>
-        internal static YieldRequest New(DynValue arg0, DynValue arg1, DynValue arg2, DynValue arg3)
+        internal static YieldRequest New(LuaValue arg0, LuaValue arg1, LuaValue arg2, LuaValue arg3)
         {
             return new YieldRequest
             {
                 _count = 4,
-                _arg0 = NormalizeReturnValue(arg0),
-                _arg1 = NormalizeReturnValue(arg1),
-                _arg2 = NormalizeReturnValue(arg2),
-                _arg3 = NormalizeReturnValue(arg3),
+                _arg0 = arg0,
+                _arg1 = arg1,
+                _arg2 = arg2,
+                _arg3 = arg3,
             };
         }
 
         /// <summary>
         /// Exposes the underlying return-value buffer so coroutine machinery can reuse it without copying.
         /// </summary>
-        internal DynValue[] BorrowReturnValuesBuffer()
+        internal LuaValue[] BorrowReturnValuesBuffer()
         {
             return GetReturnValuesBuffer();
         }
@@ -116,34 +117,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Converts the yielded values into the tuple shape returned by coroutine resume.
         /// </summary>
         /// <returns>The yielded values as a scalar, tuple, or nil value.</returns>
-        internal DynValue ToTuple()
+        internal LuaValue ToTuple()
         {
             if (_returnValues != null)
             {
                 if (_returnValues.Length == 0)
                 {
-                    return DynValue.EmptyTuple;
+                    return LuaValue.EmptyTuple;
                 }
 
-                return DynValue.NewTuple(_returnValues);
+                return LuaValue.NewTuple(_returnValues);
             }
 
             switch (_count)
             {
                 case 0:
-                    return DynValue.EmptyTuple;
+                    return LuaValue.EmptyTuple;
                 case 1:
-                    return NormalizeReturnValue(_arg0);
+                    return _arg0;
                 case 2:
                 case 3:
                 case 4:
-                    return DynValue.NewTuple(GetReturnValuesBuffer());
+                    return LuaValue.NewTuple(GetReturnValuesBuffer());
                 default:
-                    return DynValue.NewTuple(GetReturnValuesBuffer());
+                    return LuaValue.NewTuple(GetReturnValuesBuffer());
             }
         }
 
-        private DynValue[] GetReturnValuesBuffer()
+        private LuaValue[] GetReturnValuesBuffer()
         {
             if (_returnValues != null)
             {
@@ -153,34 +154,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             switch (_count)
             {
                 case 0:
-                    _returnValues = Array.Empty<DynValue>();
+                    _returnValues = Array.Empty<LuaValue>();
                     break;
                 case 1:
-                    _returnValues = new[] { NormalizeReturnValue(_arg0) };
+                    _returnValues = new[] { _arg0 };
                     break;
                 case 2:
-                    _returnValues = new[]
-                    {
-                        NormalizeReturnValue(_arg0),
-                        NormalizeReturnValue(_arg1),
-                    };
+                    _returnValues = new[] { _arg0, _arg1 };
                     break;
                 case 3:
-                    _returnValues = new[]
-                    {
-                        NormalizeReturnValue(_arg0),
-                        NormalizeReturnValue(_arg1),
-                        NormalizeReturnValue(_arg2),
-                    };
+                    _returnValues = new[] { _arg0, _arg1, _arg2 };
                     break;
                 case 4:
-                    _returnValues = new[]
-                    {
-                        NormalizeReturnValue(_arg0),
-                        NormalizeReturnValue(_arg1),
-                        NormalizeReturnValue(_arg2),
-                        NormalizeReturnValue(_arg3),
-                    };
+                    _returnValues = new[] { _arg0, _arg1, _arg2, _arg3 };
                     break;
                 default:
                     throw new InvalidOperationException("Invalid yield return value count.");
@@ -189,66 +175,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return _returnValues;
         }
 
-        private static DynValue[] ExtractBackingArray(ReadOnlyMemory<DynValue> value)
+        private static LuaValue[] ExtractBackingArray(ReadOnlyMemory<LuaValue> value)
         {
             if (value.IsEmpty)
             {
-                return Array.Empty<DynValue>();
+                return Array.Empty<LuaValue>();
             }
 
             if (
-                MemoryMarshal.TryGetArray(value, out ArraySegment<DynValue> segment)
+                MemoryMarshal.TryGetArray(value, out ArraySegment<LuaValue> segment)
                 && segment.Array != null
                 && segment.Offset == 0
                 && segment.Count == segment.Array.Length
             )
             {
-                return NormalizeReturnValues(segment.Array);
+                return segment.Array;
             }
 
-            DynValue[] values = value.ToArray();
-            NormalizeReturnValuesInPlace(values);
-            return values;
-        }
-
-        private static DynValue[] NormalizeReturnValues(DynValue[] values)
-        {
-            for (int i = 0; i < values.Length; i++)
-            {
-                if (values[i] == null)
-                {
-                    DynValue[] normalized = new DynValue[values.Length];
-                    Array.Copy(values, normalized, i);
-                    normalized[i] = DynValue.Nil;
-
-                    for (int j = i + 1; j < values.Length; j++)
-                    {
-                        normalized[j] = NormalizeReturnValue(values[j]);
-                    }
-
-                    return normalized;
-                }
-            }
-
-            return values;
-        }
-
-        private static void NormalizeReturnValuesInPlace(DynValue[] values)
-        {
-            for (int i = 0; i < values.Length; i++)
-            {
-                values[i] = NormalizeReturnValue(values[i]);
-            }
-        }
-
-        private static DynValue NormalizeReturnValue(DynValue value)
-        {
-            if (value == null)
-            {
-                return DynValue.Nil;
-            }
-
-            return value;
+            return value.ToArray();
         }
 
         /// <summary>

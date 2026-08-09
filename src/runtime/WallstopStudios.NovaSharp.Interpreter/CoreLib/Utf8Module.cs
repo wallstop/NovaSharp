@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -19,15 +20,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     {
         private const string InvalidUtf8CodeMessage = "invalid UTF-8 code";
 
-        // Cached callback to avoid allocation on every utf8.codes call (non-lax mode)
-        private static readonly DynValue CachedCodesIteratorCallback = DynValue.NewCallback(
-            CodesIterator
-        );
+        private static readonly ConditionalWeakTable<Script, IteratorCallbacks> CallbackCache =
+            new();
 
-        // Cached callback for lax mode utf8.codes
-        private static readonly DynValue CachedCodesIteratorLaxCallback = DynValue.NewCallback(
-            CodesIteratorLax
-        );
+        private sealed class IteratorCallbacks
+        {
+            internal IteratorCallbacks(Script script)
+            {
+                Strict = LuaValue.NewCallback(script, CodesIterator);
+                Lax = LuaValue.NewCallback(script, CodesIteratorLax);
+            }
+
+            internal LuaValue Strict { get; }
+
+            internal LuaValue Lax { get; }
+        }
 
         [NovaSharpModuleConstant(Name = "charpattern")]
         public const string CharPattern = "[\0-\x7F\xC2-\xF4][\x80-\xBF]*";
@@ -41,19 +48,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// NaN, and Infinity will throw "number has no integer representation".
         /// </remarks>
         [NovaSharpModuleMethod(Name = "len")]
-        public static DynValue Len(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Len(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            DynValue value = args.AsType(0, "utf8.len", DataType.String, false);
-            DynValue start = args.AsType(1, "utf8.len", DataType.Number, true);
-            DynValue end = args.AsType(2, "utf8.len", DataType.Number, true);
+            LuaValue value = args.AsType(0, "utf8.len", DataType.String, false);
+            LuaValue start = args.AsType(1, "utf8.len", DataType.Number, true);
+            LuaValue end = args.AsType(2, "utf8.len", DataType.Number, true);
 
             // Lua 5.4+ adds an optional lax parameter (argument #4)
             bool lax = false;
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
             if (version >= LuaCompatibilityVersion.Lua54)
             {
-                DynValue laxArg = args.AsType(3, "utf8.len", DataType.Boolean, true);
-                lax = !laxArg.IsNil() && laxArg.Boolean;
+                LuaValue laxArg = args.AsType(3, "utf8.len", DataType.Boolean, true);
+                lax = !laxArg.IsNil && laxArg.Boolean;
             }
 
             // utf8 module is Lua 5.3+ only - always require integer representation
@@ -61,7 +68,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             Utilities.LuaNumberHelpers.ValidateIntegerArgument(version, end, "len", 3);
 
             (int startIndex, int endExclusive) = NormalizeRange(value.String, start, end);
-            DynValue result = CountRunesOrError(value.String, startIndex, endExclusive, lax);
+            LuaValue result = CountRunesOrError(value.String, startIndex, endExclusive, lax);
 
             return result;
         }
@@ -75,22 +82,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// NaN, and Infinity will throw "number has no integer representation".
         /// </remarks>
         [NovaSharpModuleMethod(Name = "codepoint")]
-        public static DynValue CodePoint(
+        public static LuaValue CodePoint(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue value = args.AsType(0, "utf8.codepoint", DataType.String, false);
-            DynValue start = args.AsType(1, "utf8.codepoint", DataType.Number, true);
-            DynValue end = args.AsType(2, "utf8.codepoint", DataType.Number, true);
+            LuaValue value = args.AsType(0, "utf8.codepoint", DataType.String, false);
+            LuaValue start = args.AsType(1, "utf8.codepoint", DataType.Number, true);
+            LuaValue end = args.AsType(2, "utf8.codepoint", DataType.Number, true);
 
             // Lua 5.4+ adds an optional lax parameter (argument #4)
             bool lax = false;
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
             if (version >= LuaCompatibilityVersion.Lua54)
             {
-                DynValue laxArg = args.AsType(3, "utf8.codepoint", DataType.Boolean, true);
-                lax = !laxArg.IsNil() && laxArg.Boolean;
+                LuaValue laxArg = args.AsType(3, "utf8.codepoint", DataType.Boolean, true);
+                lax = !laxArg.IsNil && laxArg.Boolean;
             }
 
             // utf8 module is Lua 5.3+ only - always require integer representation
@@ -100,7 +107,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             int length = value.String.Length;
 
             // Validate and normalize i (start position)
-            int i = start.IsNil() ? 1 : (int)start.Number;
+            int i = start.IsNil ? 1 : (int)start.Number;
             if (i < 0)
             {
                 i = length + i + 1;
@@ -108,7 +115,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             // Validate and normalize j (end position)
             // When end is nil, j defaults to i (endDefaultsToStart: true)
-            int j = end.IsNil() ? i : (int)end.Number;
+            int j = end.IsNil ? i : (int)end.Number;
             if (j < 0)
             {
                 j = length + j + 1;
@@ -138,7 +145,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // Fast path: empty range (when start > end after normalization)
             if (startIndex >= endExclusive)
             {
-                return DynValue.Void;
+                return LuaValue.Void;
             }
 
             // Fast path: single character (very common case)
@@ -156,7 +163,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 // Check if this is the only character
                 if (startIndex + firstWidth >= endExclusive)
                 {
-                    return DynValue.FromNumber(firstCodePoint);
+                    return LuaValue.FromNumber(firstCodePoint);
                 }
             }
             else
@@ -167,9 +174,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // Multi-character path: estimate capacity based on remaining bytes
             int remainingBytes = endExclusive - startIndex;
             // Use pooled list for common case (most strings have < 64 codepoints)
-            using (ListPool<DynValue>.Get(Math.Min(remainingBytes, 64), out List<DynValue> numbers))
+            using (ListPool<LuaValue>.Get(Math.Min(remainingBytes, 64), out List<LuaValue> numbers))
             {
-                numbers.Add(DynValue.FromNumber(firstCodePoint));
+                numbers.Add(LuaValue.FromNumber(firstCodePoint));
 
                 int index = startIndex + firstWidth;
                 while (index < endExclusive)
@@ -188,11 +195,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         throw new ScriptRuntimeException(InvalidUtf8CodeMessage);
                     }
 
-                    numbers.Add(DynValue.FromNumber(codePoint));
+                    numbers.Add(LuaValue.FromNumber(codePoint));
                     index += width;
                 }
 
-                return DynValue.NewTuple(ListPool<DynValue>.ToExactArray(numbers));
+                return LuaValue.NewTuple(ListPool<LuaValue>.ToExactArray(numbers));
             }
         }
 
@@ -217,7 +224,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </para>
         /// </remarks>
         [NovaSharpModuleMethod(Name = "char")]
-        public static DynValue Char(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Char(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
             bool useLua54ExtendedRange = version >= LuaCompatibilityVersion.Lua54;
@@ -228,7 +235,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             for (int i = 0; i < args.Count; i++)
             {
                 // utf8 module is Lua 5.3+ only - always require integer representation
-                DynValue argValue = args.AsType(i, "utf8.char", DataType.Number, false);
+                LuaValue argValue = args.AsType(i, "utf8.char", DataType.Number, false);
                 Utilities.LuaNumberHelpers.RequireIntegerRepresentation(
                     argValue.LuaNumber,
                     "utf8.char",
@@ -276,7 +283,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 chars[j] = (char)bytes[j];
             }
-            return DynValue.NewString(new string(chars));
+            return LuaValue.NewString(new string(chars));
         }
 
         /// <summary>
@@ -338,25 +345,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// In Lua 5.4+, accepts an optional lax parameter to allow surrogates and extended codepoints.
         /// </summary>
         [NovaSharpModuleMethod(Name = "codes")]
-        public static DynValue Codes(
+        public static LuaValue Codes(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue value = args.AsType(0, "utf8.codes", DataType.String, false);
+            LuaValue value = args.AsType(0, "utf8.codes", DataType.String, false);
 
             // Lua 5.4+ supports optional 'lax' parameter
             bool lax = false;
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
             if (version >= LuaCompatibilityVersion.Lua54)
             {
-                DynValue laxArg = args.RawGet(1, false);
-                lax = laxArg != null && laxArg.Type == DataType.Boolean && laxArg.Boolean;
+                lax =
+                    args.TryRawGet(1, translateVoids: false, out LuaValue laxArg)
+                    && laxArg.Type == DataType.Boolean
+                    && laxArg.Boolean;
             }
 
-            DynValue iterator = lax ? CachedCodesIteratorLaxCallback : CachedCodesIteratorCallback;
+            IteratorCallbacks callbacks = CallbackCache.GetValue(
+                executionContext.Script,
+                static script => new IteratorCallbacks(script)
+            );
+            LuaValue iterator = lax ? callbacks.Lax : callbacks.Strict;
 
-            return DynValue.NewTuple(iterator, value, DynValue.FromNumber(0));
+            return LuaValue.NewTuple(iterator, value, LuaValue.FromNumber(0));
         }
 
         /// <summary>
@@ -367,15 +380,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// NaN, and Infinity will throw "number has no integer representation".
         /// </remarks>
         [NovaSharpModuleMethod(Name = "offset")]
-        public static DynValue Offset(
+        public static LuaValue Offset(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
-            DynValue value = args.AsType(0, "utf8.offset", DataType.String, false);
-            DynValue nArg = args.AsType(1, "utf8.offset", DataType.Number, false);
-            DynValue indexArg = args.AsType(2, "utf8.offset", DataType.Number, true);
+            LuaValue value = args.AsType(0, "utf8.offset", DataType.String, false);
+            LuaValue nArg = args.AsType(1, "utf8.offset", DataType.Number, false);
+            LuaValue indexArg = args.AsType(2, "utf8.offset", DataType.Number, true);
 
             // utf8 module is Lua 5.3+ only - always require integer representation
             Utilities.LuaNumberHelpers.RequireIntegerRepresentation(nArg.LuaNumber, "offset", 2);
@@ -384,7 +397,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             int n = (int)nArg.Number;
 
             // Validate position (i) before normalizing - position 0 is never valid
-            if (!indexArg.IsNil())
+            if (!indexArg.IsNil)
             {
                 int rawPosition = (int)indexArg.Number;
                 int length = value.String.Length;
@@ -413,14 +426,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 int boundary = NormalizeBoundary(
                     value.String,
-                    indexArg.IsNil() ? 1 : (int)indexArg.Number
+                    indexArg.IsNil ? 1 : (int)indexArg.Number
                 );
                 int containing = FindRuneStartContainingBoundary(value.String, boundary);
 
-                return containing >= 0 ? DynValue.FromNumber(containing + 1) : DynValue.Nil;
+                return containing >= 0 ? LuaValue.FromNumber(containing + 1) : LuaValue.Nil;
             }
 
-            int initial = indexArg.IsNil()
+            int initial = indexArg.IsNil
                 ? (n > 0 ? 1 : value.String.Length + 1)
                 : (int)indexArg.Number;
             int boundaryOffset = NormalizeBoundary(value.String, initial);
@@ -429,7 +442,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 if (!IsRuneBoundary(value.String, boundaryOffset))
                 {
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
 
                 int index = boundaryOffset;
@@ -447,14 +460,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         )
                     )
                     {
-                        return DynValue.Nil;
+                        return LuaValue.Nil;
                     }
 
                     remaining--;
 
                     if (remaining == 0)
                     {
-                        return DynValue.FromNumber(index + 1);
+                        return LuaValue.FromNumber(index + 1);
                     }
 
                     index += width;
@@ -471,35 +484,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                     if (index < 0)
                     {
-                        return DynValue.Nil;
+                        return LuaValue.Nil;
                     }
 
                     remaining--;
 
                     if (remaining == 0)
                     {
-                        return DynValue.FromNumber(index + 1);
+                        return LuaValue.FromNumber(index + 1);
                     }
                 }
             }
 
-            return DynValue.Nil;
+            return LuaValue.Nil;
         }
 
-        private static DynValue CodesIterator(
+        private static LuaValue CodesIterator(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue state = args.AsType(0, "utf8.codes", DataType.String, false);
-            DynValue control = args.AsType(1, "utf8.codes", DataType.Number, true);
+            LuaValue state = args.AsType(0, "utf8.codes", DataType.String, false);
+            LuaValue control = args.AsType(1, "utf8.codes", DataType.Number, true);
 
             string value = state.String;
             int index = GetNextIteratorIndex(value, control);
 
             if (index >= value.Length)
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
 
             if (
@@ -515,26 +528,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw new ScriptRuntimeException(InvalidUtf8CodeMessage);
             }
 
-            return DynValue.NewTuple(
-                DynValue.FromNumber(index + 1),
-                DynValue.FromNumber(codePoint)
+            return LuaValue.NewTuple(
+                LuaValue.FromNumber(index + 1),
+                LuaValue.FromNumber(codePoint)
             );
         }
 
-        private static DynValue CodesIteratorLax(
+        private static LuaValue CodesIteratorLax(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            DynValue state = args.AsType(0, "utf8.codes", DataType.String, false);
-            DynValue control = args.AsType(1, "utf8.codes", DataType.Number, true);
+            LuaValue state = args.AsType(0, "utf8.codes", DataType.String, false);
+            LuaValue control = args.AsType(1, "utf8.codes", DataType.Number, true);
 
             string value = state.String;
             int index = GetNextIteratorIndex(value, control, true);
 
             if (index >= value.Length)
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
 
             if (
@@ -551,13 +564,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw new ScriptRuntimeException(InvalidUtf8CodeMessage);
             }
 
-            return DynValue.NewTuple(
-                DynValue.FromNumber(index + 1),
-                DynValue.FromNumber(codePoint)
+            return LuaValue.NewTuple(
+                LuaValue.FromNumber(index + 1),
+                LuaValue.FromNumber(codePoint)
             );
         }
 
-        private static DynValue CountRunesOrError(
+        private static LuaValue CountRunesOrError(
             string value,
             int startIndex,
             int endExclusive,
@@ -580,25 +593,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     )
                 )
                 {
-                    return DynValue.NewTuple(DynValue.Nil, DynValue.FromNumber(index + 1));
+                    return LuaValue.NewTuple(LuaValue.Nil, LuaValue.FromNumber(index + 1));
                 }
 
                 count++;
                 index += width;
             }
 
-            return DynValue.FromNumber(count);
+            return LuaValue.FromNumber(count);
         }
 
         private static (int StartIndex, int EndExclusive) NormalizeRange(
             string value,
-            DynValue start,
-            DynValue end,
+            LuaValue start,
+            LuaValue end,
             bool endDefaultsToStart = false
         )
         {
-            int i = start.IsNil() ? 1 : (int)start.Number;
-            int j = end.IsNil() ? (endDefaultsToStart ? i : value.Length) : (int)end.Number;
+            int i = start.IsNil ? 1 : (int)start.Number;
+            int j = end.IsNil ? (endDefaultsToStart ? i : value.Length) : (int)end.Number;
 
             if (i < 0)
             {
@@ -715,14 +728,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return true;
         }
 
-        private static int GetNextIteratorIndex(string value, DynValue control)
+        private static int GetNextIteratorIndex(string value, LuaValue control)
         {
             return GetNextIteratorIndex(value, control, false);
         }
 
-        private static int GetNextIteratorIndex(string value, DynValue control, bool lax)
+        private static int GetNextIteratorIndex(string value, LuaValue control, bool lax)
         {
-            if (control.IsNil() || control.IsVoid())
+            if (control.IsNil || control.IsVoid())
             {
                 return 0;
             }

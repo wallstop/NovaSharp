@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -25,7 +26,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Script script = new(version);
             script.DoString("function idle() return 5 end");
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("idle"));
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("idle"));
             Coroutine coroutine = coroutineValue.Coroutine;
             Processor coroutineProcessor = coroutine.GetProcessorForTests();
 

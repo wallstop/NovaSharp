@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -46,11 +47,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         [global::TUnit.Core.Test]
         public async Task TryGetIntegerDynValueParsesNumbersAndNumericStrings()
         {
-            DynValue number = DynValue.NewNumber(64);
+            LuaValue number = LuaValue.NewNumber(64);
             bool numericSuccess = LuaIntegerHelper.TryGetInteger(number, out long numericResult);
-            DynValue text = DynValue.NewString("1024");
+            LuaValue text = LuaValue.NewString("1024");
             bool textSuccess = LuaIntegerHelper.TryGetInteger(text, out long textResult);
-            DynValue invalid = DynValue.NewString("not-a-number");
+            LuaValue invalid = LuaValue.NewString("not-a-number");
             bool invalidSuccess = LuaIntegerHelper.TryGetInteger(invalid, out long invalidResult);
 
             await Assert.That(numericSuccess).IsTrue();

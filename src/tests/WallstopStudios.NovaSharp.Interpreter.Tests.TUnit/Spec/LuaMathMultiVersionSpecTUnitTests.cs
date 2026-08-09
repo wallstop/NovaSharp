@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -21,13 +22,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         )
         {
             Script script = CreateScript(version, CoreModulePresets.Complete);
-            DynValue mathTable = script.Globals.Get("math");
+            LuaValue mathTable = script.Globals.Get("math");
             await Assert.That(mathTable.Type).IsEqualTo(DataType.Table);
 
             Table mt = mathTable.Table;
-            await Assert.That(mt.Get("type").IsNil()).IsTrue();
-            await Assert.That(mt.Get("tointeger").IsNil()).IsTrue();
-            await Assert.That(mt.Get("ult").IsNil()).IsTrue();
+            await Assert.That(mt.Get("type").IsNil).IsTrue();
+            await Assert.That(mt.Get("tointeger").IsNil).IsTrue();
+            await Assert.That(mt.Get("ult").IsNil).IsTrue();
         }
 
         [Test]
@@ -35,7 +36,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task MathTypeReportsIntegerAndFloat(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue tuple = script.DoString("return math.type(5), math.type(3.5), math.type(1.0)");
+            LuaValue tuple = script.DoString("return math.type(5), math.type(3.5), math.type(1.0)");
 
             await Assert.That(tuple.Tuple[0].String).IsEqualTo("integer");
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("float");
@@ -48,14 +49,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task MathToIntegerConvertsNumbersAndStrings(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 "return math.tointeger(10.0), math.tointeger(-3), math.tointeger('42'), math.tointeger(3.25)"
             );
 
             await Assert.That(tuple.Tuple[0].Number).IsEqualTo(10);
             await Assert.That(tuple.Tuple[1].Number).IsEqualTo(-3);
             await Assert.That(tuple.Tuple[2].Number).IsEqualTo(42);
-            await Assert.That(tuple.Tuple[3].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[3].IsNil).IsTrue();
         }
 
         [Test]
@@ -68,7 +69,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             // (boolean, table, function, userdata, etc.) - it does NOT throw an error.
             // Reference: Lua 5.3 Manual §6.7
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.tointeger({})");
+            LuaValue result = script.DoString("return math.tointeger({})");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
@@ -78,7 +79,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task MathToIntegerReturnsNilForBoolean(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.tointeger(true)");
+            LuaValue result = script.DoString("return math.tointeger(true)");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
@@ -88,7 +89,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task MathToIntegerReturnsNilForFunction(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.tointeger(function() end)");
+            LuaValue result = script.DoString("return math.tointeger(function() end)");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
@@ -98,7 +99,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task MathUltComparesUsingUnsignedOrdering(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 "return math.ult(0, -1), math.ult(-1, 0), math.ult(10, 20)"
             );
 
@@ -112,7 +113,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task MathUltRejectsNonIntegerArguments(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 "local ok, err = pcall(math.ult, 1.5, 2) return ok, err"
             );
 

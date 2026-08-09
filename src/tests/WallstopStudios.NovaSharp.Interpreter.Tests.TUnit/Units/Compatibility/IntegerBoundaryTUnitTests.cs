@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -169,10 +170,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
 
         #endregion
 
-        #region LuaIntegerHelper.TryGetInteger(DynValue) - DynValue API Tests
+        #region LuaIntegerHelper.TryGetInteger(LuaValue) - LuaValue API Tests
 
         /// <summary>
-        /// Tests that DynValue integers preserve precision for boundary values.
+        /// Tests that LuaValue integers preserve precision for boundary values.
         /// </summary>
         [Test]
         [Arguments(9223372036854775807L, "long.MaxValue")]
@@ -187,24 +188,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
             string description
         )
         {
-            // Create a DynValue with native integer storage
-            DynValue dynValue = DynValue.NewInteger(value);
+            // Create a LuaValue with native integer storage
+            LuaValue dynValue = LuaValue.NewInteger(value);
 
             bool success = LuaIntegerHelper.TryGetInteger(dynValue, out long result);
 
             await Assert
                 .That(success)
                 .IsTrue()
-                .Because($"DynValue integer {value} [{description}] should be convertible");
+                .Because($"LuaValue integer {value} [{description}] should be convertible");
 
             await Assert
                 .That(result)
                 .IsEqualTo(value)
-                .Because($"DynValue integer {value} [{description}] should preserve exact value");
+                .Because($"LuaValue integer {value} [{description}] should preserve exact value");
         }
 
         /// <summary>
-        /// Tests that DynValue floats at boundary are handled correctly.
+        /// Tests that LuaValue floats at boundary are handled correctly.
         /// Note: -9223372036854775809.0 as a double actually equals long.MinValue due to precision.
         /// </summary>
         [Test]
@@ -216,8 +217,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
             string description
         )
         {
-            // Create a DynValue with float storage (not integer)
-            DynValue dynValue = DynValue.NewNumber(value);
+            // Create a LuaValue with float storage (not integer)
+            LuaValue dynValue = LuaValue.NewNumber(value);
 
             bool success = LuaIntegerHelper.TryGetInteger(dynValue, out long result);
 
@@ -225,7 +226,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
                 .That(success)
                 .IsEqualTo(expectedSuccess)
                 .Because(
-                    $"DynValue float {value} [{description}] success should be {expectedSuccess}"
+                    $"LuaValue float {value} [{description}] success should be {expectedSuccess}"
                 );
         }
 
@@ -268,7 +269,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString($"return math.tointeger({expression})");
+            LuaValue result = script.DoString($"return math.tointeger({expression})");
 
             if (shouldSucceed)
             {
@@ -294,7 +295,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
             else
             {
                 await Assert
-                    .That(result.IsNil())
+                    .That(result.IsNil)
                     .IsTrue()
                     .Because($"math.tointeger({expression}) [{description}] should return nil");
             }
@@ -324,7 +325,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString($"return math.tointeger({expression})");
+            LuaValue result = script.DoString($"return math.tointeger({expression})");
 
             if (shouldSucceed)
             {
@@ -343,7 +344,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
             else
             {
                 await Assert
-                    .That(result.IsNil())
+                    .That(result.IsNil)
                     .IsTrue()
                     .Because($"math.tointeger({expression}) [{description}] should return nil");
             }
@@ -408,7 +409,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString($"return math.ult({left}, {right})");
+            LuaValue result = script.DoString($"return math.ult({left}, {right})");
 
             await Assert
                 .That(result.Boolean)
@@ -427,8 +428,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
             Script script = CreateScript(version);
 
             // Verify the values are stored correctly as integers
-            DynValue maxInt = script.DoString("return math.maxinteger");
-            DynValue minInt = script.DoString("return math.mininteger");
+            LuaValue maxInt = script.DoString("return math.maxinteger");
+            LuaValue minInt = script.DoString("return math.mininteger");
 
             await Assert.That(maxInt.LuaNumber.IsInteger).IsTrue();
             await Assert.That(minInt.LuaNumber.IsInteger).IsTrue();
@@ -437,7 +438,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
 
             // The key test: unsigned comparison should work correctly
             // In unsigned: maxinteger (0x7FFFFFFF...) < mininteger (0x80000000...)
-            DynValue ult = script.DoString("return math.ult(math.maxinteger, math.mininteger)");
+            LuaValue ult = script.DoString("return math.ult(math.maxinteger, math.mininteger)");
             await Assert
                 .That(ult.Boolean)
                 .IsTrue()
@@ -479,7 +480,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString($"return math.type({expression})");
+            LuaValue result = script.DoString($"return math.type({expression})");
 
             await Assert
                 .That(result.String)
@@ -525,7 +526,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString($"return {expression}");
+            LuaValue result = script.DoString($"return {expression}");
 
             await Assert
                 .That(result.LuaNumber.IsInteger)
@@ -552,7 +553,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
             Script script = CreateScript(version);
 
             // Per Lua 5.3/5.4 spec: mininteger // -1 = mininteger (wraps due to two's complement)
-            DynValue result = script.DoString("return math.mininteger // -1");
+            LuaValue result = script.DoString("return math.mininteger // -1");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
 
@@ -618,7 +619,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString($"return {expression}");
+            LuaValue result = script.DoString($"return {expression}");
 
             await Assert
                 .That(result.LuaNumber.IsInteger)
@@ -738,8 +739,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
 
             // Also test via script
             Script script = CreateScript(version);
-            DynValue scriptResult = script.DoString("return math.tointeger(2^63)");
-            await Assert.That(scriptResult.IsNil()).IsTrue();
+            LuaValue scriptResult = script.DoString("return math.tointeger(2^63)");
+            await Assert.That(scriptResult.IsNil).IsTrue();
         }
 
         #endregion
@@ -758,7 +759,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
 
             // Original bug 1: math.ult(maxinteger, mininteger) returned false on x64
             // due to precision loss when converting to double before comparison.
-            DynValue ultResult = script.DoString(
+            LuaValue ultResult = script.DoString(
                 "return math.ult(math.maxinteger, math.mininteger)"
             );
             await Assert
@@ -770,9 +771,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
 
             // Original bug 2: math.tointeger(2^63) returned different values on x64 vs ARM64
             // due to undefined behavior in (long)double conversion for out-of-range values.
-            DynValue tointResult = script.DoString("return math.tointeger(2^63)");
+            LuaValue tointResult = script.DoString("return math.tointeger(2^63)");
             await Assert
-                .That(tointResult.IsNil())
+                .That(tointResult.IsNil)
                 .IsTrue()
                 .Because(
                     "math.tointeger(2^63) should return nil (this returned platform-dependent garbage before)"
@@ -788,8 +789,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         {
             Script script = CreateScript(version);
 
-            DynValue max = script.DoString("return math.maxinteger");
-            DynValue min = script.DoString("return math.mininteger");
+            LuaValue max = script.DoString("return math.maxinteger");
+            LuaValue min = script.DoString("return math.mininteger");
 
             // Verify they're stored as integers
             await Assert.That(max.LuaNumber.IsInteger).IsTrue();
@@ -800,8 +801,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
             await Assert.That(min.LuaNumber.AsInteger).IsEqualTo(long.MinValue);
 
             // Verify round-trip through tointeger preserves values
-            DynValue maxRoundTrip = script.DoString("return math.tointeger(math.maxinteger)");
-            DynValue minRoundTrip = script.DoString("return math.tointeger(math.mininteger)");
+            LuaValue maxRoundTrip = script.DoString("return math.tointeger(math.maxinteger)");
+            LuaValue minRoundTrip = script.DoString("return math.tointeger(math.mininteger)");
 
             await Assert.That(maxRoundTrip.LuaNumber.AsInteger).IsEqualTo(long.MaxValue);
             await Assert.That(minRoundTrip.LuaNumber.AsInteger).IsEqualTo(long.MinValue);

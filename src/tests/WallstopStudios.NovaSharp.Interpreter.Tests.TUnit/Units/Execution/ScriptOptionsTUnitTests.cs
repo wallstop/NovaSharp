@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -276,11 +277,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task RecycleCoroutineValidatesCoroutineType(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.NewString("done"));
-            DynValue coroutineValue = script.CreateCoroutine(callback);
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.NewString("done"));
+            LuaValue coroutineValue = script.CreateCoroutineValue(callback);
 
             // CLR callback coroutines have CoroutineType.ClrCallback, not Coroutine
-            DynValue newFunc = script.LoadString("return 'recycled'");
+            LuaValue newFunc = script.LoadString("return 'recycled'");
 
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
                 script.RecycleCoroutine(coroutineValue.Coroutine, newFunc)
@@ -302,11 +303,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function gen() coroutine.yield(1) return 2 end");
-            DynValue func = script.Globals.Get("gen");
-            DynValue coroutineValue = script.CreateCoroutine(func);
+            LuaValue func = script.Globals.Get("gen");
+            LuaValue coroutineValue = script.CreateCoroutineValue(func);
 
             // Coroutine is in NotStarted state, not Dead
-            DynValue newFunc = script.LoadString("return 'new'");
+            LuaValue newFunc = script.LoadString("return 'new'");
 
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
                 script.RecycleCoroutine(coroutineValue.Coroutine, newFunc)
@@ -328,12 +329,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function gen() return 'done' end");
-            DynValue func = script.Globals.Get("gen");
-            DynValue coroutineValue = script.CreateCoroutine(func);
+            LuaValue func = script.Globals.Get("gen");
+            LuaValue coroutineValue = script.CreateCoroutineValue(func);
             coroutineValue.Coroutine.Resume(); // Execute to Dead state
 
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
-                script.RecycleCoroutine(coroutineValue.Coroutine, null)
+                script.RecycleCoroutine(coroutineValue.Coroutine, LuaValue.Nil)
             );
 
             await Assert
@@ -354,11 +355,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script scriptB = new(CoreModulePresets.Complete);
 
             scriptA.DoString("function gen() return 'a' end");
-            DynValue funcA = scriptA.Globals.Get("gen");
-            DynValue coroutineValue = scriptA.CreateCoroutine(funcA);
+            LuaValue funcA = scriptA.Globals.Get("gen");
+            LuaValue coroutineValue = scriptA.CreateCoroutineValue(funcA);
             coroutineValue.Coroutine.Resume();
 
-            DynValue funcB = scriptB.LoadString("return 'b'");
+            LuaValue funcB = scriptB.LoadString("return 'b'");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 scriptA.RecycleCoroutine(coroutineValue.Coroutine, funcB)
@@ -380,15 +381,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function gen() return 'original' end");
-            DynValue originalFunc = script.Globals.Get("gen");
-            DynValue coroutineValue = script.CreateCoroutine(originalFunc);
+            LuaValue originalFunc = script.Globals.Get("gen");
+            LuaValue coroutineValue = script.CreateCoroutineValue(originalFunc);
             coroutineValue.Coroutine.Resume(); // Execute to Dead
 
             script.DoString("function newGen() return 'recycled' end");
-            DynValue newFunc = script.Globals.Get("newGen");
+            LuaValue newFunc = script.Globals.Get("newGen");
 
-            DynValue recycled = script.RecycleCoroutine(coroutineValue.Coroutine, newFunc);
-            DynValue result = recycled.Coroutine.Resume();
+            LuaValue recycled = script.RecycleCoroutine(coroutineValue.Coroutine, newFunc);
+            LuaValue result = recycled.Coroutine.Resume();
 
             await Assert.That(result.String).IsEqualTo("recycled").ConfigureAwait(false);
         }
@@ -455,7 +456,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 $"FilePath: {tempFile.FilePath}, LoaderType: {loaderType}, "
                 + $"FileExists: {System.IO.File.Exists(tempFile.FilePath)}";
 
-            DynValue result = Script.RunFile(tempFile.FilePath);
+            LuaValue result = Script.RunFile(tempFile.FilePath);
 
             await Assert
                 .That(result.Number)
@@ -472,7 +473,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task RunStringCreatesScriptAndExecutes(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return 'hello'");
+            LuaValue result = Script.RunString("return 'hello'");
 
             await Assert.That(result.String).IsEqualTo("hello").ConfigureAwait(false);
         }
@@ -497,7 +498,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
             using TempFileScope tempFile = TempFileScope.CreateWithText(code, extension: ".lua");
 
-            DynValue result = Script.RunFile(tempFile.FilePath);
+            LuaValue result = Script.RunFile(tempFile.FilePath);
 
             await Assert
                 .That(result.Type)
@@ -541,7 +542,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
 
             await Assert
                 .That(result.Type)
@@ -581,7 +582,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             string loaderType =
                 Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "null (no loader)";
 
-            DynValue result = Script.RunString("return 123");
+            LuaValue result = Script.RunString("return 123");
 
             await Assert
                 .That(result.Number)

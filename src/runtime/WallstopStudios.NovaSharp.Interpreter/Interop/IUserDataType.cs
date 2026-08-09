@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop
 {
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -16,7 +17,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <param name="index">The index.</param>
         /// <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
         /// <returns></returns>
-        public DynValue Index(Script script, DynValue index, bool isDirectIndexing);
+        public bool TryIndex(
+            Script script,
+            LuaValue index,
+            bool isDirectIndexing,
+            out LuaValue value
+        );
 
         /// <summary>
         /// Performs an "index" "set" operation.
@@ -26,12 +32,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <param name="value">The value to be set</param>
         /// <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
         /// <returns></returns>
-        public bool SetIndex(Script script, DynValue index, DynValue value, bool isDirectIndexing);
+        public bool SetIndex(Script script, LuaValue index, LuaValue value, bool isDirectIndexing);
 
         /// <summary>
         ///
-        /// Gets a "meta" operation on this userdata. If a descriptor does not support this functionality,
-        /// it should return "null" (not a nil).
+        /// Attempts to get a "meta" operation on this userdata.
         ///
         /// These standard metamethods can be supported (the return value should be a function accepting the
         /// classic parameters of the corresponding metamethod):
@@ -45,6 +50,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <param name="script">The script originating the request</param>
         /// <param name="metaname">The name of the metamember.</param>
         /// <returns></returns>
-        public DynValue MetaIndex(Script script, string metaname);
+        public bool TryMetaIndex(Script script, string metaname, out LuaValue value);
     }
 }

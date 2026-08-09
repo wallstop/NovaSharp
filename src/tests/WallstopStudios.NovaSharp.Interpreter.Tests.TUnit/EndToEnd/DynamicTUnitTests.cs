@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -15,7 +16,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task DynamicAccessEval(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return dynamic.eval('5+1');");
+            LuaValue result = script.DoString("return dynamic.eval('5+1');");
             await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false);
         }
 
@@ -29,7 +30,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return dynamic.eval(prepared);
                 ";
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false);
         }
 
@@ -49,7 +50,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false);
         }
 
@@ -76,7 +77,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
@@ -87,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString("t = { ciao = { 'hello' } }");
 
-            DynValue evaluation = script
+            LuaValue evaluation = script
                 .CreateDynamicExpression("t.ciao[1] .. ' world'")
                 .Evaluate();
             await Assert.That(evaluation.String).IsEqualTo("hello world").ConfigureAwait(false);

@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System;
     using System.IO;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -39,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             Script script = globalTable.OwnerScript;
             Table stringMetatable = new(script);
-            stringMetatable.Set(Metamethods.Index, DynValue.NewTable(stringTable));
+            stringMetatable.Set(Metamethods.Index, LuaValue.NewTable(stringTable));
 
             // Lua 5.4+: String-to-number coercion was removed from the arithmetic operators themselves.
             // Instead, the string metatable provides arithmetic metamethods that perform the coercion.
@@ -63,10 +64,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         private static void RegisterStringArithmeticMetamethods(Table stringMetatable)
         {
+            Script ownerScript = stringMetatable.OwnerScript;
+
             // __add: a + b
             stringMetatable.Set(
                 Metamethods.Add,
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
+                    ownerScript,
                     (ctx, args) => StringBinaryArithmetic(ctx, args, Metamethods.Add, LuaNumber.Add)
                 )
             );
@@ -74,7 +78,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __sub: a - b
             stringMetatable.Set(
                 Metamethods.Sub,
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.Sub, LuaNumber.Subtract)
                 )
@@ -83,7 +88,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __mul: a * b
             stringMetatable.Set(
                 Metamethods.Mul,
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.Mul, LuaNumber.Multiply)
                 )
@@ -92,7 +98,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __div: a / b
             stringMetatable.Set(
                 Metamethods.Div,
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.Div, LuaNumber.Divide)
                 )
@@ -101,7 +108,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __mod: a % b
             stringMetatable.Set(
                 Metamethods.Mod,
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                         StringBinaryArithmetic(
                             ctx,
@@ -115,7 +123,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __pow: a ^ b
             stringMetatable.Set(
                 Metamethods.Pow,
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.Pow, LuaNumber.Power)
                 )
@@ -124,7 +133,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __idiv: a // b (floor division)
             stringMetatable.Set(
                 Metamethods.IDiv,
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.IDiv, LuaNumber.FloorDivide)
                 )
@@ -133,7 +143,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __unm: -a (unary minus)
             stringMetatable.Set(
                 Metamethods.Unm,
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                     {
                         LuaNumber? a = CoerceToLuaNumber(args[0]);
@@ -141,7 +152,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         {
                             throw ScriptRuntimeException.ArithmeticOnNonNumber(args[0]);
                         }
-                        return DynValue.NewNumber(LuaNumber.Negate(a.Value));
+                        return LuaValue.NewNumber(LuaNumber.Negate(a.Value));
                     }
                 )
             );
@@ -151,15 +162,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements a binary arithmetic metamethod for strings with proper fallback behavior.
         /// Per Lua 5.4 manual: if coercion fails, calls the other operand's metamethod (if present).
         /// </summary>
-        private static DynValue StringBinaryArithmetic(
+        private static LuaValue StringBinaryArithmetic(
             ScriptExecutionContext ctx,
             CallbackArguments args,
             string metamethodName,
             Func<LuaNumber, LuaNumber, LuaNumber> operation
         )
         {
-            DynValue left = args[0];
-            DynValue right = args[1];
+            LuaValue left = args[0];
+            LuaValue right = args[1];
 
             LuaNumber? a = CoerceToLuaNumber(left);
             LuaNumber? b = CoerceToLuaNumber(right);
@@ -167,12 +178,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // If both can be coerced to numbers, perform the operation
             if (a.HasValue && b.HasValue)
             {
-                return DynValue.NewNumber(operation(a.Value, b.Value));
+                return LuaValue.NewNumber(operation(a.Value, b.Value));
             }
 
             // Coercion failed - try to fall back to the other operand's metamethod
             // We need to check if the non-string operand has its own metamethod
-            DynValue nonStringOperand = left.Type == DataType.String ? right : left;
+            LuaValue nonStringOperand = left.Type == DataType.String ? right : left;
 
             // Only try fallback if the other operand could have a metamethod (tables, userdata)
             if (
@@ -180,16 +191,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 || nonStringOperand.Type == DataType.UserData
             )
             {
-                DynValue otherMetamethod = ctx.GetBinaryMetamethod(
-                    nonStringOperand,
-                    nonStringOperand,
-                    metamethodName
-                );
-
-                if (otherMetamethod != null && otherMetamethod.IsNotNil())
+                if (
+                    ctx.TryGetBinaryMetamethod(
+                        nonStringOperand,
+                        nonStringOperand,
+                        metamethodName,
+                        out LuaValue otherMetamethod
+                    ) && otherMetamethod.IsNotNil()
+                )
                 {
                     // Call the other operand's metamethod with the original arguments
-                    return ctx.Script.Call(otherMetamethod, left, right);
+                    return ctx.Script.CallValues(otherMetamethod, left, right);
                 }
             }
 
@@ -198,11 +210,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         }
 
         /// <summary>
-        /// Coerces a DynValue to a LuaNumber for string arithmetic metamethods.
+        /// Coerces a LuaValue to a LuaNumber for string arithmetic metamethods.
         /// Returns null if the value cannot be coerced.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static LuaNumber? CoerceToLuaNumber(DynValue value)
+        private static LuaNumber? CoerceToLuaNumber(LuaValue value)
         {
             if (value.Type == DataType.Number)
             {
@@ -223,7 +235,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Creates an appropriate arithmetic error for string coercion failure.
         /// </summary>
-        private static ScriptRuntimeException ArithmeticCoercionError(DynValue a, DynValue b)
+        private static ScriptRuntimeException ArithmeticCoercionError(LuaValue a, LuaValue b)
         {
             // Report the first non-number operand
             if (
@@ -243,14 +255,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments supplying the function to dump.</param>
         /// <returns>Serialized chunk as a string.</returns>
         [NovaSharpModuleMethod(Name = "dump")]
-        public static DynValue Dump(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Dump(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue fn = args.AsType(0, "dump", DataType.Function, false);
+            LuaValue fn = args.AsType(0, "dump", DataType.Function, false);
 
             try
             {
@@ -262,7 +274,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     bytes = ms.ToArray();
                 }
                 string base64 = Convert.ToBase64String(bytes);
-                return DynValue.NewString(Base64DumpHeader + base64);
+                return LuaValue.NewString(Base64DumpHeader + base64);
             }
             catch (Exception ex)
             {
@@ -282,7 +294,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Numeric or numeric-string arguments.</param>
         /// <returns>Concatenated characters.</returns>
         [NovaSharpModuleMethod(Name = "char")]
-        public static DynValue CharFunction(
+        public static LuaValue CharFunction(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -302,7 +314,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             for (int i = 0; i < args.Count; i++)
             {
-                DynValue v = args[i];
+                LuaValue v = args[i];
                 double d = 0d;
 
                 if (v.Type == DataType.String)
@@ -394,7 +406,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 sb.Append((char)charValue);
             }
 
-            return DynValue.NewString(sb.ToString());
+            return LuaValue.NewString(sb.ToString());
         }
 
         /// <summary>
@@ -410,16 +422,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// In Lua 5.1/5.2, non-integer indices are silently truncated via floor.
         /// </remarks>
         [NovaSharpModuleMethod(Name = "byte")]
-        public static DynValue Byte(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Byte(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue vs = args.AsType(0, "byte", DataType.String, false);
-            DynValue vi = args.AsType(1, "byte", DataType.Number, true);
-            DynValue vj = args.AsType(2, "byte", DataType.Number, true);
+            LuaValue vs = args.AsType(0, "byte", DataType.String, false);
+            LuaValue vi = args.AsType(1, "byte", DataType.Number, true);
+            LuaValue vj = args.AsType(2, "byte", DataType.Number, true);
 
             // Validate indices for Lua 5.3+ integer representation requirements
             LuaNumberHelpers.ValidateStringIndices(
@@ -439,7 +451,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">String plus optional range.</param>
         /// <returns>Tuple of code points.</returns>
         [NovaSharpModuleMethod(Name = "unicode")]
-        public static DynValue Unicode(
+        public static LuaValue Unicode(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -449,17 +461,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue vs = args.AsType(0, "unicode", DataType.String, false);
-            DynValue vi = args.AsType(1, "unicode", DataType.Number, true);
-            DynValue vj = args.AsType(2, "unicode", DataType.Number, true);
+            LuaValue vs = args.AsType(0, "unicode", DataType.String, false);
+            LuaValue vi = args.AsType(1, "unicode", DataType.Number, true);
+            LuaValue vj = args.AsType(2, "unicode", DataType.Number, true);
 
             return PerformByteLike(vs, vi, vj, i => i);
         }
 
-        private static DynValue PerformByteLike(
-            DynValue vs,
-            DynValue vi,
-            DynValue vj,
+        private static LuaValue PerformByteLike(
+            LuaValue vs,
+            LuaValue vi,
+            LuaValue vj,
             Func<int, int> filter
         )
         {
@@ -470,23 +482,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (length == 0)
             {
-                return DynValue.Void;
+                return LuaValue.Void;
             }
 
             // Fast path for single character - avoid array allocation
             if (length == 1)
             {
-                return DynValue.NewNumber(filter(span[0]));
+                return LuaValue.NewNumber(filter(span[0]));
             }
 
-            DynValue[] rets = new DynValue[length];
+            LuaValue[] rets = new LuaValue[length];
 
             for (int i = 0; i < length; ++i)
             {
-                rets[i] = DynValue.NewNumber(filter(span[i]));
+                rets[i] = LuaValue.NewNumber(filter(span[i]));
             }
 
-            return DynValue.NewTuple(rets);
+            return LuaValue.NewTuple(rets);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -510,9 +522,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Normalizes Lua substring indices (1-based/negative) into zero-based offsets.
         /// </summary>
-        private static int? AdjustIndex(string s, DynValue vi, int defval)
+        private static int? AdjustIndex(string s, LuaValue vi, int defval)
         {
-            if (vi.IsNil())
+            if (vi.IsNil)
             {
                 return defval;
             }
@@ -540,7 +552,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             /// <summary>
             /// Mirrors <see cref="AdjustIndex"/> for unit tests.
             /// </summary>
-            public static int? AdjustIndex(string s, DynValue vi, int defaultValue)
+            public static int? AdjustIndex(string s, LuaValue vi, int defaultValue)
             {
                 return StringModule.AdjustIndex(s, vi, defaultValue);
             }
@@ -550,22 +562,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `string.len`, returning the number of bytes in the string (§6.4.1).
         /// </summary>
         [NovaSharpModuleMethod(Name = "len")]
-        public static DynValue Len(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Len(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue vs = args.AsType(0, "len", DataType.String, false);
-            return DynValue.FromNumber(vs.String.Length);
+            LuaValue vs = args.AsType(0, "len", DataType.String, false);
+            return LuaValue.FromNumber(vs.String.Length);
         }
 
         /// <summary>
         /// Implements Lua `string.match`, returning captures for the first pattern match (§6.4.1).
         /// </summary>
         [NovaSharpModuleMethod(Name = "match")]
-        public static DynValue Match(
+        public static LuaValue Match(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -582,7 +594,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `string.gmatch`, returning an iterator over pattern matches (§6.4.1).
         /// </summary>
         [NovaSharpModuleMethod(Name = "gmatch")]
-        public static DynValue GMatch(
+        public static LuaValue GMatch(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -599,7 +611,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `string.gsub`, performing pattern substitution (§6.4.1).
         /// </summary>
         [NovaSharpModuleMethod(Name = "gsub")]
-        public static DynValue GSub(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue GSub(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -613,7 +625,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `string.find`, locating the first pattern occurrence (§6.4.1).
         /// </summary>
         [NovaSharpModuleMethod(Name = "find")]
-        public static DynValue Find(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Find(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -627,7 +639,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `string.lower`, converting characters to lower-case (§6.4.1).
         /// </summary>
         [NovaSharpModuleMethod(Name = "lower")]
-        public static DynValue Lower(
+        public static LuaValue Lower(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -637,15 +649,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue argS = args.AsType(0, "lower", DataType.String, false);
-            return DynValue.NewString(InvariantString.ToLowerInvariantIfNeeded(argS.String));
+            LuaValue argS = args.AsType(0, "lower", DataType.String, false);
+            return LuaValue.NewString(InvariantString.ToLowerInvariantIfNeeded(argS.String));
         }
 
         /// <summary>
         /// Implements Lua `string.upper`, converting characters to upper-case (§6.4.1).
         /// </summary>
         [NovaSharpModuleMethod(Name = "upper")]
-        public static DynValue Upper(
+        public static LuaValue Upper(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -655,8 +667,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue argS = args.AsType(0, "upper", DataType.String, false);
-            return DynValue.NewString(InvariantString.ToUpperInvariantIfNeeded(argS.String));
+            LuaValue argS = args.AsType(0, "upper", DataType.String, false);
+            return LuaValue.NewString(InvariantString.ToUpperInvariantIfNeeded(argS.String));
         }
 
         /// <summary>
@@ -674,16 +686,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </para>
         /// </remarks>
         [NovaSharpModuleMethod(Name = "rep")]
-        public static DynValue Rep(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Rep(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue argS = args.AsType(0, "rep", DataType.String, false);
-            DynValue argN = args.AsType(1, "rep", DataType.Number, false);
-            DynValue argSep = args.AsType(2, "rep", DataType.String, true);
+            LuaValue argS = args.AsType(0, "rep", DataType.String, false);
+            LuaValue argN = args.AsType(1, "rep", DataType.Number, false);
+            LuaValue argSep = args.AsType(2, "rep", DataType.String, true);
 
             // Validate count for Lua 5.3+ integer representation requirements
             LuaNumberHelpers.ValidateIntegerArgument(
@@ -695,7 +707,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (String.IsNullOrEmpty(argS.String) || (argN.Number < 1))
             {
-                return DynValue.EmptyString;
+                return LuaValue.EmptyString;
             }
 
             // Separator was added in Lua 5.2 - ignore it in Lua 5.1 mode
@@ -720,14 +732,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 result.Append(argS.String);
             }
 
-            return DynValue.NewString(result.ToString());
+            return LuaValue.NewString(result.ToString());
         }
 
         /// <summary>
         /// Implements Lua `string.format`, producing formatted strings (printf-style) (§6.4.1).
         /// </summary>
         [NovaSharpModuleMethod(Name = "format")]
-        public static DynValue Format(
+        public static LuaValue Format(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -744,7 +756,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `string.reverse`, reversing byte order (§6.4.1).
         /// </summary>
         [NovaSharpModuleMethod(Name = "reverse")]
-        public static DynValue Reverse(
+        public static LuaValue Reverse(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -754,12 +766,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue argS = args.AsType(0, "reverse", DataType.String, false);
+            LuaValue argS = args.AsType(0, "reverse", DataType.String, false);
             string str = argS.String;
 
             if (String.IsNullOrEmpty(str))
             {
-                return DynValue.EmptyString;
+                return LuaValue.EmptyString;
             }
 
             // Use stackalloc for common small strings to avoid heap allocation
@@ -770,14 +782,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 Span<char> buffer = stackalloc char[str.Length];
                 str.AsSpan().CopyTo(buffer);
                 buffer.Reverse();
-                return DynValue.NewString(new string(buffer));
+                return LuaValue.NewString(new string(buffer));
             }
             else
             {
                 // Fallback to heap allocation for large strings
                 char[] elements = str.ToCharArray();
                 Array.Reverse(elements);
-                return DynValue.NewString(new string(elements));
+                return LuaValue.NewString(new string(elements));
             }
         }
 
@@ -791,16 +803,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// In Lua 5.1/5.2, non-integer indices are silently truncated via floor.
         /// </remarks>
         [NovaSharpModuleMethod(Name = "sub")]
-        public static DynValue Sub(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Sub(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue argS = args.AsType(0, "sub", DataType.String, false);
-            DynValue argI = args.AsType(1, "sub", DataType.Number, true);
-            DynValue argJ = args.AsType(2, "sub", DataType.Number, true);
+            LuaValue argS = args.AsType(0, "sub", DataType.String, false);
+            LuaValue argI = args.AsType(1, "sub", DataType.Number, true);
+            LuaValue argJ = args.AsType(2, "sub", DataType.Number, true);
 
             // Validate indices for Lua 5.3+ integer representation requirements
             LuaNumberHelpers.ValidateStringIndices(
@@ -813,14 +825,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             StringRange range = StringRange.FromLuaRange(argI, argJ, -1);
             string s = range.ApplyToString(argS.String);
 
-            return DynValue.NewString(s);
+            return LuaValue.NewString(s);
         }
 
         /// <summary>
         /// NovaSharp helper: returns whether a string begins with the provided prefix (ordinal comparison).
         /// </summary>
         [NovaSharpModuleMethod(Name = "startswith")]
-        public static DynValue StartsWith(
+        public static LuaValue StartsWith(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -830,15 +842,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue argS1 = args.AsType(0, "startsWith", DataType.String, true);
-            DynValue argS2 = args.AsType(1, "startsWith", DataType.String, true);
+            LuaValue argS1 = args.AsType(0, "startsWith", DataType.String, true);
+            LuaValue argS2 = args.AsType(1, "startsWith", DataType.String, true);
 
-            if (argS1.IsNil() || argS2.IsNil())
+            if (argS1.IsNil || argS2.IsNil)
             {
-                return DynValue.False;
+                return LuaValue.False;
             }
 
-            return DynValue.NewBoolean(
+            return LuaValue.NewBoolean(
                 argS1.String.StartsWith(argS2.String, StringComparison.Ordinal)
             );
         }
@@ -847,7 +859,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// NovaSharp helper: returns whether a string ends with the provided suffix (ordinal comparison).
         /// </summary>
         [NovaSharpModuleMethod(Name = "endswith")]
-        public static DynValue EndsWith(
+        public static LuaValue EndsWith(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -857,15 +869,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue argS1 = args.AsType(0, "endsWith", DataType.String, true);
-            DynValue argS2 = args.AsType(1, "endsWith", DataType.String, true);
+            LuaValue argS1 = args.AsType(0, "endsWith", DataType.String, true);
+            LuaValue argS2 = args.AsType(1, "endsWith", DataType.String, true);
 
-            if (argS1.IsNil() || argS2.IsNil())
+            if (argS1.IsNil || argS2.IsNil)
             {
-                return DynValue.False;
+                return LuaValue.False;
             }
 
-            return DynValue.NewBoolean(
+            return LuaValue.NewBoolean(
                 argS1.String.EndsWith(argS2.String, StringComparison.Ordinal)
             );
         }
@@ -874,7 +886,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// NovaSharp helper: returns whether a string contains the provided substring (ordinal comparison).
         /// </summary>
         [NovaSharpModuleMethod(Name = "contains")]
-        public static DynValue Contains(
+        public static LuaValue Contains(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -884,15 +896,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue argS1 = args.AsType(0, "contains", DataType.String, true);
-            DynValue argS2 = args.AsType(1, "contains", DataType.String, true);
+            LuaValue argS1 = args.AsType(0, "contains", DataType.String, true);
+            LuaValue argS2 = args.AsType(1, "contains", DataType.String, true);
 
-            if (argS1.IsNil() || argS2.IsNil())
+            if (argS1.IsNil || argS2.IsNil)
             {
-                return DynValue.False;
+                return LuaValue.False;
             }
 
-            return DynValue.NewBoolean(
+            return LuaValue.NewBoolean(
                 argS1.String.Contains(argS2.String, StringComparison.Ordinal)
             );
         }

@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Diagnostics.CodeAnalysis;
     using System.Reflection;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
@@ -19,10 +20,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// Class exposing C# objects as Lua userdata.
     /// For efficiency, a global registry of types is maintained, instead of a per-script one.
     /// </summary>
-    public class UserData : RefIdObject
+    public class UserData : RefIdObject, IScriptPrivateResource
     {
         private int _stableHashCode;
         private bool _stableHashCodeInitialized;
+        private Script _ownerScript;
+        private LuaValue _userValue;
 
         private UserData()
         {
@@ -33,7 +36,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Gets or sets the "uservalue". See debug.getuservalue and debug.setuservalue.
         /// http://www.lua.org/manual/5.2/manual.html#pdf-debug.setuservalue
         /// </summary>
-        public DynValue UserValue { get; set; }
+        public LuaValue UserValue
+        {
+            get { return _userValue; }
+            set
+            {
+                Script valueOwner = value.GetOwnerScript();
+                if (_ownerScript == null && valueOwner != null)
+                {
+                    _ownerScript = valueOwner;
+                }
+
+                this.CheckScriptOwnership(value);
+                _userValue = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets the script owning this userdata, or <c>null</c> when it is intentionally shared.
+        /// </summary>
+        public Script OwnerScript => _ownerScript;
 
         /// <summary>
         /// Gets the object associated to this userdata (null for static members)
@@ -304,55 +326,106 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Creates a userdata DynValue from the specified object, using a specific descriptor
+        /// Creates a userdata LuaValue from the specified object, using a specific descriptor
         /// </summary>
         /// <param name="o">The object</param>
         /// <param name="descr">The descriptor.</param>
         /// <returns></returns>
-        public static DynValue Create(object o, IUserDataDescriptor descr)
+        public static LuaValue Create(object o, IUserDataDescriptor descr)
         {
-            return DynValue.NewUserData(CreateCore(o, descr));
+            return LuaValue.NewUserData(CreateCore(null, o, descr));
         }
 
         /// <summary>
-        /// Creates a userdata DynValue from the specified object
+        /// Creates script-owned userdata from the specified object and descriptor.
+        /// </summary>
+        internal static LuaValue Create(Script script, object o, IUserDataDescriptor descr)
+        {
+            return LuaValue.NewUserData(CreateCore(script, o, descr));
+        }
+
+        /// <summary>
+        /// Creates a userdata LuaValue from the specified object
         /// </summary>
         /// <param name="o">The object</param>
         /// <returns></returns>
-        public static DynValue Create(object o)
+        public static LuaValue? Create(object o)
+        {
+            return TryCreate(o, out LuaValue value) ? value : (LuaValue?)null;
+        }
+
+        /// <summary>
+        /// Attempts to create a userdata value from the specified object.
+        /// </summary>
+        /// <param name="o">The object.</param>
+        /// <param name="value">The userdata value when a descriptor is available.</param>
+        /// <returns><see langword="true"/> when the object has a descriptor.</returns>
+        public static bool TryCreate(object o, out LuaValue value)
+        {
+            return TryCreate(null, o, out value);
+        }
+
+        /// <summary>
+        /// Attempts to create userdata owned by the specified script.
+        /// </summary>
+        internal static bool TryCreate(Script script, object o, out LuaValue value)
         {
             IUserDataDescriptor descr = GetDescriptorForObject(o);
             if (descr == null)
             {
                 if (o is Type type)
                 {
-                    return CreateStatic(type);
+                    return TryCreateStatic(type, out value);
                 }
 
-                return null;
+                value = LuaValue.Nil;
+                return false;
             }
 
-            return Create(o, descr);
+            value = Create(script, o, descr);
+            return true;
         }
 
         /// <summary>
-        /// Creates a static userdata DynValue from the specified IUserDataDescriptor
+        /// Creates a static userdata LuaValue from the specified IUserDataDescriptor
         /// </summary>
         /// <param name="descr">The IUserDataDescriptor</param>
         /// <returns></returns>
-        public static DynValue CreateStatic(IUserDataDescriptor descr)
+        public static LuaValue? CreateStatic(IUserDataDescriptor descr)
+        {
+            return TryCreateStatic(descr, out LuaValue value) ? value : (LuaValue?)null;
+        }
+
+        /// <summary>
+        /// Attempts to create a static userdata value from the specified descriptor.
+        /// </summary>
+        /// <param name="descr">The userdata descriptor.</param>
+        /// <param name="value">The static userdata value when the descriptor is available.</param>
+        /// <returns><see langword="true"/> when the descriptor is available.</returns>
+        public static bool TryCreateStatic(IUserDataDescriptor descr, out LuaValue value)
         {
             if (descr == null)
             {
-                return null;
+                value = LuaValue.Nil;
+                return false;
             }
 
-            return DynValue.NewUserData(CreateCore(null, descr));
+            value = LuaValue.NewUserData(CreateCore(null, null, descr));
+            return true;
         }
 
-        private static UserData CreateCore(object obj, IUserDataDescriptor descriptor)
+        private static UserData CreateCore(
+            Script ownerScript,
+            object obj,
+            IUserDataDescriptor descriptor
+        )
         {
-            return new UserData() { Descriptor = descriptor, Object = obj };
+            return new UserData()
+            {
+                _ownerScript = ownerScript,
+                Descriptor = descriptor,
+                Object = obj,
+            };
         }
 
         private static int CalculateStableHashCode(object obj, IUserDataDescriptor descriptor)
@@ -372,28 +445,55 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Creates a static userdata DynValue from the specified Type
+        /// Creates a static userdata LuaValue from the specified Type
         /// </summary>
         /// <param name="t">The type</param>
         /// <returns></returns>
-        public static DynValue CreateStatic(Type t)
+        public static LuaValue? CreateStatic(Type t)
         {
             if (t == null)
             {
                 throw new ArgumentNullException(nameof(t));
             }
 
-            return CreateStatic(GetDescriptorForType(t, false));
+            return TryCreateStatic(t, out LuaValue value) ? value : (LuaValue?)null;
         }
 
         /// <summary>
-        /// Creates a static userdata DynValue from the specified Type
+        /// Attempts to create a static userdata value for the specified type.
+        /// </summary>
+        /// <param name="t">The CLR type.</param>
+        /// <param name="value">The static userdata value when a descriptor is available.</param>
+        /// <returns><see langword="true"/> when the type has a descriptor.</returns>
+        public static bool TryCreateStatic(Type t, out LuaValue value)
+        {
+            if (t == null)
+            {
+                throw new ArgumentNullException(nameof(t));
+            }
+
+            return TryCreateStatic(GetDescriptorForType(t, false), out value);
+        }
+
+        /// <summary>
+        /// Creates a static userdata LuaValue from the specified Type
         /// </summary>
         /// <typeparam name="T">The Type</typeparam>
         /// <returns></returns>
-        public static DynValue CreateStatic<T>()
+        public static LuaValue? CreateStatic<T>()
         {
-            return CreateStatic(GetDescriptorForType<T>(false));
+            return TryCreateStatic<T>(out LuaValue value) ? value : (LuaValue?)null;
+        }
+
+        /// <summary>
+        /// Attempts to create a static userdata value for the specified type.
+        /// </summary>
+        /// <typeparam name="T">The CLR type.</typeparam>
+        /// <param name="value">The static userdata value when a descriptor is available.</param>
+        /// <returns><see langword="true"/> when the type has a descriptor.</returns>
+        public static bool TryCreateStatic<T>(out LuaValue value)
+        {
+            return TryCreateStatic(GetDescriptorForType<T>(false), out value);
         }
 
         /// <summary>
@@ -514,7 +614,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static Table GetDescriptionOfRegisteredTypes(bool useHistoricalData = false)
         {
-            DynValue output = DynValue.NewPrimeTable();
+            LuaValue output = LuaValue.NewPrimeTable();
             IEnumerable<KeyValuePair<Type, IUserDataDescriptor>> registeredTypesPairs =
                 useHistoricalData
                     ? TypeDescriptorRegistry.RegisteredTypesHistory
@@ -524,7 +624,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 if (descpair.Value is IWireableDescriptor sd)
                 {
-                    DynValue t = DynValue.NewPrimeTable();
+                    LuaValue t = LuaValue.NewPrimeTable();
                     output.Table.Set(descpair.Key.FullName, t);
                     sd.PrepareForWiring(t.Table);
                 }

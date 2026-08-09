@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -22,18 +23,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             bool? observed = null;
             DataType? firstArgumentType = null;
 
-            DynValue callback = DynValue.NewCallback(
+            LuaValue callback = LuaValue.NewCallback(
                 (_, args) =>
                 {
                     observed = args.IsMethodCall;
                     firstArgumentType = args.Count > 0 ? args[0].Type : null;
-                    return DynValue.NewNumber(args.Count);
+                    return LuaValue.NewNumber(args.Count);
                 }
             );
 
             Table target = new(script);
             target.Set("invoke", callback);
-            script.Globals["target"] = DynValue.NewTable(target);
+            script.Globals["target"] = LuaValue.NewTable(target);
             script.Options.ColonOperatorClrCallbackBehaviour = ColonOperatorBehaviour.TreatAsDot;
 
             script.DoString("return target:invoke(123)");
@@ -50,18 +51,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             bool? observed = null;
             DataType? firstArgumentType = null;
 
-            DynValue callback = DynValue.NewCallback(
+            LuaValue callback = LuaValue.NewCallback(
                 (_, args) =>
                 {
                     observed = args.IsMethodCall;
                     firstArgumentType = args.Count > 0 ? args[0].Type : null;
-                    return DynValue.NewNumber(args.Count);
+                    return LuaValue.NewNumber(args.Count);
                 }
             );
 
             Table target = new(script);
             target.Set("invoke", callback);
-            script.Globals["target"] = DynValue.NewTable(target);
+            script.Globals["target"] = LuaValue.NewTable(target);
             script.Options.ColonOperatorClrCallbackBehaviour = ColonOperatorBehaviour.TreatAsColon;
 
             script.DoString("return target:invoke(123)");
@@ -78,18 +79,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             bool? observed = null;
             DataType? firstArgumentType = null;
 
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue callback = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
                     observed = args.IsMethodCall;
                     firstArgumentType = args.Count > 0 ? args[0].Type : null;
-                    return DynValue.NewNumber(args.Count);
+                    return LuaValue.NewNumber(args.Count);
                 }
             );
 
             Table target = new(script);
             target.Set("invoke", callback);
-            script.Globals["target"] = DynValue.NewTable(target);
+            script.Globals["target"] = LuaValue.NewTable(target);
             script.Options.ColonOperatorClrCallbackBehaviour = ColonOperatorBehaviour.TreatAsDot;
 
             script.DoString("return target:invoke(123)");
@@ -108,18 +109,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             bool? observed = null;
             DataType? firstArgumentType = null;
 
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue callback = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
                     observed = args.IsMethodCall;
                     firstArgumentType = args.Count > 0 ? args[0].Type : null;
-                    return DynValue.NewNumber(args.Count);
+                    return LuaValue.NewNumber(args.Count);
                 }
             );
 
             Table target = new(script);
             target.Set("invoke", callback);
-            script.Globals["target"] = DynValue.NewTable(target);
+            script.Globals["target"] = LuaValue.NewTable(target);
             script.Options.ColonOperatorClrCallbackBehaviour = ColonOperatorBehaviour.TreatAsColon;
 
             script.DoString("return target:invoke(123)");
@@ -144,17 +145,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             bool? tableCallFlag = null;
 
-            DynValue callback = DynValue.NewCallback(
+            LuaValue callback = LuaValue.NewCallback(
                 (_, args) =>
                 {
                     tableCallFlag = args.IsMethodCall;
-                    return DynValue.NewNumber(args.Count);
+                    return LuaValue.NewNumber(args.Count);
                 }
             );
 
             Table tableTarget = new(script);
             tableTarget.Set("invoke", callback);
-            script.Globals["tableTarget"] = DynValue.NewTable(tableTarget);
+            script.Globals["tableTarget"] = LuaValue.NewTable(tableTarget);
 
             script.DoString("return tableTarget:invoke(123)");
             await Assert.That(tableCallFlag).IsFalse().ConfigureAwait(false);
@@ -177,11 +178,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             public DataType? LastFirstArgumentType { get; private set; }
 
-            public DynValue Invoke(ScriptExecutionContext context, CallbackArguments args)
+            public LuaValue Invoke(ScriptExecutionContext context, CallbackArguments args)
             {
                 LastIsMethodCall = args.IsMethodCall;
                 LastFirstArgumentType = args.Count > 0 ? args[0].Type : null;
-                return DynValue.NewNumber(args.Count);
+                return LuaValue.NewNumber(args.Count);
             }
         }
     }

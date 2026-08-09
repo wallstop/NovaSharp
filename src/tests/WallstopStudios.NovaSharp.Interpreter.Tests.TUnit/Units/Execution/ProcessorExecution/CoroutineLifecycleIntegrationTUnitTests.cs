@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -26,9 +27,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function simple() return 5 end");
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("simple"));
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("simple"));
 
-            DynValue first = coroutineValue.Coroutine.Resume();
+            LuaValue first = coroutineValue.Coroutine.Resume();
             await Assert.That(first.Type).IsEqualTo(DataType.Number);
             await Assert.That(first.Number).IsEqualTo(5);
             await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Dead);
@@ -61,13 +62,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("first"));
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("first"));
 
-            DynValue initial = coroutineValue.Coroutine.Resume();
+            LuaValue initial = coroutineValue.Coroutine.Resume();
             await Assert.That(initial.String).IsEqualTo("done");
             await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Dead);
 
-            DynValue recycledValue = script.RecycleCoroutine(
+            LuaValue recycledValue = script.RecycleCoroutine(
                 coroutineValue.Coroutine,
                 script.Globals.Get("second")
             );
@@ -79,11 +80,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Coroutine recycled = recycledValue.Coroutine;
             await Assert.That(recycled.State).IsEqualTo(CoroutineState.NotStarted);
 
-            DynValue firstYield = recycled.Resume();
+            LuaValue firstYield = recycled.Resume();
             await Assert.That(firstYield.String).IsEqualTo("pause");
             await Assert.That(recycled.State).IsEqualTo(CoroutineState.Suspended);
 
-            DynValue final = recycled.Resume();
+            LuaValue final = recycled.Resume();
             await Assert.That(final.String).IsEqualTo("done-again");
             await Assert.That(recycled.State).IsEqualTo(CoroutineState.Dead);
         }
@@ -99,7 +100,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function sample() coroutine.yield(1) end");
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("sample"));
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("sample"));
             coroutineValue.Coroutine.Resume();
 
             InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
@@ -131,10 +132,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("heavy"));
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("heavy"));
             coroutineValue.Coroutine.AutoYieldCounter = 1;
 
-            DynValue first = coroutineValue.Coroutine.Resume();
+            LuaValue first = coroutineValue.Coroutine.Resume();
             await Assert.That(first.Type).IsEqualTo(DataType.YieldRequest);
             await Assert.That(first.YieldRequest.Forced).IsTrue();
             await Assert
@@ -142,7 +143,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 .IsEqualTo(CoroutineState.ForceSuspended);
 
             coroutineValue.Coroutine.AutoYieldCounter = 0;
-            DynValue final = coroutineValue.Coroutine.Resume();
+            LuaValue final = coroutineValue.Coroutine.Resume();
 
             await Assert.That(final.Type).IsEqualTo(DataType.Number);
             await Assert.That(final.Number).IsEqualTo(400 * 401 / 2);
@@ -169,17 +170,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("busy"));
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("busy"));
             coroutineValue.Coroutine.AutoYieldCounter = 1;
 
-            DynValue first = coroutineValue.Coroutine.Resume();
+            LuaValue first = coroutineValue.Coroutine.Resume();
             await Assert.That(first.Type).IsEqualTo(DataType.YieldRequest);
             await Assert
                 .That(coroutineValue.Coroutine.State)
                 .IsEqualTo(CoroutineState.ForceSuspended);
 
             ArgumentException exception = ExpectException<ArgumentException>(() =>
-                coroutineValue.Coroutine.Resume(DynValue.NewNumber(1))
+                coroutineValue.Coroutine.ResumeValues(LuaValue.NewNumber(1))
             );
             await Assert.That(exception.Message).Contains("args must be empty");
             await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Dead);
@@ -208,10 +209,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("heavyweight"));
+            LuaValue coroutineValue = script.CreateCoroutineValue(
+                script.Globals.Get("heavyweight")
+            );
             coroutineValue.Coroutine.AutoYieldCounter = 1;
 
-            DynValue first = coroutineValue.Coroutine.Resume();
+            LuaValue first = coroutineValue.Coroutine.Resume();
             await Assert.That(first.Type).IsEqualTo(DataType.YieldRequest);
             await Assert.That(first.YieldRequest.Forced).IsTrue();
             await Assert
@@ -220,7 +223,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             coroutineValue.Coroutine.AutoYieldCounter = 0;
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            DynValue final = coroutineValue.Coroutine.Resume(context);
+            LuaValue final = coroutineValue.Coroutine.Resume(context);
 
             await Assert.That(final.Type).IsEqualTo(DataType.Number);
             await Assert.That(final.Number).IsEqualTo(300 * 301 / 2);
@@ -245,14 +248,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("accumulator"));
+            LuaValue coroutineValue = script.CreateCoroutineValue(
+                script.Globals.Get("accumulator")
+            );
 
-            DynValue first = coroutineValue.Coroutine.Resume();
+            LuaValue first = coroutineValue.Coroutine.Resume();
             await Assert.That(first.Type).IsEqualTo(DataType.String);
             await Assert.That(first.String).IsEqualTo("ready");
             await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Suspended);
 
-            DynValue result = coroutineValue.Coroutine.Resume(DynValue.NewNumber(21));
+            LuaValue result = coroutineValue.Coroutine.ResumeValues(LuaValue.NewNumber(21));
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number);
             await Assert.That(result.Number).IsEqualTo(42);
@@ -277,13 +282,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(
+            LuaValue coroutineValue = script.CreateCoroutineValue(
                 script.Globals.Get("closable_success")
             );
             coroutineValue.Coroutine.Resume();
             await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Suspended);
 
-            DynValue closeResult = coroutineValue.Coroutine.Close();
+            LuaValue closeResult = coroutineValue.Coroutine.Close();
 
             await Assert.That(closeResult.Type).IsEqualTo(DataType.Boolean);
             await Assert.That(closeResult.Boolean).IsTrue();
@@ -310,13 +315,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(
+            LuaValue coroutineValue = script.CreateCoroutineValue(
                 script.Globals.Get("closable_failure")
             );
             coroutineValue.Coroutine.Resume();
             await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Suspended);
 
-            DynValue closeResult = coroutineValue.Coroutine.Close();
+            LuaValue closeResult = coroutineValue.Coroutine.Close();
 
             await Assert.That(closeResult.Type).IsEqualTo(DataType.Tuple);
             await Assert.That(closeResult.Tuple[0].Boolean).IsFalse();
@@ -335,9 +340,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function never_started() return 5 end");
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("never_started"));
+            LuaValue coroutineValue = script.CreateCoroutineValue(
+                script.Globals.Get("never_started")
+            );
 
-            DynValue closeResult = coroutineValue.Coroutine.Close();
+            LuaValue closeResult = coroutineValue.Coroutine.Close();
 
             await Assert.That(closeResult.Type).IsEqualTo(DataType.Boolean);
             await Assert.That(closeResult.Boolean).IsTrue();
@@ -365,15 +372,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(
+            LuaValue coroutineValue = script.CreateCoroutineValue(
                 script.Globals.Get("closable_failure")
             );
             coroutineValue.Coroutine.Resume();
 
-            DynValue firstClose = coroutineValue.Coroutine.Close();
+            LuaValue firstClose = coroutineValue.Coroutine.Close();
             await Assert.That(firstClose.Tuple[0].Boolean).IsFalse();
 
-            DynValue secondClose = coroutineValue.Coroutine.Close();
+            LuaValue secondClose = coroutineValue.Coroutine.Close();
 
             await Assert.That(secondClose.Type).IsEqualTo(DataType.Tuple);
             await Assert.That(secondClose.Tuple[0].Boolean).IsFalse();

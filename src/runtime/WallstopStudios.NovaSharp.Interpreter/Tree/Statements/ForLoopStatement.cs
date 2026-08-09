@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
 {
+    using global::NovaSharp;
     using Debugging;
     using Execution.Scopes;
     using Expressions;
@@ -53,7 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             }
             else
             {
-                _step = new LiteralExpression(lcontext, DynValue.NewNumber(1));
+                _step = new LiteralExpression(lcontext, LuaValue.NewNumber(1));
             }
 
             lcontext.Scope.PushBlock();

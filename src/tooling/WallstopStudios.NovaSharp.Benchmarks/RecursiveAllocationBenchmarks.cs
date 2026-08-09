@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using global::NovaSharp;
     using BenchmarkDotNet.Attributes;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -72,7 +73,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 null,
                 $"recursive_alloc_{scenario}"
             );
-            DynValue function = chunk.Execute();
+            LuaValue function = chunk.Execute();
             _compiled = script.PrepareCallable(function);
         }
 
@@ -81,7 +82,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         /// <returns>The scalar result returned by the recursive Lua workload.</returns>
         [Benchmark(Description = "Precompiled recursive execute")]
-        public DynValue ExecutePrecompiled() => _compiled.Execute();
+        public LuaValue ExecutePrecompiled() => _compiled.Execute();
 
         private static string GetScript(RecursiveAllocationScenario scenario) =>
             scenario switch

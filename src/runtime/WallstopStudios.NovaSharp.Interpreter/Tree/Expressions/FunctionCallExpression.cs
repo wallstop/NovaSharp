@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
     using System.Collections.Generic;
+    using global::NovaSharp;
     using Debugging;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -103,7 +104,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             if (!string.IsNullOrEmpty(_name))
             {
                 bc.EmitCopy(0);
-                bc.EmitIndex(DynValue.NewString(_name), true);
+                bc.EmitIndex(LuaValue.NewString(_name), true);
                 bc.EmitSwap(0, 1);
                 ++argslen;
             }
@@ -124,7 +125,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         }
 
         /// <inheritdoc/>
-        public override DynValue Eval(ScriptExecutionContext context)
+        public override LuaValue Eval(ScriptExecutionContext context)
         {
             throw new DynamicExpressionException("Dynamic Expressions cannot call functions.");
         }

@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System.Collections.Generic;
     using System.Globalization;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -24,11 +25,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Type[] targets = new[]
             {
                 typeof(Dictionary<object, object>),
-                typeof(Dictionary<DynValue, DynValue>),
+                typeof(Dictionary<LuaValue, LuaValue>),
                 typeof(List<object>),
-                typeof(List<DynValue>),
+                typeof(List<LuaValue>),
                 typeof(object[]),
-                typeof(DynValue[]),
+                typeof(LuaValue[]),
             };
 
             foreach (Type target in targets)
@@ -117,8 +118,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ConvertTableToTypeHandlesDictionaryOfObjects()
         {
             Table table = CreateDictionaryTable(
-                (DynValue.NewString("one"), DynValue.NewNumber(1)),
-                (DynValue.NewString("two"), DynValue.NewString("second"))
+                (LuaValue.NewString("one"), LuaValue.NewNumber(1)),
+                (LuaValue.NewString("two"), LuaValue.NewString("second"))
             );
 
             object result = TableConversions.ConvertTableToType(
@@ -139,29 +140,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task ConvertTableToTypeHandlesDictionaryOfDynValues()
         {
-            DynValue key = DynValue.NewString("key");
-            DynValue value = DynValue.NewNumber(42);
+            LuaValue key = LuaValue.NewString("key");
+            LuaValue value = LuaValue.NewNumber(42);
             Table table = CreateDictionaryTable((key, value));
 
             object result = TableConversions.ConvertTableToType(
                 table,
-                typeof(Dictionary<DynValue, DynValue>)
+                typeof(Dictionary<LuaValue, LuaValue>)
             );
 
             await Assert
                 .That(result)
-                .IsTypeOf<Dictionary<DynValue, DynValue>>()
+                .IsTypeOf<Dictionary<LuaValue, LuaValue>>()
                 .ConfigureAwait(false);
-            Dictionary<DynValue, DynValue> dictionary = (Dictionary<DynValue, DynValue>)result;
-            await Assert.That(dictionary[key]).IsSameReferenceAs(value).ConfigureAwait(false);
+            Dictionary<LuaValue, LuaValue> dictionary = (Dictionary<LuaValue, LuaValue>)result;
+            await Assert.That(dictionary[key]).IsEqualTo(value).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task ConvertTableToTypeHandlesListOfObjects()
         {
             Table table = CreateSequentialTable(
-                DynValue.NewNumber(10),
-                DynValue.NewString("value")
+                LuaValue.NewNumber(10),
+                LuaValue.NewString("value")
             );
 
             object result = TableConversions.ConvertTableToType(table, typeof(List<object>));
@@ -180,21 +181,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task ConvertTableToTypeHandlesListOfDynValues()
         {
-            DynValue first = DynValue.NewNumber(1);
-            DynValue second = DynValue.NewString("two");
+            LuaValue first = LuaValue.NewNumber(1);
+            LuaValue second = LuaValue.NewString("two");
             Table table = CreateSequentialTable(first, second);
 
-            object result = TableConversions.ConvertTableToType(table, typeof(List<DynValue>));
+            object result = TableConversions.ConvertTableToType(table, typeof(List<LuaValue>));
 
-            await Assert.That(result).IsTypeOf<List<DynValue>>().ConfigureAwait(false);
-            List<DynValue> list = (List<DynValue>)result;
+            await Assert.That(result).IsTypeOf<List<LuaValue>>().ConfigureAwait(false);
+            List<LuaValue> list = (List<LuaValue>)result;
             await AssertSequenceSameReferences(list, new[] { first, second }).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task ConvertTableToTypeHandlesObjectArray()
         {
-            Table table = CreateSequentialTable(DynValue.NewNumber(1), DynValue.NewString("two"));
+            Table table = CreateSequentialTable(LuaValue.NewNumber(1), LuaValue.NewString("two"));
 
             object[] array = (object[])TableConversions.ConvertTableToType(table, typeof(object[]));
 
@@ -210,12 +211,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task ConvertTableToTypeHandlesDynValueArray()
         {
-            DynValue first = DynValue.NewNumber(7);
-            DynValue second = DynValue.True;
+            LuaValue first = LuaValue.NewNumber(7);
+            LuaValue second = LuaValue.True;
             Table table = CreateSequentialTable(first, second);
 
-            DynValue[] array = (DynValue[])
-                TableConversions.ConvertTableToType(table, typeof(DynValue[]));
+            LuaValue[] array = (LuaValue[])
+                TableConversions.ConvertTableToType(table, typeof(LuaValue[]));
 
             await AssertSequenceSameReferences(array, new[] { first, second })
                 .ConfigureAwait(false);
@@ -224,7 +225,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task ConvertTableToTypeHandlesGenericList()
         {
-            Table table = CreateSequentialTable(DynValue.NewNumber(3), DynValue.NewNumber(4));
+            Table table = CreateSequentialTable(LuaValue.NewNumber(3), LuaValue.NewNumber(4));
 
             List<int> list =
                 (List<int>)TableConversions.ConvertTableToType(table, typeof(List<int>));
@@ -235,7 +236,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task ConvertTableToTypeHandlesEnumerableInterface()
         {
-            Table table = CreateSequentialTable(DynValue.NewNumber(5), DynValue.NewNumber(6));
+            Table table = CreateSequentialTable(LuaValue.NewNumber(5), LuaValue.NewNumber(6));
 
             IEnumerable<int> enumerable =
                 (IEnumerable<int>)
@@ -249,8 +250,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ConvertTableToTypeHandlesGenericDictionary()
         {
             Table table = CreateDictionaryTable(
-                (DynValue.NewString("alpha"), DynValue.NewNumber(1)),
-                (DynValue.NewString("beta"), DynValue.NewNumber(2))
+                (LuaValue.NewString("alpha"), LuaValue.NewNumber(1)),
+                (LuaValue.NewString("beta"), LuaValue.NewNumber(2))
             );
 
             Dictionary<string, int> dictionary =
@@ -265,7 +266,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ConvertTableToTypeHandlesDictionaryInterface()
         {
             Table table = CreateDictionaryTable(
-                (DynValue.NewString("pi"), DynValue.NewNumber(3.14))
+                (LuaValue.NewString("pi"), LuaValue.NewNumber(3.14))
             );
 
             IDictionary<string, double> dictionary =
@@ -283,9 +284,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ConvertTableToTypeHandlesArrayOfGenericType()
         {
             Table table = CreateSequentialTable(
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3)
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3)
             );
 
             int[] result = (int[])TableConversions.ConvertTableToType(table, typeof(int[]));
@@ -296,7 +297,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task ConvertTableToTypeReturnsNullForUnsupportedTarget()
         {
-            Table table = CreateSequentialTable(DynValue.NewNumber(1));
+            Table table = CreateSequentialTable(LuaValue.NewNumber(1));
 
             object result = TableConversions.ConvertTableToType(table, typeof(ValueType));
 
@@ -313,18 +314,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         private static async Task AssertSequenceSameReferences(
-            IReadOnlyList<DynValue> actual,
-            DynValue[] expected
+            IReadOnlyList<LuaValue> actual,
+            LuaValue[] expected
         )
         {
             await Assert.That(actual.Count).IsEqualTo(expected.Length).ConfigureAwait(false);
             for (int i = 0; i < expected.Length; i++)
             {
-                await Assert.That(actual[i]).IsSameReferenceAs(expected[i]).ConfigureAwait(false);
+                await Assert.That(actual[i]).IsEqualTo(expected[i]).ConfigureAwait(false);
             }
         }
 
-        private static Table CreateSequentialTable(params DynValue[] values)
+        private static Table CreateSequentialTable(params LuaValue[] values)
         {
             Table table = new(new Script());
             for (int i = 0; i < values.Length; i++)
@@ -335,10 +336,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             return table;
         }
 
-        private static Table CreateDictionaryTable(params (DynValue Key, DynValue Value)[] entries)
+        private static Table CreateDictionaryTable(params (LuaValue Key, LuaValue Value)[] entries)
         {
             Table table = new(new Script());
-            foreach ((DynValue Key, DynValue Value) entry in entries)
+            foreach ((LuaValue Key, LuaValue Value) entry in entries)
             {
                 table.Set(entry.Key, entry.Value);
             }

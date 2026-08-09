@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -29,7 +30,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments providing the table and new metatable.</param>
         /// <returns>The original table.</returns>
         [NovaSharpModuleMethod(Name = "setmetatable")]
-        public static DynValue SetMetatable(
+        public static LuaValue SetMetatable(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -40,12 +41,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue table = args.AsType(0, "setmetatable", DataType.Table);
-            DynValue metatable = args.AsType(1, "setmetatable", DataType.Table, true);
+            LuaValue table = args.AsType(0, "setmetatable", DataType.Table);
+            LuaValue metatable = args.AsType(1, "setmetatable", DataType.Table, true);
 
-            DynValue curmeta = executionContext.GetMetamethod(table, Metamethods.Metatable);
-
-            if (curmeta != null)
+            if (executionContext.TryGetMetamethod(table, Metamethods.Metatable, out LuaValue _))
             {
                 throw new ScriptRuntimeException("cannot change a protected metatable");
             }
@@ -66,7 +65,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments containing the object to inspect.</param>
         /// <returns>The metatable, `__metatable` value, or <c>nil</c>.</returns>
         [NovaSharpModuleMethod(Name = "getmetatable")]
-        public static DynValue GetMetatable(
+        public static LuaValue GetMetatable(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -77,7 +76,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue obj = args[0];
+            LuaValue obj = args[0];
             Table meta = null;
 
             if (obj.Type.CanHaveTypeMetatables())
@@ -92,15 +91,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (meta == null)
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
-            else if (meta.RawGet(Metamethods.Metatable) != null)
+            else if (meta.TryRawGet(Metamethods.Metatable, out LuaValue _))
             {
                 return meta.Get(Metamethods.Metatable);
             }
             else
             {
-                return DynValue.NewTable(meta);
+                return LuaValue.NewTable(meta);
             }
         }
 
@@ -114,7 +113,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments specifying the table and key.</param>
         /// <returns>The raw value stored at the key.</returns>
         [NovaSharpModuleMethod(Name = "rawget")]
-        public static DynValue RawGet(
+        public static LuaValue RawGet(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -125,10 +124,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue table = args.AsType(0, "rawget", DataType.Table);
-            DynValue index = args[1];
+            LuaValue table = args.AsType(0, "rawget", DataType.Table);
+            LuaValue index = args[1];
 
-            return table.Table.Get(index);
+            return table.Table.GetValue(index);
         }
 
         // rawset (table, index, value)
@@ -143,7 +142,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments providing the table, key, and value.</param>
         /// <returns>The original table.</returns>
         [NovaSharpModuleMethod(Name = "rawset")]
-        public static DynValue RawSet(
+        public static LuaValue RawSet(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -154,10 +153,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue table = args.AsType(0, "rawset", DataType.Table);
-            DynValue index = args[1];
+            LuaValue table = args.AsType(0, "rawset", DataType.Table);
+            LuaValue index = args[1];
 
-            table.Table.Set(index, args[2]);
+            table.Table.SetValue(index, args[2]);
 
             return table;
         }
@@ -172,7 +171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments containing the two values.</param>
         /// <returns>Boolean result.</returns>
         [NovaSharpModuleMethod(Name = "rawequal")]
-        public static DynValue RawEqual(
+        public static LuaValue RawEqual(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -183,10 +182,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue v1 = args[0];
-            DynValue v2 = args[1];
+            LuaValue v1 = args[0];
+            LuaValue v2 = args[1];
 
-            return DynValue.FromBoolean(v1.Equals(v2));
+            return LuaValue.FromBoolean(v1.Equals(v2));
         }
 
         //rawlen (v)
@@ -204,7 +203,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <returns>Length as a number.</returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "rawlen")]
-        public static DynValue RawLen(
+        public static LuaValue RawLen(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )

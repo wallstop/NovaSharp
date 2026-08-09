@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
 
@@ -20,7 +21,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="context">The context.</param>
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
-        public DynValue Execute(
+        public LuaValue Execute(
             Script script,
             object obj,
             ScriptExecutionContext context,

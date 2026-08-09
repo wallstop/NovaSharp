@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -32,7 +33,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
@@ -53,7 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
@@ -142,7 +143,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
@@ -254,7 +255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
@@ -287,7 +288,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 67).ConfigureAwait(false);
         }
     }

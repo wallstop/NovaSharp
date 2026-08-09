@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using Compatibility;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -449,16 +450,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 get { return typeof(SomeOtherClassCustomDescriptor); }
             }
 
-            public DynValue Index(Script script, object obj, DynValue index, bool dummy)
+            public bool TryIndex(
+                Script script,
+                object obj,
+                LuaValue index,
+                bool dummy,
+                out LuaValue value
+            )
             {
-                return DynValue.NewNumber(index.Number * 4);
+                value = LuaValue.NewNumber(index.Number * 4);
+                return true;
             }
 
             public bool SetIndex(
                 Script script,
                 object obj,
-                DynValue index,
-                DynValue value,
+                LuaValue index,
+                LuaValue value,
                 bool dummy
             )
             {
@@ -470,9 +478,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return null;
             }
 
-            public DynValue MetaIndex(Script script, object obj, string metaname)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
             {
-                return null;
+                value = LuaValue.Nil;
+                return false;
             }
 
             public bool IsTypeCompatible(Type type, object obj)
@@ -483,18 +492,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         internal sealed class SelfDescribingClass : IUserDataType
         {
-            public DynValue Index(Script script, DynValue index, bool isNameIndex)
+            public bool TryIndex(
+                Script script,
+                LuaValue index,
+                bool isNameIndex,
+                out LuaValue value
+            )
             {
-                return DynValue.NewNumber(index.Number * 3);
+                value = LuaValue.NewNumber(index.Number * 3);
+                return true;
             }
 
-            public bool SetIndex(Script script, DynValue index, DynValue value, bool isNameIndex)
+            public bool SetIndex(Script script, LuaValue index, LuaValue value, bool isNameIndex)
             {
                 throw new NotImplementedException();
             }
 
-            public DynValue MetaIndex(Script script, string metaname)
+            public bool TryMetaIndex(Script script, string metaname, out LuaValue value)
             {
+                value = LuaValue.Nil;
                 throw new NotImplementedException();
             }
         }
@@ -527,9 +543,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(res.String).IsEqualTo("1.2@ciao:True").ConfigureAwait(false);
@@ -559,7 +575,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                         v => (int[])ScriptToClrIntArray.Clone()
                     );
                     registry.SetClrToScriptCustomConversion<StringBuilder>(
-                        (s, v) => DynValue.NewString(v.ToString().ToUpperInvariant())
+                        (s, v) => LuaValue.NewString(v.ToString().ToUpperInvariant())
                     );
                 }
             );
@@ -578,10 +594,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>().Value);
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
@@ -610,10 +626,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>().Value);
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
@@ -640,10 +656,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>().Value);
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
@@ -665,10 +681,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>().Value);
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(res.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
@@ -694,10 +710,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>().Value);
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
@@ -722,9 +738,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
@@ -749,9 +765,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
@@ -781,7 +797,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             s.Globals["mytype"] = typeof(SomeClass);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
@@ -809,7 +825,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             s.Globals["static"] = typeof(SomeClass);
             s.Globals["myobj"] = obj;
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
@@ -840,7 +856,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 opt
             );
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(res.String).IsEqualTo("1%2").ConfigureAwait(false);
@@ -872,7 +888,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 opt
             );
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(10).ConfigureAwait(false);
@@ -1109,9 +1125,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeOtherClass obj = new();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(res.String).IsEqualTo("Test1").ConfigureAwait(false);
@@ -1135,9 +1151,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeOtherClassWithDualInterfaces obj = new();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(res.String).IsEqualTo("Test1Test2").ConfigureAwait(false);
@@ -1163,9 +1179,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(20).ConfigureAwait(false);
@@ -1192,9 +1208,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 UserDataRegistrationScope.Track<SelfDescribingClass>(ensureUnregistered: true);
             registrationScope.RegisterType<SelfDescribingClass>();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(18).ConfigureAwait(false);
@@ -1223,9 +1239,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 );
             registrationScope.RegisterType<SomeOtherClassCustomDescriptor>(new CustomDescriptor());
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(24).ConfigureAwait(false);
@@ -1248,10 +1264,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
                 SomeClass obj = new();
 
-                s.Globals.Set("mystatic", UserData.CreateStatic<SomeClass>());
-                s.Globals.Set("myobj", UserData.Create(obj));
+                s.Globals.Set("mystatic", UserData.CreateStatic<SomeClass>().Value);
+                s.Globals.Set("myobj", UserData.Create(obj).Value);
 
-                DynValue res = s.DoString(script);
+                LuaValue res = s.DoString(script);
 
                 throw new InvalidOperationException(
                     "Expected ScriptRuntimeException when accessing instance members through a static descriptor."

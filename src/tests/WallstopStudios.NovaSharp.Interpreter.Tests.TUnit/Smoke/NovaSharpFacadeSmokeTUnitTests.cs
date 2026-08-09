@@ -148,14 +148,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
                 )
                 .AsFunction();
             LuaCoroutine coroutine = lua.CreateCoroutine(function);
+            LuaCoroutine roundTrippedCoroutine = coroutine.ToValue().AsCoroutine();
 
-            LuaValue yielded = coroutine.Resume(40);
-            LuaValue completed = coroutine.Resume();
+            LuaValue yielded = roundTrippedCoroutine.Resume(40);
+            LuaValue completed = roundTrippedCoroutine.Resume();
 
             await Assert.That(yielded.AsInteger()).IsEqualTo(41).ConfigureAwait(false);
             await Assert.That(completed.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
             await Assert
-                .That(coroutine.State)
+                .That(roundTrippedCoroutine.State)
                 .IsEqualTo(LuaCoroutineState.Dead)
                 .ConfigureAwait(false);
         }
@@ -197,33 +198,69 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
                 .That(closeValues[1].AsString())
                 .Contains("close failure")
                 .ConfigureAwait(false);
-            await Assert.That(closeResult.Owner).IsSameReferenceAs(lua).ConfigureAwait(false);
-            await Assert.That(closeValues[0].Owner).IsNull().ConfigureAwait(false);
-            await Assert.That(closeValues[1].Owner).IsNull().ConfigureAwait(false);
+            await Assert.That(closeResult.OwnerScript).IsNull().ConfigureAwait(false);
+            await Assert.That(closeValues[0].OwnerScript).IsNull().ConfigureAwait(false);
+            await Assert.That(closeValues[1].OwnerScript).IsNull().ConfigureAwait(false);
+
+            closeValues[0] = LuaValue.FromBoolean(true);
+
+            await Assert.That(closeResult.AsTuple()[0].AsBoolean()).IsFalse().ConfigureAwait(false);
 
             lua.Dispose();
 
-            await Assert
-                .That(() => closeResult.AsTuple())
-                .Throws<ObjectDisposedException>()
-                .ConfigureAwait(false);
+            await Assert.That(closeResult.AsTuple().Length).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [Test]
         public async Task ScalarEqualityUsesLuaValueSemantics()
         {
-            await Assert
-                .That(LuaValue.FromInteger(256) == LuaValue.FromInteger(256))
-                .IsTrue()
-                .ConfigureAwait(false);
-            await Assert
-                .That(LuaValue.FromString("same") == LuaValue.FromString("same"))
-                .IsTrue()
-                .ConfigureAwait(false);
+            LuaValue integer = LuaValue.FromInteger(256);
+            LuaValue equivalentInteger = LuaValue.FromInteger(256);
+            LuaValue differentInteger = LuaValue.FromInteger(257);
+            LuaValue text = LuaValue.FromString("same");
+            object boxedInteger = equivalentInteger;
+            LuaValue implicitBoolean = true;
+            LuaValue implicitInteger = 42;
+            LuaValue implicitLong = 43L;
+            LuaValue implicitNumber = 1.5d;
+            LuaValue implicitString = "text";
+            LuaValue? absent = default;
+            string nullString = null;
+            LuaValue handledNullString = nullString;
+
+            await Assert.That(integer == equivalentInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(text == LuaValue.FromString("same")).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(LuaValue.FromInteger(42) == LuaValue.FromNumber(42.0))
                 .IsTrue()
                 .ConfigureAwait(false);
+            await Assert.That(integer.Equals(equivalentInteger)).IsTrue().ConfigureAwait(false);
+            await Assert.That(integer.Equals(boxedInteger)).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(integer.GetHashCode())
+                .IsEqualTo(LuaValue.FromNumber(256d).GetHashCode())
+                .ConfigureAwait(false);
+            await Assert.That(integer != differentInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(default(LuaValue) == LuaValue.Nil).IsTrue().ConfigureAwait(false);
+            await Assert.That(LuaValue.Nil.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(integer.ToString()).IsEqualTo("256").ConfigureAwait(false);
+            await Assert.That(integer.IsNil).IsFalse().ConfigureAwait(false);
+            await Assert.That(integer.IsNumber).IsTrue().ConfigureAwait(false);
+            await Assert.That(integer.IsString).IsFalse().ConfigureAwait(false);
+            await Assert.That(integer.IsTable).IsFalse().ConfigureAwait(false);
+            await Assert.That(integer.IsFunction).IsFalse().ConfigureAwait(false);
+            await Assert.That(text.IsNil).IsFalse().ConfigureAwait(false);
+            await Assert.That(text.IsNumber).IsFalse().ConfigureAwait(false);
+            await Assert.That(text.IsString).IsTrue().ConfigureAwait(false);
+            await Assert.That(text.IsTable).IsFalse().ConfigureAwait(false);
+            await Assert.That(text.IsFunction).IsFalse().ConfigureAwait(false);
+            await Assert.That(implicitBoolean.AsBoolean()).IsTrue().ConfigureAwait(false);
+            await Assert.That(implicitInteger.AsInteger()).IsEqualTo(42L).ConfigureAwait(false);
+            await Assert.That(implicitLong.AsInteger()).IsEqualTo(43L).ConfigureAwait(false);
+            await Assert.That(implicitNumber.AsNumber()).IsEqualTo(1.5d).ConfigureAwait(false);
+            await Assert.That(implicitString.AsString()).IsEqualTo("text").ConfigureAwait(false);
+            await Assert.That(absent.HasValue).IsFalse().ConfigureAwait(false);
+            await Assert.That(handledNullString.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
@@ -238,12 +275,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
             LuaValue function = lua.Run("return function() return 42 end");
             LuaValue tableValue = table.ToValue();
 
-            await Assert.That(integer.Owner).IsNull().ConfigureAwait(false);
-            await Assert.That(boolean.Owner).IsNull().ConfigureAwait(false);
-            await Assert.That(text.Owner).IsNull().ConfigureAwait(false);
-            await Assert.That(tableScalar.Owner).IsNull().ConfigureAwait(false);
-            await Assert.That(function.Owner).IsSameReferenceAs(lua).ConfigureAwait(false);
-            await Assert.That(tableValue.Owner).IsSameReferenceAs(lua).ConfigureAwait(false);
+            await Assert.That(integer.OwnerScript).IsNull().ConfigureAwait(false);
+            await Assert.That(boolean.OwnerScript).IsNull().ConfigureAwait(false);
+            await Assert.That(text.OwnerScript).IsNull().ConfigureAwait(false);
+            await Assert.That(tableScalar.OwnerScript).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(function.OwnerScript)
+                .IsSameReferenceAs(lua.Script)
+                .ConfigureAwait(false);
+            await Assert
+                .That(tableValue.OwnerScript)
+                .IsSameReferenceAs(lua.Script)
+                .ConfigureAwait(false);
         }
 
         [Test]
@@ -260,6 +303,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
             );
 
             await Assert.That(value.Kind).IsEqualTo(LuaKind.Float).ConfigureAwait(false);
+            await Assert.That(value.AsNumber()).IsEqualTo(1.5d).ConfigureAwait(false);
             await Assert
                 .That(() => value.AsInteger())
                 .Throws<InvalidOperationException>()

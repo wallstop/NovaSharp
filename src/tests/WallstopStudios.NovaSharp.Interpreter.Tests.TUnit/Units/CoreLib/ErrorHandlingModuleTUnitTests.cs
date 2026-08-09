@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
     using System;
     using System.Threading;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -21,7 +22,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local ok, a, b = pcall(function() return 1, 2 end)
                 return ok, a, b
@@ -39,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local noneOk, noneValue = pcall(function() end)
                 local oneOk, oneValue, oneExtra = pcall(function() return 42 end)
@@ -74,19 +75,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            DynValue function = script.DoString("return function() return 1 end");
+            LuaValue function = script.DoString("return function() return 1 end");
             CallbackArguments args = new(new[] { function }, false);
 
-            DynValue first = ErrorHandlingModule.Pcall(context, args);
-            DynValue second = ErrorHandlingModule.Pcall(context, args);
+            LuaValue first = ErrorHandlingModule.Pcall(context, args);
+            LuaValue second = ErrorHandlingModule.Pcall(context, args);
             second.TailCallData.Continuation.AdditionalData = "dirty";
             second.TailCallData.ErrorHandler.AdditionalData = "dirty";
-            DynValue third = ErrorHandlingModule.Pcall(context, args);
+            LuaValue third = ErrorHandlingModule.Pcall(context, args);
 
             await Assert.That(first.Type).IsEqualTo(DataType.TailCallRequest).ConfigureAwait(false);
             await Assert
                 .That(second.Type)
                 .IsEqualTo(DataType.TailCallRequest)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.HasErrorHandlerBeforeUnwind)
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandlerBeforeUnwind)
+                .IsNull()
                 .ConfigureAwait(false);
             await Assert
                 .That(first.TailCallData.Continuation)
@@ -174,7 +183,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local ok, err = pcall(function() error('boom') end)
                 return ok, err
@@ -191,7 +200,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString("return pcall(123)");
+            LuaValue tuple = script.DoString("return pcall(123)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert
@@ -205,13 +214,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         public async Task PcallHandlesClrFunctionSuccess(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["clr"] = DynValue.NewCallback(
+            script.Globals["clr"] = LuaValue.NewCallback(
                 (context, args) =>
-                    DynValue.NewTuple(DynValue.NewString("hello"), DynValue.NewNumber(5)),
+                    LuaValue.NewTuple(LuaValue.NewString("hello"), LuaValue.NewNumber(5)),
                 "clr"
             );
 
-            DynValue tuple = script.DoString("return pcall(clr)");
+            LuaValue tuple = script.DoString("return pcall(clr)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("hello").ConfigureAwait(false);
@@ -223,13 +232,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         public async Task PcallHandlesCallbackViewSuccess(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["clr"] = DynValue.NewCallbackView(
+            script.Globals["clr"] = LuaValue.NewCallbackView(
                 (context, args) =>
-                    DynValue.NewTuple(DynValue.NewString("hello"), DynValue.NewNumber(args.Count)),
+                    LuaValue.NewTuple(LuaValue.NewString("hello"), LuaValue.NewNumber(args.Count)),
                 "clr-view"
             );
 
-            DynValue tuple = script.DoString("return pcall(clr, 1, 2, 3)");
+            LuaValue tuple = script.DoString("return pcall(clr, 1, 2, 3)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("hello").ConfigureAwait(false);
@@ -242,7 +251,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local function sum(a, b, c)
                     return a + b + c
@@ -262,12 +271,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         public async Task PcallDecoratesClrScriptRuntimeExceptions(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["clr"] = DynValue.NewCallback(
+            script.Globals["clr"] = LuaValue.NewCallback(
                 (context, args) => throw new ScriptRuntimeException("fail"),
                 "clr-fail"
             );
 
-            DynValue tuple = script.DoString("return pcall(clr)");
+            LuaValue tuple = script.DoString("return pcall(clr)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert.That(tuple.Tuple[1].String).Contains("fail").ConfigureAwait(false);
@@ -280,12 +289,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         )
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["clr"] = DynValue.NewCallbackView(
+            script.Globals["clr"] = LuaValue.NewCallbackView(
                 (context, args) => throw new ScriptRuntimeException("fail"),
                 "clr-view-fail"
             );
 
-            DynValue tuple = script.DoString("return pcall(clr)");
+            LuaValue tuple = script.DoString("return pcall(clr)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert.That(tuple.Tuple[1].String).Contains("fail").ConfigureAwait(false);
@@ -298,15 +307,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         )
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["tailing"] = DynValue.NewCallback(
+            script.Globals["tailing"] = LuaValue.NewCallback(
                 (context, args) =>
-                    DynValue.NewTailCallReq(
-                        DynValue.NewCallback((ctx, innerArgs) => DynValue.NewNumber(77), "inner")
+                    LuaValue.NewTailCallReq(
+                        LuaValue.NewCallback((ctx, innerArgs) => LuaValue.NewNumber(77), "inner")
                     ),
                 "tailing-clr"
             );
 
-            DynValue record = script.DoString(
+            LuaValue record = script.DoString(
                 @"
                 local ok, value = pcall(tailing)
                 return { ok = ok, value = value, valueType = type(value) }
@@ -316,9 +325,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             await Assert.That(record.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
             Table table = record.Table;
 
-            DynValue ok = table.Get("ok");
-            DynValue valueType = table.Get("valueType");
-            DynValue value = table.Get("value");
+            LuaValue ok = table.Get("ok");
+            LuaValue valueType = table.Get("valueType");
+            LuaValue value = table.Get("value");
 
             await Assert.That(ok.Boolean).IsTrue().ConfigureAwait(false);
             await Assert
@@ -333,7 +342,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             }
             else
             {
-                await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
+                await Assert.That(value.IsNil).IsTrue().ConfigureAwait(false);
             }
         }
 
@@ -344,18 +353,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         )
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["tailing"] = DynValue.NewCallbackView(
+            script.Globals["tailing"] = LuaValue.NewCallbackView(
                 (context, args) =>
-                    DynValue.NewTailCallReq(
-                        DynValue.NewCallbackView(
-                            (ctx, innerArgs) => DynValue.NewNumber(88),
+                    LuaValue.NewTailCallReq(
+                        LuaValue.NewCallbackView(
+                            (ctx, innerArgs) => LuaValue.NewNumber(88),
                             "inner-view"
                         )
                     ),
                 "tailing-view"
             );
 
-            DynValue record = script.DoString(
+            LuaValue record = script.DoString(
                 @"
                 local ok, value = pcall(tailing)
                 return { ok = ok, value = value, valueType = type(value) }
@@ -365,9 +374,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             await Assert.That(record.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
             Table table = record.Table;
 
-            DynValue ok = table.Get("ok");
-            DynValue valueType = table.Get("valueType");
-            DynValue value = table.Get("value");
+            LuaValue ok = table.Get("ok");
+            LuaValue valueType = table.Get("valueType");
+            LuaValue value = table.Get("value");
 
             await Assert.That(ok.Boolean).IsTrue().ConfigureAwait(false);
             await Assert
@@ -382,7 +391,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             }
             else
             {
-                await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
+                await Assert.That(value.IsNil).IsTrue().ConfigureAwait(false);
             }
         }
 
@@ -391,25 +400,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         public async Task PcallRejectsClrTailCallWithContinuation(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["tailing"] = DynValue.NewCallback(
+            script.Globals["tailing"] = LuaValue.NewCallback(
                 (context, args) =>
                 {
                     TailCallData tailCall = new()
                     {
-                        Function = DynValue.NewCallback((ctx, innerArgs) => DynValue.True, "inner"),
-                        Args = System.Array.Empty<DynValue>(),
+                        Function = LuaValue.NewCallback((ctx, innerArgs) => LuaValue.True, "inner"),
+                        Args = System.Array.Empty<LuaValue>(),
                         Continuation = new CallbackFunction(
-                            (ctx, continuationArgs) => DynValue.True,
+                            (ctx, continuationArgs) => LuaValue.True,
                             "continuation"
                         ),
                     };
 
-                    return DynValue.NewTailCallReq(tailCall);
+                    return LuaValue.NewTailCallReq(tailCall);
                 },
                 "tailing-clr"
             );
 
-            DynValue tuple = script.DoString("return pcall(tailing)");
+            LuaValue tuple = script.DoString("return pcall(tailing)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert
@@ -425,28 +434,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         )
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["tailing"] = DynValue.NewCallbackView(
+            script.Globals["tailing"] = LuaValue.NewCallbackView(
                 (context, args) =>
                 {
                     TailCallData tailCall = new()
                     {
-                        Function = DynValue.NewCallbackView(
-                            (ctx, innerArgs) => DynValue.True,
+                        Function = LuaValue.NewCallbackView(
+                            (ctx, innerArgs) => LuaValue.True,
                             "inner-view"
                         ),
-                        Args = System.Array.Empty<DynValue>(),
+                        Args = System.Array.Empty<LuaValue>(),
                         Continuation = new CallbackFunction(
-                            (ctx, continuationArgs) => DynValue.True,
+                            (ctx, continuationArgs) => LuaValue.True,
                             "continuation"
                         ),
                     };
 
-                    return DynValue.NewTailCallReq(tailCall);
+                    return LuaValue.NewTailCallReq(tailCall);
                 },
                 "tailing-view"
             );
 
-            DynValue tuple = script.DoString("return pcall(tailing)");
+            LuaValue tuple = script.DoString("return pcall(tailing)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert
@@ -460,12 +469,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         public async Task PcallRejectsClrYieldRequest(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["yielding"] = DynValue.NewCallback(
-                (context, args) => DynValue.NewYieldReq(System.Array.Empty<DynValue>()),
+            script.Globals["yielding"] = LuaValue.NewCallback(
+                (context, args) => LuaValue.NewYieldReq(System.Array.Empty<LuaValue>()),
                 "yielding-clr"
             );
 
-            DynValue tuple = script.DoString("return pcall(yielding)");
+            LuaValue tuple = script.DoString("return pcall(yielding)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert
@@ -479,12 +488,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         public async Task PcallRejectsCallbackViewYieldRequest(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["yielding"] = DynValue.NewCallbackView(
-                (context, args) => DynValue.NewYieldReq(System.Array.Empty<DynValue>()),
+            script.Globals["yielding"] = LuaValue.NewCallbackView(
+                (context, args) => LuaValue.NewYieldReq(System.Array.Empty<LuaValue>()),
                 "yielding-view"
             );
 
-            DynValue tuple = script.DoString("return pcall(yielding)");
+            LuaValue tuple = script.DoString("return pcall(yielding)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert
@@ -500,7 +509,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         )
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["clr"] = DynValue.NewCallback(
+            script.Globals["clr"] = LuaValue.NewCallback(
                 (context, args) => throw new ScriptRuntimeException("failure"),
                 "clr-fail"
             );
@@ -513,7 +522,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
                 "
             );
 
-            DynValue tuple = script.DoString("return xpcall(clr, decorator)");
+            LuaValue tuple = script.DoString("return xpcall(clr, decorator)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert.That(tuple.Tuple[1].String).Contains("decorated:").ConfigureAwait(false);
@@ -527,7 +536,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         )
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["clr"] = DynValue.NewCallbackView(
+            script.Globals["clr"] = LuaValue.NewCallbackView(
                 (context, args) => throw new ScriptRuntimeException("failure"),
                 "clr-view-fail"
             );
@@ -540,7 +549,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
                 "
             );
 
-            DynValue tuple = script.DoString("return xpcall(clr, decorator)");
+            LuaValue tuple = script.DoString("return xpcall(clr, decorator)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert.That(tuple.Tuple[1].String).Contains("decorated:").ConfigureAwait(false);
@@ -553,21 +562,80 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            DynValue function = script.DoString("return function() return 1 end");
-            DynValue handler = script.DoString("return function(err) return err end");
+            LuaValue function = script.DoString("return function() return 1 end");
+            LuaValue handler = script.DoString("return function(err) return err end");
             CallbackArguments args = new(new[] { function, handler }, false);
 
-            DynValue first = ErrorHandlingModule.Xpcall(context, args);
-            DynValue second = ErrorHandlingModule.Xpcall(context, args);
+            LuaValue first = ErrorHandlingModule.Xpcall(context, args);
+            LuaValue second = ErrorHandlingModule.Xpcall(context, args);
             second.TailCallData.Continuation.AdditionalData = "dirty";
             second.TailCallData.ErrorHandler.AdditionalData = "dirty";
-            DynValue third = ErrorHandlingModule.Xpcall(context, args);
+            LuaValue third = ErrorHandlingModule.Xpcall(context, args);
+
+            LuaValue? nilRequest = default;
+            LuaValue? voidRequest = default;
+            if (
+                version == LuaCompatibilityVersion.Lua51
+                || version == LuaCompatibilityVersion.Lua52
+            )
+            {
+                nilRequest = ErrorHandlingModule.Xpcall(
+                    context,
+                    new CallbackArguments(new[] { function, LuaValue.Nil }, false)
+                );
+                voidRequest = ErrorHandlingModule.Xpcall(
+                    context,
+                    new CallbackArguments(new[] { function, LuaValue.Void, LuaValue.Nil }, false)
+                );
+            }
 
             await Assert.That(first.Type).IsEqualTo(DataType.TailCallRequest).ConfigureAwait(false);
             await Assert
                 .That(second.Type)
                 .IsEqualTo(DataType.TailCallRequest)
                 .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.HasErrorHandlerBeforeUnwind)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandlerBeforeUnwind.HasValue)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandlerBeforeUnwind.Value.Function)
+                .IsSameReferenceAs(handler.Function)
+                .ConfigureAwait(false);
+            if (nilRequest.HasValue)
+            {
+                LuaValue presentNilRequest = nilRequest.Value;
+                await Assert.That(voidRequest.HasValue).IsTrue().ConfigureAwait(false);
+                LuaValue presentVoidRequest = voidRequest.Value;
+                await Assert
+                    .That(presentNilRequest.TailCallData.HasErrorHandlerBeforeUnwind)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(presentNilRequest.TailCallData.ErrorHandlerBeforeUnwind.HasValue)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(presentNilRequest.TailCallData.ErrorHandlerBeforeUnwind.Value.Type)
+                    .IsEqualTo(DataType.Nil)
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(presentVoidRequest.TailCallData.HasErrorHandlerBeforeUnwind)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(presentVoidRequest.TailCallData.ErrorHandlerBeforeUnwind.HasValue)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(presentVoidRequest.TailCallData.ErrorHandlerBeforeUnwind.Value.Type)
+                    .IsEqualTo(DataType.Void)
+                    .ConfigureAwait(false);
+            }
             await Assert
                 .That(first.TailCallData.Continuation)
                 .IsSameReferenceAs(second.TailCallData.Continuation)
@@ -608,7 +676,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local function handler(msg) return 'handled:' .. msg end
                 local ok, err = xpcall(function() error('bad') end, handler)
@@ -629,7 +697,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local outer_count = 0
                 local inner_count = 0
@@ -672,7 +740,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local outer_count = 0
                 local inner_count = 0
@@ -716,7 +784,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local events = {}
                 local mt = {
@@ -752,7 +820,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 return xpcall(function()
                     error('boom', 0)
@@ -777,7 +845,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local events = {}
                 local first_mt = {
@@ -832,7 +900,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local events = {}
                 local outer_count = 0
@@ -885,7 +953,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local events = {}
                 local first_mt = {
@@ -936,7 +1004,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local function succeed()
                     return 'done', 42
@@ -960,12 +1028,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         public async Task XpcallAcceptsClrHandler(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["clrhandler"] = DynValue.NewCallback(
-                (context, args) => DynValue.NewString("handled:" + args[0].String),
+            script.Globals["clrhandler"] = LuaValue.NewCallback(
+                (context, args) => LuaValue.NewString("handled:" + args[0].String),
                 "handler"
             );
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local function fail()
                     error('boom')
@@ -989,7 +1057,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 return xpcall(function() error('test error') end, nil)
                 "
@@ -1051,7 +1119,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
             // In Lua 5.1/5.2, xpcall with a non-function handler should return true
             // if the main function doesn't error (the handler is never invoked)
-            DynValue result = script.DoString("return xpcall(function() end, 123)");
+            LuaValue result = script.DoString("return xpcall(function() end, 123)");
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -1068,7 +1136,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             Script script = CreateScriptWithVersion(version);
 
             // When main function errors and handler isn't callable, returns "error in error handling"
-            DynValue result = script.DoString("return xpcall(function() error('test') end, 123)");
+            LuaValue result = script.DoString("return xpcall(function() error('test') end, 123)");
 
             await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert
@@ -1087,7 +1155,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "return xpcall(function() error('test') end, 'not-a-function')"
             );
 
@@ -1108,7 +1176,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString("return xpcall(function() error('test') end, {})");
+            LuaValue result = script.DoString("return xpcall(function() error('test') end, {})");
 
             await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert
@@ -1180,7 +1248,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
             // In Lua 5.1, extra args (1, 2, 3) should NOT be passed to the function
             // The function should receive the same args as if called without extras
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local receivedWithExtras = {}
                 local receivedWithoutExtras = {}
@@ -1218,7 +1286,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local received = {}
                 local ok, a, b, c = xpcall(function(...) 
@@ -1250,7 +1318,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local captured = nil
                 local ok, err = xpcall(function(a, b, c) 
@@ -1277,7 +1345,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local countWithExtras = 0
                 local countWithoutExtras = 0
@@ -1322,9 +1390,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua54);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            DynValue function = script.DoString("return function() return 1 end");
+            LuaValue function = script.DoString("return function() return 1 end");
             CallbackArguments args = new(new[] { function }, false);
-            DynValue request = ErrorHandlingModule.Pcall(context, args);
+            LuaValue request = ErrorHandlingModule.Pcall(context, args);
 
             if (request.Type != DataType.TailCallRequest)
             {
@@ -1341,10 +1409,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua54);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            DynValue function = script.DoString("return function() return 1 end");
-            DynValue handler = script.DoString("return function(err) return err end");
+            LuaValue function = script.DoString("return function() return 1 end");
+            LuaValue handler = script.DoString("return function(err) return err end");
             CallbackArguments args = new(new[] { function, handler }, false);
-            DynValue request = ErrorHandlingModule.Xpcall(context, args);
+            LuaValue request = ErrorHandlingModule.Xpcall(context, args);
 
             if (request.Type != DataType.TailCallRequest)
             {

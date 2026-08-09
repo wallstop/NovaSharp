@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -25,8 +26,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             SampleTarget target = new();
             SampleReadWriteDescriptor descriptor = new();
 
-            descriptor.SetValue(script, target, DynValue.NewNumber(42));
-            DynValue result = descriptor.GetValue(script, target);
+            descriptor.SetValue(script, target, LuaValue.NewNumber(42));
+            LuaValue result = descriptor.GetValue(script, target);
 
             await Assert.That(target.Value).IsEqualTo(42).ConfigureAwait(false);
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
@@ -39,11 +40,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             SampleTarget target = new();
             SampleReadOnlyDescriptor descriptor = new(10);
 
-            DynValue value = descriptor.GetValue(script, target);
+            LuaValue value = descriptor.GetValue(script, target);
             await Assert.That(value.Number).IsEqualTo(10d).ConfigureAwait(false);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                descriptor.SetValue(script, target, DynValue.NewNumber(5))
+                descriptor.SetValue(script, target, LuaValue.NewNumber(5))
             );
             await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
@@ -55,7 +56,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             SampleTarget target = new();
             SampleWriteOnlyDescriptor descriptor = new();
 
-            descriptor.SetValue(script, target, DynValue.NewNumber(5));
+            descriptor.SetValue(script, target, LuaValue.NewNumber(5));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.GetValue(script, target)
@@ -82,10 +83,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             SampleTarget target = new();
             SampleReadWriteDescriptor descriptor = new();
 
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                descriptor.SetValue(script, target, value: null)
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.SetValue(script, target, value: default)
             );
-            await Assert.That(exception.ParamName).IsEqualTo("value").ConfigureAwait(false);
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -95,10 +96,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             SampleTarget target = new() { Value = 3 };
             SampleHardwiredMethodDescriptor descriptor = new();
 
-            List<DynValue> arguments = new() { DynValue.NewNumber(5) };
+            List<LuaValue> arguments = new() { LuaValue.NewNumber(5) };
             CallbackArguments callbackArguments = new(arguments, isMethodCall: false);
 
-            DynValue result = descriptor.Execute(script, target, context: null, callbackArguments);
+            LuaValue result = descriptor.Execute(script, target, context: null, callbackArguments);
 
             await Assert.That(result.Number).IsEqualTo(18d).ConfigureAwait(false);
             await Assert.That(descriptor.LastArgumentCount).IsEqualTo(2).ConfigureAwait(false);

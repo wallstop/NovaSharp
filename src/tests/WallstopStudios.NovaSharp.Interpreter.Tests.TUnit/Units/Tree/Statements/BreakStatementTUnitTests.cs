@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statements
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -105,7 +106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
                 return log
             ";
 
-            DynValue result = script.DoString(chunk);
+            LuaValue result = script.DoString(chunk);
             Table log = result.Table;
 
             await Assert.That(log.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -130,7 +131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
                 return log
             ";
 
-            DynValue result = script.DoString(chunk);
+            LuaValue result = script.DoString(chunk);
             Table log = result.Table;
 
             await Assert.That(log.Length).IsEqualTo(3).ConfigureAwait(false);

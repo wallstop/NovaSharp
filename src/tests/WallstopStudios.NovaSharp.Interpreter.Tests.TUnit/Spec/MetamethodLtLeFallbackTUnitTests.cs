@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions.Extensions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -47,7 +48,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task LtFallbackToLeWorksInLua51Through54(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(ScriptWithOnlyLtMetamethod);
+            LuaValue result = script.DoString(ScriptWithOnlyLtMetamethod);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
@@ -75,7 +76,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             // Latest mode follows the current NovaSharp target (Lua 5.4.x), which allows the fallback.
             // When NovaSharp targets Lua 5.5+, this test should be updated to expect failure.
             Script script = new(version);
-            DynValue result = script.DoString(ScriptWithOnlyLtMetamethod);
+            LuaValue result = script.DoString(ScriptWithOnlyLtMetamethod);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
@@ -98,7 +99,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 ";
 
             Script script = new(version);
-            DynValue result = script.DoString(scriptCode);
+            LuaValue result = script.DoString(scriptCode);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
@@ -121,7 +122,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 ";
 
             Script script = new(version);
-            DynValue result = script.DoString(scriptCode);
+            LuaValue result = script.DoString(scriptCode);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
@@ -146,7 +147,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 ";
 
             Script script = new(version);
-            DynValue result = script.DoString(scriptCode);
+            LuaValue result = script.DoString(scriptCode);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
@@ -170,7 +171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 ";
 
             Script script = new(version);
-            DynValue result = script.DoString(scriptCode);
+            LuaValue result = script.DoString(scriptCode);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);

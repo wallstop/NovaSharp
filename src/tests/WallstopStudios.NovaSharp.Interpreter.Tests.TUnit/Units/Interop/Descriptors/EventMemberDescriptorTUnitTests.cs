@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
     using System.Linq;
     using System.Reflection;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -52,7 +53,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         {
             SampleEventSource source = new();
             Script script = new Script(version);
-            DynValue handler = script.DoString("return function() end");
+            LuaValue handler = script.DoString("return function() end");
 
             EventMemberDescriptor descriptor = new(
                 typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
@@ -76,7 +77,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
             );
 
-            DynValue facadeValue = descriptor.GetValue(script, source);
+            LuaValue facadeValue = descriptor.GetValue(script, source);
             await Assert
                 .That(facadeValue.UserData.Object)
                 .IsTypeOf<EventFacade>()
@@ -93,10 +94,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             SampleEventSource source = new();
             Script script = new Script(version);
             script.DoString($"{HitsVariable} = 0");
-            DynValue handler1 = script.DoString(
+            LuaValue handler1 = script.DoString(
                 $"return function(sender, arg) {HitsVariable} = {HitsVariable} + 1 end"
             );
-            DynValue handler2 = script.DoString(
+            LuaValue handler2 = script.DoString(
                 $"return function(sender, arg) {HitsVariable} = {HitsVariable} + 10 end"
             );
 
@@ -117,7 +118,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 .ConfigureAwait(false);
             await Assert.That(source.RemoveInvokeCount).IsEqualTo(0).ConfigureAwait(false);
 
-            source.RaiseEvent(DynValue.NewString("payload"));
+            source.RaiseEvent(LuaValue.NewString("payload"));
             double hits = script.Globals.Get(HitsVariable).Number;
             await Assert.That(hits).IsEqualTo(11).ConfigureAwait(false);
 
@@ -133,7 +134,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
             await Assert.That(source.RemoveInvokeCount).IsEqualTo(1).ConfigureAwait(false);
 
-            source.RaiseEvent(DynValue.NewString("payload2"));
+            source.RaiseEvent(LuaValue.NewString("payload2"));
             hits = script.Globals.Get(HitsVariable).Number;
             await Assert
                 .That(hits)
@@ -153,7 +154,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             StaticSampleEventSource.Reset();
             Script script = new Script(version);
             script.DoString($"{HitsVariable} = 0");
-            DynValue handler = script.DoString(
+            LuaValue handler = script.DoString(
                 $"return function(_, amount) {HitsVariable} = {HitsVariable} + amount end"
             );
 
@@ -177,8 +178,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 .IsEqualTo(0)
                 .ConfigureAwait(false);
 
-            StaticSampleEventSource.Raise(DynValue.NewNumber(2));
-            StaticSampleEventSource.Raise(DynValue.NewNumber(3));
+            StaticSampleEventSource.Raise(LuaValue.NewNumber(2));
+            StaticSampleEventSource.Raise(LuaValue.NewNumber(3));
 
             double hits = script.Globals.Get(HitsVariable).Number;
             await Assert.That(hits).IsEqualTo(5).ConfigureAwait(false);
@@ -189,7 +190,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 .IsEqualTo(1)
                 .ConfigureAwait(false);
 
-            StaticSampleEventSource.Raise(DynValue.NewNumber(10));
+            StaticSampleEventSource.Raise(LuaValue.NewNumber(10));
             hits = script.Globals.Get(HitsVariable).Number;
             await Assert
                 .That(hits)
@@ -221,7 +222,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 .ConfigureAwait(false);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                descriptor.SetValue(script, source, DynValue.NewString("should fail assignment"))
+                descriptor.SetValue(script, source, LuaValue.NewString("should fail assignment"))
             )!;
             await Assert
                 .That(exception.Message)
@@ -237,7 +238,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         {
             SampleEventSource source = new();
             Script script = new Script(version);
-            DynValue handler = script.DoString("return function() end");
+            LuaValue handler = script.DoString("return function() end");
 
             EventMemberDescriptor descriptor = new(
                 typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
@@ -265,10 +266,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             SampleEventSource source = new();
             Script script = new Script(version);
             script.DoString($"{HitsVariable} = 0");
-            DynValue registered = script.DoString(
+            LuaValue registered = script.DoString(
                 $"return function(_, amount) {HitsVariable} = {HitsVariable} + amount end"
             );
-            DynValue unknown = script.DoString("return function() end");
+            LuaValue unknown = script.DoString("return function() end");
 
             EventMemberDescriptor descriptor = new(
                 typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
@@ -282,7 +283,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
             await Assert.That(source.RemoveInvokeCount).IsEqualTo(0).ConfigureAwait(false);
 
-            source.RaiseEvent(DynValue.NewNumber(2));
+            source.RaiseEvent(LuaValue.NewNumber(2));
             double hits = script.Globals.Get(HitsVariable).Number;
             await Assert.That(hits).IsEqualTo(2).ConfigureAwait(false);
 
@@ -298,7 +299,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         {
             SampleEventSource source = new();
             Script script = new Script(version);
-            DynValue handler = script.DoString("return function() end");
+            LuaValue handler = script.DoString("return function() end");
 
             EventMemberDescriptor descriptor = new(
                 typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
@@ -459,7 +460,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             MultiSignatureEventSource source = new();
             Script script = new Script(version);
             script.DoString("hits = 0");
-            DynValue handler = script.DoString("return function() hits = hits + 1 end");
+            LuaValue handler = script.DoString("return function() hits = hits + 1 end");
 
             EventMemberDescriptor descriptor = new(
                 typeof(MultiSignatureEventSource).GetEvent(
@@ -485,7 +486,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             MultiSignatureEventSource source = new();
             Script script = new Script(version);
             script.DoString("payload = nil");
-            DynValue handler = script.DoString(
+            LuaValue handler = script.DoString(
                 "return function(a, b, c) payload = table.concat({a, b, c}, \":\") end"
             );
 
@@ -537,16 +538,16 @@ return function(...)
     hits['{@case.Id}'] = {{ count = actual, args = args }}
 end";
 
-                DynValue handler = script.DoString(handlerSource);
+                LuaValue handler = script.DoString(handlerSource);
 
                 descriptor.AddCallback(source, context, TestHelpers.CreateArguments(handler));
 
                 @case.Raise(source);
 
-                DynValue entry = script.Globals.Get("hits").Table.Get(@case.Id);
+                LuaValue entry = script.Globals.Get("hits").Table.Get(@case.Id);
                 await Assert.That(entry.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
 
-                DynValue count = entry.Table.Get("count");
+                LuaValue count = entry.Table.Get("count");
                 await Assert.That(count.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
                 await Assert
                     .That(count.Number)
@@ -554,12 +555,12 @@ end";
                     .Because($"Arity mismatch for {@case.EventName}")
                     .ConfigureAwait(false);
 
-                DynValue args = entry.Table.Get("args");
+                LuaValue args = entry.Table.Get("args");
                 await Assert.That(args.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
 
                 for (int i = 1; i <= @case.Arity; i++)
                 {
-                    DynValue argValue = args.Table.Get(i);
+                    LuaValue argValue = args.Table.Get(i);
                     await Assert
                         .That(argValue.String)
                         .IsEqualTo($"a{i}")
@@ -569,9 +570,9 @@ end";
 
                 if (@case.Arity < MultiArityEventSource.MaxArity)
                 {
-                    DynValue next = args.Table.Get(@case.Arity + 1);
+                    LuaValue next = args.Table.Get(@case.Arity + 1);
                     await Assert
-                        .That(next.IsNil())
+                        .That(next.IsNil)
                         .IsTrue()
                         .Because($"Trailing argument should be nil for {@case.EventName}")
                         .ConfigureAwait(false);
@@ -631,12 +632,12 @@ end";
 
         private sealed class SampleEventSource
         {
-            private event EventHandler<DynValue> _event;
+            private event EventHandler<object> _event;
 
             public int AddInvokeCount { get; private set; }
             public int RemoveInvokeCount { get; private set; }
 
-            public event EventHandler<DynValue> PublicEvent
+            public event EventHandler<object> PublicEvent
             {
                 add
                 {
@@ -650,7 +651,7 @@ end";
                 }
             }
 
-            public void RaiseEvent(DynValue arg)
+            public void RaiseEvent(object arg)
             {
                 _event?.Invoke(null, arg);
             }
@@ -1118,12 +1119,12 @@ end";
 
         private static class StaticSampleEventSource
         {
-            private static event EventHandler<DynValue> _event;
+            private static event EventHandler<object> _event;
 
             public static int AddInvokeCount { get; private set; }
             public static int RemoveInvokeCount { get; private set; }
 
-            public static event EventHandler<DynValue> GlobalEvent
+            public static event EventHandler<object> GlobalEvent
             {
                 add
                 {
@@ -1137,7 +1138,7 @@ end";
                 }
             }
 
-            public static void Raise(DynValue arg)
+            public static void Raise(object arg)
             {
                 _event?.Invoke(null, arg);
             }

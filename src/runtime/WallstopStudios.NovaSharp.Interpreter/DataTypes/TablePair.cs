@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
+    using global::NovaSharp;
     using DataStructs;
 
     /// <summary>
@@ -7,27 +8,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// </summary>
     public struct TablePair : System.IEquatable<TablePair>
     {
-        private static readonly TablePair NilNode = new(DynValue.Nil, DynValue.Nil);
-        private readonly DynValue _key;
+        private static readonly TablePair NilNode = new(LuaValue.Nil, LuaValue.Nil);
+        private readonly LuaValue _key;
 
-        private readonly DynValue _value;
+        private readonly LuaValue _value;
 
         /// <summary>
         /// Gets the key.
         /// </summary>
-        public DynValue Key => _key;
+        public LuaValue Key => _key;
 
         /// <summary>
         /// Gets or sets the value.
         /// </summary>
-        public DynValue Value => _value;
+        public LuaValue Value => _value;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TablePair"/> struct.
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="val">The value.</param>
-        public TablePair(DynValue key, DynValue val)
+        public TablePair(LuaValue key, LuaValue val)
         {
             _key = key;
             _value = val;

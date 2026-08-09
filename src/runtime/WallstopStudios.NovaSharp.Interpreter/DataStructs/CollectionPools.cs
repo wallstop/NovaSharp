@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
 
     /// <summary>
     /// Provides thread-safe pooled access to <see cref="List{T}"/> instances.
@@ -11,7 +12,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// <remarks>
     /// Usage pattern:
     /// <code>
-    /// using (ListPool&lt;DynValue&gt;.Get(out List&lt;DynValue&gt; list))
+    /// using (ListPool&lt;LuaValue&gt;.Get(out List&lt;LuaValue&gt; list))
     /// {
     ///     list.Add(value1);
     ///     list.Add(value2);
@@ -93,8 +94,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <returns>A list instance from the pool.</returns>
         public static List<T> Rent()
         {
-            Pool.Get(out List<T> list);
-            return list;
+            return Pool.Rent();
         }
 
         /// <summary>
@@ -105,7 +105,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <returns>A list instance from the pool with at least the specified capacity.</returns>
         public static List<T> Rent(int capacity)
         {
-            Pool.Get(out List<T> list);
+            List<T> list = Pool.Rent();
             if (list.Capacity < capacity)
             {
                 list.Capacity = capacity;
@@ -201,8 +201,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <returns>A hash set instance from the pool.</returns>
         public static HashSet<T> Rent()
         {
-            Pool.Get(out HashSet<T> set);
-            return set;
+            return Pool.Rent();
         }
 
         /// <summary>

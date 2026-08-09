@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
     using System.Collections.Generic;
     using System.IO;
     using System.Runtime.InteropServices;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -172,16 +173,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
             string luaExecutable = GetLuaExecutableHint();
 
             Table argTable = new(script);
-            argTable.Set(DynValue.NewNumber(-1), DynValue.NewString(luaExecutable));
-            script.Globals.Set("arg", DynValue.NewTable(argTable));
+            argTable.SetValue(LuaValue.NewNumber(-1), LuaValue.NewString(luaExecutable));
+            script.Globals.Set("arg", LuaValue.NewTable(argTable));
 
             Table platform = new(script);
-            platform.Set("lua", DynValue.NewString(luaExecutable));
-            platform.Set("compat", DynValue.NewBoolean(false));
-            platform.Set("intsize", DynValue.NewNumber(IntPtr.Size));
-            platform.Set("osname", DynValue.NewString(GetPlatformName()));
+            platform.Set("lua", LuaValue.NewString(luaExecutable));
+            platform.Set("compat", LuaValue.NewBoolean(false));
+            platform.Set("intsize", LuaValue.NewNumber(IntPtr.Size));
+            platform.Set("osname", LuaValue.NewString(GetPlatformName()));
             TapStdinHelper.Register(script, platform, compatibilityVersion, testDirectory);
-            script.Globals.Set("platform", DynValue.NewTable(platform));
+            script.Globals.Set("platform", LuaValue.NewTable(platform));
         }
 
         private static string GetLuaExecutableHint()

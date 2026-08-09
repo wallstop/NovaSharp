@@ -85,6 +85,9 @@ Debugger icons are from the Eclipse project (https://www.eclipse.org/).
 Use of the library is easy as:
 
 ```C#
+using NovaSharp;
+using WallstopStudios.NovaSharp.Interpreter;
+
 double NovaSharpFactorial()
 {
 	string script = @"    
@@ -99,14 +102,12 @@ double NovaSharpFactorial()
 
 	return fact(5)";
 
-	DynValue res = Script.RunString(script);
-	return res.Number;
+	LuaValue res = Script.RunString(script);
+	return res.AsNumber();
 }
 ```
 
 For more in-depth tutorials, samples, etc. please refer to https://www.moonsharp.org/getting_started.html
-
-
 
 
 

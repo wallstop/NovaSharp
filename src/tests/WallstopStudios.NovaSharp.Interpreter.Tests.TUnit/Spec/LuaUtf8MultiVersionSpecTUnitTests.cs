@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -19,8 +20,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task Utf8LibraryIsUnavailableBeforeLua53(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version, CoreModulePresets.Default);
-            DynValue utf8 = script.Globals.Get("utf8");
-            await Assert.That(utf8.IsNil()).IsTrue();
+            LuaValue utf8 = script.Globals.Get("utf8");
+            await Assert.That(utf8.IsNil).IsTrue();
         }
 
         [Test]
@@ -30,15 +31,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         )
         {
             Script script = new Script(version, CoreModulePresets.Default);
-            script.Globals.Set("sample", DynValue.NewString("héll😀"));
-            script.Globals.Set("invalid", DynValue.NewString("\uD83D"));
+            script.Globals.Set("sample", LuaValue.NewString("héll😀"));
+            script.Globals.Set("invalid", LuaValue.NewString("\uD83D"));
 
-            DynValue len = script.DoString("return utf8.len(sample)");
+            LuaValue len = script.DoString("return utf8.len(sample)");
             await Assert.That(len.Number).IsEqualTo(5);
 
-            DynValue tuple = script.DoString("return utf8.len(invalid)");
+            LuaValue tuple = script.DoString("return utf8.len(invalid)");
             await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].Number).IsEqualTo(1);
         }
 
@@ -47,9 +48,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task Utf8CodePointDecodesRequestedSlice(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Default);
-            script.Globals.Set("word", DynValue.NewString("A😀€"));
+            script.Globals.Set("word", LuaValue.NewString("A😀€"));
 
-            DynValue tuple = script.DoString("return utf8.codepoint(word, 1, #word)");
+            LuaValue tuple = script.DoString("return utf8.codepoint(word, 1, #word)");
 
             await Assert.That(tuple.Tuple.Length).IsEqualTo(3);
             await Assert.That(tuple.Tuple[0].Number).IsEqualTo(65);
@@ -62,9 +63,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task Utf8OffsetEnforcesCharacterBoundaries(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Default);
-            script.Globals.Set("word", DynValue.NewString("A😀B"));
+            script.Globals.Set("word", LuaValue.NewString("A😀B"));
 
-            DynValue offsets = script.DoString(
+            LuaValue offsets = script.DoString(
                 @"
                 local forward2 = utf8.offset(word, 2)
                 local back1 = utf8.offset(word, -1)
@@ -77,8 +78,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             await Assert.That(offsets.Tuple[1].Number).IsEqualTo(4);
             await Assert.That(offsets.Tuple[2].Number).IsEqualTo(2);
 
-            DynValue invalid = script.DoString("return utf8.offset(word, 1, 3)");
-            await Assert.That(invalid.IsNil()).IsTrue();
+            LuaValue invalid = script.DoString("return utf8.offset(word, 1, 3)");
+            await Assert.That(invalid.IsNil).IsTrue();
         }
 
         [Test]
@@ -86,9 +87,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task Utf8CodesIteratesPositionsAndScalars(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Default);
-            script.Globals.Set("word", DynValue.NewString("A😀B"));
+            script.Globals.Set("word", LuaValue.NewString("A😀B"));
 
-            DynValue summary = script.DoString(
+            LuaValue summary = script.DoString(
                 @"
                 local parts = {}
                 for pos, cp in utf8.codes(word) do
@@ -106,7 +107,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task Utf8CharpatternMatchesManualDefinition(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Default);
-            DynValue pattern = script.DoString("return utf8.charpattern");
+            LuaValue pattern = script.DoString("return utf8.charpattern");
 
             const string Expected = "[\0-\x7F\xC2-\xF4][\x80-\xBF]*";
             await Assert.That(pattern.String).IsEqualTo(Expected);

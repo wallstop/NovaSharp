@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
@@ -17,23 +18,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         /// <param name="closure">Closure to execute when the coroutine starts.</param>
         /// <returns>A coroutine handle.</returns>
-        public DynValue CreateCoroutine(Closure closure)
+        public LuaValue CreateCoroutine(Closure closure)
         {
             // create a processor instance
             Processor p = new(this);
 
             // Put the closure as first value on the stack, for future reference
-            // Use FromClosure to avoid allocation when the closure already has a cached DynValue
-            p._valueStack.Push(DynValue.FromClosure(closure));
+            // Use FromClosure to avoid allocation when the closure already has a cached LuaValue
+            p._valueStack.Push(LuaValue.FromClosure(closure));
 
             // Return the coroutine handle
-            return DynValue.NewCoroutine(new Coroutine(p));
+            return LuaValue.NewCoroutine(new Coroutine(p));
         }
 
         /// <summary>
         /// Reuses an existing processor instance to create a coroutine without re-allocating stacks.
         /// </summary>
-        public DynValue RecycleCoroutine(Processor mainProcessor, Closure closure)
+        public LuaValue RecycleCoroutine(Processor mainProcessor, Closure closure)
         {
             // Clear the used parts of the stacks to prep for reuse
             _valueStack.ClearUsed();
@@ -43,11 +44,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             Processor p = new(mainProcessor, this);
 
             // Put the closure as first value on the stack, for future reference
-            // Use FromClosure to avoid allocation when the closure already has a cached DynValue
-            p._valueStack.Push(DynValue.FromClosure(closure));
+            // Use FromClosure to avoid allocation when the closure already has a cached LuaValue
+            p._valueStack.Push(LuaValue.FromClosure(closure));
 
             // Return the coroutine handle
-            return DynValue.NewCoroutine(new Coroutine(p));
+            return LuaValue.NewCoroutine(new Coroutine(p));
         }
 
         /// <summary>
@@ -69,7 +70,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="args">Arguments supplied to <c>coroutine.resume</c>.</param>
         /// <returns>Return values or yield results.</returns>
         /// <exception cref="ScriptRuntimeException">Thrown when resuming invalid states.</exception>
-        public DynValue ResumeCoroutine(DynValue[] args)
+        public LuaValue ResumeCoroutine(LuaValue[] args)
         {
             return ResumeCoroutine(new ClrCallArguments(args));
         }
@@ -77,7 +78,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Resumes execution with caller-owned contiguous arguments.
         /// </summary>
-        public DynValue ResumeCoroutine(ReadOnlySpan<DynValue> args)
+        public LuaValue ResumeCoroutine(ReadOnlySpan<LuaValue> args)
         {
             return ResumeCoroutine(new ClrCallArguments(args));
         }
@@ -85,7 +86,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Resumes execution with one argument, avoiding public params-array allocation.
         /// </summary>
-        public DynValue ResumeCoroutine(DynValue arg)
+        public LuaValue ResumeCoroutine(LuaValue arg)
         {
             return ResumeCoroutine(new ClrCallArguments(arg));
         }
@@ -93,7 +94,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Resumes execution with two arguments, avoiding public params-array allocation.
         /// </summary>
-        public DynValue ResumeCoroutine(DynValue arg1, DynValue arg2)
+        public LuaValue ResumeCoroutine(LuaValue arg1, LuaValue arg2)
         {
             return ResumeCoroutine(new ClrCallArguments(arg1, arg2));
         }
@@ -101,7 +102,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Resumes execution with three arguments, avoiding public params-array allocation.
         /// </summary>
-        public DynValue ResumeCoroutine(DynValue arg1, DynValue arg2, DynValue arg3)
+        public LuaValue ResumeCoroutine(LuaValue arg1, LuaValue arg2, LuaValue arg3)
         {
             return ResumeCoroutine(new ClrCallArguments(arg1, arg2, arg3));
         }
@@ -109,7 +110,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Resumes execution with four arguments, avoiding public params-array allocation.
         /// </summary>
-        public DynValue ResumeCoroutine(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+        public LuaValue ResumeCoroutine(LuaValue arg1, LuaValue arg2, LuaValue arg3, LuaValue arg4)
         {
             return ResumeCoroutine(new ClrCallArguments(arg1, arg2, arg3, arg4));
         }
@@ -117,12 +118,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Resumes execution with five arguments, avoiding public params-array allocation.
         /// </summary>
-        public DynValue ResumeCoroutine(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
+        public LuaValue ResumeCoroutine(
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
         )
         {
             return ResumeCoroutine(new ClrCallArguments(arg1, arg2, arg3, arg4, arg5));
@@ -131,13 +132,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Resumes execution with six arguments, avoiding public params-array allocation.
         /// </summary>
-        public DynValue ResumeCoroutine(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+        public LuaValue ResumeCoroutine(
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
             return ResumeCoroutine(new ClrCallArguments(arg1, arg2, arg3, arg4, arg5, arg6));
@@ -146,20 +147,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Resumes execution with seven arguments, avoiding public params-array allocation.
         /// </summary>
-        public DynValue ResumeCoroutine(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+        public LuaValue ResumeCoroutine(
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
             return ResumeCoroutine(new ClrCallArguments(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
         }
 
-        private DynValue ResumeCoroutine(ClrCallArguments args)
+        private LuaValue ResumeCoroutine(ClrCallArguments args)
         {
             EnterProcessor();
 
@@ -180,7 +181,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     entrypoint = PushClrToScriptStackFrame(
                         CallStackItemFlagsPresets.ResumeEntryPoint,
-                        null,
                         args
                     );
                 }
@@ -202,7 +202,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
 
                 _state = CoroutineState.Running;
-                DynValue retVal = ProcessingLoop(entrypoint);
+                LuaValue retVal = ProcessingLoop(entrypoint);
 
                 if (retVal.Type == DataType.YieldRequest)
                 {
@@ -214,21 +214,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     else
                     {
                         _state = CoroutineState.Suspended;
-                        _lastCloseError = DynValue.Nil;
+                        _lastCloseError = LuaValue.Nil;
                         return retVal.YieldRequest.ToTuple();
                     }
                 }
                 else
                 {
                     _state = CoroutineState.Dead;
-                    _lastCloseError = DynValue.Nil;
+                    _lastCloseError = LuaValue.Nil;
                     return retVal;
                 }
             }
             catch (ScriptRuntimeException ex)
             {
                 _state = CoroutineState.Dead;
-                _lastCloseError = DynValue.NewString(ex.DecoratedMessage);
+                _lastCloseError = LuaValue.NewString(ex.DecoratedMessage);
                 throw;
             }
             catch (Exception)
@@ -246,7 +246,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Forces the coroutine to close, unwinding pending blocks and returning Lua-compatible status tuples.
         /// </summary>
-        public DynValue CloseCoroutine()
+        public LuaValue CloseCoroutine()
         {
             EnterProcessor();
 
@@ -270,8 +270,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 if (_state == CoroutineState.NotStarted)
                 {
                     _state = CoroutineState.Dead;
-                    _lastCloseError = DynValue.Nil;
-                    return DynValue.True;
+                    _lastCloseError = LuaValue.Nil;
+                    return LuaValue.True;
                 }
 
                 if (_state != CoroutineState.Suspended && _state != CoroutineState.ForceSuspended)
@@ -286,7 +286,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         CallStackItem frame = PopToBasePointer();
                         try
                         {
-                            CloseAllPendingBlocks(frame, DynValue.Nil);
+                            CloseAllPendingBlocks(frame, LuaValue.Nil);
                         }
                         finally
                         {
@@ -295,16 +295,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     }
 
                     _valueStack.Clear();
-                    _lastCloseError = DynValue.Nil;
+                    _lastCloseError = LuaValue.Nil;
                     _state = CoroutineState.Dead;
-                    return DynValue.True;
+                    return LuaValue.True;
                 }
                 catch (ScriptRuntimeException ex)
                 {
-                    DynValue error = DynValue.NewString(ex.DecoratedMessage);
+                    LuaValue error = LuaValue.NewString(ex.DecoratedMessage);
                     _lastCloseError = error;
                     _state = CoroutineState.Dead;
-                    return DynValue.NewTuple(DynValue.False, error);
+                    return LuaValue.NewTuple(LuaValue.False, error);
                 }
             }
             finally
@@ -316,14 +316,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Builds the result tuple returned by <see cref="CloseCoroutine"/> based on the last error.
         /// </summary>
-        private DynValue BuildCloseResultFromLastError()
+        private LuaValue BuildCloseResultFromLastError()
         {
-            if (_lastCloseError != null && !_lastCloseError.IsNil())
+            if (!_lastCloseError.IsNil)
             {
-                return DynValue.NewTuple(DynValue.False, _lastCloseError);
+                return LuaValue.NewTuple(LuaValue.False, _lastCloseError);
             }
 
-            return DynValue.True;
+            return LuaValue.True;
         }
     }
 }

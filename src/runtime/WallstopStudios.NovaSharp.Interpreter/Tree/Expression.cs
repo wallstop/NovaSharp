@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree
 {
     using System.Collections.Generic;
+    using global::NovaSharp;
     using Expressions;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -28,7 +29,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         /// <summary>
         /// Evaluates the expression within the supplied execution context and produces a Lua value.
         /// </summary>
-        public abstract DynValue Eval(ScriptExecutionContext context);
+        public abstract LuaValue Eval(ScriptExecutionContext context);
 
         /// <summary>
         /// Resolves the symbol reference for dynamic expressions that defer lookup until runtime.

@@ -9,6 +9,7 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Xml;
+    using global::NovaSharp;
     using Network;
     using Threading;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -238,12 +239,13 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger
                                     xw.Attribute("name", wi.Name);
                                 }
 
-                                if (wi.Value != null)
+                                if (wi.Value.HasValue)
                                 {
-                                    xw.Attribute("value", wi.Value.ToString());
+                                    LuaValue value = wi.Value.Value;
+                                    xw.Attribute("value", value.ToRawString());
                                     xw.Attribute(
                                         "type",
-                                        wi.IsError ? "error" : wi.Value.Type.ToLuaDebuggerString()
+                                        wi.IsError ? "error" : value.Type.ToLuaDebuggerString()
                                     );
                                 }
 
@@ -389,7 +391,7 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger
                 SendMessage($"Error setting watch {code} :\n{ex.Message}");
                 return _script.CreateConstantDynamicExpression(
                     code,
-                    DynValue.NewString(ex.Message)
+                    LuaValue.NewString(ex.Message)
                 );
             }
             catch (ArgumentException ex)
@@ -397,7 +399,7 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger
                 SendMessage($"Error setting watch {code} :\n{ex.Message}");
                 return _script.CreateConstantDynamicExpression(
                     code,
-                    DynValue.NewString(ex.Message)
+                    LuaValue.NewString(ex.Message)
                 );
             }
         }

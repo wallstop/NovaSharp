@@ -47,7 +47,7 @@ Unity's Mono boxes `List<T>` enumerators, allocating **24 bytes per loop**:
 
 ```csharp
 // BAD: Allocates 24 bytes
-foreach (DynValue item in myList) { Process(item); }
+foreach (LuaValue item in myList) { Process(item); }
 
 // GOOD: Zero allocation
 for (int i = 0; i < myList.Count; i++) { Process(myList[i]); }
@@ -63,15 +63,15 @@ All LINQ methods allocate iterator objects and often delegate objects:
 
 ```csharp
 // BAD: Each method allocates
-List<DynValue> result = values
-    .Where(v => v.Type == DataType.Number)  // Iterator + delegate
+List<LuaValue> result = values
+    .Where(v => v.IsNumber)                 // Iterator + delegate
     .ToList();                               // New List
 
 // GOOD: Explicit loop with pooling
-using PooledResource<List<DynValue>> lease = ListPool<DynValue>.Get();
+using PooledResource<List<LuaValue>> lease = ListPool<LuaValue>.Get();
 for (int i = 0; i < values.Count; i++)
 {
-    if (values[i].Type == DataType.Number)
+    if (values[i].IsNumber)
         lease.Resource.Add(values[i]);
 }
 ```
@@ -83,22 +83,22 @@ ______________________________________________________________________
 Lambdas that capture variables allocate closure objects:
 
 ```csharp
-// BAD: Captures 'targetType' - allocates closure
-DataType targetType = DataType.Number;
-DynValue found = list.Find(v => v.Type == targetType);
+// BAD: Captures 'targetKind' - allocates closure
+LuaKind targetKind = LuaKind.Table;
+LuaValue found = list.Find(v => v.Kind == targetKind);
 
 // GOOD: Explicit loop
-DynValue found = null;
+LuaValue found = LuaValue.Nil;
 for (int i = 0; i < list.Count; i++)
 {
-    if (list[i].Type == targetType) { found = list[i]; break; }
+    if (list[i].Kind == targetKind) { found = list[i]; break; }
 }
 ```
 
 **Use static lambdas** (C# 9+) to prevent accidental captures:
 
 ```csharp
-items.Sort(static (a, b) => a.Number.CompareTo(b.Number));
+items.Sort(static (a, b) => a.AsNumber().CompareTo(b.AsNumber()));
 ```
 
 ______________________________________________________________________
@@ -111,7 +111,7 @@ Delegate creation allocates every time:
 // BAD: Allocates delegate EVERY iteration
 for (int i = 0; i < count; i++)
 {
-    Func<DynValue> fn = GetValue;  // 52+ bytes!
+    Func<LuaValue> fn = GetValue;  // 52+ bytes!
     result.Add(fn());
 }
 
@@ -129,15 +129,15 @@ ______________________________________________________________________
 Methods with `params` allocate an array every call:
 
 ```csharp
-// Method: public DynValue Call(params DynValue[] args)
+// Example method: void Consume(params LuaValue[] args)
 
 // BAD: Allocates array (24+ bytes per call)
-DynValue result = function.Call(arg1, arg2, arg3);
+Consume(arg1, arg2, arg3);
 
 // GOOD: Use pooled array
-using var pooled = DynValueArrayPool.Get(3, out DynValue[] buffer);
+using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(3, out LuaValue[] buffer);
 buffer[0] = arg1; buffer[1] = arg2; buffer[2] = arg3;
-DynValue result = function.Call(buffer);
+Consume(buffer);
 ```
 
 ______________________________________________________________________

@@ -61,11 +61,11 @@ Find the main processing loop and add a case:
 case OpCode.NewOpCode:
 {
     // Pop operands from stack
-    DynValue operand2 = m_ValueStack.Pop();
-    DynValue operand1 = m_ValueStack.Pop();
+    LuaValue operand2 = m_ValueStack.Pop();
+    LuaValue operand1 = m_ValueStack.Pop();
     
     // Perform operation
-    DynValue result = /* compute result */;
+    LuaValue result = /* compute result */;
     
     // Push result
     m_ValueStack.Push(result);
@@ -108,8 +108,8 @@ Create TUnit tests:
 public async Task NewOpcodeWorksCorrectly(LuaCompatibilityVersion version)
 {
     Script script = CreateScript(version);
-    DynValue result = script.DoString("return <lua code that triggers opcode>");
-    await Assert.That(result.Number).IsEqualTo(expectedValue).ConfigureAwait(false);
+    LuaValue result = script.DoString("return <lua code that triggers opcode>");
+    await Assert.That(result.AsNumber()).IsEqualTo(expectedValue).ConfigureAwait(false);
 }
 ```
 
@@ -123,7 +123,7 @@ If the opcode appears in serialized bytecode, ensure it round-trips correctly:
 public async Task NewOpcodeSerializesCorrectly(LuaCompatibilityVersion version)
 {
     Script script = CreateScript(version);
-    DynValue func = script.LoadString("return <code>");
+    LuaValue func = script.LoadString("return <code>");
     
     // Serialize
     using MemoryStream ms = new();
@@ -131,10 +131,10 @@ public async Task NewOpcodeSerializesCorrectly(LuaCompatibilityVersion version)
     
     // Deserialize and execute
     ms.Position = 0;
-    DynValue loaded = script.LoadStream(ms);
-    DynValue result = script.Call(loaded);
+    LuaValue loaded = script.LoadStream(ms);
+    LuaValue result = script.Call(loaded);
     
-    await Assert.That(result.Number).IsEqualTo(expectedValue).ConfigureAwait(false);
+    await Assert.That(result.AsNumber()).IsEqualTo(expectedValue).ConfigureAwait(false);
 }
 ```
 

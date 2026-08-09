@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -27,7 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task RequireDebugReturnsFunctionTable(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue module = script.DoString("return require('debug')");
+            LuaValue module = script.DoString("return require('debug')");
 
             await Assert.That(module.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
             await Assert
@@ -45,7 +46,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task RequireDebugReturnsSameInstanceAsGlobal(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local first = require('debug')
                 local second = require('debug')
@@ -53,7 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] results = tuple.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] results = tuple.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(results.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(results[0].CastToBool()).IsTrue().ConfigureAwait(false);
             await Assert.That(results[1].CastToBool()).IsTrue().ConfigureAwait(false);
@@ -64,7 +65,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetInfoReturnsFunctionMetadata(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue info = script.DoString(
+            LuaValue info = script.DoString(
                 @"
                 local function sample()
                     return 1
@@ -89,9 +90,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetInfoLevelOutOfRangeReturnsNil(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue info = script.DoString("return debug.getinfo(999)");
+            LuaValue info = script.DoString("return debug.getinfo(999)");
 
-            await Assert.That(info.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(info.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
@@ -116,7 +117,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetRegistryExposesLoadedTable(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue registry = script.DoString(
+            LuaValue registry = script.DoString(
                 @"
                 local debug = require('debug')
                 return debug.getregistry()
@@ -124,8 +125,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             await Assert.That(registry.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
-            DynValue loaded = registry.Table.RawGet("_LOADED") ?? DynValue.Nil;
-            await Assert.That(loaded.IsNil()).IsFalse().ConfigureAwait(false);
+            LuaValue loaded = registry.Table.RawGet("_LOADED");
+            await Assert.That(loaded.IsNil).IsFalse().ConfigureAwait(false);
             await Assert.That(loaded.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
         }
 
@@ -134,7 +135,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetMetatableRoundTrips(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local target = {}
                 local mt = { flag = true }
@@ -151,7 +152,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetMetatableErrorMatchesLuaFormat(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local ok, err = pcall(function()
                     debug.setmetatable({}, true)
@@ -160,7 +161,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
             string message = tuple[1].String ?? string.Empty;
             await Assert
@@ -180,7 +181,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             registrationScope.RegisterType<TrackedHandle>();
             script.Globals["handle"] = UserData.Create(new TrackedHandle());
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 debug.setuservalue(handle, { label = 'userdata' })
                 local value = debug.getuservalue(handle)
@@ -201,7 +202,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             registrationScope.RegisterType<TrackedHandle>();
             script.Globals["handle"] = UserData.Create(new TrackedHandle());
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local payload = { flag = true }
                 local assigned = debug.setuservalue(handle, payload)
@@ -209,7 +210,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
             await Assert.That(tuple[1].CastToBool()).IsTrue().ConfigureAwait(false);
         }
@@ -226,26 +227,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             registrationScope.RegisterType<TrackedHandle>();
             script.Globals["handle"] = UserData.Create(new TrackedHandle());
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
-                local ok, err = pcall(function()
-                    debug.setuservalue(handle, true)
+                local ok, valueOrError = pcall(function()
+                    return debug.setuservalue(handle, true)
                 end)
-                return ok, err
+                return ok, valueOrError, debug.getuservalue(handle)
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
-            await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
-            string message = tuple[1].String ?? string.Empty;
-            await Assert
-                .That(message.Contains("table expected, got boolean", StringComparison.Ordinal))
-                .IsTrue()
-                .ConfigureAwait(false);
-            await Assert
-                .That(message.Contains("nil or table", StringComparison.Ordinal))
-                .IsFalse()
-                .ConfigureAwait(false);
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
+            if (version <= LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
+                string message = tuple[1].String ?? string.Empty;
+                await Assert
+                    .That(message.Contains("table expected, got boolean", StringComparison.Ordinal))
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(message.Contains("nil or table", StringComparison.Ordinal))
+                    .IsFalse()
+                    .ConfigureAwait(false);
+                await Assert.That(tuple[2].IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
+                await Assert.That(tuple[1].Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+                await Assert.That(tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            }
         }
 
         [Test]
@@ -256,7 +267,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // For Lua 5.1: _ENV is always at index 1 (for setfenv/getfenv compatibility), so 'captured' is at index 2.
             // For Lua 5.2+: _ENV is only captured if globals are referenced, so 'captured' is at index 1.
             int capturedIndex = version == LuaCompatibilityVersion.Lua51 ? 2 : 1;
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                 local function make()
                     local captured = 7
@@ -283,7 +294,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // For Lua 5.1: _ENV is always at index 1, so 'captured' is at index 2.
             // For Lua 5.2+: _ENV is only captured if globals are referenced, so 'captured' is at index 1.
             int capturedIndex = version == LuaCompatibilityVersion.Lua51 ? 2 : 1;
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local function make()
                     local captured = 1
@@ -309,7 +320,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // For Lua 5.1: _ENV is always at index 1, so 'value' is at index 2.
             // For Lua 5.2+: _ENV is only captured if globals are referenced, so 'value' is at index 1.
             int valueIndex = version == LuaCompatibilityVersion.Lua51 ? 2 : 1;
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local function counter(start)
                     local value = start
@@ -356,7 +367,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // For Lua 5.1: _ENV is always at index 1, so 'captured' is at index 2.
             // For Lua 5.2+: _ENV is only captured if globals are referenced, so 'captured' is at index 1.
             int capturedIndex = version == LuaCompatibilityVersion.Lua51 ? 2 : 1;
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local function make()
                     local captured = 1
@@ -372,7 +383,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
             await Assert.That(tuple[0].String).IsEqualTo("userdata").ConfigureAwait(false);
             await Assert.That(tuple[1].CastToBool()).IsTrue().ConfigureAwait(false);
         }
@@ -382,7 +393,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task TracebackIncludesMessage(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue message = script.DoString("return debug.traceback('traceback message')");
+            LuaValue message = script.DoString("return debug.traceback('traceback message')");
 
             await Assert
                 .That(message.String.StartsWith("traceback message", StringComparison.Ordinal))
@@ -395,7 +406,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task TracebackUsesLfLineEndings(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue trace = script.DoString("return debug.traceback()");
+            LuaValue trace = script.DoString("return debug.traceback()");
 
             string payload = trace.String ?? string.Empty;
             await Assert

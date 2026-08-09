@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.IO;
     using System.Text;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -35,10 +36,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using TempFileScope missingFileScope = TempFileScope.Create(extension: ".txt");
             string path = missingFileScope.EscapedPath;
 
-            DynValue result = script.DoString($"return io.open('{path}', 'r')");
+            LuaValue result = script.DoString($"return io.open('{path}', 'r')");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("No such file");
         }
 
@@ -118,10 +119,10 @@ end
             using TempFileScope tempScope = TempFileScope.Create(extension: ".txt");
             string path = tempScope.EscapedPath;
 
-            DynValue result = script.DoString($"return io.open('{path}', 'z')");
+            LuaValue result = script.DoString($"return io.open('{path}', 'z')");
 
             await Assert.That(result.Tuple.Length).IsGreaterThan(1).ConfigureAwait(false);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].IsNil).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(result.Tuple[1].String)
                 .Contains("invalid mode")
@@ -140,7 +141,7 @@ end
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string path = temp.EscapedPath;
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                 local f = io.open('{path}', 'w')
                 local openType = io.type(f)
@@ -165,7 +166,7 @@ end
             using TempFileScope temp = TempFileScope.CreateWithText("first\nsecond\n");
             string path = temp.EscapedPath;
 
-            DynValue read = script.DoString(
+            LuaValue read = script.DoString(
                 $@"
                 io.input('{path}')
                 return io.read('*l')
@@ -210,7 +211,7 @@ end
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue typeValue = script.DoString(
+            LuaValue typeValue = script.DoString(
                 @"
                 local f = io.tmpfile()
                 f:write('temp-data')
@@ -232,11 +233,11 @@ end
             LuaCompatibilityVersion version
         )
         {
-            DynValue tuple = await ReadNumberFromContent("123e").ConfigureAwait(false);
+            LuaValue tuple = await ReadNumberFromContent("123e").ConfigureAwait(false);
 
             await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple);
             await Assert.That(tuple.Tuple[0].Type).IsEqualTo(DataType.Nil);
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("123e");
         }
 
@@ -248,7 +249,7 @@ end
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task ReadNumberParsesHexLiteralInput(LuaCompatibilityVersion version)
         {
-            DynValue tuple = await ReadNumberFromContent("0x1p2\n").ConfigureAwait(false);
+            LuaValue tuple = await ReadNumberFromContent("0x1p2\n").ConfigureAwait(false);
 
             await Assert.That(tuple.Tuple[0].Type).IsEqualTo(DataType.Number);
             await Assert.That(tuple.Tuple[0].Number).IsEqualTo(4d);
@@ -264,7 +265,7 @@ end
         public async Task IoStdinExposesFileUserDataHandle(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue stdinHandle = script.DoString("return io.stdin");
+            LuaValue stdinHandle = script.DoString("return io.stdin");
 
             await Assert.That(stdinHandle.Type).IsEqualTo(DataType.UserData);
             await Assert.That(stdinHandle.UserData.Object).IsTypeOf<FileUserDataBase>();
@@ -279,9 +280,9 @@ end
         public async Task NumericIndexOnFileHandleReturnsNil(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue result = script.DoString("return io.stdin[1]");
+            LuaValue result = script.DoString("return io.stdin[1]");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -298,7 +299,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
                     local first = f:read('*L')
@@ -324,7 +325,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
                     local zero = f:read(0)
@@ -354,7 +355,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
                     local first, second, third = f:read(4, 4, 4)
@@ -432,7 +433,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
                     local size = f:seek('end', 0)
@@ -452,7 +453,7 @@ end
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task ReadNumberReturnsInfinityForHugeExponent(LuaCompatibilityVersion version)
         {
-            DynValue tuple = await ReadNumberFromContent("1e400").ConfigureAwait(false);
+            LuaValue tuple = await ReadNumberFromContent("1e400").ConfigureAwait(false);
 
             await Assert.That(tuple.Tuple[0].Type).IsEqualTo(DataType.Number);
             await Assert.That(double.IsPositiveInfinity(tuple.Tuple[0].Number)).IsTrue();
@@ -468,7 +469,7 @@ end
         public async Task ReadNumberParsesHugeInteger(LuaCompatibilityVersion version)
         {
             const string literal = "123456789012345678901234567890\n";
-            DynValue tuple = await ReadNumberFromContent(literal).ConfigureAwait(false);
+            LuaValue tuple = await ReadNumberFromContent(literal).ConfigureAwait(false);
             double expected = double.Parse(
                 "123456789012345678901234567890",
                 CultureInfo.InvariantCulture
@@ -489,7 +490,7 @@ end
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 "return io.stdin ~= nil, io.stdout ~= nil, io.stderr ~= nil, io.unknown == nil"
             );
 
@@ -512,7 +513,7 @@ end
 
             IoModule.SetDefaultFile(script, StandardFileType.StdIn, stream);
 
-            DynValue result = script.DoString("return io.read('*l')");
+            LuaValue result = script.DoString("return io.read('*l')");
 
             await Assert.That(result.String).IsEqualTo("override");
         }
@@ -567,7 +568,7 @@ end
 
             IoModule.SetDefaultFile(script, StandardFileType.StdIn, stream);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local results = {}
                 for line in io.lines() do
@@ -580,7 +581,7 @@ end
 
             await Assert.That(tuple.Tuple[0].String).IsEqualTo("alpha");
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("beta");
-            await Assert.That(tuple.Tuple[2].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[2].IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -596,7 +597,7 @@ end
 
             IoModule.SetDefaultFile(script, StandardFileType.StdIn, stream);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local first = io.read('*l')
                 local second = io.read('*l')
@@ -607,7 +608,7 @@ end
 
             await Assert.That(tuple.Tuple[0].String).IsEqualTo("alpha");
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("beta");
-            await Assert.That(tuple.Tuple[2].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[2].IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -622,7 +623,7 @@ end
             using TempFileScope temp = TempFileScope.CreateWithBytes(new byte[] { 0x41, 0x42 });
             string path = temp.EscapedPath;
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local f = assert(io.open('{path}', 'rb', 'binary'))
                 local data = f:read('*a')
@@ -663,10 +664,10 @@ end
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string path = temp.EscapedPath;
 
-            DynValue result = script.DoString($"return io.open('{path}', \"\")");
+            LuaValue result = script.DoString($"return io.open('{path}', \"\")");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("invalid mode");
         }
 
@@ -703,10 +704,10 @@ end
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string path = temp.EscapedPath;
 
-            DynValue result = script.DoString($"return io.open('{path}', 'x')");
+            LuaValue result = script.DoString($"return io.open('{path}', 'x')");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("invalid mode");
         }
 
@@ -724,10 +725,10 @@ end
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string path = temp.EscapedPath;
 
-            DynValue result = script.DoString($"return io.open('{path}', 'rb', 'utf-8')");
+            LuaValue result = script.DoString($"return io.open('{path}', 'rb', 'utf-8')");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("Can't specify encodings");
         }
 
@@ -741,9 +742,9 @@ end
         {
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString("return io.type(123)");
+            LuaValue result = script.DoString("return io.type(123)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -755,10 +756,10 @@ end
         public async Task TypeReturnsNilForNonUserDataArguments(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString("return io.type(42), io.type({})");
+            LuaValue tuple = script.DoString("return io.type(42), io.type({})");
 
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
-            await Assert.That(tuple.Tuple[1].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
+            await Assert.That(tuple.Tuple[1].IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -772,9 +773,9 @@ end
             Script script = CreateScriptWithVersion(version);
             script.Globals["sampleUserData"] = UserData.Create(new SampleUserData());
 
-            DynValue result = script.DoString("return io.type(sampleUserData)");
+            LuaValue result = script.DoString("return io.type(sampleUserData)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -833,7 +834,7 @@ end
 
             foreach ((string literal, double expected, string remainder) in cases)
             {
-                DynValue tuple = await ReadNumberFromContent(literal).ConfigureAwait(false);
+                LuaValue tuple = await ReadNumberFromContent(literal).ConfigureAwait(false);
 
                 await Assert.That(tuple.Tuple[0].Type).IsEqualTo(DataType.Number);
                 await Assert.That(tuple.Tuple[0].Number).IsEqualTo(expected);
@@ -853,7 +854,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'w'))
                     local result = io.close(f)
@@ -877,7 +878,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'w'))
                     io.output(f)
@@ -902,7 +903,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'w'))
                     io.output(f)
@@ -928,7 +929,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
                     io.input(f)
@@ -953,7 +954,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                     local iter = io.lines('{escapedPath}')
                     return iter(), iter(), iter(), iter()
@@ -963,7 +964,7 @@ end
             await Assert.That(tuple.Tuple[0].String).IsEqualTo("alpha");
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("beta");
             await Assert.That(tuple.Tuple[2].String).IsEqualTo("gamma");
-            await Assert.That(tuple.Tuple[3].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[3].IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -975,7 +976,7 @@ end
         public async Task LinesRaisesUsefulMessageWhenFileMissing(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local ok, err = pcall(function() return io.lines('missing-file.txt') end)
                 return ok, err
@@ -995,9 +996,9 @@ end
         public async Task CloseStdErrReturnsErrorTuple(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString("return io.close(io.stderr)");
+            LuaValue tuple = script.DoString("return io.close(io.stderr)");
 
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].String).Contains("standard file");
         }
 
@@ -1010,9 +1011,9 @@ end
         public async Task StdErrMethodCloseReturnsErrorTuple(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString("return io.stderr:close()");
+            LuaValue tuple = script.DoString("return io.stderr:close()");
 
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].String).Contains("standard file");
         }
 
@@ -1025,7 +1026,7 @@ end
         public async Task StdErrFlushReturnsTrue(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue result = script.DoString("return io.stderr:flush()");
+            LuaValue result = script.DoString("return io.stderr:flush()");
             await Assert.That(result.Boolean).IsTrue();
         }
 
@@ -1041,7 +1042,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
                     local before = io.type(f)
@@ -1067,7 +1068,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'w'))
                     local noop = f:setvbuf('no')
@@ -1097,7 +1098,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'w'))
                     local returned = f:write('payload')
@@ -1124,14 +1125,14 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                 local file, message = io.open('{escapedPath}', 'w', 'does-not-exist')
                 return file, message
                 "
             );
 
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].String).Contains("does-not-exist");
         }
 
@@ -1173,7 +1174,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                 local ok, res1, res2 = pcall(function()
                     return io.open('{escapedPath}', 'wb', 'utf-8')
@@ -1183,7 +1184,7 @@ end
             );
 
             await Assert.That(tuple.Tuple[0].Boolean).IsTrue();
-            await Assert.That(tuple.Tuple[1].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[1].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[2].String).Contains("Can't specify encodings");
         }
 
@@ -1196,7 +1197,7 @@ end
         public async Task TmpFileCreatesWritableStream(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = io.tmpfile()
                 f:write('temp data')
@@ -1311,10 +1312,10 @@ end
         public async Task PopenIsUnsupportedAndProvidesErrorMessage(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue typeValue = script.DoString("return type(io.popen)");
+            LuaValue typeValue = script.DoString("return type(io.popen)");
             await Assert.That(typeValue.String).IsEqualTo("function");
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local ok, err = pcall(function() return io.popen('echo hello') end)
                 return ok, err
@@ -1337,7 +1338,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
                     local out = {{}}
@@ -1366,7 +1367,7 @@ end
             string escapedPath = temp.EscapedPath;
 
             Script script = CreateScriptWithVersion(version);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
                     local chunks = {{}}
@@ -1405,14 +1406,14 @@ end
         private static string EscapePath(string path) =>
             path.Replace("\\", "\\\\", StringComparison.Ordinal);
 
-        private static async Task<DynValue> ReadNumberFromContent(string content)
+        private static async Task<LuaValue> ReadNumberFromContent(string content)
         {
             await Task.CompletedTask.ConfigureAwait(false);
             using TempFileScope temp = TempFileScope.CreateWithText(content);
             string escapedPath = temp.EscapedPath;
             Script script = CreateScript();
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 $@"
                 local f = assert(io.open('{escapedPath}', 'r'))
                 io.input(f)

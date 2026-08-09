@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Expressions;
 
@@ -10,7 +11,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
     public class DynamicExpression : IScriptPrivateResource
     {
         private readonly DynamicExprExpression _exp;
-        private readonly DynValue _constant;
+        private readonly LuaValue _constant;
+        private readonly bool _hasConstant;
 
         /// <summary>
         /// The code which generated this expression
@@ -24,11 +26,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             _exp = expr;
         }
 
-        internal DynamicExpression(Script s, string strExpr, DynValue constant)
+        internal DynamicExpression(Script s, string strExpr, LuaValue constant)
         {
             ExpressionCode = strExpr;
             OwnerScript = s;
             _constant = constant;
+            _hasConstant = true;
         }
 
         /// <summary>
@@ -36,13 +39,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// </summary>
         /// <param name="context">The context.</param>
         /// <returns></returns>
-        public DynValue Evaluate(ScriptExecutionContext context = null)
+        public LuaValue Evaluate(ScriptExecutionContext context = null)
         {
             context = context ?? OwnerScript.CreateDynamicExecutionContext();
 
             this.CheckScriptOwnership(context.Script);
 
-            if (_constant != null)
+            if (_hasConstant)
             {
                 return _constant;
             }
@@ -88,7 +91,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <returns></returns>
         public bool IsConstant()
         {
-            return _constant != null;
+            return _hasConstant;
         }
 
         /// <summary>

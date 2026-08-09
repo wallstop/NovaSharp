@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.Collections.Generic;
     using System.Globalization;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -70,7 +71,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new Script(version)
             );
 
-            DynValue result = descriptor.CallbackOr(
+            LuaValue result = descriptor.CallbackOr(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(SampleFlags.Fast, descriptor),
@@ -93,7 +94,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new Script(version)
             );
 
-            DynValue result = descriptor.CallbackXor(
+            LuaValue result = descriptor.CallbackXor(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(SampleFlags.Fast | SampleFlags.Safe, descriptor),
@@ -118,7 +119,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new Script(version)
             );
 
-            DynValue result = descriptor.CallbackBwNot(
+            LuaValue result = descriptor.CallbackBwNot(
                 context,
                 TestHelpers.CreateArguments(UserData.Create(SampleFlags.Safe, descriptor))
             );
@@ -138,9 +139,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new Script(version)
             );
 
-            DynValue result = descriptor.CallbackOr(
+            LuaValue result = descriptor.CallbackOr(
                 context,
-                TestHelpers.CreateArguments(DynValue.NewNumber(1), DynValue.NewNumber(4))
+                TestHelpers.CreateArguments(LuaValue.NewNumber(1), LuaValue.NewNumber(4))
             );
 
             await Assert
@@ -158,7 +159,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new Script(version)
             );
 
-            DynValue hasAll = descriptor.CallbackHasAll(
+            LuaValue hasAll = descriptor.CallbackHasAll(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(SampleFlags.Fast | SampleFlags.Safe, descriptor),
@@ -179,7 +180,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new Script(version)
             );
 
-            DynValue hasAny = descriptor.CallbackHasAny(
+            LuaValue hasAny = descriptor.CallbackHasAny(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(SampleFlags.Fast, descriptor),
@@ -202,7 +203,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new Script(version)
             );
 
-            DynValue result = descriptor.CallbackAnd(
+            LuaValue result = descriptor.CallbackAnd(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(SignedIntFlags.Left | SignedIntFlags.Right, descriptor),
@@ -227,7 +228,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new Script(version)
             );
 
-            DynValue result = descriptor.CallbackXor(
+            LuaValue result = descriptor.CallbackXor(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(SignedIntFlags.Left | SignedIntFlags.Right, descriptor),
@@ -250,7 +251,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new Script(version)
             );
 
-            DynValue hasAll = descriptor.CallbackHasAll(
+            LuaValue hasAll = descriptor.CallbackHasAll(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(SignedIntFlags.Left | SignedIntFlags.Right, descriptor),
@@ -271,7 +272,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new Script(version)
             );
 
-            DynValue hasAny = descriptor.CallbackHasAny(
+            LuaValue hasAny = descriptor.CallbackHasAny(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(SignedIntFlags.Left, descriptor),
@@ -316,7 +317,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new Script(version)
             );
 
-            DynValue result = descriptor.CallbackBwNot(
+            LuaValue result = descriptor.CallbackBwNot(
                 context,
                 TestHelpers.CreateArguments(
                     UserData.Create(SampleSignedEnum.NegativeOne, descriptor)
@@ -342,8 +343,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
                     new Script(version)
                 );
-                DynValue left = UserData.Create(flagValue, descriptor);
-                DynValue result = descriptor.CallbackAnd(
+                LuaValue left = UserData.Create(flagValue, descriptor);
+                LuaValue result = descriptor.CallbackAnd(
                     context,
                     TestHelpers.CreateArguments(left, left)
                 );
@@ -368,8 +369,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
                     new Script(version)
                 );
-                DynValue left = UserData.Create(flagValue, descriptor);
-                DynValue result = descriptor.CallbackAnd(
+                LuaValue left = UserData.Create(flagValue, descriptor);
+                LuaValue result = descriptor.CallbackAnd(
                     context,
                     TestHelpers.CreateArguments(left, left)
                 );
@@ -396,9 +397,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new Script(version)
             );
 
-            DynValue result = descriptor.CallbackOr(
+            LuaValue result = descriptor.CallbackOr(
                 context,
-                TestHelpers.CreateArguments(DynValue.NewNumber(1), DynValue.NewNumber(2))
+                TestHelpers.CreateArguments(LuaValue.NewNumber(1), LuaValue.NewNumber(2))
             );
 
             await Assert.That((int)result.UserData.Object).IsEqualTo(3).ConfigureAwait(false);
@@ -416,7 +417,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.CallbackOr(
                     context,
-                    TestHelpers.CreateArguments(DynValue.NewString("bad"), DynValue.NewNumber(1))
+                    TestHelpers.CreateArguments(LuaValue.NewString("bad"), LuaValue.NewNumber(1))
                 )
             );
 
@@ -441,7 +442,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                     context,
                     TestHelpers.CreateArguments(
                         UserData.Create(SampleEnum.One, foreignDescriptor),
-                        DynValue.NewNumber(1)
+                        LuaValue.NewNumber(1)
                     )
                 )
             );
@@ -531,7 +532,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
 
-            DynValue meta = descriptor.MetaIndex(new Script(version), SampleFlags.Fast, "__concat");
+            LuaValue meta = descriptor
+                .MetaIndex(new Script(version), SampleFlags.Fast, "__concat")
+                .Value;
 
             await Assert.That(meta.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
@@ -541,9 +544,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         public async Task MetaIndexReturnsNullForNonFlags(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleEnum));
-            DynValue meta = descriptor.MetaIndex(new Script(version), SampleEnum.One, "__concat");
+            Script script = new(version);
+            LuaValue? meta = descriptor.MetaIndex(script, SampleEnum.One, "__concat");
+            bool found = descriptor.TryMetaIndex(
+                script,
+                SampleEnum.One,
+                "__concat",
+                out LuaValue missing
+            );
 
             await Assert.That(meta).IsNull().ConfigureAwait(false);
+            await Assert.That(found).IsFalse().ConfigureAwait(false);
+            await Assert.That(missing.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

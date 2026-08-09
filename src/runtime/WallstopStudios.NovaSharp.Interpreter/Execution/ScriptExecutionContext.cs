@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -20,69 +21,69 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
         private readonly struct FixedCallArguments
         {
-            private readonly DynValue _arg0;
-            private readonly DynValue _arg1;
-            private readonly DynValue _arg2;
-            private readonly DynValue _arg3;
-            private readonly DynValue _arg4;
-            private readonly DynValue _arg5;
-            private readonly DynValue _arg6;
+            private readonly LuaValue _arg0;
+            private readonly LuaValue _arg1;
+            private readonly LuaValue _arg2;
+            private readonly LuaValue _arg3;
+            private readonly LuaValue _arg4;
+            private readonly LuaValue _arg5;
+            private readonly LuaValue _arg6;
             private readonly int _count;
 
-            internal FixedCallArguments(DynValue arg)
+            internal FixedCallArguments(LuaValue arg)
             {
                 _arg0 = arg;
-                _arg1 = null;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg1 = default;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 1;
             }
 
-            internal FixedCallArguments(DynValue arg1, DynValue arg2)
+            internal FixedCallArguments(LuaValue arg1, LuaValue arg2)
             {
                 _arg0 = arg1;
                 _arg1 = arg2;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 2;
             }
 
-            internal FixedCallArguments(DynValue arg1, DynValue arg2, DynValue arg3)
+            internal FixedCallArguments(LuaValue arg1, LuaValue arg2, LuaValue arg3)
             {
                 _arg0 = arg1;
                 _arg1 = arg2;
                 _arg2 = arg3;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 3;
             }
 
-            internal FixedCallArguments(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+            internal FixedCallArguments(LuaValue arg1, LuaValue arg2, LuaValue arg3, LuaValue arg4)
             {
                 _arg0 = arg1;
                 _arg1 = arg2;
                 _arg2 = arg3;
                 _arg3 = arg4;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 4;
             }
 
             internal FixedCallArguments(
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3,
-                DynValue arg4,
-                DynValue arg5
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3,
+                LuaValue arg4,
+                LuaValue arg5
             )
             {
                 _arg0 = arg1;
@@ -90,18 +91,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg2 = arg3;
                 _arg3 = arg4;
                 _arg4 = arg5;
-                _arg5 = null;
-                _arg6 = null;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 5;
             }
 
             internal FixedCallArguments(
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3,
-                DynValue arg4,
-                DynValue arg5,
-                DynValue arg6
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3,
+                LuaValue arg4,
+                LuaValue arg5,
+                LuaValue arg6
             )
             {
                 _arg0 = arg1;
@@ -110,18 +111,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg3 = arg4;
                 _arg4 = arg5;
                 _arg5 = arg6;
-                _arg6 = null;
+                _arg6 = default;
                 _count = 6;
             }
 
             internal FixedCallArguments(
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3,
-                DynValue arg4,
-                DynValue arg5,
-                DynValue arg6,
-                DynValue arg7
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3,
+                LuaValue arg4,
+                LuaValue arg5,
+                LuaValue arg6,
+                LuaValue arg7
             )
             {
                 _arg0 = arg1;
@@ -145,7 +146,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             /// <summary>
             /// Gets a fixed argument by zero-based index.
             /// </summary>
-            internal DynValue this[int index]
+            internal LuaValue this[int index]
             {
                 get
                 {
@@ -166,7 +167,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             /// <summary>
             /// Prepends a callable self value when the fixed argument buffer has capacity.
             /// </summary>
-            internal bool TryPrepend(DynValue value, out FixedCallArguments args)
+            internal bool TryPrepend(LuaValue value, out FixedCallArguments args)
             {
                 switch (_count)
                 {
@@ -205,7 +206,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             /// <summary>
             /// Copies the fixed arguments into an existing argument buffer.
             /// </summary>
-            internal void CopyTo(DynValue[] destination, int destinationIndex)
+            internal void CopyTo(LuaValue[] destination, int destinationIndex)
             {
                 for (int i = 0; i < Count; i++)
                 {
@@ -216,7 +217,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             /// <summary>
             /// Invokes the specified callback with the stored fixed arguments.
             /// </summary>
-            internal DynValue InvokeCallback(
+            internal LuaValue InvokeCallback(
                 ScriptExecutionContext context,
                 CallbackFunction callback
             )
@@ -340,13 +341,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// </summary>
         /// <param name="value">The value.</param>
         /// <returns></returns>
-        public Table GetMetatable(DynValue value)
+        public Table GetMetatable(LuaValue value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             return _processor.GetMetatable(value);
         }
 
@@ -355,61 +351,106 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// </summary>
         /// <param name="value">The value.</param>
         /// <param name="metamethod">The metamethod name.</param>
-        /// <returns></returns>
-        public DynValue GetMetamethod(DynValue value, string metamethod)
+        /// <returns>The metamethod, or <see cref="LuaValue.Nil"/> when none is available.</returns>
+        public LuaValue GetMetamethod(LuaValue value, string metamethod)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
+            return TryGetMetamethod(value, metamethod, out LuaValue resolvedMetamethod)
+                ? resolvedMetamethod
+                : LuaValue.Nil;
+        }
 
+        /// <summary>
+        /// Attempts to get the specified metamethod associated with the given value.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <param name="metamethod">The metamethod name.</param>
+        /// <param name="resolvedMetamethod">
+        /// The resolved metamethod, or <see cref="LuaValue.Nil"/> when none is available.
+        /// </param>
+        /// <returns><see langword="true"/> when a metamethod was resolved; otherwise, <see langword="false"/>.</returns>
+        public bool TryGetMetamethod(
+            LuaValue value,
+            string metamethod,
+            out LuaValue resolvedMetamethod
+        )
+        {
             if (metamethod == null)
             {
                 throw new ArgumentNullException(nameof(metamethod));
             }
 
-            return _processor.GetMetamethod(value, metamethod);
+            return _processor.TryGetMetamethod(value, metamethod, out resolvedMetamethod);
         }
 
         /// <summary>
-        /// prepares a tail call request for the specified metamethod, or null if no metamethod is found.
+        /// Prepares a tail call request for the specified metamethod, or nil if no metamethod is found.
         /// </summary>
-        public DynValue GetMetamethodTailCall(
-            DynValue value,
+        public LuaValue GetMetamethodTailCall(
+            LuaValue value,
             string metamethod,
-            params DynValue[] args
+            params LuaValue[] args
         )
         {
-            DynValue meta = GetMetamethod(value, metamethod);
-            if (meta == null)
+            return TryGetMetamethodTailCall(value, metamethod, out LuaValue tailCall, args)
+                ? tailCall
+                : LuaValue.Nil;
+        }
+
+        /// <summary>
+        /// Attempts to prepare a tail call request for the specified metamethod.
+        /// </summary>
+        public bool TryGetMetamethodTailCall(
+            LuaValue value,
+            string metamethod,
+            out LuaValue tailCall,
+            params LuaValue[] args
+        )
+        {
+            if (!TryGetMetamethod(value, metamethod, out LuaValue meta))
             {
-                return null;
+                tailCall = LuaValue.Nil;
+                return false;
             }
 
-            return DynValue.NewTailCallReq(meta, args);
+            tailCall = LuaValue.NewTailCallReq(meta, args);
+            return true;
         }
 
         /// <summary>
         /// Gets the metamethod to be used for a binary operation using op1 and op2.
         /// </summary>
-        public DynValue GetBinaryMetamethod(DynValue op1, DynValue op2, string eventName)
+        /// <returns>The metamethod, or <see cref="LuaValue.Nil"/> when none is available.</returns>
+        public LuaValue GetBinaryMetamethod(LuaValue op1, LuaValue op2, string eventName)
         {
-            if (op1 == null)
-            {
-                throw new ArgumentNullException(nameof(op1));
-            }
+            return TryGetBinaryMetamethod(op1, op2, eventName, out LuaValue resolvedMetamethod)
+                ? resolvedMetamethod
+                : LuaValue.Nil;
+        }
 
-            if (op2 == null)
-            {
-                throw new ArgumentNullException(nameof(op2));
-            }
-
+        /// <summary>
+        /// Attempts to get the metamethod used for a binary operation on <paramref name="op1"/> and
+        /// <paramref name="op2"/>.
+        /// </summary>
+        /// <param name="op1">The left operand.</param>
+        /// <param name="op2">The right operand.</param>
+        /// <param name="eventName">The metamethod name.</param>
+        /// <param name="resolvedMetamethod">
+        /// The resolved metamethod, or <see cref="LuaValue.Nil"/> when none is available.
+        /// </param>
+        /// <returns><see langword="true"/> when a metamethod was resolved; otherwise, <see langword="false"/>.</returns>
+        public bool TryGetBinaryMetamethod(
+            LuaValue op1,
+            LuaValue op2,
+            string eventName,
+            out LuaValue resolvedMetamethod
+        )
+        {
             if (eventName == null)
             {
                 throw new ArgumentNullException(nameof(eventName));
             }
 
-            return _processor.GetBinaryMetamethod(op1, op2, eventName);
+            return _processor.TryGetBinaryMetamethod(op1, op2, eventName, out resolvedMetamethod);
         }
 
         /// <summary>
@@ -463,7 +504,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <param name="functionName">Name of the function - for error messages.</param>
         /// <param name="callback">The callback.</param>
         /// <returns></returns>
-        public DynValue EmulateClassicCall(
+        public LuaValue EmulateClassicCall(
             CallbackArguments args,
             string functionName,
             Func<LuaState, int> callback
@@ -490,16 +531,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
         /// <returns></returns>
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
-        public DynValue Call(DynValue func)
+        public LuaValue Call(LuaValue func)
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
-                return Script.Call(func);
+                return Script.CallValues(func);
             }
 
             if (func.Type == DataType.ClrFunction && func.Callback.HasArgumentViewCallback)
@@ -522,16 +558,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <param name="arg">The argument.</param>
         /// <returns>The function result.</returns>
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
-        public DynValue Call(DynValue func, DynValue arg)
+        public LuaValue Call(LuaValue func, LuaValue arg)
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
-                return Script.Call(func, arg);
+                return Script.CallValues(func, arg);
             }
 
             if (func.Type == DataType.ClrFunction)
@@ -551,16 +582,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <param name="arg2">The second argument.</param>
         /// <returns>The function result.</returns>
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
-        public DynValue Call(DynValue func, DynValue arg1, DynValue arg2)
+        public LuaValue Call(LuaValue func, LuaValue arg1, LuaValue arg2)
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
-                return Script.Call(func, arg1, arg2);
+                return Script.CallValues(func, arg1, arg2);
             }
 
             if (func.Type == DataType.ClrFunction)
@@ -581,16 +607,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <param name="arg3">The third argument.</param>
         /// <returns>The function result.</returns>
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
-        public DynValue Call(DynValue func, DynValue arg1, DynValue arg2, DynValue arg3)
+        public LuaValue Call(LuaValue func, LuaValue arg1, LuaValue arg2, LuaValue arg3)
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
-                return Script.Call(func, arg1, arg2, arg3);
+                return Script.CallValues(func, arg1, arg2, arg3);
             }
 
             if (func.Type == DataType.ClrFunction)
@@ -612,22 +633,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <param name="arg4">The fourth argument.</param>
         /// <returns>The function result.</returns>
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
-        public DynValue Call(
-            DynValue func,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4
+        public LuaValue Call(
+            LuaValue func,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4
         )
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
-                return Script.Call(func, arg1, arg2, arg3, arg4);
+                return Script.CallValues(func, arg1, arg2, arg3, arg4);
             }
 
             if (func.Type == DataType.ClrFunction)
@@ -650,23 +666,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <param name="arg5">The fifth argument.</param>
         /// <returns>The function result.</returns>
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
-        public DynValue Call(
-            DynValue func,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
+        public LuaValue Call(
+            LuaValue func,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
         )
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
-                return Script.Call(func, arg1, arg2, arg3, arg4, arg5);
+                return Script.CallValues(func, arg1, arg2, arg3, arg4, arg5);
             }
 
             if (func.Type == DataType.ClrFunction)
@@ -690,24 +701,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <param name="arg6">The sixth argument.</param>
         /// <returns>The function result.</returns>
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
-        public DynValue Call(
-            DynValue func,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+        public LuaValue Call(
+            LuaValue func,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
-                return Script.Call(func, arg1, arg2, arg3, arg4, arg5, arg6);
+                return Script.CallValues(func, arg1, arg2, arg3, arg4, arg5, arg6);
             }
 
             if (func.Type == DataType.ClrFunction)
@@ -732,25 +738,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <param name="arg7">The seventh argument.</param>
         /// <returns>The function result.</returns>
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
-        public DynValue Call(
-            DynValue func,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+        public LuaValue Call(
+            LuaValue func,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
-                return Script.Call(func, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                return Script.CallValues(func, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
             }
 
             if (func.Type == DataType.ClrFunction)
@@ -769,16 +770,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <param name="args">The arguments.</param>
         /// <returns>The function result.</returns>
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
-        public DynValue Call(DynValue func, ReadOnlySpan<DynValue> args)
+        public LuaValue Call(LuaValue func, ReadOnlySpan<LuaValue> args)
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.ClrFunction)
             {
-                DynValue ret = func.Callback.HasArgumentViewCallback
+                LuaValue ret = func.Callback.HasArgumentViewCallback
                     ? func.Callback.InvokeArgumentViewSpan(this, args)
                     : func.Callback.InvokeLegacySpan(this, args);
                 return CompleteDirectClrCall(ret);
@@ -815,7 +811,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                         );
                 }
 
-                return Script.Call(func, args);
+                return Script.CallValues(func, args);
             }
 
             int maxloops = 10;
@@ -823,24 +819,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             while (maxloops > 0)
             {
-                DynValue v = GetMetamethod(func, Metamethods.Call);
-
-                if (v == null || v.IsNil() || !CanCallMetamethod(v))
+                if (
+                    !TryGetMetamethod(func, Metamethods.Call, out LuaValue v)
+                    || v.IsNil
+                    || !CanCallMetamethod(v)
+                )
                 {
                     throw ScriptRuntimeException.AttemptToCallNonFunc(func.Type);
                 }
 
-                DynValue previousFunc = func;
+                LuaValue previousFunc = func;
                 if (
                     isFirstCallMetamethodResolution
-                    && TryCallDirectMetamethod(v, previousFunc, args, out DynValue directResult)
+                    && TryCallDirectMetamethod(v, previousFunc, args, out LuaValue directResult)
                 )
                 {
                     return directResult;
                 }
 
                 func = v;
-                DynValue[] nextArgs = CreateCallMetamethodArguments(previousFunc, args);
+                LuaValue[] nextArgs = CreateCallMetamethodArguments(previousFunc, args);
                 if (func.Type == DataType.Function || func.Type == DataType.ClrFunction)
                 {
                     return Call(func, nextArgs.AsSpan());
@@ -861,13 +859,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
-        public DynValue Call(DynValue func, params DynValue[] args)
+        public LuaValue Call(LuaValue func, params LuaValue[] args)
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
@@ -875,13 +868,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             if (func.Type == DataType.Function)
             {
-                return Script.Call(func, args);
+                return Script.CallValues(func, args);
             }
             else if (func.Type == DataType.ClrFunction)
             {
                 while (true)
                 {
-                    DynValue ret = func.Callback.Invoke(this, args, false);
+                    LuaValue ret = func.Callback.Invoke(this, args, false);
 
                     if (ret.Type == DataType.YieldRequest)
                     {
@@ -916,17 +909,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
                 while (maxloops > 0)
                 {
-                    DynValue v = GetMetamethod(func, Metamethods.Call);
-
-                    if (v == null || v.IsNil() || !CanCallMetamethod(v))
+                    if (
+                        !TryGetMetamethod(func, Metamethods.Call, out LuaValue v)
+                        || v.IsNil
+                        || !CanCallMetamethod(v)
+                    )
                     {
                         throw ScriptRuntimeException.AttemptToCallNonFunc(func.Type);
                     }
 
-                    DynValue previousFunc = func;
+                    LuaValue previousFunc = func;
                     if (
                         isFirstCallMetamethodResolution
-                        && TryCallDirectMetamethod(v, previousFunc, args, out DynValue directResult)
+                        && TryCallDirectMetamethod(v, previousFunc, args, out LuaValue directResult)
                     )
                     {
                         return directResult;
@@ -936,11 +931,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
                     if (func.Type == DataType.Function || func.Type == DataType.ClrFunction)
                     {
-                        DynValue[] metaargs = CreateCallMetamethodArguments(previousFunc, args);
+                        LuaValue[] metaargs = CreateCallMetamethodArguments(previousFunc, args);
                         return Call(func, metaargs);
                     }
 
-                    DynValue[] nextArgs = CreateCallMetamethodArguments(previousFunc, args);
+                    LuaValue[] nextArgs = CreateCallMetamethodArguments(previousFunc, args);
                     args = nextArgs;
 
                     isFirstCallMetamethodResolution = false;
@@ -951,12 +946,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             }
         }
 
-        private static DynValue[] CreateCallMetamethodArguments(
-            DynValue function,
-            ReadOnlySpan<DynValue> args
+        private static LuaValue[] CreateCallMetamethodArguments(
+            LuaValue function,
+            ReadOnlySpan<LuaValue> args
         )
         {
-            DynValue[] metaargs = new DynValue[args.Length + 1];
+            LuaValue[] metaargs = new LuaValue[args.Length + 1];
             metaargs[0] = function;
             for (int i = 0; i < args.Length; i++)
             {
@@ -967,15 +962,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         }
 
         private bool TryCallDirectMetamethod(
-            DynValue metafunction,
-            DynValue self,
-            ReadOnlySpan<DynValue> args,
-            out DynValue result
+            LuaValue metafunction,
+            LuaValue self,
+            ReadOnlySpan<LuaValue> args,
+            out LuaValue result
         )
         {
             if (!IsDirectCallTarget(metafunction))
             {
-                result = null;
+                result = default;
                 return false;
             }
 
@@ -1020,19 +1015,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                     );
                     return true;
                 default:
-                    result = null;
+                    result = default;
                     return false;
             }
         }
 
-        private DynValue CallDirectTarget(
-            DynValue func,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+        private LuaValue CallDirectTarget(
+            LuaValue func,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
             if (func.Type == DataType.ClrFunction)
@@ -1044,15 +1039,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return Script.CallDirectLuaFunction(func, arg1, arg2, arg3, arg4, arg5, arg6);
         }
 
-        private DynValue CallDirectTarget(
-            DynValue func,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+        private LuaValue CallDirectTarget(
+            LuaValue func,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
             if (func.Type == DataType.ClrFunction)
@@ -1064,9 +1059,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return Script.CallDirectLuaFunction(func, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         }
 
-        private DynValue CallNonFunction(DynValue func)
+        private LuaValue CallNonFunction(LuaValue func)
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(func);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedCallArguments args = new(func);
@@ -1076,9 +1071,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return Call(metafunction, func);
         }
 
-        private DynValue CallNonFunction(DynValue func, DynValue arg)
+        private LuaValue CallNonFunction(LuaValue func, LuaValue arg)
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(func);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedCallArguments args = new(func, arg);
@@ -1088,9 +1083,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return Call(metafunction, func, arg);
         }
 
-        private DynValue CallNonFunction(DynValue func, DynValue arg1, DynValue arg2)
+        private LuaValue CallNonFunction(LuaValue func, LuaValue arg1, LuaValue arg2)
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(func);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedCallArguments args = new(func, arg1, arg2);
@@ -1100,9 +1095,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return Call(metafunction, func, arg1, arg2);
         }
 
-        private DynValue CallNonFunction(DynValue func, DynValue arg1, DynValue arg2, DynValue arg3)
+        private LuaValue CallNonFunction(LuaValue func, LuaValue arg1, LuaValue arg2, LuaValue arg3)
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(func);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedCallArguments args = new(func, arg1, arg2, arg3);
@@ -1112,15 +1107,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return Call(metafunction, func, arg1, arg2, arg3);
         }
 
-        private DynValue CallNonFunction(
-            DynValue func,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4
+        private LuaValue CallNonFunction(
+            LuaValue func,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4
         )
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(func);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedCallArguments args = new(func, arg1, arg2, arg3, arg4);
@@ -1130,16 +1125,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return Call(metafunction, func, arg1, arg2, arg3, arg4);
         }
 
-        private DynValue CallNonFunction(
-            DynValue func,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
+        private LuaValue CallNonFunction(
+            LuaValue func,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
         )
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(func);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedCallArguments args = new(func, arg1, arg2, arg3, arg4, arg5);
@@ -1149,17 +1144,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return CallDirectTarget(metafunction, func, arg1, arg2, arg3, arg4, arg5);
         }
 
-        private DynValue CallNonFunction(
-            DynValue func,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+        private LuaValue CallNonFunction(
+            LuaValue func,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(func);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedCallArguments args = new(func, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -1169,22 +1164,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return CallDirectTarget(metafunction, func, arg1, arg2, arg3, arg4, arg5, arg6);
         }
 
-        private DynValue CallNonFunction(
-            DynValue func,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+        private LuaValue CallNonFunction(
+            LuaValue func,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(func);
 
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 8,
-                out DynValue[] arguments
+                out LuaValue[] arguments
             );
             arguments[0] = func;
             arguments[1] = arg1;
@@ -1198,7 +1193,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return Call(metafunction, arguments.AsSpan(0, 8));
         }
 
-        private DynValue CallChainedNonFunction(DynValue func, FixedCallArguments args)
+        private LuaValue CallChainedNonFunction(LuaValue func, FixedCallArguments args)
         {
             int maxloops = 9;
 
@@ -1209,7 +1204,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                     throw ScriptRuntimeException.LoopInCall();
                 }
 
-                DynValue metafunction = GetCallableMetamethodOrThrow(func);
+                LuaValue metafunction = GetCallableMetamethodOrThrow(func);
                 if (!args.TryPrepend(func, out FixedCallArguments nextArgs))
                 {
                     return CallOverflowChainedNonFunction(func, metafunction, args, maxloops);
@@ -1223,18 +1218,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return CallFixed(func, args);
         }
 
-        private DynValue CallOverflowChainedNonFunction(
-            DynValue func,
-            DynValue metafunction,
+        private LuaValue CallOverflowChainedNonFunction(
+            LuaValue func,
+            LuaValue metafunction,
             FixedCallArguments args,
             int maxloops
         )
         {
             int count = args.Count + 1;
             int capacity = count + Math.Max(0, maxloops - 1);
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 capacity,
-                out DynValue[] arguments
+                out LuaValue[] arguments
             );
             arguments[0] = func;
             args.CopyTo(arguments, 1);
@@ -1260,7 +1255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return Call(func, arguments.AsSpan(0, count));
         }
 
-        private DynValue CallFixed(DynValue func, FixedCallArguments args)
+        private LuaValue CallFixed(LuaValue func, FixedCallArguments args)
         {
             return args.Count switch
             {
@@ -1284,15 +1279,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             };
         }
 
-        private static bool IsDirectCallTarget(DynValue func)
+        private static bool IsDirectCallTarget(LuaValue func)
         {
             return func.Type == DataType.Function || func.Type == DataType.ClrFunction;
         }
 
-        private DynValue GetCallableMetamethodOrThrow(DynValue func)
+        private LuaValue GetCallableMetamethodOrThrow(LuaValue func)
         {
-            DynValue metafunction = GetMetamethod(func, Metamethods.Call);
-            if (metafunction != null && !metafunction.IsNil() && CanCallMetamethod(metafunction))
+            if (
+                TryGetMetamethod(func, Metamethods.Call, out LuaValue metafunction)
+                && !metafunction.IsNil
+                && CanCallMetamethod(metafunction)
+            )
             {
                 return metafunction;
             }
@@ -1300,7 +1298,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             throw ScriptRuntimeException.AttemptToCallNonFunc(func.Type);
         }
 
-        private bool CanCallMetamethod(DynValue metafunction)
+        private bool CanCallMetamethod(LuaValue metafunction)
         {
             return LuaVersionDefaults.Resolve(Script.Options.CompatibilityVersion)
                     >= LuaCompatibilityVersion.Lua54
@@ -1308,7 +1306,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 || metafunction.Type == DataType.ClrFunction;
         }
 
-        private DynValue CompleteDirectClrCall(DynValue ret)
+        private LuaValue CompleteDirectClrCall(LuaValue ret)
         {
             while (true)
             {
@@ -1338,11 +1336,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <summary>
         /// Tries to get the reference of a symbol in the current execution state
         /// </summary>
-        public DynValue EvaluateSymbol(SymbolRef symref)
+        public LuaValue EvaluateSymbol(SymbolRef symref)
         {
             if (symref == null)
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
 
             return _processor.GetGenericSymbol(symref);
@@ -1351,7 +1349,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <summary>
         /// Tries to get the value of a symbol in the current execution state
         /// </summary>
-        public DynValue EvaluateSymbolByName(string symbol)
+        public LuaValue EvaluateSymbolByName(string symbol)
         {
             return EvaluateSymbol(FindSymbolByName(symbol));
         }
@@ -1371,9 +1369,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         {
             get
             {
-                DynValue env = EvaluateSymbolByName(WellKnownSymbols.ENV);
+                LuaValue env = EvaluateSymbolByName(WellKnownSymbols.ENV);
 
-                if (env == null || env.Type != DataType.Table)
+                if (env.Type != DataType.Table)
                 {
                     return null;
                 }
@@ -1390,7 +1388,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <param name="messageHandler">The message handler.</param>
         /// <param name="exception">The exception.</param>
         public void PerformMessageDecorationBeforeUnwind(
-            DynValue messageHandler,
+            LuaValue messageHandler,
             ScriptRuntimeException exception
         )
         {
@@ -1399,18 +1397,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(exception));
             }
 
-            if (messageHandler != null)
+            exception.DecoratedMessage = _processor.PerformMessageDecorationBeforeUnwind(
+                messageHandler,
+                exception.Message,
+                CallingLocation
+            );
+        }
+
+        /// <summary>
+        /// Preserves the original error message when no pre-unwind handler was supplied.
+        /// </summary>
+        public static void PerformMessageDecorationBeforeUnwind(ScriptRuntimeException exception)
+        {
+            if (exception == null)
             {
-                exception.DecoratedMessage = _processor.PerformMessageDecorationBeforeUnwind(
-                    messageHandler,
-                    exception.Message,
-                    CallingLocation
-                );
+                throw new ArgumentNullException(nameof(exception));
             }
-            else
-            {
-                exception.DecoratedMessage = exception.Message;
-            }
+
+            exception.DecoratedMessage = exception.Message;
         }
 
         /// <summary>

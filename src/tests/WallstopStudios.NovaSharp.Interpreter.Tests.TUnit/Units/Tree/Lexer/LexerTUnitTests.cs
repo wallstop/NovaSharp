@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
     using System;
     using System.Text;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -150,7 +151,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
         public async Task KeywordHeavyChunkParsesAfterRangeBasedKeywordClassification()
         {
             Script script = new();
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local total = 0
                 local values = { true, false, nil }

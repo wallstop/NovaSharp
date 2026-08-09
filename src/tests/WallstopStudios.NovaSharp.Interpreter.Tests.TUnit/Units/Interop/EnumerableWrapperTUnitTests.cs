@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
     using System.Collections;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -19,20 +20,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             Script script = new();
             TrackingEnumerator enumerator = new(1, 2);
 
-            DynValue tuple = EnumerableWrapper.ConvertIterator(script, enumerator);
-            DynValue iteratorUserData = tuple.Tuple[0];
-            DynValue iteratorCallback = GetIteratorCallback(script, iteratorUserData);
+            LuaValue tuple = EnumerableWrapper.ConvertIterator(script, enumerator);
+            LuaValue iteratorUserData = tuple.Tuple[0];
+            LuaValue iteratorCallback = GetIteratorCallback(script, iteratorUserData);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
-            DynValue first = iteratorCallback.Callback.ClrCallback(
+            LuaValue first = iteratorCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
-            DynValue second = iteratorCallback.Callback.ClrCallback(
+            LuaValue second = iteratorCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
-            DynValue third = iteratorCallback.Callback.ClrCallback(
+            LuaValue third = iteratorCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
@@ -44,7 +45,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 .ConfigureAwait(false);
             await Assert.That(first.Number).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(second.Number).IsEqualTo(2).ConfigureAwait(false);
-            await Assert.That(third.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(third.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -52,31 +53,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         {
             Script script = new();
             TrackingEnumerator enumerator = new(5, null, 7);
-            DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
+            LuaValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
                 0
             ];
-            DynValue iteratorCallback = GetIteratorCallback(script, iteratorUserData);
+            LuaValue iteratorCallback = GetIteratorCallback(script, iteratorUserData);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
-            DynValue first = iteratorCallback.Callback.ClrCallback(
+            LuaValue first = iteratorCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
-            DynValue second = iteratorCallback.Callback.ClrCallback(
+            LuaValue second = iteratorCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
-            DynValue third = iteratorCallback.Callback.ClrCallback(
+            LuaValue third = iteratorCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
 
             await Assert.That(first.Number).IsEqualTo(5).ConfigureAwait(false);
             await Assert.That(second.Number).IsEqualTo(7).ConfigureAwait(false);
-            await Assert.That(third.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(third.IsNil).IsTrue().ConfigureAwait(false);
             await Assert.That(enumerator.ResetCalls).IsZero().ConfigureAwait(false);
 
-            DynValue restart = iteratorCallback.Callback.ClrCallback(
+            LuaValue restart = iteratorCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
@@ -90,16 +91,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         {
             Script script = new();
             TrackingEnumerator enumerator = new("alpha", "beta");
-            DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
+            LuaValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
                 0
             ];
             (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
-            DynValue moveNext = descriptor.Index(
+            LuaValue moveNext = RequireIndex(
+                descriptor,
                 script,
                 instance,
-                DynValue.NewString("MoveNext"),
+                LuaValue.NewString("MoveNext"),
                 isDirectIndexing: true
             );
             bool advanced = moveNext
@@ -108,25 +110,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
 
             await Assert.That(advanced).IsTrue().ConfigureAwait(false);
 
-            DynValue current = descriptor.Index(
+            LuaValue current = RequireIndex(
+                descriptor,
                 script,
                 instance,
-                DynValue.NewString("Current"),
+                LuaValue.NewString("Current"),
                 isDirectIndexing: true
             );
             await Assert.That(current.String).IsEqualTo("alpha").ConfigureAwait(false);
 
-            DynValue resetCallback = descriptor.Index(
+            LuaValue resetCallback = RequireIndex(
+                descriptor,
                 script,
                 instance,
-                DynValue.NewString("Reset"),
+                LuaValue.NewString("Reset"),
                 isDirectIndexing: true
             );
-            DynValue resetResult = resetCallback.Callback.ClrCallback(
+            LuaValue resetResult = resetCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
-            await Assert.That(resetResult.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(resetResult.IsNil).IsTrue().ConfigureAwait(false);
 
             bool restarted = moveNext
                 .Callback.ClrCallback(context, TestHelpers.CreateArguments())
@@ -141,29 +145,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         {
             Script script = new();
             Table table = new(script);
-            table.Append(DynValue.NewNumber(10));
-            table.Append(DynValue.NewNumber(20));
+            table.Append(LuaValue.NewNumber(10));
+            table.Append(LuaValue.NewNumber(20));
 
-            DynValue iteratorUserData = EnumerableWrapper.ConvertTable(table).Tuple[0];
-            DynValue iteratorCallback = GetIteratorCallback(script, iteratorUserData);
+            LuaValue iteratorUserData = EnumerableWrapper.ConvertTable(table).Tuple[0];
+            LuaValue iteratorCallback = GetIteratorCallback(script, iteratorUserData);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
-            DynValue first = iteratorCallback.Callback.ClrCallback(
+            LuaValue first = iteratorCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
-            DynValue second = iteratorCallback.Callback.ClrCallback(
+            LuaValue second = iteratorCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
-            DynValue third = iteratorCallback.Callback.ClrCallback(
+            LuaValue third = iteratorCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
 
             await Assert.That(first.Number).IsEqualTo(10).ConfigureAwait(false);
             await Assert.That(second.Number).IsEqualTo(20).ConfigureAwait(false);
-            await Assert.That(third.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(third.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -171,29 +175,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         {
             Script script = new();
             TrackingEnumerator enumerator = new("one", "two");
-            DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
+            LuaValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
                 0
             ];
             (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
-            DynValue moveNext =
-                descriptor.Index(script, instance, DynValue.NewString("move_next"), true)
-                ?? throw new global::System.InvalidOperationException(
-                    "move_next callback should exist"
-                );
-            DynValue reset =
-                descriptor.Index(script, instance, DynValue.NewString("reset"), true)
-                ?? throw new global::System.InvalidOperationException(
-                    "reset callback should exist"
-                );
+            LuaValue moveNext = RequireIndex(
+                descriptor,
+                script,
+                instance,
+                LuaValue.NewString("move_next"),
+                true
+            );
+            LuaValue reset = RequireIndex(
+                descriptor,
+                script,
+                instance,
+                LuaValue.NewString("reset"),
+                true
+            );
 
-            DynValue GetCurrentAccessor()
+            LuaValue GetCurrentAccessor()
             {
-                return descriptor.Index(script, instance, DynValue.NewString("current"), true)
-                    ?? throw new global::System.InvalidOperationException(
-                        "current accessor should exist"
-                    );
+                return RequireIndex(
+                    descriptor,
+                    script,
+                    instance,
+                    LuaValue.NewString("current"),
+                    true
+                );
             }
 
             await Assert
@@ -207,19 +218,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 .ConfigureAwait(false);
             await Assert.That(GetCurrentAccessor().String).IsEqualTo("two").ConfigureAwait(false);
 
-            DynValue unknown = descriptor.Index(
+            bool foundUnknown = descriptor.TryIndex(
                 script,
                 instance,
-                DynValue.NewString("does_not_exist"),
-                true
+                LuaValue.NewString("does_not_exist"),
+                true,
+                out LuaValue missing
             );
-            await Assert.That(unknown).IsNull().ConfigureAwait(false);
+            await Assert.That(foundUnknown).IsFalse().ConfigureAwait(false);
+            await Assert.That(missing.IsNil).IsTrue().ConfigureAwait(false);
 
-            DynValue resetResult = reset.Callback.ClrCallback(
+            LuaValue resetResult = reset.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
             );
-            await Assert.That(resetResult.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(resetResult.IsNil).IsTrue().ConfigureAwait(false);
 
             reset.Callback.ClrCallback(context, TestHelpers.CreateArguments());
 
@@ -236,7 +249,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         {
             Script script = new();
             TrackingEnumerator enumerator = new();
-            DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
+            LuaValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
                 0
             ];
             (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);
@@ -244,8 +257,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             bool result = descriptor.SetIndex(
                 script,
                 instance,
-                DynValue.NewString("any"),
-                DynValue.NewNumber(1),
+                LuaValue.NewString("any"),
+                LuaValue.NewNumber(1),
                 isDirectIndexing: true
             );
 
@@ -257,24 +270,50 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         {
             Script script = new();
             TrackingEnumerator enumerator = new(1);
-            DynValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
+            LuaValue iteratorUserData = EnumerableWrapper.ConvertIterator(script, enumerator).Tuple[
                 0
             ];
             (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);
 
-            DynValue value = descriptor.MetaIndex(script, instance, "__len");
+            bool found = descriptor.TryMetaIndex(script, instance, "__len", out LuaValue value);
 
-            await Assert.That(value).IsNull().ConfigureAwait(false);
+            await Assert.That(found).IsFalse().ConfigureAwait(false);
+            await Assert.That(value.IsNil).IsTrue().ConfigureAwait(false);
         }
 
-        private static DynValue GetIteratorCallback(Script script, DynValue iteratorUserData)
+        private static LuaValue GetIteratorCallback(Script script, LuaValue iteratorUserData)
         {
             (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);
-            return descriptor.MetaIndex(script, instance, "__call");
+            return descriptor.TryMetaIndex(script, instance, "__call", out LuaValue callback)
+                ? callback
+                : throw new global::System.InvalidOperationException(
+                    "iterator callback should exist"
+                );
+        }
+
+        private static LuaValue RequireIndex(
+            IUserDataDescriptor descriptor,
+            Script script,
+            object instance,
+            LuaValue index,
+            bool isDirectIndexing
+        )
+        {
+            return descriptor.TryIndex(
+                script,
+                instance,
+                index,
+                isDirectIndexing,
+                out LuaValue value
+            )
+                ? value
+                : throw new global::System.InvalidOperationException(
+                    $"{index.ToPrintString()} should exist"
+                );
         }
 
         private static (IUserDataDescriptor descriptor, object instance) GetDescriptor(
-            DynValue iteratorUserData
+            LuaValue iteratorUserData
         )
         {
             UserData userData = iteratorUserData.UserData;

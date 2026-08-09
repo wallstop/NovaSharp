@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -61,14 +62,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// <exception cref="DynamicExpressionException">
         /// Thrown when the operand type is incompatible with the requested operator.
         /// </exception>
-        public override DynValue Eval(ScriptExecutionContext context)
+        public override LuaValue Eval(ScriptExecutionContext context)
         {
-            DynValue v = _exp.Eval(context).ToScalar();
+            LuaValue v = _exp.Eval(context).ToScalar();
 
             switch (_opText)
             {
                 case LuaKeywords.Not:
-                    return DynValue.FromBoolean(!v.CastToBool());
+                    return LuaValue.FromBoolean(!v.CastToBool());
                 case "#":
                     return v.GetLength();
                 case "-":
@@ -77,7 +78,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
                     if (d.HasValue)
                     {
-                        return DynValue.NewNumber(-d.Value);
+                        return LuaValue.NewNumber(-d.Value);
                     }
 
                     throw new DynamicExpressionException(
@@ -87,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 case "~":
                     if (LuaIntegerHelper.TryGetInteger(v, out long operand))
                     {
-                        return DynValue.NewNumber(~operand);
+                        return LuaValue.NewNumber(~operand);
                     }
 
                     throw new DynamicExpressionException(

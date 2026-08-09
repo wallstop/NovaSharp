@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Collections;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -212,11 +213,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             public IEnumerator Pairs()
             {
                 _ = Value;
-                List<DynValue> tuples = new()
+                List<LuaValue> tuples = new()
                 {
-                    DynValue.NewTuple(DynValue.NewString("a"), DynValue.NewString("A")),
-                    DynValue.NewTuple(DynValue.NewString("b"), DynValue.NewString("B")),
-                    DynValue.NewTuple(DynValue.NewString("c"), DynValue.NewString("C")),
+                    LuaValue.NewTuple(LuaValue.NewString("a"), LuaValue.NewString("A")),
+                    LuaValue.NewTuple(LuaValue.NewString("b"), LuaValue.NewString("B")),
+                    LuaValue.NewTuple(LuaValue.NewString("c"), LuaValue.NewString("C")),
                 };
                 return tuples.GetEnumerator();
             }
@@ -230,7 +231,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
             registrationScope.RegisterType<ArithmOperatorsTestClass>();
-            script.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
+            script.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)).Value);
 
             string lua =
                 @"
@@ -242,7 +243,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return str;
                 ";
 
-            DynValue result = script.DoString(lua);
+            LuaValue result = script.DoString(lua);
             await Assert.That(result.String).IsEqualTo("aAbBcC").ConfigureAwait(false);
         }
 
@@ -254,7 +255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
             registrationScope.RegisterType<ArithmOperatorsTestClass>();
-            script.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
+            script.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)).Value);
 
             string lua =
                 @"
@@ -266,7 +267,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return str;
                 ";
 
-            DynValue result = script.DoString(lua);
+            LuaValue result = script.DoString(lua);
             await Assert.That(result.String).IsEqualTo("aAbBcC").ConfigureAwait(false);
         }
 
@@ -278,7 +279,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
             registrationScope.RegisterType<ArithmOperatorsTestClass>();
-            script.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)));
+            script.Globals.Set("o", UserData.Create(new ArithmOperatorsTestClass(-5)).Value);
 
             string lua =
                 @"
@@ -290,7 +291,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return sum;
                 ";
 
-            DynValue result = script.DoString(lua);
+            LuaValue result = script.DoString(lua);
             await Assert.That(result.Number).IsEqualTo(6).ConfigureAwait(false);
         }
 
@@ -309,9 +310,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             registrationScope.RegisterType<ClassWithCount>();
             registrationScope.RegisterType<ClassWithLength>();
 
-            script.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(5)));
-            script.Globals.Set("o2", UserData.Create(new ClassWithCount()));
-            script.Globals.Set("o3", UserData.Create(new ClassWithLength()));
+            script.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(5)).Value);
+            script.Globals.Set("o2", UserData.Create(new ClassWithCount()).Value);
+            script.Globals.Set("o3", UserData.Create(new ClassWithLength()).Value);
 
             await Assert
                 .That(script.DoString("return #o3").Number)
@@ -334,9 +335,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
             registrationScope.RegisterType<ArithmOperatorsTestClass>();
 
-            script.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(5)));
-            script.Globals.Set("o2", UserData.Create(new ArithmOperatorsTestClass(1)));
-            script.Globals.Set("o3", UserData.Create(new ArithmOperatorsTestClass(5)));
+            script.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(5)).Value);
+            script.Globals.Set("o2", UserData.Create(new ArithmOperatorsTestClass(1)).Value);
+            script.Globals.Set("o3", UserData.Create(new ArithmOperatorsTestClass(5)).Value);
 
             await Assert
                 .That(script.DoString("return o1 == o1").Boolean)
@@ -389,8 +390,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
             registrationScope.RegisterType<ArithmOperatorsTestClass>();
 
-            script.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(1)));
-            script.Globals.Set("o2", UserData.Create(new ArithmOperatorsTestClass(4)));
+            script.Globals.Set("o1", UserData.Create(new ArithmOperatorsTestClass(1)).Value);
+            script.Globals.Set("o2", UserData.Create(new ArithmOperatorsTestClass(4)).Value);
 
             await Assert
                 .That(script.DoString("return o1 <= o1").Boolean)
@@ -531,9 +532,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
             registrationScope.RegisterType<ArithmOperatorsTestClass>();
-            script.Globals.Set("o", UserData.Create(target));
+            script.Globals.Set("o", UserData.Create(target).Value);
 
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(result.Number).IsEqualTo(expected).ConfigureAwait(false);

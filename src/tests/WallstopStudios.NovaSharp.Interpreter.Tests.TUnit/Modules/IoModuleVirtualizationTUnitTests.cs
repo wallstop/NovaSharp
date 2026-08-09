@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -32,7 +33,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.DoString("local f = io.open('virtual.txt', 'w'); f:write('hello'); f:close()");
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local f = io.open('virtual.txt', 'r')
                 local data = f:read('*a')
@@ -90,7 +91,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             script.DoString("local f = io.open('temp.txt', 'w'); f:write('payload'); f:close()");
             await Assert.That(platform.HasFile("temp.txt")).IsTrue();
 
-            DynValue result = script.DoString("return os.remove('temp.txt')");
+            LuaValue result = script.DoString("return os.remove('temp.txt')");
 
             await Assert.That(result.Boolean).IsTrue();
             await Assert.That(platform.HasFile("temp.txt")).IsFalse();
@@ -108,8 +109,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = context.Script;
             InMemoryPlatformAccessor platform = context.Platform;
 
-            DynValue firstValue = script.DoString("return os.tmpname()");
-            DynValue secondValue = script.DoString("return os.tmpname()");
+            LuaValue firstValue = script.DoString("return os.tmpname()");
+            LuaValue secondValue = script.DoString("return os.tmpname()");
 
             await Assert.That(firstValue.Type).IsEqualTo(DataType.String);
             await Assert.That(secondValue.Type).IsEqualTo(DataType.String);
@@ -140,7 +141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.DoString("local f = io.open('old.txt', 'w'); f:write('payload'); f:close()");
 
-            DynValue result = script.DoString("return os.rename('old.txt', 'new.txt')");
+            LuaValue result = script.DoString("return os.rename('old.txt', 'new.txt')");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean);
             await Assert.That(result.Boolean).IsTrue();

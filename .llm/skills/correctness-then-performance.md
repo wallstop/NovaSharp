@@ -104,7 +104,7 @@ The interpreter hot paths (in priority order):
 
 1. **VM execution loop** (`Processor.cs`, `ExecutionLoop`)
 1. **Bytecode dispatch** (opcode handling)
-1. **DynValue operations** (type checks, arithmetic)
+1. **LuaValue operations** (type checks, arithmetic)
 1. **Table operations** (get/set/iterate)
 1. **Function calls** (frame setup, argument passing)
 1. **String operations** (pattern matching, concatenation)

@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -16,7 +17,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task PCallReturnsMultipleValues(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return pcall(function() return 1,2,3 end)");
+            LuaValue result = script.DoString("return pcall(function() return 1,2,3 end)");
 
             await EndToEndDynValueAssert.ExpectAsync(result, true, 1, 2, 3).ConfigureAwait(false);
         }
@@ -32,7 +33,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, false, "caught").ConfigureAwait(false);
         }
 
@@ -70,7 +71,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, "!cba").ConfigureAwait(false);
         }
 
@@ -100,22 +101,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             Script script = new Script(version, default(CoreModules));
-            script.Globals["try"] = DynValue.NewCallback(
+            script.Globals["try"] = LuaValue.NewCallback(
                 (context, args) =>
                 {
                     try
                     {
-                        DynValue result = args[0].Function.Call();
+                        LuaValue result = args[0].Function.Call();
                         return result;
                     }
                     catch (ScriptRuntimeException)
                     {
-                        return DynValue.NewString("!");
+                        return LuaValue.NewString("!");
                     }
                 }
             );
 
-            DynValue executionResult = script.DoString(code);
+            LuaValue executionResult = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(executionResult, "!cba").ConfigureAwait(false);
         }
     }

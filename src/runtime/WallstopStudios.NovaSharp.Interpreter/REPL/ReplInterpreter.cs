@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.REPL
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -66,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.REPL
         /// </summary>
         /// <param name="input">The input.</param>
         /// <returns>This method returns the result of the computation, or null if more input is needed for a computation.</returns>
-        public virtual DynValue Evaluate(string input)
+        public virtual LuaValue? Evaluate(string input)
         {
             if (input == null)
             {
@@ -81,7 +82,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.REPL
 
             if (_currentCommand.Length == 0)
             {
-                return DynValue.Void;
+                return LuaValue.Void;
             }
 
             _currentCommand += "\n";
@@ -89,7 +90,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.REPL
             bool resetCurrentCommand = true;
             try
             {
-                DynValue result = null;
+                LuaValue result;
 
                 if (isFirstLine && HandleClassicExprsSyntax && _currentCommand[0] == '=')
                 {
@@ -102,7 +103,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.REPL
                     if (codeSpan.IsEmpty)
                     {
                         _currentCommand = string.Empty;
-                        return DynValue.Void;
+                        return LuaValue.Void;
                     }
 
                     DynamicExpression exp = _script.CreateDynamicExpression(new string(codeSpan));
@@ -110,8 +111,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.REPL
                 }
                 else
                 {
-                    DynValue v = _script.LoadString(_currentCommand, null, "stdin");
-                    result = _script.Call(v);
+                    LuaValue v = _script.LoadString(_currentCommand, null, "stdin");
+                    result = _script.CallValues(v);
                 }
 
                 _currentCommand = string.Empty;
@@ -128,7 +129,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.REPL
                 else
                 {
                     resetCurrentCommand = false;
-                    return null;
+                    return (LuaValue?)null;
                 }
             }
             catch (ScriptRuntimeException sre)

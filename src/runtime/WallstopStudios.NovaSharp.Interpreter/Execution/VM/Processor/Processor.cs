@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System.Collections.Generic;
     using System.Globalization;
     using System.Threading;
+    using global::NovaSharp;
     using Debugging;
     using Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -17,7 +18,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     {
         private readonly ByteCode _rootChunk;
 
-        private readonly FastStack<DynValue> _valueStack;
+        private readonly FastStack<LuaValue> _valueStack;
         private readonly FastStack<CallStackItem> _executionStack;
         private List<Processor> _coroutinesStack;
 
@@ -28,99 +29,99 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private bool _canYield = true;
         private int _savedInstructionPtr = -1;
         private readonly DebugContext _debug;
-        private DynValue _lastCloseError = DynValue.Nil;
+        private LuaValue _lastCloseError = LuaValue.Nil;
         private int _errorHandlerBeforeUnwindScanBoundaryDepth = -1;
 
         private readonly ref struct ClrCallArguments
         {
-            private readonly DynValue[] _array;
-            private readonly ReadOnlySpan<DynValue> _span;
-            private readonly DynValue _arg0;
-            private readonly DynValue _arg1;
-            private readonly DynValue _arg2;
-            private readonly DynValue _arg3;
-            private readonly DynValue _arg4;
-            private readonly DynValue _arg5;
-            private readonly DynValue _arg6;
+            private readonly LuaValue[] _array;
+            private readonly ReadOnlySpan<LuaValue> _span;
+            private readonly LuaValue _arg0;
+            private readonly LuaValue _arg1;
+            private readonly LuaValue _arg2;
+            private readonly LuaValue _arg3;
+            private readonly LuaValue _arg4;
+            private readonly LuaValue _arg5;
+            private readonly LuaValue _arg6;
             private readonly int _count;
             private readonly bool _hasSpan;
 
-            internal ClrCallArguments(DynValue[] args)
+            internal ClrCallArguments(LuaValue[] args)
             {
                 _array = args;
                 _span = default;
-                _arg0 = null;
-                _arg1 = null;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg0 = default;
+                _arg1 = default;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = args != null ? args.Length : 0;
                 _hasSpan = false;
             }
 
-            internal ClrCallArguments(ReadOnlySpan<DynValue> args)
+            internal ClrCallArguments(ReadOnlySpan<LuaValue> args)
             {
                 _array = null;
                 _span = args;
-                _arg0 = null;
-                _arg1 = null;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg0 = default;
+                _arg1 = default;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = args.Length;
                 _hasSpan = true;
             }
 
-            internal ClrCallArguments(DynValue arg)
+            internal ClrCallArguments(LuaValue arg)
             {
                 _array = null;
                 _span = default;
                 _arg0 = arg;
-                _arg1 = null;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg1 = default;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 1;
                 _hasSpan = false;
             }
 
-            internal ClrCallArguments(DynValue arg1, DynValue arg2)
+            internal ClrCallArguments(LuaValue arg1, LuaValue arg2)
             {
                 _array = null;
                 _span = default;
                 _arg0 = arg1;
                 _arg1 = arg2;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 2;
                 _hasSpan = false;
             }
 
-            internal ClrCallArguments(DynValue arg1, DynValue arg2, DynValue arg3)
+            internal ClrCallArguments(LuaValue arg1, LuaValue arg2, LuaValue arg3)
             {
                 _array = null;
                 _span = default;
                 _arg0 = arg1;
                 _arg1 = arg2;
                 _arg2 = arg3;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 3;
                 _hasSpan = false;
             }
 
-            internal ClrCallArguments(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+            internal ClrCallArguments(LuaValue arg1, LuaValue arg2, LuaValue arg3, LuaValue arg4)
             {
                 _array = null;
                 _span = default;
@@ -128,19 +129,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg1 = arg2;
                 _arg2 = arg3;
                 _arg3 = arg4;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 4;
                 _hasSpan = false;
             }
 
             internal ClrCallArguments(
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3,
-                DynValue arg4,
-                DynValue arg5
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3,
+                LuaValue arg4,
+                LuaValue arg5
             )
             {
                 _array = null;
@@ -150,19 +151,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg2 = arg3;
                 _arg3 = arg4;
                 _arg4 = arg5;
-                _arg5 = null;
-                _arg6 = null;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 5;
                 _hasSpan = false;
             }
 
             internal ClrCallArguments(
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3,
-                DynValue arg4,
-                DynValue arg5,
-                DynValue arg6
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3,
+                LuaValue arg4,
+                LuaValue arg5,
+                LuaValue arg6
             )
             {
                 _array = null;
@@ -173,19 +174,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg3 = arg4;
                 _arg4 = arg5;
                 _arg5 = arg6;
-                _arg6 = null;
+                _arg6 = default;
                 _count = 6;
                 _hasSpan = false;
             }
 
             internal ClrCallArguments(
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3,
-                DynValue arg4,
-                DynValue arg5,
-                DynValue arg6,
-                DynValue arg7
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3,
+                LuaValue arg4,
+                LuaValue arg5,
+                LuaValue arg6,
+                LuaValue arg7
             )
             {
                 _array = null;
@@ -206,11 +207,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 get { return _count; }
             }
 
-            internal DynValue this[int index]
+            internal LuaValue this[int index]
             {
                 get
                 {
-                    DynValue value;
+                    LuaValue value;
                     if (_hasSpan)
                     {
                         value = _span[index];
@@ -234,29 +235,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         };
                     }
 
-                    return value ?? DynValue.Nil;
+                    return value;
                 }
             }
 
             /// <summary>
             /// Creates the coroutine resume tuple, reusing array-backed caller arguments when available.
             /// </summary>
-            internal DynValue ToTuple()
+            internal LuaValue ToTuple()
             {
                 if (_array != null)
                 {
-                    if (!ContainsNull(_array))
-                    {
-                        return DynValue.NewTuple(_array);
-                    }
-
-                    DynValue[] values = new DynValue[_count];
-                    for (int i = 0; i < _count; i++)
-                    {
-                        values[i] = _array[i] ?? DynValue.Nil;
-                    }
-
-                    return DynValue.NewTuple(values);
+                    return LuaValue.NewTuple(_array);
                 }
 
                 if (_hasSpan)
@@ -267,19 +257,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 switch (_count)
                 {
                     case 0:
-                        return DynValue.EmptyTuple;
+                        return LuaValue.EmptyTuple;
                     case 1:
-                        return DynValue.NewTuple(this[0]);
+                        return LuaValue.NewTuple(this[0]);
                     case 2:
-                        return DynValue.NewTuple(this[0], this[1]);
+                        return LuaValue.NewTuple(this[0], this[1]);
                     case 3:
-                        return DynValue.NewTuple(this[0], this[1], this[2]);
+                        return LuaValue.NewTuple(this[0], this[1], this[2]);
                     case 4:
-                        return DynValue.NewTuple(this[0], this[1], this[2], this[3]);
+                        return LuaValue.NewTuple(this[0], this[1], this[2], this[3]);
                     case 5:
-                        return DynValue.NewTuple(this[0], this[1], this[2], this[3], this[4]);
+                        return LuaValue.NewTuple(this[0], this[1], this[2], this[3], this[4]);
                     case 6:
-                        DynValue[] fixedValues =
+                        LuaValue[] fixedValues =
                         {
                             this[0],
                             this[1],
@@ -288,9 +278,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             this[4],
                             this[5],
                         };
-                        return DynValue.NewTuple(fixedValues);
+                        return LuaValue.NewTuple(fixedValues);
                     case 7:
-                        DynValue[] fixedSevenValues =
+                        LuaValue[] fixedSevenValues =
                         {
                             this[0],
                             this[1],
@@ -300,34 +290,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             this[5],
                             this[6],
                         };
-                        return DynValue.NewTuple(fixedSevenValues);
+                        return LuaValue.NewTuple(fixedSevenValues);
                     default:
-                        DynValue[] values = new DynValue[_count];
+                        LuaValue[] values = new LuaValue[_count];
                         for (int i = 0; i < _count; i++)
                         {
                             values[i] = this[i];
                         }
 
-                        return DynValue.NewTuple(values);
+                        return LuaValue.NewTuple(values);
                 }
             }
 
-            private static DynValue CreateTupleFromSpan(ReadOnlySpan<DynValue> values)
+            private static LuaValue CreateTupleFromSpan(ReadOnlySpan<LuaValue> values)
             {
                 switch (values.Length)
                 {
                     case 0:
-                        return DynValue.EmptyTuple;
+                        return LuaValue.EmptyTuple;
                     case 1:
-                        return DynValue.NewTuple(values[0]);
+                        return LuaValue.NewTuple(values[0]);
                     case 2:
-                        return DynValue.NewTuple(values[0], values[1]);
+                        return LuaValue.NewTuple(values[0], values[1]);
                     case 3:
-                        return DynValue.NewTuple(values[0], values[1], values[2]);
+                        return LuaValue.NewTuple(values[0], values[1], values[2]);
                     case 4:
-                        return DynValue.NewTuple(values[0], values[1], values[2], values[3]);
+                        return LuaValue.NewTuple(values[0], values[1], values[2], values[3]);
                     case 5:
-                        return DynValue.NewTuple(
+                        return LuaValue.NewTuple(
                             values[0],
                             values[1],
                             values[2],
@@ -336,26 +326,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         );
                 }
 
-                DynValue[] copiedValues = new DynValue[values.Length];
-                for (int i = 0; i < values.Length; i++)
-                {
-                    copiedValues[i] = values[i] ?? DynValue.Nil;
-                }
+                LuaValue[] copiedValues = new LuaValue[values.Length];
+                values.CopyTo(copiedValues);
 
-                return DynValue.NewTuple(copiedValues);
-            }
-
-            private static bool ContainsNull(DynValue[] values)
-            {
-                for (int i = 0; i < values.Length; i++)
-                {
-                    if (values[i] == null)
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
+                return LuaValue.NewTuple(copiedValues);
             }
         }
 
@@ -375,7 +349,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="byteCode">Root chunk to execute.</param>
         public Processor(Script script, Table globalContext, ByteCode byteCode)
         {
-            _valueStack = new FastStack<DynValue>(
+            _valueStack = new FastStack<LuaValue>(
                 VmStackDefaults.ValueStackInitialCapacity,
                 script.Options.MaxVmValueStackSize
             );
@@ -390,7 +364,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             _globalTable = globalContext;
             _script = script;
             _state = CoroutineState.Main;
-            DynValue.NewCoroutine(new Coroutine(this)); // creates an associated coroutine for the main processor
+            LuaValue.NewCoroutine(new Coroutine(this)); // creates an associated coroutine for the main processor
         }
 
         /// <summary>
@@ -401,7 +375,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             // Inherit the ceilings baked into the parent's stacks (ultimately the main processor's, captured
             // at script creation) so every coroutine under a script shares one limit even if ScriptOptions is
             // mutated after the main processor was built.
-            _valueStack = new FastStack<DynValue>(
+            _valueStack = new FastStack<LuaValue>(
                 VmStackDefaults.ValueStackInitialCapacity,
                 parentProcessor._valueStack.MaxCapacity
             );
@@ -441,7 +415,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="function">Function to invoke.</param>
         /// <param name="args">Arguments to pass.</param>
         /// <returns>The return tuple.</returns>
-        public DynValue Call(DynValue function, DynValue[] args)
+        public LuaValue Call(LuaValue function, LuaValue[] args)
         {
             return Call(function, new ClrCallArguments(args));
         }
@@ -452,9 +426,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="entryPointAddress">Instruction pointer for the chunk entry point.</param>
         /// <param name="closureScope">Closure context containing the chunk's environment upvalue.</param>
         /// <returns>The return tuple.</returns>
-        internal DynValue CallChunk(int entryPointAddress, ClosureContext closureScope)
+        internal LuaValue CallChunk(int entryPointAddress, ClosureContext closureScope)
         {
-            return CallChunk(entryPointAddress, closureScope, function: null);
+            return CallChunkCore(entryPointAddress, closureScope, hasFunction: false, LuaValue.Nil);
         }
 
         /// <summary>
@@ -462,21 +436,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         /// <param name="function">Function to invoke.</param>
         /// <returns>The return tuple.</returns>
-        internal DynValue CallFunctionWithoutArguments(DynValue function)
+        internal LuaValue CallFunctionWithoutArguments(LuaValue function)
         {
-            if (function == null)
+            if (function.Type != DataType.Function)
             {
-                throw new ArgumentNullException(nameof(function));
+                throw new ArgumentException("Value must be a Lua function.", nameof(function));
             }
 
             Closure closure = function.Function;
-            return CallChunk(closure.EntryPointByteCodeLocation, closure.ClosureContext, function);
+            return CallChunkCore(
+                closure.EntryPointByteCodeLocation,
+                closure.ClosureContext,
+                hasFunction: true,
+                function
+            );
         }
 
-        private DynValue CallChunk(
+        private LuaValue CallChunkCore(
             int entryPointAddress,
             ClosureContext closureScope,
-            DynValue function
+            bool hasFunction,
+            LuaValue function
         )
         {
             if (closureScope == null)
@@ -489,7 +469,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (coroutinesStack.Count > 0 && coroutinesStack[^1] != this)
             {
-                return coroutinesStack[^1].CallChunk(entryPointAddress, closureScope, function);
+                return coroutinesStack[^1]
+                    .CallChunkCore(entryPointAddress, closureScope, hasFunction, function);
             }
 
             EnterProcessor();
@@ -504,7 +485,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 try
                 {
-                    PushChunkEntryPointStackFrame(entryPointAddress, closureScope, function);
+                    PushChunkEntryPointStackFrame(
+                        entryPointAddress,
+                        closureScope,
+                        hasFunction,
+                        function
+                    );
                     return ProcessingLoop(entryPointAddress);
                 }
                 finally
@@ -529,7 +515,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="function">Function to invoke.</param>
         /// <param name="args">Arguments to pass.</param>
         /// <returns>The return tuple.</returns>
-        public DynValue Call(DynValue function, ReadOnlySpan<DynValue> args)
+        public LuaValue Call(LuaValue function, ReadOnlySpan<LuaValue> args)
         {
             return Call(function, new ClrCallArguments(args));
         }
@@ -537,7 +523,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Invokes the specified function with one argument.
         /// </summary>
-        public DynValue Call(DynValue function, DynValue arg)
+        public LuaValue Call(LuaValue function, LuaValue arg)
         {
             return Call(function, new ClrCallArguments(arg));
         }
@@ -545,7 +531,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Invokes the specified function with two arguments.
         /// </summary>
-        public DynValue Call(DynValue function, DynValue arg1, DynValue arg2)
+        public LuaValue Call(LuaValue function, LuaValue arg1, LuaValue arg2)
         {
             return Call(function, new ClrCallArguments(arg1, arg2));
         }
@@ -553,7 +539,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Invokes the specified function with three arguments.
         /// </summary>
-        public DynValue Call(DynValue function, DynValue arg1, DynValue arg2, DynValue arg3)
+        public LuaValue Call(LuaValue function, LuaValue arg1, LuaValue arg2, LuaValue arg3)
         {
             return Call(function, new ClrCallArguments(arg1, arg2, arg3));
         }
@@ -561,12 +547,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Invokes the specified function with four arguments.
         /// </summary>
-        public DynValue Call(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4
+        public LuaValue Call(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4
         )
         {
             return Call(function, new ClrCallArguments(arg1, arg2, arg3, arg4));
@@ -575,13 +561,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Invokes the specified function with five arguments.
         /// </summary>
-        public DynValue Call(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
+        public LuaValue Call(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
         )
         {
             return Call(function, new ClrCallArguments(arg1, arg2, arg3, arg4, arg5));
@@ -590,14 +576,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Invokes the specified function with six arguments.
         /// </summary>
-        public DynValue Call(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+        public LuaValue Call(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
             return Call(function, new ClrCallArguments(arg1, arg2, arg3, arg4, arg5, arg6));
@@ -606,21 +592,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Invokes the specified function with seven arguments.
         /// </summary>
-        public DynValue Call(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+        public LuaValue Call(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
             return Call(function, new ClrCallArguments(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
         }
 
-        private DynValue Call(DynValue function, ClrCallArguments args)
+        private LuaValue Call(LuaValue function, ClrCallArguments args)
         {
             List<Processor> coroutinesStack =
                 _parent != null ? _parent._coroutinesStack : _coroutinesStack;
@@ -665,18 +651,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        // pushes all what's required to perform a clr-to-script function call. function can be null if it's already
-        // at vstack top.
         /// <summary>
         /// Pushes the stack frame metadata needed to transition from CLR into Lua code.
         /// </summary>
         /// <param name="Flags">Flags describing the call entry point.</param>
-        /// <param name="function">Function being invoked (optional when already on stack).</param>
+        /// <param name="function">Function being invoked.</param>
         /// <param name="args">Arguments to copy.</param>
         /// <returns>The instruction pointer to start executing.</returns>
         private int PushClrToScriptStackFrame(
             CallStackItemFlags Flags,
-            DynValue function,
+            LuaValue function,
+            ClrCallArguments args
+        )
+        {
+            return PushClrToScriptStackFrameCore(Flags, hasFunction: true, function, args);
+        }
+
+        /// <summary>
+        /// Pushes a CLR-to-script frame when the function is already at the top of the value stack.
+        /// </summary>
+        private int PushClrToScriptStackFrame(CallStackItemFlags Flags, ClrCallArguments args)
+        {
+            return PushClrToScriptStackFrameCore(Flags, hasFunction: false, LuaValue.Nil, args);
+        }
+
+        private int PushClrToScriptStackFrameCore(
+            CallStackItemFlags Flags,
+            bool hasFunction,
+            LuaValue function,
             ClrCallArguments args
         )
         {
@@ -688,7 +690,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             int valueStackBaseline = _valueStack.Count;
             try
             {
-                if (function == null)
+                if (!hasFunction)
                 {
                     function = _valueStack.Peek();
                 }
@@ -698,7 +700,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
 
                 int argCount = PushAdjustedArguments(args);
-                _valueStack.Push(DynValue.FromNumber(argCount)); // func args count
+                _valueStack.Push(LuaValue.FromNumber(argCount)); // func args count
 
                 CallStackItem frame = RentCallFrame();
                 frame.BasePointer = _valueStack.Count;
@@ -722,7 +724,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private void PushChunkEntryPointStackFrame(
             int entryPointAddress,
             ClosureContext closureScope,
-            DynValue function
+            bool hasFunction,
+            LuaValue function
         )
         {
             // RET cleanup expects the CLR entry layout: function slot followed by argument count.
@@ -732,15 +735,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             int valueStackBaseline = _valueStack.Count;
             try
             {
-                _valueStack.Push(DynValue.Void);
-                _valueStack.Push(DynValue.FromNumber(0));
+                _valueStack.Push(LuaValue.Void);
+                _valueStack.Push(LuaValue.FromNumber(0));
 
                 CallStackItem frame = RentCallFrame();
                 frame.BasePointer = _valueStack.Count;
                 frame.DebugEntryPoint = entryPointAddress;
                 frame.ReturnAddress = -1;
                 frame.ClosureScope = closureScope;
-                frame.Function = function;
+                frame.Function = hasFunction ? function : LuaValue.Nil;
                 frame.CallingSourceRef = SourceRef.GetClrLocation();
                 frame.Flags = CallStackItemFlagsPresets.CallEntryPoint;
                 _executionStack.Push(frame);
@@ -768,7 +771,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return PushAdjustedTrailingValue(args[count - 1], count - 1);
         }
 
-        private int PushAdjustedTrailingValue(DynValue value, int pushedCount)
+        private int PushAdjustedTrailingValue(LuaValue value, int pushedCount)
         {
             if (value.Type == DataType.Void)
             {
@@ -784,7 +787,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return PushAdjustedTrailingTuple(value.Tuple, pushedCount);
         }
 
-        private int PushAdjustedTrailingTuple(DynValue[] tuple, int pushedCount)
+        private int PushAdjustedTrailingTuple(LuaValue[] tuple, int pushedCount)
         {
             int tupleLength = tuple.Length;
             if (tupleLength == 0)
@@ -794,11 +797,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             for (int i = 0; i < tupleLength - 1; i++)
             {
-                _valueStack.Push((tuple[i] ?? DynValue.Nil).ToScalar());
+                _valueStack.Push(tuple[i].ToScalar());
                 pushedCount++;
             }
 
-            return PushAdjustedTrailingValue(tuple[tupleLength - 1] ?? DynValue.Nil, pushedCount);
+            return PushAdjustedTrailingValue(tuple[tupleLength - 1], pushedCount);
         }
 
         private int _owningThreadId = -1;

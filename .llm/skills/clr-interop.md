@@ -24,7 +24,7 @@ ______________________________________________________________________
 
 NovaSharp allows seamless interop between C# and Lua through the `UserData` system.
 
-**Key namespace**: `WallstopStudios.NovaSharp.Interpreter.Interop`
+**Key namespaces**: `NovaSharp` for the public value facade and `WallstopStudios.NovaSharp.Interpreter.Interop` for userdata registration.
 
 ______________________________________________________________________
 
@@ -129,8 +129,8 @@ ______________________________________________________________________
 
 ```csharp
 Script script = new Script();
-DynValue result = script.DoString("return 1 + 2");
-int value = (int)result.Number;  // 3
+LuaValue result = script.DoString("return 1 + 2");
+int value = checked((int)result.AsNumber());  // 3
 ```
 
 ### Call Lua functions
@@ -142,9 +142,9 @@ script.DoString(@"
     end
 ");
 
-DynValue greetFunc = script.Globals.Get("greet");
-DynValue result = script.Call(greetFunc, "World");
-string message = result.String;  // "Hello, World"
+LuaValue greetFunc = script.Globals.Get("greet");
+LuaValue result = script.Call(greetFunc, "World");
+string message = result.AsString();  // "Hello, World"
 ```
 
 ### Pass callbacks
@@ -174,45 +174,46 @@ script.Globals["myTable"] = table;
 
 ```csharp
 script.DoString("result = { a = 1, b = 2, 'x', 'y' }");
-Table result = script.Globals.Get("result").Table;
+LuaTable result = script.Globals.Get("result").AsTable();
 
-int a = (int)result.Get("a").Number;  // 1
-string first = result.Get(1).String;   // "x"
-
-// Iterate
-foreach (TablePair pair in result.Pairs)
-{
-    Console.WriteLine($"{pair.Key} = {pair.Value}");
-}
+int a = (int)result.Get("a").AsNumber();  // 1
+string first = result.Get(1).AsString();   // "x"
 ```
 
 ______________________________________________________________________
 
-## DynValue Conversions
+## LuaValue Conversions
 
-### C# to DynValue
+### C# to LuaValue
 
 ```csharp
-DynValue.NewNumber(42);
-DynValue.NewString("hello");
-DynValue.NewBoolean(true);
-DynValue.NewTable(script);
-DynValue.NewCallback(myFunc);
-DynValue.Nil;
+using LuaEngine engine = LuaEngine.Create();
+LuaCallback myFunc = static (context, args) => LuaValue.Nil;
+
+LuaValue number = LuaValue.FromNumber(42);
+LuaValue integer = LuaValue.FromInteger(42);
+LuaValue text = LuaValue.FromString("hello");
+LuaValue boolean = LuaValue.FromBoolean(true);
+LuaValue table = engine.CreateTable().ToValue();
+LuaValue callback = engine.CreateCallback(myFunc);
+LuaValue nil = LuaValue.Nil;
 ```
 
-### DynValue to C\#
+### LuaValue to C\#
 
 ```csharp
-double num = dynValue.Number;
-string str = dynValue.String;
-bool b = dynValue.Boolean;
-Table t = dynValue.Table;
-Closure f = dynValue.Function;
+double num = luaValue.AsNumber();
+long integer = luaValue.AsInteger();
+string str = luaValue.AsString();
+bool b = luaValue.AsBoolean();
+LuaTable t = luaValue.AsTable();
+LuaFunction f = luaValue.AsFunction();
 
 // Safe conversion
-if (dynValue.Type == DataType.Number)
-    double n = dynValue.Number;
+if (luaValue.IsNumber)
+{
+    double n = luaValue.AsNumber();
+}
 ```
 
 ______________________________________________________________________
@@ -276,8 +277,8 @@ public async Task InteropTest(LuaCompatibilityVersion version)
     Script script = CreateScript(version);
     script.Globals["MyClass"] = typeof(MyClass);
     
-    DynValue result = script.DoString("return MyClass().SomeMethod()");
-    await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
+    LuaValue result = script.DoString("return MyClass().SomeMethod()");
+    await Assert.That(result.AsNumber()).IsEqualTo(42).ConfigureAwait(false);
 }
 ```
 
@@ -290,5 +291,5 @@ ______________________________________________________________________
 | `Interop/UserData.cs`          | Type registration    |
 | `Interop/StandardDescriptors/` | Type descriptors     |
 | `Interop/Converters/`          | Type conversion      |
-| `DataTypes/DynValue.cs`        | Universal value type |
+| `Api/LuaValue.cs`              | Universal value type |
 | `DataTypes/Table.cs`           | Lua table            |

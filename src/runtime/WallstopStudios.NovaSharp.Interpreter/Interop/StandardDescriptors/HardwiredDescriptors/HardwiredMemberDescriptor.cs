@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Converters;
@@ -44,9 +45,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Hard
         public MemberDescriptorAccess MemberAccess { get; private set; }
 
         /// <summary>
-        /// Reads the member value, enforcing access rules, and converts it to a <see cref="DynValue"/>.
+        /// Reads the member value, enforcing access rules, and converts it to a <see cref="LuaValue"/>.
         /// </summary>
-        public DynValue GetValue(Script script, object obj)
+        public LuaValue GetValue(Script script, object obj)
         {
             this.CheckAccess(MemberDescriptorAccess.CanRead, obj);
             object result = GetValueCore(script, obj);
@@ -54,15 +55,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Hard
         }
 
         /// <summary>
-        /// Writes the member value after converting from a <see cref="DynValue"/>.
+        /// Writes the member value after converting from a <see cref="LuaValue"/>.
         /// </summary>
-        public void SetValue(Script script, object obj, DynValue value)
+        public void SetValue(Script script, object obj, LuaValue value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
             object v = ScriptToClrConversions.DynValueToObjectOfType(
                 value,

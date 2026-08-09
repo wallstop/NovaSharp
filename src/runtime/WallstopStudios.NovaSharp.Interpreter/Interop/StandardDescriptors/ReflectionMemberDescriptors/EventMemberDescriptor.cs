@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -250,7 +251,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         /// <param name="script">The script.</param>
         /// <param name="obj">The object for which the facade should be written.</param>
         /// <returns></returns>
-        public DynValue GetValue(Script script, object obj)
+        public LuaValue GetValue(Script script, object obj)
         {
             this.CheckAccess(MemberDescriptorAccess.CanRead, obj);
 
@@ -259,13 +260,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 obj = this;
             }
 
-            return UserData.Create(new EventFacade(this, obj));
+            return UserData.TryCreate(script, new EventFacade(this, obj), out LuaValue facade)
+                ? facade
+                : LuaValue.Nil;
         }
 
         /// <summary>
         /// Wires the supplied Lua closure into the CLR event (called by <see cref="EventFacade"/>).
         /// </summary>
-        internal DynValue AddCallback(
+        internal LuaValue AddCallback(
             object o,
             ScriptExecutionContext context,
             CallbackArguments args
@@ -286,14 +289,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                     RegisterCallback(o);
                 }
 
-                return DynValue.Void;
+                return LuaValue.Void;
             }
         }
 
         /// <summary>
         /// Removes the specified Lua closure from the CLR event invocation list.
         /// </summary>
-        internal DynValue RemoveCallback(
+        internal LuaValue RemoveCallback(
             object o,
             ScriptExecutionContext context,
             CallbackArguments args
@@ -314,7 +317,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                     UnregisterCallback(o);
                 }
 
-                return DynValue.Void;
+                return LuaValue.Void;
             }
         }
 
@@ -722,7 +725,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
         /// <param name="value">The value to assign.</param>
-        public void SetValue(Script script, object obj, DynValue value)
+        public void SetValue(Script script, object obj, LuaValue value)
         {
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
         }

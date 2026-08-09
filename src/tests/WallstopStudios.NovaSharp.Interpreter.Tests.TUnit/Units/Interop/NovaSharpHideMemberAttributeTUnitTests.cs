@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -26,7 +27,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             Script script = new Script(version, CoreModulePresets.Complete);
             script.Globals["sample"] = UserData.Create(new HiddenMembersSample());
 
-            DynValue visibleResult = script.DoString("return sample.VisibleMethod()");
+            LuaValue visibleResult = script.DoString("return sample.VisibleMethod()");
             await Assert.That(visibleResult.Number).IsEqualTo(5).ConfigureAwait(false);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -47,7 +48,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             Script script = new Script(version, CoreModulePresets.Complete);
             script.Globals["sample"] = UserData.Create(new DerivedHiddenMembersSample());
 
-            DynValue visibleResult = script.DoString("return sample.Visible()");
+            LuaValue visibleResult = script.DoString("return sample.Visible()");
             await Assert.That(visibleResult.Number).IsEqualTo(10).ConfigureAwait(false);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>

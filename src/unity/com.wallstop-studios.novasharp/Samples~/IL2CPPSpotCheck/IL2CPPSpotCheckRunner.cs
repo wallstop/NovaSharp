@@ -1,12 +1,9 @@
 namespace WallstopStudios.NovaSharp.Unity.Samples
 {
+    using global::NovaSharp;
     using System;
     using System.Globalization;
     using UnityEngine;
-    using WallstopStudios.NovaSharp.Interpreter;
-    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
-    using WallstopStudios.NovaSharp.Interpreter.Execution;
-    using WallstopStudios.NovaSharp.Interpreter.Modules;
     using Stopwatch = System.Diagnostics.Stopwatch;
 
     /// <summary>
@@ -51,10 +48,10 @@ end
         [SerializeField]
         private bool _runClrCallbackCheck = true;
 
-        private Script _script;
-        private DynValue _tickFunction;
-        private DynValue _tableFunction;
-        private DynValue _callbackFunction;
+        private LuaEngine _lua;
+        private LuaFunction _tickFunction;
+        private LuaFunction _tableFunction;
+        private LuaFunction _callbackFunction;
 
         private void Start()
         {
@@ -159,43 +156,48 @@ end
 
         private void EnsureScript()
         {
-            if (_script != null)
+            if (_lua != null)
             {
                 return;
             }
 
-            Script script = new Script(CoreModulePresets.Complete);
-            script.Globals.Set("host_add", DynValue.NewCallback(HostAdd, "host_add"));
-            script.DoString(BenchmarkScript, null, "NovaSharpIL2CPPSpotCheck");
+            LuaEngine lua = LuaEngine.Create();
+            lua.Globals.Set("host_add", lua.CreateCallback(HostAdd, "host_add"));
+            lua.Run(BenchmarkScript, "NovaSharpIL2CPPSpotCheck");
 
-            DynValue tickFunction = script.Globals.Get("nova_tick");
-            DynValue tableFunction = script.Globals.Get("nova_table");
-            DynValue callbackFunction = script.Globals.Get("nova_callback");
+            LuaFunction tickFunction = lua.Globals.Get("nova_tick").AsFunction();
+            LuaFunction tableFunction = lua.Globals.Get("nova_table").AsFunction();
+            LuaFunction callbackFunction = lua.Globals.Get("nova_callback").AsFunction();
 
             _tickFunction = tickFunction;
             _tableFunction = tableFunction;
             _callbackFunction = callbackFunction;
-            _script = script;
+            _lua = lua;
         }
 
         private double RunOneIteration()
         {
-            DynValue tickResult = _script.Call(_tickFunction);
-            DynValue tableResult = _script.Call(_tableFunction);
+            LuaValue tickResult = _tickFunction.Call();
+            LuaValue tableResult = _tableFunction.Call();
             if (!_runClrCallbackCheck)
             {
-                return tickResult.Number + tableResult.Number;
+                return tickResult.AsNumber() + tableResult.AsNumber();
             }
 
-            DynValue callbackResult = _script.Call(_callbackFunction);
-            return tickResult.Number + tableResult.Number + callbackResult.Number;
+            LuaValue callbackResult = _callbackFunction.Call();
+            return tickResult.AsNumber() + tableResult.AsNumber() + callbackResult.AsNumber();
         }
 
-        private static DynValue HostAdd(ScriptExecutionContext context, CallbackArguments args)
+        private static LuaValue HostAdd(LuaContext context, ReadOnlySpan<LuaValue> args)
         {
-            int left = args.AsInt(0, "host_add");
-            int right = args.AsInt(1, "host_add");
-            return DynValue.NewNumber(left + right);
+            long left = args[0].AsInteger();
+            long right = args[1].AsInteger();
+            return LuaValue.FromInteger(left + right);
+        }
+
+        private void OnDestroy()
+        {
+            _lua?.Dispose();
         }
     }
 }

@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
     using System.IO;
     using System.Reflection;
     using System.Threading;
+    using global::NovaSharp;
     using CoreLib;
     using Cysharp.Text;
     using Debugging;
@@ -59,6 +60,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         private readonly DateTime _startTimeUtc;
         private readonly Sandboxing.AllocationTracker _allocationTracker;
         private readonly Execution.ScriptCompilationCache _compilationCache;
+        private int _facadeLifetimeInvalidated;
         private bool _bit32CompatibilityWarningEmitted;
         private static ScriptGlobalOptions GlobalOptionsSnapshot;
         private static readonly AsyncLocal<GlobalOptionsScope> ScopedGlobalOptions = new();
@@ -66,7 +68,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             Type,
             MethodInfo
         > LegacyResolveFileNameMethods = new();
-        private static readonly Func<LoadStringGuardState, DynValue> LoadStringGuardAction =
+        private static readonly Func<LoadStringGuardState, LuaValue> LoadStringGuardAction =
             static state =>
                 state.Script.LoadStringCore(
                     state.Code,
@@ -74,7 +76,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     state.CodeFriendlyName,
                     state.SkipCompilationCacheLookup
                 );
-        private static readonly Func<LoadStreamGuardState, DynValue> LoadStreamGuardAction =
+        private static readonly Func<LoadStreamGuardState, LuaValue> LoadStreamGuardAction =
             static state =>
                 state.Script.LoadStreamCore(
                     state.Stream,
@@ -184,73 +186,73 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private readonly struct FixedChainedCallArguments
         {
-            private readonly DynValue _arg0;
-            private readonly DynValue _arg1;
-            private readonly DynValue _arg2;
-            private readonly DynValue _arg3;
-            private readonly DynValue _arg4;
-            private readonly DynValue _arg5;
-            private readonly DynValue _arg6;
+            private readonly LuaValue _arg0;
+            private readonly LuaValue _arg1;
+            private readonly LuaValue _arg2;
+            private readonly LuaValue _arg3;
+            private readonly LuaValue _arg4;
+            private readonly LuaValue _arg5;
+            private readonly LuaValue _arg6;
 
-            internal FixedChainedCallArguments(DynValue arg0)
+            internal FixedChainedCallArguments(LuaValue arg0)
             {
                 _arg0 = arg0;
-                _arg1 = null;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg1 = default;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 Count = 1;
             }
 
-            internal FixedChainedCallArguments(DynValue arg0, DynValue arg1)
+            internal FixedChainedCallArguments(LuaValue arg0, LuaValue arg1)
             {
                 _arg0 = arg0;
                 _arg1 = arg1;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 Count = 2;
             }
 
-            internal FixedChainedCallArguments(DynValue arg0, DynValue arg1, DynValue arg2)
+            internal FixedChainedCallArguments(LuaValue arg0, LuaValue arg1, LuaValue arg2)
             {
                 _arg0 = arg0;
                 _arg1 = arg1;
                 _arg2 = arg2;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 Count = 3;
             }
 
             internal FixedChainedCallArguments(
-                DynValue arg0,
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3
+                LuaValue arg0,
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3
             )
             {
                 _arg0 = arg0;
                 _arg1 = arg1;
                 _arg2 = arg2;
                 _arg3 = arg3;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 Count = 4;
             }
 
             internal FixedChainedCallArguments(
-                DynValue arg0,
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3,
-                DynValue arg4
+                LuaValue arg0,
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3,
+                LuaValue arg4
             )
             {
                 _arg0 = arg0;
@@ -258,18 +260,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 _arg2 = arg2;
                 _arg3 = arg3;
                 _arg4 = arg4;
-                _arg5 = null;
-                _arg6 = null;
+                _arg5 = default;
+                _arg6 = default;
                 Count = 5;
             }
 
             internal FixedChainedCallArguments(
-                DynValue arg0,
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3,
-                DynValue arg4,
-                DynValue arg5
+                LuaValue arg0,
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3,
+                LuaValue arg4,
+                LuaValue arg5
             )
             {
                 _arg0 = arg0;
@@ -278,18 +280,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 _arg3 = arg3;
                 _arg4 = arg4;
                 _arg5 = arg5;
-                _arg6 = null;
+                _arg6 = default;
                 Count = 6;
             }
 
             internal FixedChainedCallArguments(
-                DynValue arg0,
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3,
-                DynValue arg4,
-                DynValue arg5,
-                DynValue arg6
+                LuaValue arg0,
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3,
+                LuaValue arg4,
+                LuaValue arg5,
+                LuaValue arg6
             )
             {
                 _arg0 = arg0;
@@ -310,7 +312,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             /// <summary>
             /// Gets a fixed argument by zero-based index.
             /// </summary>
-            internal DynValue this[int index]
+            internal LuaValue this[int index]
             {
                 get
                 {
@@ -331,7 +333,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             /// <summary>
             /// Prepends a callable self value when the fixed argument buffer has capacity.
             /// </summary>
-            internal bool TryPrepend(DynValue value, out FixedChainedCallArguments args)
+            internal bool TryPrepend(LuaValue value, out FixedChainedCallArguments args)
             {
                 switch (Count)
                 {
@@ -377,7 +379,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             /// <summary>
             /// Copies the fixed arguments into an existing argument buffer.
             /// </summary>
-            internal void CopyTo(DynValue[] destination, int destinationIndex)
+            internal void CopyTo(LuaValue[] destination, int destinationIndex)
             {
                 for (int i = 0; i < Count; i++)
                 {
@@ -749,6 +751,28 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
         }
 
+        /// <summary>
+        /// Invalidates public facade handles backed by this script.
+        /// </summary>
+        internal void InvalidateFacadeLifetime()
+        {
+            if (Interlocked.Exchange(ref _facadeLifetimeInvalidated, 1) == 0)
+            {
+                _compilationCache?.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Throws when the public facade lifetime associated with this script has ended.
+        /// </summary>
+        internal void ThrowIfDisposed()
+        {
+            if (Volatile.Read(ref _facadeLifetimeInvalidated) != 0)
+            {
+                throw new ObjectDisposedException("LuaEngine");
+            }
+        }
+
         private long EstimateCoroutineRetainedBytes()
         {
             long bytes = 0L;
@@ -840,9 +864,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalTable">The global table to bind to this chunk.</param>
         /// <param name="funcFriendlyName">Name of the function used to report errors, etc.</param>
         /// <returns>
-        /// A DynValue containing a function which will execute the loaded code.
+        /// A LuaValue containing a function which will execute the loaded code.
         /// </returns>
-        public DynValue LoadFunction(
+        public LuaValue LoadFunction(
             string code,
             Table globalTable = null,
             string funcFriendlyName = null
@@ -862,8 +886,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="code">The function source code.</param>
         /// <param name="globalTable">The global table to bind to this function.</param>
         /// <param name="funcFriendlyName">Name of the function used for diagnostics.</param>
-        /// <returns>A DynValue containing the loaded function.</returns>
-        internal DynValue LoadFunctionWithoutCompilationCache(
+        /// <returns>A LuaValue containing the loaded function.</returns>
+        internal LuaValue LoadFunctionWithoutCompilationCache(
             string code,
             Table globalTable = null,
             string funcFriendlyName = null
@@ -877,7 +901,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             );
         }
 
-        private DynValue LoadFunctionCore(
+        private LuaValue LoadFunctionCore(
             string code,
             Table globalTable,
             string funcFriendlyName,
@@ -1003,9 +1027,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalTable">The global table to bind to this chunk.</param>
         /// <param name="codeFriendlyName">Name of the code - used to report errors, etc. Also used by debuggers to locate the original source file.</param>
         /// <returns>
-        /// A DynValue containing a function which will execute the loaded code.
+        /// A LuaValue containing a function which will execute the loaded code.
         /// </returns>
-        public DynValue LoadString(
+        public LuaValue LoadString(
             string code,
             Table globalTable = null,
             string codeFriendlyName = null
@@ -1021,7 +1045,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return ExecuteWithCompatibilityGuard(state, LoadStringGuardAction);
         }
 
-        private DynValue LoadStringSkippingCompilationCacheLookup(
+        private LuaValue LoadStringSkippingCompilationCacheLookup(
             string code,
             Table globalTable = null,
             string codeFriendlyName = null
@@ -1080,7 +1104,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// Thrown when <paramref name="function"/> is not directly callable and has no callable
         /// <c>__call</c> metamethod.
         /// </exception>
-        public CompiledScript BindFunction(DynValue function)
+        public CompiledScript BindFunction(LuaValue function)
         {
             return new CompiledScript(this, function);
         }
@@ -1095,7 +1119,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// Thrown when <paramref name="function"/> is not directly callable and has no callable
         /// <c>__call</c> metamethod.
         /// </exception>
-        public CompiledScript PrepareCallable(DynValue function)
+        public CompiledScript PrepareCallable(LuaValue function)
         {
             return BindFunction(function);
         }
@@ -1271,13 +1295,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// Thrown when <paramref name="function"/> is not directly callable and has no callable
         /// <c>__call</c> metamethod.
         /// </exception>
-        internal void ValidateCompiledScriptTarget(DynValue function)
+        internal void ValidateCompiledScriptTarget(LuaValue function)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
 
             if (!IsDirectCallTarget(function))
@@ -1290,7 +1309,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// Executes a resolved callable handle without re-running the public call dispatcher when
         /// the handle is a Lua function.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(DynValue function)
+        internal LuaValue ExecuteCompiledFunction(LuaValue function)
         {
             this.CheckScriptOwnership(function);
             return ExecuteTrustedCompiledFunction(function);
@@ -1299,7 +1318,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a resolved callable handle with one argument.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(DynValue function, DynValue arg)
+        internal LuaValue ExecuteCompiledFunction(LuaValue function, LuaValue arg)
         {
             this.CheckScriptOwnership(function);
             return ExecuteTrustedCompiledFunction(function, arg);
@@ -1308,7 +1327,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a resolved callable handle with two arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(DynValue function, DynValue arg1, DynValue arg2)
+        internal LuaValue ExecuteCompiledFunction(LuaValue function, LuaValue arg1, LuaValue arg2)
         {
             this.CheckScriptOwnership(function);
             return ExecuteTrustedCompiledFunction(function, arg1, arg2);
@@ -1317,11 +1336,11 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a resolved callable handle with three arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3
+        internal LuaValue ExecuteCompiledFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3
         )
         {
             this.CheckScriptOwnership(function);
@@ -1331,12 +1350,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a resolved callable handle with four arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4
+        internal LuaValue ExecuteCompiledFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4
         )
         {
             this.CheckScriptOwnership(function);
@@ -1346,13 +1365,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a resolved callable handle with five arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
+        internal LuaValue ExecuteCompiledFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
         )
         {
             this.CheckScriptOwnership(function);
@@ -1362,14 +1381,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a resolved callable handle with six arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+        internal LuaValue ExecuteCompiledFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
             this.CheckScriptOwnership(function);
@@ -1379,15 +1398,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a resolved callable handle with seven arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+        internal LuaValue ExecuteCompiledFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
             this.CheckScriptOwnership(function);
@@ -1406,7 +1425,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a resolved callable handle with caller-owned contiguous arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(DynValue function, ReadOnlySpan<DynValue> args)
+        internal LuaValue ExecuteCompiledFunction(LuaValue function, ReadOnlySpan<LuaValue> args)
         {
             this.CheckScriptOwnership(function);
             return ExecuteTrustedCompiledFunction(function, args);
@@ -1415,7 +1434,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a resolved callable handle with caller-owned contiguous CLR object arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(DynValue function, ReadOnlySpan<object> args)
+        internal LuaValue ExecuteCompiledFunction(LuaValue function, ReadOnlySpan<object> args)
         {
             this.CheckScriptOwnership(function);
             return ExecuteTrustedCompiledFunction(function, args);
@@ -1425,17 +1444,17 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// Executes a handle-created callable after the handle creation path has already validated
         /// the stored function's ownership and callability.
         /// </summary>
-        internal DynValue ExecuteTrustedCompiledFunction(DynValue function)
+        internal LuaValue ExecuteTrustedCompiledFunction(LuaValue function)
         {
             if (function.Type != DataType.Function)
             {
-                return Call(function);
+                return CallValues(function);
             }
 
             return ExecuteLuaFunctionWithoutArguments(function);
         }
 
-        private DynValue ExecuteLuaFunctionWithoutArguments(DynValue function)
+        private LuaValue ExecuteLuaFunctionWithoutArguments(LuaValue function)
         {
             return ExecuteWithCompatibilityGuard(
                 (_mainProcessor, function),
@@ -1446,13 +1465,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a trusted handle-created callable with one caller-provided argument.
         /// </summary>
-        internal DynValue ExecuteTrustedCompiledFunction(DynValue function, DynValue arg)
+        internal LuaValue ExecuteTrustedCompiledFunction(LuaValue function, LuaValue arg)
         {
             this.CheckScriptOwnership(arg);
 
             if (function.Type != DataType.Function)
             {
-                return Call(function, arg);
+                return CallValues(function, arg);
             }
 
             return ExecuteWithCompatibilityGuard(
@@ -1464,10 +1483,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a trusted handle-created callable with two caller-provided arguments.
         /// </summary>
-        internal DynValue ExecuteTrustedCompiledFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2
+        internal LuaValue ExecuteTrustedCompiledFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2
         )
         {
             this.CheckScriptOwnership(arg1);
@@ -1475,7 +1494,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type != DataType.Function)
             {
-                return Call(function, arg1, arg2);
+                return CallValues(function, arg1, arg2);
             }
 
             return ExecuteWithCompatibilityGuard(
@@ -1487,11 +1506,11 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a trusted handle-created callable with three caller-provided arguments.
         /// </summary>
-        internal DynValue ExecuteTrustedCompiledFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3
+        internal LuaValue ExecuteTrustedCompiledFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3
         )
         {
             this.CheckScriptOwnership(arg1);
@@ -1500,7 +1519,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type != DataType.Function)
             {
-                return Call(function, arg1, arg2, arg3);
+                return CallValues(function, arg1, arg2, arg3);
             }
 
             return ExecuteWithCompatibilityGuard(
@@ -1513,12 +1532,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a trusted handle-created callable with four caller-provided arguments.
         /// </summary>
-        internal DynValue ExecuteTrustedCompiledFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4
+        internal LuaValue ExecuteTrustedCompiledFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4
         )
         {
             this.CheckScriptOwnership(arg1);
@@ -1528,7 +1547,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type != DataType.Function)
             {
-                return Call(function, arg1, arg2, arg3, arg4);
+                return CallValues(function, arg1, arg2, arg3, arg4);
             }
 
             return ExecuteWithCompatibilityGuard(
@@ -1547,13 +1566,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a trusted handle-created callable with five caller-provided arguments.
         /// </summary>
-        internal DynValue ExecuteTrustedCompiledFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
+        internal LuaValue ExecuteTrustedCompiledFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
         )
         {
             this.CheckScriptOwnership(arg1);
@@ -1564,7 +1583,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type != DataType.Function)
             {
-                return Call(function, arg1, arg2, arg3, arg4, arg5);
+                return CallValues(function, arg1, arg2, arg3, arg4, arg5);
             }
 
             return ExecuteWithCompatibilityGuard(
@@ -1584,14 +1603,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a trusted handle-created callable with six caller-provided arguments.
         /// </summary>
-        internal DynValue ExecuteTrustedCompiledFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+        internal LuaValue ExecuteTrustedCompiledFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
             this.CheckScriptOwnership(arg1);
@@ -1603,7 +1622,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type != DataType.Function)
             {
-                return Call(function, arg1, arg2, arg3, arg4, arg5, arg6);
+                return CallValues(function, arg1, arg2, arg3, arg4, arg5, arg6);
             }
 
             return ExecuteWithCompatibilityGuard(
@@ -1624,15 +1643,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a trusted handle-created callable with seven caller-provided arguments.
         /// </summary>
-        internal DynValue ExecuteTrustedCompiledFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+        internal LuaValue ExecuteTrustedCompiledFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
             this.CheckScriptOwnership(arg1);
@@ -1645,7 +1664,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type != DataType.Function)
             {
-                return Call(function, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                return CallValues(function, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
             }
 
             return ExecuteWithCompatibilityGuard(
@@ -1667,16 +1686,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a trusted handle-created callable with caller-owned contiguous arguments.
         /// </summary>
-        internal DynValue ExecuteTrustedCompiledFunction(
-            DynValue function,
-            ReadOnlySpan<DynValue> args
+        internal LuaValue ExecuteTrustedCompiledFunction(
+            LuaValue function,
+            ReadOnlySpan<LuaValue> args
         )
         {
             this.CheckScriptOwnership(args);
 
             if (function.Type != DataType.Function)
             {
-                return Call(function, args);
+                return CallValues(function, args);
             }
 
             return args.Length switch
@@ -1792,8 +1811,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Executes a trusted handle-created callable with caller-owned contiguous CLR object arguments.
         /// </summary>
-        internal DynValue ExecuteTrustedCompiledFunction(
-            DynValue function,
+        internal LuaValue ExecuteTrustedCompiledFunction(
+            LuaValue function,
             ReadOnlySpan<object> args
         )
         {
@@ -1809,74 +1828,74 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 case 1:
                     return ExecuteTrustedCompiledFunction(
                         function,
-                        DynValue.FromObject(this, args[0])
+                        LuaValue.FromObject(this, args[0])
                     );
                 case 2:
                     return ExecuteTrustedCompiledFunction(
                         function,
-                        DynValue.FromObject(this, args[0]),
-                        DynValue.FromObject(this, args[1])
+                        LuaValue.FromObject(this, args[0]),
+                        LuaValue.FromObject(this, args[1])
                     );
                 case 3:
                     return ExecuteTrustedCompiledFunction(
                         function,
-                        DynValue.FromObject(this, args[0]),
-                        DynValue.FromObject(this, args[1]),
-                        DynValue.FromObject(this, args[2])
+                        LuaValue.FromObject(this, args[0]),
+                        LuaValue.FromObject(this, args[1]),
+                        LuaValue.FromObject(this, args[2])
                     );
                 case 4:
                     return ExecuteTrustedCompiledFunction(
                         function,
-                        DynValue.FromObject(this, args[0]),
-                        DynValue.FromObject(this, args[1]),
-                        DynValue.FromObject(this, args[2]),
-                        DynValue.FromObject(this, args[3])
+                        LuaValue.FromObject(this, args[0]),
+                        LuaValue.FromObject(this, args[1]),
+                        LuaValue.FromObject(this, args[2]),
+                        LuaValue.FromObject(this, args[3])
                     );
                 case 5:
                     return ExecuteTrustedCompiledFunction(
                         function,
-                        DynValue.FromObject(this, args[0]),
-                        DynValue.FromObject(this, args[1]),
-                        DynValue.FromObject(this, args[2]),
-                        DynValue.FromObject(this, args[3]),
-                        DynValue.FromObject(this, args[4])
+                        LuaValue.FromObject(this, args[0]),
+                        LuaValue.FromObject(this, args[1]),
+                        LuaValue.FromObject(this, args[2]),
+                        LuaValue.FromObject(this, args[3]),
+                        LuaValue.FromObject(this, args[4])
                     );
                 case 6:
                     return ExecuteTrustedCompiledFunction(
                         function,
-                        DynValue.FromObject(this, args[0]),
-                        DynValue.FromObject(this, args[1]),
-                        DynValue.FromObject(this, args[2]),
-                        DynValue.FromObject(this, args[3]),
-                        DynValue.FromObject(this, args[4]),
-                        DynValue.FromObject(this, args[5])
+                        LuaValue.FromObject(this, args[0]),
+                        LuaValue.FromObject(this, args[1]),
+                        LuaValue.FromObject(this, args[2]),
+                        LuaValue.FromObject(this, args[3]),
+                        LuaValue.FromObject(this, args[4]),
+                        LuaValue.FromObject(this, args[5])
                     );
                 case 7:
                     return ExecuteTrustedCompiledFunction(
                         function,
-                        DynValue.FromObject(this, args[0]),
-                        DynValue.FromObject(this, args[1]),
-                        DynValue.FromObject(this, args[2]),
-                        DynValue.FromObject(this, args[3]),
-                        DynValue.FromObject(this, args[4]),
-                        DynValue.FromObject(this, args[5]),
-                        DynValue.FromObject(this, args[6])
+                        LuaValue.FromObject(this, args[0]),
+                        LuaValue.FromObject(this, args[1]),
+                        LuaValue.FromObject(this, args[2]),
+                        LuaValue.FromObject(this, args[3]),
+                        LuaValue.FromObject(this, args[4]),
+                        LuaValue.FromObject(this, args[5]),
+                        LuaValue.FromObject(this, args[6])
                     );
             }
 
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 args.Length,
-                out DynValue[] convertedArgs
+                out LuaValue[] convertedArgs
             );
             for (int i = 0; i < args.Length; i++)
             {
-                convertedArgs[i] = DynValue.FromObject(this, args[i]);
+                convertedArgs[i] = LuaValue.FromObject(this, args[i]);
             }
 
             return ExecuteTrustedCompiledFunction(function, convertedArgs.AsSpan(0, args.Length));
         }
 
-        private DynValue LoadStringCore(
+        private LuaValue LoadStringCore(
             string code,
             Table globalTable = null,
             string codeFriendlyName = null,
@@ -1955,9 +1974,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalTable">The global table to bind to this chunk.</param>
         /// <param name="codeFriendlyName">Name of the code - used to report errors, etc.</param>
         /// <returns>
-        /// A DynValue containing a function which will execute the loaded code.
+        /// A LuaValue containing a function which will execute the loaded code.
         /// </returns>
-        public DynValue LoadStream(
+        public LuaValue LoadStream(
             Stream stream,
             Table globalTable = null,
             string codeFriendlyName = null
@@ -2001,7 +2020,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return CompileStream(stream, globalTable, codeFriendlyName);
         }
 
-        private DynValue LoadStreamCore(
+        private LuaValue LoadStreamCore(
             Stream stream,
             Table globalTable = null,
             string codeFriendlyName = null
@@ -2069,13 +2088,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// or
         /// function arg has upvalues other than _ENV
         /// </exception>
-        public void Dump(DynValue function, Stream stream)
+        public void Dump(LuaValue function, Stream stream)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             if (stream == null)
             {
                 throw new ArgumentNullException(nameof(stream));
@@ -2117,9 +2131,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalContext">The global table to bind to this chunk.</param>
         /// <param name="friendlyFilename">The filename to be used in error messages.</param>
         /// <returns>
-        /// A DynValue containing a function which will execute the loaded code.
+        /// A LuaValue containing a function which will execute the loaded code.
         /// </returns>
-        public DynValue LoadFile(
+        public LuaValue LoadFile(
             string filename,
             Table globalContext = null,
             string friendlyFilename = null
@@ -2154,7 +2168,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return Options.ScriptLoader.LoadFile(resolvedFilename, globals);
         }
 
-        private DynValue LoadFileContent(object code, Table globalContext, string chunkName)
+        private LuaValue LoadFileContent(object code, Table globalContext, string chunkName)
         {
             if (code is string s)
             {
@@ -2233,31 +2247,31 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalContext">The global context.</param>
         /// <param name="codeFriendlyName">Name of the code - used to report errors, etc. Also used by debuggers to locate the original source file.</param>
         /// <returns>
-        /// A DynValue containing the result of the processing of the loaded chunk.
+        /// A LuaValue containing the result of the processing of the loaded chunk.
         /// </returns>
-        public DynValue DoString(
+        public LuaValue DoString(
             string code,
             Table globalContext = null,
             string codeFriendlyName = null
         )
         {
-            if (TryExecuteCachedString(code, globalContext, codeFriendlyName, out DynValue result))
+            if (TryExecuteCachedString(code, globalContext, codeFriendlyName, out LuaValue result))
             {
                 return result;
             }
 
-            DynValue func = LoadString(code, globalContext, codeFriendlyName);
-            return Call(func);
+            LuaValue func = LoadString(code, globalContext, codeFriendlyName);
+            return CallValues(func);
         }
 
         private bool TryExecuteCachedString(
             string code,
             Table globalContext,
             string codeFriendlyName,
-            out DynValue result
+            out LuaValue result
         )
         {
-            result = null;
+            result = LuaValue.Nil;
 
             if (_compilationCache == null)
             {
@@ -2289,7 +2303,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
 
             Table environment = globalContext ?? _globalTable;
-            ClosureContext closureScope = new(DynValue.FromTable(environment));
+            ClosureContext closureScope = new(LuaValue.FromTable(environment));
 
             try
             {
@@ -2310,16 +2324,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalContext">The global context.</param>
         /// <param name="codeFriendlyName">Name of the code - used to report errors, etc. Also used by debuggers to locate the original source file.</param>
         /// <returns>
-        /// A DynValue containing the result of the processing of the loaded chunk.
+        /// A LuaValue containing the result of the processing of the loaded chunk.
         /// </returns>
-        public DynValue DoStream(
+        public LuaValue DoStream(
             Stream stream,
             Table globalContext = null,
             string codeFriendlyName = null
         )
         {
-            DynValue func = LoadStream(stream, globalContext, codeFriendlyName);
-            return Call(func);
+            LuaValue func = LoadStream(stream, globalContext, codeFriendlyName);
+            return CallValues(func);
         }
 
         /// <summary>
@@ -2329,9 +2343,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalContext">The global context.</param>
         /// <param name="codeFriendlyName">Name of the code - used to report errors, etc. Also used by debuggers to locate the original source file.</param>
         /// <returns>
-        /// A DynValue containing the result of the processing of the loaded chunk.
+        /// A LuaValue containing the result of the processing of the loaded chunk.
         /// </returns>
-        public DynValue DoFile(
+        public LuaValue DoFile(
             string filename,
             Table globalContext = null,
             string codeFriendlyName = null
@@ -2342,29 +2356,29 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (code is string source)
             {
-                if (TryExecuteCachedString(source, globalContext, chunkName, out DynValue result))
+                if (TryExecuteCachedString(source, globalContext, chunkName, out LuaValue result))
                 {
                     return result;
                 }
 
-                DynValue stringFunc = LoadStringSkippingCompilationCacheLookup(
+                LuaValue stringFunc = LoadStringSkippingCompilationCacheLookup(
                     source,
                     globalContext,
                     chunkName
                 );
-                return Call(stringFunc);
+                return CallValues(stringFunc);
             }
 
-            DynValue func = LoadFileContent(code, globalContext, chunkName);
-            return Call(func);
+            LuaValue func = LoadFileContent(code, globalContext, chunkName);
+            return CallValues(func);
         }
 
         /// <summary>
         /// Runs the specified file with all possible defaults for quick experimenting.
         /// </summary>
         /// <param name="filename">The filename.</param>
-        /// A DynValue containing the result of the processing of the executed script.
-        public static DynValue RunFile(string filename)
+        /// A LuaValue containing the result of the processing of the executed script.
+        public static LuaValue RunFile(string filename)
         {
             Script s = new();
             return s.DoFile(filename);
@@ -2374,8 +2388,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// Runs the specified code with all possible defaults for quick experimenting.
         /// </summary>
         /// <param name="code">The Lua/NovaSharp code.</param>
-        /// A DynValue containing the result of the processing of the executed script.
-        public static DynValue RunString(string code)
+        /// A LuaValue containing the result of the processing of the executed script.
+        public static LuaValue RunString(string code)
         {
             Script s = new();
             return s.DoString(code);
@@ -2425,7 +2439,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             });
         }
 
-        private DynValue MakeClosure(int address, Table envTable = null)
+        private LuaValue MakeClosure(int address, Table envTable = null)
         {
             this.CheckScriptOwnership(envTable);
             Closure c;
@@ -2445,16 +2459,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
                         this,
                         address,
                         Array.Empty<SymbolRef>(),
-                        Array.Empty<Execution.Scopes.ValueSlot>()
+                        Array.Empty<Execution.Scopes.UpvalueCell>()
                     );
                 }
             }
             else
             {
-                c = new Closure(this, address, DynValue.FromTable(envTable));
+                c = new Closure(this, address, LuaValue.FromTable(envTable));
             }
 
-            return DynValue.NewClosure(c);
+            return LuaValue.NewClosure(c);
         }
 
         /// <summary>
@@ -2465,13 +2479,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue function)
+        internal LuaValue CallValues(LuaValue function)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
 
             if (function.Type == DataType.Function)
@@ -2503,13 +2512,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue function, DynValue arg)
+        internal LuaValue CallValues(LuaValue function, LuaValue arg)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg);
 
@@ -2547,13 +2551,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue function, DynValue arg1, DynValue arg2)
+        internal LuaValue CallValues(LuaValue function, LuaValue arg1, LuaValue arg2)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
@@ -2594,13 +2593,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue function, DynValue arg1, DynValue arg2, DynValue arg3)
+        internal LuaValue CallValues(LuaValue function, LuaValue arg1, LuaValue arg2, LuaValue arg3)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
@@ -2645,19 +2639,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4
+        internal LuaValue CallValues(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
@@ -2711,20 +2700,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
+        internal LuaValue CallValues(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
@@ -2789,21 +2773,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+        internal LuaValue CallValues(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
@@ -2873,22 +2852,17 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+        internal LuaValue CallValues(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
@@ -2956,13 +2930,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue function, ReadOnlySpan<DynValue> args)
+        internal LuaValue CallValues(LuaValue function, ReadOnlySpan<LuaValue> args)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(args);
 
@@ -2976,11 +2945,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     throw ScriptRuntimeException.LoopInCall();
                 }
 
-                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
-
                 if (
-                    metafunction == null
-                    || metafunction.IsNil()
+                    !_mainProcessor.TryGetMetamethod(
+                        function,
+                        Metamethods.Call,
+                        out LuaValue metafunction
+                    )
+                    || metafunction.IsNil
                     || !CanCallMetamethod(metafunction)
                 )
                 {
@@ -2995,14 +2966,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
                         metafunction,
                         function,
                         args,
-                        out DynValue directResult
+                        out LuaValue directResult
                     )
                 )
                 {
                     return directResult;
                 }
 
-                DynValue[] metaargs = CreateCallMetamethodArguments(function, args);
+                LuaValue[] metaargs = CreateCallMetamethodArguments(function, args);
                 function = metafunction;
                 args = metaargs;
                 isFirstCallMetamethodResolution = false;
@@ -3023,21 +2994,29 @@ namespace WallstopStudios.NovaSharp.Interpreter
             switch (args.Length)
             {
                 case 0:
-                    return Call(function);
+                    return CallValues(function);
                 case 1:
-                    return Call(function, args[0]);
+                    return CallValues(function, args[0]);
                 case 2:
-                    return Call(function, args[0], args[1]);
+                    return CallValues(function, args[0], args[1]);
                 case 3:
-                    return Call(function, args[0], args[1], args[2]);
+                    return CallValues(function, args[0], args[1], args[2]);
                 case 4:
-                    return Call(function, args[0], args[1], args[2], args[3]);
+                    return CallValues(function, args[0], args[1], args[2], args[3]);
                 case 5:
-                    return Call(function, args[0], args[1], args[2], args[3], args[4]);
+                    return CallValues(function, args[0], args[1], args[2], args[3], args[4]);
                 case 6:
-                    return Call(function, args[0], args[1], args[2], args[3], args[4], args[5]);
+                    return CallValues(
+                        function,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4],
+                        args[5]
+                    );
                 case 7:
-                    return Call(
+                    return CallValues(
                         function,
                         args[0],
                         args[1],
@@ -3061,13 +3040,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue function, params DynValue[] args)
+        internal LuaValue CallValues(LuaValue function, params LuaValue[] args)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
@@ -3086,11 +3060,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     throw ScriptRuntimeException.LoopInCall();
                 }
 
-                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
-
                 if (
-                    metafunction == null
-                    || metafunction.IsNil()
+                    !_mainProcessor.TryGetMetamethod(
+                        function,
+                        Metamethods.Call,
+                        out LuaValue metafunction
+                    )
+                    || metafunction.IsNil
                     || !CanCallMetamethod(metafunction)
                 )
                 {
@@ -3105,14 +3081,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
                         metafunction,
                         function,
                         args,
-                        out DynValue directResult
+                        out LuaValue directResult
                     )
                 )
                 {
                     return directResult;
                 }
 
-                DynValue[] metaargs = new DynValue[args.Length + 1];
+                LuaValue[] metaargs = new LuaValue[args.Length + 1];
                 metaargs[0] = function;
                 for (int i = 0; i < args.Length; i++)
                 {
@@ -3141,9 +3117,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
             );
         }
 
-        private DynValue ExecuteSpanCallWithCompatibilityGuard(
-            DynValue function,
-            ReadOnlySpan<DynValue> args
+        private LuaValue ExecuteSpanCallWithCompatibilityGuard(
+            LuaValue function,
+            ReadOnlySpan<LuaValue> args
         )
         {
             try
@@ -3158,34 +3134,34 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         private bool TryCallDirectMetamethod(
-            DynValue metafunction,
-            DynValue self,
-            ReadOnlySpan<DynValue> args,
-            out DynValue result
+            LuaValue metafunction,
+            LuaValue self,
+            ReadOnlySpan<LuaValue> args,
+            out LuaValue result
         )
         {
             if (!IsDirectCallTarget(metafunction))
             {
-                result = null;
+                result = LuaValue.Nil;
                 return false;
             }
 
             switch (args.Length)
             {
                 case 0:
-                    result = Call(metafunction, self);
+                    result = CallValues(metafunction, self);
                     return true;
                 case 1:
-                    result = Call(metafunction, self, args[0]);
+                    result = CallValues(metafunction, self, args[0]);
                     return true;
                 case 2:
-                    result = Call(metafunction, self, args[0], args[1]);
+                    result = CallValues(metafunction, self, args[0], args[1]);
                     return true;
                 case 3:
-                    result = Call(metafunction, self, args[0], args[1], args[2]);
+                    result = CallValues(metafunction, self, args[0], args[1], args[2]);
                     return true;
                 case 4:
-                    result = Call(metafunction, self, args[0], args[1], args[2], args[3]);
+                    result = CallValues(metafunction, self, args[0], args[1], args[2], args[3]);
                     return true;
                 case 5:
                     result = CallDirectTarget(
@@ -3211,19 +3187,19 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     );
                     return true;
                 default:
-                    result = null;
+                    result = LuaValue.Nil;
                     return false;
             }
         }
 
-        private DynValue CallDirectTarget(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+        private LuaValue CallDirectTarget(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
             if (function.Type == DataType.ClrFunction)
@@ -3268,15 +3244,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
             );
         }
 
-        private DynValue CallDirectTarget(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+        private LuaValue CallDirectTarget(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
             if (function.Type == DataType.ClrFunction)
@@ -3327,14 +3303,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Calls a Lua function with six fixed arguments after the caller has already resolved the call target.
         /// </summary>
-        internal DynValue CallDirectLuaFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+        internal LuaValue CallDirectLuaFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
             this.CheckScriptOwnership(function);
@@ -3363,15 +3339,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Calls a Lua function with seven fixed arguments after the caller has already resolved the call target.
         /// </summary>
-        internal DynValue CallDirectLuaFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+        internal LuaValue CallDirectLuaFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
             this.CheckScriptOwnership(function);
@@ -3399,87 +3375,87 @@ namespace WallstopStudios.NovaSharp.Interpreter
             );
         }
 
-        private DynValue CallNonFunction(DynValue function)
+        private LuaValue CallNonFunction(LuaValue function)
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(function);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function);
                 return CallChainedNonFunction(metafunction, args);
             }
 
-            return Call(metafunction, function);
+            return CallValues(metafunction, function);
         }
 
-        private DynValue CallNonFunction(DynValue function, DynValue arg)
+        private LuaValue CallNonFunction(LuaValue function, LuaValue arg)
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(function);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function, arg);
                 return CallChainedNonFunction(metafunction, args);
             }
 
-            return Call(metafunction, function, arg);
+            return CallValues(metafunction, function, arg);
         }
 
-        private DynValue CallNonFunction(DynValue function, DynValue arg1, DynValue arg2)
+        private LuaValue CallNonFunction(LuaValue function, LuaValue arg1, LuaValue arg2)
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(function);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function, arg1, arg2);
                 return CallChainedNonFunction(metafunction, args);
             }
 
-            return Call(metafunction, function, arg1, arg2);
+            return CallValues(metafunction, function, arg1, arg2);
         }
 
-        private DynValue CallNonFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3
+        private LuaValue CallNonFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3
         )
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(function);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function, arg1, arg2, arg3);
                 return CallChainedNonFunction(metafunction, args);
             }
 
-            return Call(metafunction, function, arg1, arg2, arg3);
+            return CallValues(metafunction, function, arg1, arg2, arg3);
         }
 
-        private DynValue CallNonFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4
+        private LuaValue CallNonFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4
         )
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(function);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function, arg1, arg2, arg3, arg4);
                 return CallChainedNonFunction(metafunction, args);
             }
 
-            return Call(metafunction, function, arg1, arg2, arg3, arg4);
+            return CallValues(metafunction, function, arg1, arg2, arg3, arg4);
         }
 
-        private DynValue CallNonFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
+        private LuaValue CallNonFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
         )
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(function);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function, arg1, arg2, arg3, arg4, arg5);
@@ -3489,17 +3465,17 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return CallDirectTarget(metafunction, function, arg1, arg2, arg3, arg4, arg5);
         }
 
-        private DynValue CallNonFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+        private LuaValue CallNonFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(function);
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -3509,22 +3485,22 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return CallDirectTarget(metafunction, function, arg1, arg2, arg3, arg4, arg5, arg6);
         }
 
-        private DynValue CallNonFunction(
-            DynValue function,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+        private LuaValue CallNonFunction(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
-            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            LuaValue metafunction = GetCallableMetamethodOrThrow(function);
 
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 8,
-                out DynValue[] arguments
+                out LuaValue[] arguments
             );
             arguments[0] = function;
             arguments[1] = arg1;
@@ -3535,10 +3511,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
             arguments[6] = arg6;
             arguments[7] = arg7;
 
-            return Call(metafunction, arguments.AsSpan(0, 8));
+            return CallValues(metafunction, arguments.AsSpan(0, 8));
         }
 
-        private DynValue CallChainedNonFunction(DynValue function, FixedChainedCallArguments args)
+        private LuaValue CallChainedNonFunction(LuaValue function, FixedChainedCallArguments args)
         {
             int maxloops = 9;
 
@@ -3549,7 +3525,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     throw ScriptRuntimeException.LoopInCall();
                 }
 
-                DynValue metafunction = GetCallableMetamethodOrThrow(function);
+                LuaValue metafunction = GetCallableMetamethodOrThrow(function);
                 if (!args.TryPrepend(function, out FixedChainedCallArguments nextArgs))
                 {
                     return CallOverflowChainedNonFunction(function, metafunction, args, maxloops);
@@ -3563,18 +3539,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return CallFixed(function, args);
         }
 
-        private DynValue CallOverflowChainedNonFunction(
-            DynValue function,
-            DynValue metafunction,
+        private LuaValue CallOverflowChainedNonFunction(
+            LuaValue function,
+            LuaValue metafunction,
             FixedChainedCallArguments args,
             int maxloops
         )
         {
             int count = args.Count + 1;
             int capacity = count + Math.Max(0, maxloops - 1);
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 capacity,
-                out DynValue[] arguments
+                out LuaValue[] arguments
             );
             arguments[0] = function;
             args.CopyTo(arguments, 1);
@@ -3597,18 +3573,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 maxloops--;
             }
 
-            return Call(function, arguments.AsSpan(0, count));
+            return CallValues(function, arguments.AsSpan(0, count));
         }
 
-        private DynValue CallFixed(DynValue function, FixedChainedCallArguments args)
+        private LuaValue CallFixed(LuaValue function, FixedChainedCallArguments args)
         {
             return args.Count switch
             {
-                1 => Call(function, args[0]),
-                2 => Call(function, args[0], args[1]),
-                3 => Call(function, args[0], args[1], args[2]),
-                4 => Call(function, args[0], args[1], args[2], args[3]),
-                5 => Call(function, args[0], args[1], args[2], args[3], args[4]),
+                1 => CallValues(function, args[0]),
+                2 => CallValues(function, args[0], args[1]),
+                3 => CallValues(function, args[0], args[1], args[2]),
+                4 => CallValues(function, args[0], args[1], args[2], args[3]),
+                5 => CallValues(function, args[0], args[1], args[2], args[3], args[4]),
                 6 => CallDirectTarget(
                     function,
                     args[0],
@@ -3628,19 +3604,26 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     args[5],
                     args[6]
                 ),
-                _ => Call(function),
+                _ => CallValues(function),
             };
         }
 
-        private static bool IsDirectCallTarget(DynValue function)
+        private static bool IsDirectCallTarget(LuaValue function)
         {
             return function.Type == DataType.Function || function.Type == DataType.ClrFunction;
         }
 
-        private DynValue GetCallableMetamethodOrThrow(DynValue function)
+        private LuaValue GetCallableMetamethodOrThrow(LuaValue function)
         {
-            DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
-            if (metafunction != null && !metafunction.IsNil() && CanCallMetamethod(metafunction))
+            if (
+                _mainProcessor.TryGetMetamethod(
+                    function,
+                    Metamethods.Call,
+                    out LuaValue metafunction
+                )
+                && !metafunction.IsNil
+                && CanCallMetamethod(metafunction)
+            )
             {
                 return metafunction;
             }
@@ -3648,12 +3631,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
             throw new ArgumentException("function is not a function and has no __call metamethod.");
         }
 
-        private static DynValue[] CreateCallMetamethodArguments(
-            DynValue function,
-            ReadOnlySpan<DynValue> args
+        private static LuaValue[] CreateCallMetamethodArguments(
+            LuaValue function,
+            ReadOnlySpan<LuaValue> args
         )
         {
-            DynValue[] metaargs = new DynValue[args.Length + 1];
+            LuaValue[] metaargs = new LuaValue[args.Length + 1];
             metaargs[0] = function;
             for (int i = 0; i < args.Length; i++)
             {
@@ -3663,36 +3646,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return metaargs;
         }
 
-        private bool CanCallMetamethod(DynValue metafunction)
+        private bool CanCallMetamethod(LuaValue metafunction)
         {
             return LuaVersionDefaults.Resolve(Options.CompatibilityVersion)
                     >= LuaCompatibilityVersion.Lua54
                 || metafunction.Type == DataType.Function
                 || metafunction.Type == DataType.ClrFunction;
-        }
-
-        /// <summary>
-        /// Calls the specified function.
-        /// </summary>
-        /// <param name="function">The Lua/NovaSharp function to be called</param>
-        /// <param name="args">The arguments to pass to the function.</param>
-        /// <returns>
-        /// The return value(s) of the function call.
-        /// </returns>
-        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue function, params object[] args)
-        {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
-            if (args == null)
-            {
-                throw new ArgumentNullException(nameof(args));
-            }
-
-            return CallObjectArguments(function, args.AsSpan());
         }
 
         /// <summary>
@@ -3704,14 +3663,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
-        public DynValue CallObjectArguments(DynValue function, object[] args)
+        internal LuaValue CallObjectArgumentsCore(LuaValue function, object[] args)
         {
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
             }
 
-            return CallObjectArguments(function, args.AsSpan());
+            return CallObjectArgumentsCore(function, args.AsSpan());
         }
 
         /// <summary>
@@ -3723,82 +3682,77 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
-        public DynValue CallObjectArguments(DynValue function, ReadOnlySpan<object> args)
+        internal LuaValue CallObjectArgumentsCore(LuaValue function, ReadOnlySpan<object> args)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             switch (args.Length)
             {
                 case 0:
-                    return Call(function);
+                    return CallValues(function);
                 case 1:
-                    return Call(function, DynValue.FromObject(this, args[0]));
+                    return CallValues(function, LuaValue.FromObject(this, args[0]));
                 case 2:
-                    return Call(
+                    return CallValues(
                         function,
-                        DynValue.FromObject(this, args[0]),
-                        DynValue.FromObject(this, args[1])
+                        LuaValue.FromObject(this, args[0]),
+                        LuaValue.FromObject(this, args[1])
                     );
                 case 3:
-                    return Call(
+                    return CallValues(
                         function,
-                        DynValue.FromObject(this, args[0]),
-                        DynValue.FromObject(this, args[1]),
-                        DynValue.FromObject(this, args[2])
+                        LuaValue.FromObject(this, args[0]),
+                        LuaValue.FromObject(this, args[1]),
+                        LuaValue.FromObject(this, args[2])
                     );
                 case 4:
-                    return Call(
+                    return CallValues(
                         function,
-                        DynValue.FromObject(this, args[0]),
-                        DynValue.FromObject(this, args[1]),
-                        DynValue.FromObject(this, args[2]),
-                        DynValue.FromObject(this, args[3])
+                        LuaValue.FromObject(this, args[0]),
+                        LuaValue.FromObject(this, args[1]),
+                        LuaValue.FromObject(this, args[2]),
+                        LuaValue.FromObject(this, args[3])
                     );
                 case 5:
-                    return Call(
+                    return CallValues(
                         function,
-                        DynValue.FromObject(this, args[0]),
-                        DynValue.FromObject(this, args[1]),
-                        DynValue.FromObject(this, args[2]),
-                        DynValue.FromObject(this, args[3]),
-                        DynValue.FromObject(this, args[4])
+                        LuaValue.FromObject(this, args[0]),
+                        LuaValue.FromObject(this, args[1]),
+                        LuaValue.FromObject(this, args[2]),
+                        LuaValue.FromObject(this, args[3]),
+                        LuaValue.FromObject(this, args[4])
                     );
                 case 6:
-                    return Call(
+                    return CallValues(
                         function,
-                        DynValue.FromObject(this, args[0]),
-                        DynValue.FromObject(this, args[1]),
-                        DynValue.FromObject(this, args[2]),
-                        DynValue.FromObject(this, args[3]),
-                        DynValue.FromObject(this, args[4]),
-                        DynValue.FromObject(this, args[5])
+                        LuaValue.FromObject(this, args[0]),
+                        LuaValue.FromObject(this, args[1]),
+                        LuaValue.FromObject(this, args[2]),
+                        LuaValue.FromObject(this, args[3]),
+                        LuaValue.FromObject(this, args[4]),
+                        LuaValue.FromObject(this, args[5])
                     );
                 case 7:
-                    return Call(
+                    return CallValues(
                         function,
-                        DynValue.FromObject(this, args[0]),
-                        DynValue.FromObject(this, args[1]),
-                        DynValue.FromObject(this, args[2]),
-                        DynValue.FromObject(this, args[3]),
-                        DynValue.FromObject(this, args[4]),
-                        DynValue.FromObject(this, args[5]),
-                        DynValue.FromObject(this, args[6])
+                        LuaValue.FromObject(this, args[0]),
+                        LuaValue.FromObject(this, args[1]),
+                        LuaValue.FromObject(this, args[2]),
+                        LuaValue.FromObject(this, args[3]),
+                        LuaValue.FromObject(this, args[4]),
+                        LuaValue.FromObject(this, args[5]),
+                        LuaValue.FromObject(this, args[6])
                     );
             }
 
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 args.Length,
-                out DynValue[] convertedArgs
+                out LuaValue[] convertedArgs
             );
             for (int i = 0; i < args.Length; i++)
             {
-                convertedArgs[i] = DynValue.FromObject(this, args[i]);
+                convertedArgs[i] = LuaValue.FromObject(this, args[i]);
             }
 
-            return Call(function, convertedArgs.AsSpan(0, args.Length));
+            return CallValues(function, convertedArgs.AsSpan(0, args.Length));
         }
 
         /// <summary>
@@ -3810,14 +3764,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue function, object arg)
+        internal LuaValue CallObjectArgumentsCore(LuaValue function, object arg)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
-            return Call(function, DynValue.FromObject(this, arg));
+            return CallValues(function, LuaValue.FromObject(this, arg));
         }
 
         /// <summary>
@@ -3830,14 +3779,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue function, object arg1, object arg2)
+        internal LuaValue CallObjectArgumentsCore(LuaValue function, object arg1, object arg2)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
-            return Call(function, DynValue.FromObject(this, arg1), DynValue.FromObject(this, arg2));
+            return CallValues(
+                function,
+                LuaValue.FromObject(this, arg1),
+                LuaValue.FromObject(this, arg2)
+            );
         }
 
         /// <summary>
@@ -3851,18 +3799,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue function, object arg1, object arg2, object arg3)
+        internal LuaValue CallObjectArgumentsCore(
+            LuaValue function,
+            object arg1,
+            object arg2,
+            object arg3
+        )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
-            return Call(
+            return CallValues(
                 function,
-                DynValue.FromObject(this, arg1),
-                DynValue.FromObject(this, arg2),
-                DynValue.FromObject(this, arg3)
+                LuaValue.FromObject(this, arg1),
+                LuaValue.FromObject(this, arg2),
+                LuaValue.FromObject(this, arg3)
             );
         }
 
@@ -3878,19 +3826,20 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue function, object arg1, object arg2, object arg3, object arg4)
+        internal LuaValue CallObjectArgumentsCore(
+            LuaValue function,
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4
+        )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
-            return Call(
+            return CallValues(
                 function,
-                DynValue.FromObject(this, arg1),
-                DynValue.FromObject(this, arg2),
-                DynValue.FromObject(this, arg3),
-                DynValue.FromObject(this, arg4)
+                LuaValue.FromObject(this, arg1),
+                LuaValue.FromObject(this, arg2),
+                LuaValue.FromObject(this, arg3),
+                LuaValue.FromObject(this, arg4)
             );
         }
 
@@ -3907,8 +3856,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
-            DynValue function,
+        internal LuaValue CallObjectArgumentsCore(
+            LuaValue function,
             object arg1,
             object arg2,
             object arg3,
@@ -3916,18 +3865,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
             object arg5
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
-            return Call(
+            return CallValues(
                 function,
-                DynValue.FromObject(this, arg1),
-                DynValue.FromObject(this, arg2),
-                DynValue.FromObject(this, arg3),
-                DynValue.FromObject(this, arg4),
-                DynValue.FromObject(this, arg5)
+                LuaValue.FromObject(this, arg1),
+                LuaValue.FromObject(this, arg2),
+                LuaValue.FromObject(this, arg3),
+                LuaValue.FromObject(this, arg4),
+                LuaValue.FromObject(this, arg5)
             );
         }
 
@@ -3945,8 +3889,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
-            DynValue function,
+        internal LuaValue CallObjectArgumentsCore(
+            LuaValue function,
             object arg1,
             object arg2,
             object arg3,
@@ -3955,19 +3899,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
             object arg6
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
-            return Call(
+            return CallValues(
                 function,
-                DynValue.FromObject(this, arg1),
-                DynValue.FromObject(this, arg2),
-                DynValue.FromObject(this, arg3),
-                DynValue.FromObject(this, arg4),
-                DynValue.FromObject(this, arg5),
-                DynValue.FromObject(this, arg6)
+                LuaValue.FromObject(this, arg1),
+                LuaValue.FromObject(this, arg2),
+                LuaValue.FromObject(this, arg3),
+                LuaValue.FromObject(this, arg4),
+                LuaValue.FromObject(this, arg5),
+                LuaValue.FromObject(this, arg6)
             );
         }
 
@@ -3986,8 +3925,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
-            DynValue function,
+        internal LuaValue CallObjectArgumentsCore(
+            LuaValue function,
             object arg1,
             object arg2,
             object arg3,
@@ -3997,20 +3936,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
             object arg7
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
-            return Call(
+            return CallValues(
                 function,
-                DynValue.FromObject(this, arg1),
-                DynValue.FromObject(this, arg2),
-                DynValue.FromObject(this, arg3),
-                DynValue.FromObject(this, arg4),
-                DynValue.FromObject(this, arg5),
-                DynValue.FromObject(this, arg6),
-                DynValue.FromObject(this, arg7)
+                LuaValue.FromObject(this, arg1),
+                LuaValue.FromObject(this, arg2),
+                LuaValue.FromObject(this, arg3),
+                LuaValue.FromObject(this, arg4),
+                LuaValue.FromObject(this, arg5),
+                LuaValue.FromObject(this, arg6),
+                LuaValue.FromObject(this, arg7)
             );
         }
 
@@ -4020,9 +3954,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="function">The Lua/NovaSharp function to be called</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(object function)
+        public LuaValue Call(object function)
         {
-            return Call(DynValue.FromObject(this, function));
+            return CallValues(LuaValue.FromObject(this, function));
         }
 
         /// <summary>
@@ -4032,9 +3966,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg">The argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(object function, object arg)
+        public LuaValue Call(object function, object arg)
         {
-            return Call(DynValue.FromObject(this, function), DynValue.FromObject(this, arg));
+            return CallValues(LuaValue.FromObject(this, function), LuaValue.FromObject(this, arg));
         }
 
         /// <summary>
@@ -4045,12 +3979,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg2">The second argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(object function, object arg1, object arg2)
+        public LuaValue Call(object function, object arg1, object arg2)
         {
-            return Call(
-                DynValue.FromObject(this, function),
-                DynValue.FromObject(this, arg1),
-                DynValue.FromObject(this, arg2)
+            return CallValues(
+                LuaValue.FromObject(this, function),
+                LuaValue.FromObject(this, arg1),
+                LuaValue.FromObject(this, arg2)
             );
         }
 
@@ -4063,13 +3997,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg3">The third argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(object function, object arg1, object arg2, object arg3)
+        public LuaValue Call(object function, object arg1, object arg2, object arg3)
         {
-            return Call(
-                DynValue.FromObject(this, function),
-                DynValue.FromObject(this, arg1),
-                DynValue.FromObject(this, arg2),
-                DynValue.FromObject(this, arg3)
+            return CallValues(
+                LuaValue.FromObject(this, function),
+                LuaValue.FromObject(this, arg1),
+                LuaValue.FromObject(this, arg2),
+                LuaValue.FromObject(this, arg3)
             );
         }
 
@@ -4083,14 +4017,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg4">The fourth argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(object function, object arg1, object arg2, object arg3, object arg4)
+        public LuaValue Call(object function, object arg1, object arg2, object arg3, object arg4)
         {
-            return Call(
-                DynValue.FromObject(this, function),
-                DynValue.FromObject(this, arg1),
-                DynValue.FromObject(this, arg2),
-                DynValue.FromObject(this, arg3),
-                DynValue.FromObject(this, arg4)
+            return CallValues(
+                LuaValue.FromObject(this, function),
+                LuaValue.FromObject(this, arg1),
+                LuaValue.FromObject(this, arg2),
+                LuaValue.FromObject(this, arg3),
+                LuaValue.FromObject(this, arg4)
             );
         }
 
@@ -4105,7 +4039,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg5">The fifth argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
+        public LuaValue Call(
             object function,
             object arg1,
             object arg2,
@@ -4114,13 +4048,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
             object arg5
         )
         {
-            return Call(
-                DynValue.FromObject(this, function),
-                DynValue.FromObject(this, arg1),
-                DynValue.FromObject(this, arg2),
-                DynValue.FromObject(this, arg3),
-                DynValue.FromObject(this, arg4),
-                DynValue.FromObject(this, arg5)
+            return CallValues(
+                LuaValue.FromObject(this, function),
+                LuaValue.FromObject(this, arg1),
+                LuaValue.FromObject(this, arg2),
+                LuaValue.FromObject(this, arg3),
+                LuaValue.FromObject(this, arg4),
+                LuaValue.FromObject(this, arg5)
             );
         }
 
@@ -4136,7 +4070,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg6">The sixth argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
+        public LuaValue Call(
             object function,
             object arg1,
             object arg2,
@@ -4146,14 +4080,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
             object arg6
         )
         {
-            return Call(
-                DynValue.FromObject(this, function),
-                DynValue.FromObject(this, arg1),
-                DynValue.FromObject(this, arg2),
-                DynValue.FromObject(this, arg3),
-                DynValue.FromObject(this, arg4),
-                DynValue.FromObject(this, arg5),
-                DynValue.FromObject(this, arg6)
+            return CallValues(
+                LuaValue.FromObject(this, function),
+                LuaValue.FromObject(this, arg1),
+                LuaValue.FromObject(this, arg2),
+                LuaValue.FromObject(this, arg3),
+                LuaValue.FromObject(this, arg4),
+                LuaValue.FromObject(this, arg5),
+                LuaValue.FromObject(this, arg6)
             );
         }
 
@@ -4170,7 +4104,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg7">The seventh argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
+        public LuaValue Call(
             object function,
             object arg1,
             object arg2,
@@ -4181,16 +4115,46 @@ namespace WallstopStudios.NovaSharp.Interpreter
             object arg7
         )
         {
-            return Call(
-                DynValue.FromObject(this, function),
-                DynValue.FromObject(this, arg1),
-                DynValue.FromObject(this, arg2),
-                DynValue.FromObject(this, arg3),
-                DynValue.FromObject(this, arg4),
-                DynValue.FromObject(this, arg5),
-                DynValue.FromObject(this, arg6),
-                DynValue.FromObject(this, arg7)
+            return CallValues(
+                LuaValue.FromObject(this, function),
+                LuaValue.FromObject(this, arg1),
+                LuaValue.FromObject(this, arg2),
+                LuaValue.FromObject(this, arg3),
+                LuaValue.FromObject(this, arg4),
+                LuaValue.FromObject(this, arg5),
+                LuaValue.FromObject(this, arg6),
+                LuaValue.FromObject(this, arg7)
             );
+        }
+
+        /// <summary>
+        /// Calls the specified function with preconverted Lua arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called.</param>
+        /// <param name="args">The preconverted Lua arguments to pass to the function.</param>
+        /// <returns>The return value(s) of the function call.</returns>
+        /// <exception cref="System.ArgumentNullException">Thrown if <paramref name="args"/> is null.</exception>
+        /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
+        public LuaValue Call(object function, LuaValue[] args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            return CallValues(LuaValue.FromObject(this, function), args.AsSpan());
+        }
+
+        /// <summary>
+        /// Calls the specified function with caller-owned contiguous preconverted Lua arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called.</param>
+        /// <param name="args">The preconverted Lua arguments to pass to the function.</param>
+        /// <returns>The return value(s) of the function call.</returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
+        public LuaValue Call(object function, ReadOnlySpan<LuaValue> args)
+        {
+            return CallValues(LuaValue.FromObject(this, function), args);
         }
 
         /// <summary>
@@ -4200,14 +4164,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="args">The arguments to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(object function, params object[] args)
+        public LuaValue Call(object function, params object[] args)
         {
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
             }
 
-            return CallObjectArguments(DynValue.FromObject(this, function), args.AsSpan());
+            return CallObjectArgumentsCore(LuaValue.FromObject(this, function), args.AsSpan());
         }
 
         /// <summary>
@@ -4219,14 +4183,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
-        public DynValue CallObjectArguments(object function, object[] args)
+        public LuaValue CallObjectArguments(object function, object[] args)
         {
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
             }
 
-            return CallObjectArguments(DynValue.FromObject(this, function), args.AsSpan());
+            return CallObjectArgumentsCore(LuaValue.FromObject(this, function), args.AsSpan());
         }
 
         /// <summary>
@@ -4238,9 +4202,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
-        public DynValue CallObjectArguments(object function, ReadOnlySpan<object> args)
+        public LuaValue CallObjectArguments(object function, ReadOnlySpan<object> args)
         {
-            return CallObjectArguments(DynValue.FromObject(this, function), args);
+            return CallObjectArgumentsCore(LuaValue.FromObject(this, function), args);
         }
 
         /// <summary>
@@ -4251,13 +4215,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The coroutine handle.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function or DataType.ClrFunction</exception>
-        public DynValue CreateCoroutine(DynValue function)
+        internal LuaValue CreateCoroutineValue(LuaValue function)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
 
             // Check coroutine limit before creating
@@ -4269,7 +4228,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
             else if (function.Type == DataType.ClrFunction)
             {
-                return DynValue.NewCoroutine(new Coroutine(function.Callback));
+                return LuaValue.NewCoroutine(new Coroutine(function.Callback));
             }
             else
             {
@@ -4323,7 +4282,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>
         /// The new coroutine handle.
         /// </returns>
-        public DynValue RecycleCoroutine(Coroutine coroutine, DynValue function)
+        public LuaValue RecycleCoroutine(Coroutine coroutine, LuaValue function)
         {
             this.CheckScriptOwnership(coroutine);
             this.CheckScriptOwnership(function);
@@ -4333,7 +4292,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 throw new InvalidOperationException("coroutine is not CoroutineType.Coroutine");
             }
 
-            if (function == null || function.Type != DataType.Function)
+            if (function.Type != DataType.Function)
             {
                 throw new InvalidOperationException("function is not DataType.Function");
             }
@@ -4356,9 +4315,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The coroutine handle.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function or DataType.ClrFunction</exception>
-        public DynValue CreateCoroutine(object function)
+        public LuaValue CreateCoroutine(object function)
         {
-            return CreateCoroutine(DynValue.FromObject(this, function));
+            return CreateCoroutineValue(LuaValue.FromObject(this, function));
         }
 
         /// <summary>
@@ -4611,7 +4570,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalContext">The global context.</param>
         /// <returns></returns>
         /// <exception cref="ScriptRuntimeException">Raised if module is not found</exception>
-        public DynValue RequireModule(string modname, Table globalContext = null)
+        public LuaValue RequireModule(string modname, Table globalContext = null)
         {
             this.CheckScriptOwnership(globalContext);
 
@@ -4643,7 +4602,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 );
             }
 
-            DynValue func = LoadFile(filename, globalContext, filename);
+            LuaValue func = LoadFile(filename, globalContext, filename);
             return func;
         }
 
@@ -4811,7 +4770,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="code">The code of the not-so-dynamic expression.</param>
         /// <param name="constant">The constant to return.</param>
         /// <returns></returns>
-        public DynamicExpression CreateConstantDynamicExpression(string code, DynValue constant)
+        public DynamicExpression CreateConstantDynamicExpression(string code, LuaValue constant)
         {
             this.CheckScriptOwnership(constant);
 

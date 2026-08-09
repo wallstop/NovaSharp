@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
     using System.Collections.Generic;
     using System.Globalization;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -13,11 +14,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
         [global::TUnit.Core.Test]
         public async Task ConvertFiltersByDataTypeAndProjectsToClrType()
         {
-            IEnumerable<DynValue> values = new List<DynValue>
+            IEnumerable<LuaValue> values = new List<LuaValue>
             {
-                DynValue.NewNumber(1),
-                DynValue.NewString("one"),
-                DynValue.NewNumber(2),
+                LuaValue.NewNumber(1),
+                LuaValue.NewString("one"),
+                LuaValue.NewNumber(2),
             };
 
             List<double> numbers = new(values.Convert<double>(DataType.Number));
@@ -30,17 +31,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
         [global::TUnit.Core.Test]
         public async Task OfDataTypeReturnsOnlyMatchingValues()
         {
-            IEnumerable<DynValue> values = new List<DynValue>
+            IEnumerable<LuaValue> values = new List<LuaValue>
             {
-                DynValue.NewString("alpha"),
-                DynValue.NewNumber(3),
-                DynValue.NewString("beta"),
+                LuaValue.NewString("alpha"),
+                LuaValue.NewNumber(3),
+                LuaValue.NewString("beta"),
             };
 
-            List<DynValue> strings = new(values.OfDataType(DataType.String));
+            List<LuaValue> strings = new(values.OfDataType(DataType.String));
             List<string> stringValues = new();
 
-            foreach (DynValue value in strings)
+            foreach (LuaValue value in strings)
             {
                 stringValues.Add(value.String);
             }
@@ -53,10 +54,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
         [global::TUnit.Core.Test]
         public async Task AsObjectsProjectsToRawObjects()
         {
-            IEnumerable<DynValue> values = new List<DynValue>
+            IEnumerable<LuaValue> values = new List<LuaValue>
             {
-                DynValue.NewNumber(5),
-                DynValue.NewString("value"),
+                LuaValue.NewNumber(5),
+                LuaValue.NewString("value"),
             };
 
             List<object> objects = new(values.AsObjects());
@@ -72,11 +73,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
         [global::TUnit.Core.Test]
         public async Task AsObjectsGenericProjectsToRequestedType()
         {
-            IEnumerable<DynValue> values = new List<DynValue>
+            IEnumerable<LuaValue> values = new List<LuaValue>
             {
-                DynValue.NewString("one"),
-                DynValue.NewString("two"),
-                DynValue.NewString("three"),
+                LuaValue.NewString("one"),
+                LuaValue.NewString("two"),
+                LuaValue.NewString("three"),
             };
 
             List<string> strings = new(values.AsObjects<string>());
@@ -90,7 +91,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
         [global::TUnit.Core.Test]
         public async Task HelpersThrowWhenEnumerableIsNull()
         {
-            IEnumerable<DynValue> values = null;
+            IEnumerable<LuaValue> values = null;
 
             ArgumentNullException convertException = Assert.Throws<ArgumentNullException>(() =>
             {
@@ -103,7 +104,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
 
             ArgumentNullException ofDataTypeException = Assert.Throws<ArgumentNullException>(() =>
             {
-                _ = new List<DynValue>(values.OfDataType(DataType.String));
+                _ = new List<LuaValue>(values.OfDataType(DataType.String));
             });
             await Assert
                 .That(ofDataTypeException.ParamName)

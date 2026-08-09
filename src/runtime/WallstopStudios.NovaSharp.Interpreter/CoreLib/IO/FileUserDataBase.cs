@@ -6,7 +6,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
     using System.IO;
     using System.Security;
     using System.Text;
+    using global::NovaSharp;
     using Cysharp.Text;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -27,11 +29,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         /// <param name="executionContext">Execution context owning the Lua script.</param>
         /// <param name="args">Optional format arguments (mirroring <c>file:read</c>).</param>
         /// <returns>A tuple whose elements contain each successful read followed by the final <c>nil</c>.</returns>
-        public DynValue Lines(ScriptExecutionContext executionContext, CallbackArguments args)
+        public LuaValue Lines(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            List<DynValue> readLines = new();
+            List<LuaValue> readLines = new();
 
-            DynValue readValue = null;
+            LuaValue readValue;
 
             do
             {
@@ -52,7 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         /// <param name="executionContext">Execution context owning the current script.</param>
         /// <param name="args">Lua-style parameters describing byte counts or format specifiers.</param>
         /// <returns>A tuple containing the requested values, or <c>nil</c> when the stream reaches EOF.</returns>
-        public DynValue Read(ScriptExecutionContext executionContext, CallbackArguments args)
+        public LuaValue Read(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             if (args.Count == 0)
             {
@@ -60,34 +62,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
 
                 if (str == null)
                 {
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
 
                 str = TrimLineEnding(str);
-                return DynValue.NewString(str);
+                return LuaValue.NewString(str);
             }
             else
             {
-                using PooledResource<List<DynValue>> pooled = ListPool<DynValue>.Get(
+                using PooledResource<List<LuaValue>> pooled = ListPool<LuaValue>.Get(
                     args.Count,
-                    out List<DynValue> rets
+                    out List<LuaValue> rets
                 );
 
                 for (int i = 0; i < args.Count; i++)
                 {
-                    DynValue v;
+                    LuaValue v;
 
                     if (args[i].Type == DataType.Number)
                     {
                         if (Eof())
                         {
-                            return DynValue.Nil;
+                            return LuaValue.Nil;
                         }
 
                         int howmany = (int)args[i].Number;
 
                         string str = ReadBuffer(howmany);
-                        v = DynValue.NewString(str);
+                        v = LuaValue.NewString(str);
                     }
                     else
                     {
@@ -96,32 +98,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                         if (Eof())
                         {
                             v = opt.StartsWith("*a", StringComparison.Ordinal)
-                                ? DynValue.NewString(string.Empty)
-                                : DynValue.Nil;
+                                ? LuaValue.NewString(string.Empty)
+                                : LuaValue.Nil;
                         }
                         else if (opt.StartsWith("*n", StringComparison.Ordinal))
                         {
-                            double? d = ReadNumber();
+                            LuaNumber? d = ReadNumber(executionContext.Script.CompatibilityVersion);
 
                             if (d.HasValue)
                             {
-                                v = DynValue.NewNumber(d.Value);
+                                v = LuaValue.NewNumber(d.Value);
                             }
                             else
                             {
-                                v = DynValue.Nil;
+                                v = LuaValue.Nil;
                             }
                         }
                         else if (opt.StartsWith("*a", StringComparison.Ordinal))
                         {
                             string str = ReadToEnd();
-                            v = DynValue.NewString(str);
+                            v = LuaValue.NewString(str);
                         }
                         else if (opt.StartsWith("*l", StringComparison.Ordinal))
                         {
                             string str = ReadLine();
                             str = TrimLineEnding(str);
-                            v = DynValue.NewString(str);
+                            v = LuaValue.NewString(str);
                         }
                         else if (opt.StartsWith("*L", StringComparison.Ordinal))
                         {
@@ -130,7 +132,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                             str = TrimLineEnding(str);
                             str += "\n";
 
-                            v = DynValue.NewString(str);
+                            v = LuaValue.NewString(str);
                         }
                         else
                         {
@@ -147,7 +149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                     return rets[0];
                 }
 
-                return DynValue.NewTuple(ListPool<DynValue>.ToExactArray(rets));
+                return LuaValue.NewTuple(ListPool<LuaValue>.ToExactArray(rets));
             }
         }
 
@@ -178,7 +180,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         /// <param name="executionContext">Execution context owning the current script.</param>
         /// <param name="args">Arguments that should be written sequentially to the stream.</param>
         /// <returns>The userdata handle so Lua callers can chain additional writes.</returns>
-        public DynValue Write(ScriptExecutionContext executionContext, CallbackArguments args)
+        public LuaValue Write(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             try
             {
@@ -188,7 +190,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                     Write(str);
                 }
 
-                return UserData.Create(this);
+                return UserData.TryCreate(executionContext.Script, this, out LuaValue value)
+                    ? value
+                    : LuaValue.Nil;
             }
             catch (ScriptRuntimeException)
             {
@@ -206,22 +210,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         /// </summary>
         /// <param name="executionContext">Execution context owning the current script.</param>
         /// <param name="args">Unused Lua arguments; accepted for signature parity.</param>
-        /// <returns>A <see cref="DynValue"/> conveying <c>true</c> or the Lua error tuple.</returns>
-        public DynValue Close(ScriptExecutionContext executionContext, CallbackArguments args)
+        /// <returns>A <see cref="LuaValue"/> conveying <c>true</c> or the Lua error tuple.</returns>
+        public LuaValue Close(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             try
             {
                 string msg = Close();
                 if (msg == null)
                 {
-                    return DynValue.True;
+                    return LuaValue.True;
                 }
                 else
                 {
-                    return DynValue.NewTuple(
-                        DynValue.Nil,
-                        DynValue.NewString(msg),
-                        DynValue.NewNumber(-1)
+                    return LuaValue.NewTuple(
+                        LuaValue.Nil,
+                        LuaValue.NewString(msg),
+                        LuaValue.NewNumber(-1)
                     );
                 }
             }
@@ -235,7 +239,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
             }
         }
 
-        private double? ReadNumber()
+        private LuaNumber? ReadNumber(LuaCompatibilityVersion version)
         {
             bool canRewind = SupportsRewind;
             long startPosition = canRewind ? GetCurrentPosition() : 0;
@@ -397,7 +401,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
             string numericText = literal.ToString();
 
             bool parsedSuccessfully = false;
-            double parsedValue = 0;
+            LuaNumber parsedValue = LuaNumber.Zero;
 
             if (isHex)
             {
@@ -410,7 +414,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                     isValidLiteral = false;
                 }
 
-                if (isValidLiteral && TryParseHexFloatLiteral(numericText, out parsedValue))
+                if (
+                    isValidLiteral && TryParseHexFloatLiteral(numericText, version, out parsedValue)
+                )
                 {
                     parsedSuccessfully = true;
                 }
@@ -423,15 +429,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                     && hasDigits
                     && !(exponentSeen && !exponentHasDigits);
 
-                if (
-                    isValidLiteral
-                    && double.TryParse(
-                        numericText,
-                        NumberStyles.Float,
-                        CultureInfo.InvariantCulture,
-                        out parsedValue
-                    )
-                )
+                if (isValidLiteral && LuaNumber.TryParse(numericText, version, out parsedValue))
                 {
                     parsedSuccessfully = true;
                 }
@@ -623,7 +621,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         /// <returns><c>true</c> when the literal is valid and <paramref name="value"/> contains the parsed number.</returns>
         internal static bool TryParseHexFloatLiteral(string literal, out double value)
         {
-            value = 0;
+            bool parsed = TryParseHexFloatLiteral(
+                literal,
+                LuaVersionDefaults.CurrentDefault,
+                out LuaNumber parsedNumber
+            );
+            value = parsedNumber.ToDouble;
+            return parsed;
+        }
+
+        private static bool TryParseHexFloatLiteral(
+            string literal,
+            LuaCompatibilityVersion version,
+            out LuaNumber value
+        )
+        {
+            value = LuaNumber.Zero;
 
             if (string.IsNullOrEmpty(literal))
             {
@@ -631,15 +644,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
             }
 
             int index = 0;
-            int sign = 1;
 
             if (literal[index] == '+' || literal[index] == '-')
             {
-                if (literal[index] == '-')
-                {
-                    sign = -1;
-                }
-
                 index++;
 
                 if (index >= literal.Length)
@@ -657,94 +664,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                 return false;
             }
 
-            index += 2;
-
-            double significand = 0;
-            bool digitsSeen = false;
-            int fractionalDigits = 0;
-
-            while (index < literal.Length && LexerUtils.CharIsHexDigit(literal[index]))
-            {
-                significand = (significand * 16.0) + TryGetHexDigitValue(literal[index]);
-                index++;
-                digitsSeen = true;
-            }
-
-            if (index < literal.Length && literal[index] == '.')
-            {
-                index++;
-
-                while (index < literal.Length && LexerUtils.CharIsHexDigit(literal[index]))
-                {
-                    significand = (significand * 16.0) + TryGetHexDigitValue(literal[index]);
-                    index++;
-                    digitsSeen = true;
-                    fractionalDigits++;
-                }
-            }
-
-            if (!digitsSeen)
-            {
-                return false;
-            }
-
-            int exponent = -4 * fractionalDigits;
-
-            if (index < literal.Length && (literal[index] == 'p' || literal[index] == 'P'))
-            {
-                index++;
-                if (index >= literal.Length)
-                {
-                    return false;
-                }
-
-                int exponentSign = 1;
-                if (literal[index] == '+' || literal[index] == '-')
-                {
-                    if (literal[index] == '-')
-                    {
-                        exponentSign = -1;
-                    }
-
-                    index++;
-                }
-
-                if (index >= literal.Length || !char.IsDigit(literal[index]))
-                {
-                    return false;
-                }
-
-                int exponentValue = 0;
-                while (index < literal.Length && char.IsDigit(literal[index]))
-                {
-                    exponentValue = (exponentValue * 10) + (literal[index] - '0');
-                    index++;
-                }
-
-                exponent += exponentSign * exponentValue;
-            }
-
-            if (index != literal.Length)
-            {
-                return false;
-            }
-
-            double magnitude = significand * Math.Pow(2.0, exponent);
-            value = sign * magnitude;
-            return true;
+            LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
+            LuaCompatibilityVersion numericVersion =
+                resolved < LuaCompatibilityVersion.Lua53 ? LuaCompatibilityVersion.Lua52 : resolved;
+            return LuaNumber.TryParse(literal, numericVersion, out value);
         }
 
-        private static int TryGetHexDigitValue(char c)
+        private static LuaValue CreateIoFailure(Exception exception)
         {
-            return LexerUtils.HexDigit2Value(c);
-        }
-
-        private static DynValue CreateIoFailure(Exception exception)
-        {
-            return DynValue.NewTuple(
-                DynValue.Nil,
-                DynValue.NewString(exception.Message),
-                DynValue.NewNumber(-1)
+            return LuaValue.NewTuple(
+                LuaValue.Nil,
+                LuaValue.NewString(exception.Message),
+                LuaValue.NewNumber(-1)
             );
         }
 

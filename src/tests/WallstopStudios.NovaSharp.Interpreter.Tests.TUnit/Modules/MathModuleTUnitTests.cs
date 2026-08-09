@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -20,7 +21,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.log(8)");
+            LuaValue result = script.DoString("return math.log(8)");
 
             await Assert
                 .That(result.Number)
@@ -34,7 +35,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LogSupportsCustomBase(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.log(8, 2)");
+            LuaValue result = script.DoString("return math.log(8, 2)");
 
             await Assert.That(result.Number).IsEqualTo(3d).Within(1e-12).ConfigureAwait(false);
         }
@@ -49,7 +50,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task PowHandlesLargeExponent(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.pow(10, 6)");
+            LuaValue result = script.DoString("return math.pow(10, 6)");
 
             await Assert
                 .That(result.Number)
@@ -66,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.modf(-3.25)");
+            LuaValue result = script.DoString("return math.modf(-3.25)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Number).IsEqualTo(-3d).ConfigureAwait(false);
@@ -84,7 +85,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.max(-1, 5, 12, 3)");
+            LuaValue result = script.DoString("return math.max(-1, 5, 12, 3)");
 
             await Assert.That(result.Number).IsEqualTo(12d).ConfigureAwait(false);
         }
@@ -96,7 +97,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.min(-1, 5, 12, 3)");
+            LuaValue result = script.DoString("return math.min(-1, 5, 12, 3)");
 
             await Assert.That(result.Number).IsEqualTo(-1d).ConfigureAwait(false);
         }
@@ -112,7 +113,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString("return math.ldexp(0.5, 3)");
+            LuaValue result = script.DoString("return math.ldexp(0.5, 3)");
 
             await Assert.That(result.Number).IsEqualTo(4d).Within(1e-12).ConfigureAwait(false);
         }
@@ -125,7 +126,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task FrexpAvailableInAllVersions(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.frexp(8)");
+            LuaValue result = script.DoString("return math.frexp(8)");
 
             // math.frexp(8) returns m=0.5, e=4 (8 = 0.5 * 2^4)
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -149,7 +150,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.sqrt(-1)");
+            LuaValue result = script.DoString("return math.sqrt(-1)");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
         }
@@ -165,7 +166,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.pow(10, 309)");
+            LuaValue result = script.DoString("return math.pow(10, 309)");
 
             await Assert
                 .That(double.IsPositiveInfinity(result.Number))
@@ -183,10 +184,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task PowIsNilInLua55(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString("return math.pow");
+            LuaValue result = script.DoString("return math.pow");
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because(
                     "math.pow was removed in Lua 5.5. Use ^ operator instead. "
@@ -206,7 +207,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString("return 10 ^ 6");
+            LuaValue result = script.DoString("return 10 ^ 6");
 
             await Assert
                 .That(result.Number)
@@ -224,14 +225,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue firstSequence = script.DoString(
+            LuaValue firstSequence = script.DoString(
                 @"
                 math.randomseed(1337)
                 return math.random(1, 100), math.random(1, 100), math.random()
                 "
             );
 
-            DynValue secondSequence = script.DoString(
+            LuaValue secondSequence = script.DoString(
                 @"
                 math.randomseed(1337)
                 return math.random(1, 100), math.random(1, 100), math.random()
@@ -259,7 +260,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue tuple = script.DoString("return math.type(5), math.type(3.14)");
+            LuaValue tuple = script.DoString("return math.type(5), math.type(3.14)");
 
             await Assert.That(tuple.Tuple[0].String).IsEqualTo("integer").ConfigureAwait(false);
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("float").ConfigureAwait(false);
@@ -272,7 +273,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.tointeger('42')");
+            LuaValue result = script.DoString("return math.tointeger('42')");
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
@@ -284,9 +285,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.tointeger(3.5)");
+            LuaValue result = script.DoString("return math.tointeger(3.5)");
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -315,7 +316,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Reference: Lua 5.3 Manual §6.7
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return math.tointeger(true)");
+            LuaValue result = script.DoString("return math.tointeger(true)");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
@@ -325,7 +326,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task ToIntegerReturnsNilForTable(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.tointeger({})");
+            LuaValue result = script.DoString("return math.tointeger({})");
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
@@ -336,7 +337,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.tointeger(function() end)");
+            LuaValue result = script.DoString("return math.tointeger(function() end)");
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
@@ -345,7 +346,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task ToIntegerReturnsNilForNil(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.tointeger(nil)");
+            LuaValue result = script.DoString("return math.tointeger(nil)");
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
@@ -356,7 +357,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue tuple = script.DoString("return math.ult(0, -1), math.ult(-1, 0)");
+            LuaValue tuple = script.DoString("return math.ult(0, -1), math.ult(-1, 0)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(tuple.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
@@ -373,7 +374,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString("return math.frexp(0)");
+            LuaValue result = script.DoString("return math.frexp(0)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Number).IsEqualTo(0d).ConfigureAwait(false);
@@ -391,7 +392,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString("return math.frexp(-0.0)");
+            LuaValue result = script.DoString("return math.frexp(-0.0)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Number).IsEqualTo(0d).ConfigureAwait(false);
@@ -409,7 +410,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString("return math.frexp(-8)");
+            LuaValue result = script.DoString("return math.frexp(-8)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Number).IsLessThan(0d).ConfigureAwait(false);
@@ -438,7 +439,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript(version);
             double subnormal = double.Epsilon; // Smallest positive subnormal
             script.Globals["subnormal"] = subnormal;
-            DynValue result = script.DoString("return math.frexp(subnormal)");
+            LuaValue result = script.DoString("return math.frexp(subnormal)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             double m = result.Tuple[0].Number;
@@ -465,7 +466,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString("return math.frexp(16)");
+            LuaValue result = script.DoString("return math.frexp(16)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             double m = result.Tuple[0].Number;
@@ -489,7 +490,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task FrexpAndLdexpRoundTrip(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local m, e = math.frexp(123.456)
                 return math.ldexp(m, e)
@@ -510,7 +511,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.floor(3.7)");
+            LuaValue result = script.DoString("return math.floor(3.7)");
 
             await Assert.That(result.Number).IsEqualTo(3d).ConfigureAwait(false);
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
@@ -523,7 +524,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.floor(-3.7)");
+            LuaValue result = script.DoString("return math.floor(-3.7)");
 
             await Assert.That(result.Number).IsEqualTo(-4d).ConfigureAwait(false);
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
@@ -534,7 +535,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task FloorPreservesIntegerInput(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.floor(42)");
+            LuaValue result = script.DoString("return math.floor(42)");
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
@@ -547,7 +548,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.type(math.floor(3.7))");
+            LuaValue result = script.DoString("return math.type(math.floor(3.7))");
 
             await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
         }
@@ -557,7 +558,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task FloorHandlesInfinityAsFloat(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.floor(1/0)");
+            LuaValue result = script.DoString("return math.floor(1/0)");
 
             await Assert
                 .That(double.IsPositiveInfinity(result.Number))
@@ -571,7 +572,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task FloorHandlesNaNAsFloat(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.floor(0/0)");
+            LuaValue result = script.DoString("return math.floor(0/0)");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
             await Assert.That(result.IsFloat).IsTrue().ConfigureAwait(false);
@@ -582,7 +583,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task FloorPreservesIntegerZero(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.floor(0)");
+            LuaValue result = script.DoString("return math.floor(0)");
 
             await Assert.That(result.Number).IsEqualTo(0d).ConfigureAwait(false);
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
@@ -595,7 +596,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.floor(-0.0)");
+            LuaValue result = script.DoString("return math.floor(-0.0)");
 
             // Negative zero floored is 0, which should be returned as integer
             await Assert.That(result.Number).IsEqualTo(0d).ConfigureAwait(false);
@@ -613,7 +614,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.ceil(3.2)");
+            LuaValue result = script.DoString("return math.ceil(3.2)");
 
             await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
@@ -626,7 +627,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.ceil(-3.2)");
+            LuaValue result = script.DoString("return math.ceil(-3.2)");
 
             await Assert.That(result.Number).IsEqualTo(-3d).ConfigureAwait(false);
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
@@ -637,7 +638,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task CeilPreservesIntegerInput(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.ceil(42)");
+            LuaValue result = script.DoString("return math.ceil(42)");
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
@@ -650,7 +651,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.type(math.ceil(3.2))");
+            LuaValue result = script.DoString("return math.type(math.ceil(3.2))");
 
             await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
         }
@@ -660,7 +661,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task CeilHandlesInfinityAsFloat(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.ceil(1/0)");
+            LuaValue result = script.DoString("return math.ceil(1/0)");
 
             await Assert
                 .That(double.IsPositiveInfinity(result.Number))
@@ -674,7 +675,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task CeilHandlesNaNAsFloat(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.ceil(0/0)");
+            LuaValue result = script.DoString("return math.ceil(0/0)");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
             await Assert.That(result.IsFloat).IsTrue().ConfigureAwait(false);
@@ -685,7 +686,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task CeilPreservesIntegerZero(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.ceil(0)");
+            LuaValue result = script.DoString("return math.ceil(0)");
 
             await Assert.That(result.Number).IsEqualTo(0d).ConfigureAwait(false);
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
@@ -698,7 +699,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.ceil(0.5)");
+            LuaValue result = script.DoString("return math.ceil(0.5)");
 
             await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
@@ -714,7 +715,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Note: math.maxinteger + 0.5 rounds to 2^63 which is OUTSIDE integer range,
             // so we test with a valid case instead.
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return string.format('%d', math.floor(3.7))");
+            LuaValue result = script.DoString("return string.format('%d', math.floor(3.7))");
 
             // math.floor(3.7) = 3 (promoted to integer subtype in Lua 5.3+)
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
@@ -781,7 +782,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random(1.9) should truncate to 1, then return 1 (since random(1) returns 1)
-            DynValue result = script.DoString("return math.random(1.9)");
+            LuaValue result = script.DoString("return math.random(1.9)");
 
             // Result should be 1 (truncated from 1.9)
             await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
@@ -819,7 +820,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // inf → LONG_MIN, then 1 <= LONG_MIN is FALSE → error
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return math.random(1/0)");
+            LuaValue result = script.DoString("return math.random(1/0)");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
         }
@@ -927,7 +928,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random(1, 2.0) should work since 2.0 has integer representation
-            DynValue result = script.DoString("return math.random(1, 2.0)");
+            LuaValue result = script.DoString("return math.random(1, 2.0)");
 
             await Assert.That(result.Number).IsGreaterThanOrEqualTo(1d).ConfigureAwait(false);
             await Assert.That(result.Number).IsLessThanOrEqualTo(2d).ConfigureAwait(false);
@@ -990,7 +991,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // Should not throw in Lua 5.1-5.3
-            DynValue result = script.DoString("math.randomseed(1.5); return true");
+            LuaValue result = script.DoString("math.randomseed(1.5); return true");
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -1044,7 +1045,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Lua 5.4+: math.random(0) returns a random integer (per Lua 5.4 §6.7)
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return math.random(0)");
+            LuaValue result = script.DoString("return math.random(0)");
             // Just verify it returns a number (the value is random)
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
         }
@@ -1087,7 +1088,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random(5, 5) should always return 5
-            DynValue result = script.DoString("return math.random(5, 5)");
+            LuaValue result = script.DoString("return math.random(5, 5)");
             await Assert.That(result.Number).IsEqualTo(5d).ConfigureAwait(false);
         }
 
@@ -1098,7 +1099,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random(1) should always return 1
-            DynValue result = script.DoString("return math.random(1)");
+            LuaValue result = script.DoString("return math.random(1)");
             await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
         }
 
@@ -1111,7 +1112,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random(-10, -5) should return value in [-10, -5]
-            DynValue result = script.DoString("return math.random(-10, -5)");
+            LuaValue result = script.DoString("return math.random(-10, -5)");
             await Assert.That(result.Number).IsGreaterThanOrEqualTo(-10d).ConfigureAwait(false);
             await Assert.That(result.Number).IsLessThanOrEqualTo(-5d).ConfigureAwait(false);
         }
@@ -1125,7 +1126,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random(-5, 5) should return value in [-5, 5]
-            DynValue result = script.DoString("return math.random(-5, 5)");
+            LuaValue result = script.DoString("return math.random(-5, 5)");
             await Assert.That(result.Number).IsGreaterThanOrEqualTo(-5d).ConfigureAwait(false);
             await Assert.That(result.Number).IsLessThanOrEqualTo(5d).ConfigureAwait(false);
         }
@@ -1139,7 +1140,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random() should return a float in [0, 1)
-            DynValue result = script.DoString("return math.random()");
+            LuaValue result = script.DoString("return math.random()");
             await Assert.That(result.Number).IsGreaterThanOrEqualTo(0d).ConfigureAwait(false);
             await Assert.That(result.Number).IsLessThan(1d).ConfigureAwait(false);
         }
@@ -1153,7 +1154,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // Test with a large but valid range
-            DynValue result = script.DoString("return math.random(1, 1000000)");
+            LuaValue result = script.DoString("return math.random(1, 1000000)");
             await Assert.That(result.Number).IsGreaterThanOrEqualTo(1d).ConfigureAwait(false);
             await Assert.That(result.Number).IsLessThanOrEqualTo(1000000d).ConfigureAwait(false);
         }
@@ -1306,8 +1307,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript(version);
 
             // In Lua 5.1, math.log always returns natural log regardless of second argument
-            DynValue resultWithoutBase = script.DoString("return math.log(100)");
-            DynValue resultWithBase = script.DoString("return math.log(100, 10)");
+            LuaValue resultWithoutBase = script.DoString("return math.log(100)");
+            LuaValue resultWithBase = script.DoString("return math.log(100, 10)");
 
             // Both should return ln(100) ≈ 4.605
             double expectedNaturalLog = Math.Log(100);
@@ -1334,7 +1335,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.log(100, 10) should return log base 10 of 100 = 2
-            DynValue result = script.DoString("return math.log(100, 10)");
+            LuaValue result = script.DoString("return math.log(100, 10)");
 
             await Assert
                 .That(result.Number)
@@ -1356,7 +1357,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.log10(100)");
+            LuaValue result = script.DoString("return math.log10(100)");
 
             await Assert
                 .That(result.Number)
@@ -1402,10 +1403,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task Log10IsNilInLua55(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString("return math.log10");
+            LuaValue result = script.DoString("return math.log10");
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because(
                     "math.log10 was removed in Lua 5.5. Use math.log(x, 10) instead. "
@@ -1426,7 +1427,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             // math.mod should be available and work like fmod (returns 10 % 3 = 1)
             // Note: math.mod is an alias for math.fmod, NOT IEEE remainder
-            DynValue result = script.DoString("return math.mod(10, 3)");
+            LuaValue result = script.DoString("return math.mod(10, 3)");
 
             await Assert
                 .That(result.Number)
@@ -1444,10 +1445,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task ModIsNilInLua52Plus(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.mod");
+            LuaValue result = script.DoString("return math.mod");
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because($"math.mod was removed in Lua 5.2+. Actual type: {result.Type}")
                 .ConfigureAwait(false);
@@ -1466,7 +1467,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.modf(3.5) should return (3, 0.5) with 3 as integer subtype
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "local i, f = math.modf(3.5); return math.type(i), i, math.type(f), f"
             );
 
@@ -1502,7 +1503,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.modf(3.5) should return (3.0, 0.5) both as floats
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "local i, f = math.modf(3.5); return type(i), i, type(f), f"
             );
 
@@ -1537,7 +1538,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.modf(-3.5) should return (-3, -0.5) with -3 as integer subtype
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "local i, f = math.modf(-3.5); return math.type(i), i, math.type(f), f"
             );
 
@@ -1688,7 +1689,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // - Lua 5.2: -inf <= 10 is TRUE per IEEE 754
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString($"return {luaExpression}");
+            LuaValue result = script.DoString($"return {luaExpression}");
 
             await Assert
                 .That(result.Type)
@@ -1712,7 +1713,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Lua 5.2: compares floats first, 1 <= inf is TRUE → succeeds
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return math.random(1, 1/0)");
+            LuaValue result = script.DoString("return math.random(1, 1/0)");
 
             await Assert
                 .That(result.Type)
@@ -1812,7 +1813,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Lua 5.1: converts to integer FIRST, inf/nan → LONG_MIN, then LONG_MIN <= 10 is TRUE
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString($"return {luaExpression}");
+            LuaValue result = script.DoString($"return {luaExpression}");
 
             await Assert
                 .That(result.Type)
@@ -1833,7 +1834,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // - Lua 5.1/5.2: returns (-5, -0) - negative zero preserved
             // - Lua 5.3+: returns (-5, 0.0) - always positive zero
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local int_part, frac_part = math.modf(-5)
                 -- Check if fractional part is negative zero (1/-0 = -inf)
@@ -1865,7 +1866,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // math.modf(5) should return (5, +0)
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local int_part, frac_part = math.modf(5)
                 -- Check if fractional part is positive zero (1/+0 = +inf)
@@ -1894,7 +1895,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // - Lua 5.1/5.2: returns (-inf, -0) - negative zero preserved
             // - Lua 5.3+: returns (-inf, 0.0) - always positive zero
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local int_part, frac_part = math.modf(-math.huge)
                 local is_neg_zero = (frac_part == 0 and 1/frac_part == -math.huge)
@@ -1947,7 +1948,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString($"return {luaExpression}");
+            LuaValue result = script.DoString($"return {luaExpression}");
 
             await Assert
                 .That(result.Type)
@@ -2091,7 +2092,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // Should not throw - returns nothing (nil)
-            DynValue result = script.DoString($"{luaExpression}; return true");
+            LuaValue result = script.DoString($"{luaExpression}; return true");
 
             await Assert
                 .That(result.Boolean)
@@ -2130,7 +2131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local int_part, frac_part = math.modf({input})
                 local is_neg_zero = (frac_part == 0 and 1/frac_part == -math.huge)
@@ -2186,7 +2187,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local int_part, frac_part = math.modf({input})
                 local is_pos_zero = (frac_part == 0 and 1/frac_part == math.huge)
@@ -2238,7 +2239,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local int_part, frac_part = math.modf({luaInput})
                 local is_neg_zero = (frac_part == 0 and 1/frac_part == -math.huge)
@@ -2281,7 +2282,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local int_part, frac_part = math.modf(math.huge)
                 local is_pos_inf = (int_part == math.huge)
@@ -2328,7 +2329,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local int_part, frac_part = math.modf({luaInput})
                 local int_is_neg_zero = (int_part == 0 and 1/int_part == -math.huge)
@@ -2378,7 +2379,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task ModfNaNReturnsBothNaN(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local int_part, frac_part = math.modf(0/0)
                 return int_part, frac_part, int_part ~= int_part, frac_part ~= frac_part
@@ -2425,7 +2426,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString($"return math.floor({input})");
+            LuaValue result = script.DoString($"return math.floor({input})");
 
             await Assert
                 .That(result.Number)
@@ -2455,7 +2456,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString($"return math.ceil({input})");
+            LuaValue result = script.DoString($"return math.ceil({input})");
 
             await Assert
                 .That(result.Number)
@@ -2474,8 +2475,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScript(version);
 
-            DynValue posInf = script.DoString("return math.floor(math.huge)");
-            DynValue negInf = script.DoString("return math.floor(-math.huge)");
+            LuaValue posInf = script.DoString("return math.floor(math.huge)");
+            LuaValue negInf = script.DoString("return math.floor(-math.huge)");
 
             await Assert
                 .That(double.IsPositiveInfinity(posInf.Number))
@@ -2499,8 +2500,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScript(version);
 
-            DynValue posInf = script.DoString("return math.ceil(math.huge)");
-            DynValue negInf = script.DoString("return math.ceil(-math.huge)");
+            LuaValue posInf = script.DoString("return math.ceil(math.huge)");
+            LuaValue negInf = script.DoString("return math.ceil(-math.huge)");
 
             await Assert
                 .That(double.IsPositiveInfinity(posInf.Number))
@@ -2536,7 +2537,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString($"return math.fmod({dividend}, {divisor})");
+            LuaValue result = script.DoString($"return math.fmod({dividend}, {divisor})");
 
             await Assert
                 .That(result.Number)
@@ -2567,7 +2568,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString($"return math.type({expression})");
+            LuaValue result = script.DoString($"return math.type({expression})");
 
             await Assert
                 .That(result.String)
@@ -2594,10 +2595,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString($"return math.type({expression})");
+            LuaValue result = script.DoString($"return math.type({expression})");
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because($"math.type should return nil for {typeName} in {version}")
                 .ConfigureAwait(false);

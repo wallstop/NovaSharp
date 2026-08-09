@@ -42,19 +42,14 @@ ______________________________________________________________________
 Return early with graceful fallbacks:
 
 ```csharp
-public DynValue ProcessValue(DynValue input)
+public LuaValue ProcessValue(LuaValue input)
 {
-    if (input == null || input.Type != DataType.Table)
+    if (!input.IsTable)
     {
-        return DynValue.Nil;
+        return LuaValue.Nil;
     }
 
-    Table table = input.Table;
-    if (table == null)
-    {
-        return DynValue.Nil;
-    }
-
+    LuaTable table = input.AsTable();
     return table.Get("key");
 }
 ```
@@ -64,11 +59,11 @@ public DynValue ProcessValue(DynValue input)
 Make success/failure explicit:
 
 ```csharp
-public bool TryGetValue(string key, out DynValue result)
+public bool TryGetValue(string key, out LuaValue result)
 {
     if (string.IsNullOrEmpty(key))
     {
-        result = DynValue.Nil;
+        result = LuaValue.Nil;
         return false;
     }
 
@@ -81,11 +76,11 @@ public bool TryGetValue(string key, out DynValue result)
 Always check before collection access:
 
 ```csharp
-public DynValue GetArgument(int index)
+public LuaValue GetArgument(int index)
 {
     if (_arguments == null || index < 0 || index >= _arguments.Length)
     {
-        return DynValue.Nil;
+        return LuaValue.Nil;
     }
 
     return _arguments[index];
@@ -128,11 +123,11 @@ ______________________________________________________________________
 
 ```csharp
 // GOOD: Return default for optional/expected failures
-public DynValue GetGlobal(string name)
+public LuaValue GetGlobal(string name)
 {
     if (string.IsNullOrEmpty(name))
     {
-        return DynValue.Nil;
+        return LuaValue.Nil;
     }
     // ...
 }
@@ -179,10 +174,10 @@ public bool Execute()
 Validate everything first, then update:
 
 ```csharp
-public bool UpdateState(string key, DynValue value)
+public bool UpdateState(string key, LuaValue value)
 {
     // Validate first
-    if (string.IsNullOrEmpty(key) || value == null)
+    if (string.IsNullOrEmpty(key))
     {
         return false;
     }

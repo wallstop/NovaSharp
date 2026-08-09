@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using BasicDescriptors;
     using Compatibility;
     using Converters;
@@ -211,7 +212,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
         /// <exception cref="ScriptRuntimeException">function call doesn't match any overload</exception>
-        private DynValue PerformOverloadedCall(
+        private LuaValue PerformOverloadedCall(
             Script script,
             object obj,
             ScriptExecutionContext context,
@@ -312,7 +313,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         /// <summary>
         /// Invokes the overload set directly without first materializing a CLR callback wrapper.
         /// </summary>
-        internal DynValue Execute(
+        internal LuaValue Execute(
             Script script,
             object obj,
             ScriptExecutionContext context,
@@ -468,7 +469,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
 
             for (int i = 0; i < argCount; i++)
             {
-                DynValue arg = args[i];
+                LuaValue arg = args[i];
                 if (arg.Type != GetLastCallArgumentType(i))
                 {
                     return false;
@@ -550,7 +551,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
             }
         }
 
-        private void UpdateLastCallArgument(int index, DynValue arg)
+        private void UpdateLastCallArgument(int index, LuaValue arg)
         {
             Type userDataType = arg.Type == DataType.UserData ? arg.UserData.Descriptor.Type : null;
             switch (index)
@@ -632,19 +633,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 if (i == method.Parameters.Count - 1 && method.VarArgsArrayType != null)
                 {
                     int varArgCount = 0;
-                    DynValue firstArg = null;
+                    LuaValue firstArg = LuaValue.Nil;
                     int scoreBeforeVarArgs = totalScore;
 
                     // update score for varargs
-                    while (true)
+                    while (args.TryRawGet(argsCnt, translateVoids: false, out LuaValue arg))
                     {
-                        DynValue arg = args.RawGet(argsCnt, false);
-                        if (arg == null)
+                        if (varArgCount == 0)
                         {
-                            break;
+                            firstArg = arg;
                         }
-
-                        firstArg ??= arg;
 
                         argsCnt += 1;
 
@@ -660,7 +658,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                     }
 
                     // check if exact-match
-                    if (varArgCount == 1 && firstArg != null)
+                    if (varArgCount == 1)
                     {
                         if (firstArg.Type == DataType.UserData && firstArg.UserData.Object != null)
                         {
@@ -690,7 +688,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 }
                 else
                 {
-                    DynValue arg = args.RawGet(argsCnt, false) ?? DynValue.Void;
+                    LuaValue arg = args.TryRawGet(
+                        argsCnt,
+                        translateVoids: false,
+                        out LuaValue suppliedArgument
+                    )
+                        ? suppliedArgument
+                        : LuaValue.Void;
 
                     int score = CalcScoreForSingleArgument(
                         method.Parameters[i],
@@ -742,7 +746,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         private static int CalcScoreForSingleArgument(
             ParameterDescriptor desc,
             Type parameterType,
-            DynValue arg,
+            LuaValue arg,
             bool isOptional
         )
         {
@@ -766,7 +770,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         /// <param name="script">The script for which the callback must be generated.</param>
         /// <param name="obj">The object (null for static).</param>
         /// <returns></returns>
-        public Func<ScriptExecutionContext, CallbackArguments, DynValue> GetCallback(
+        public Func<ScriptExecutionContext, CallbackArguments, LuaValue> GetCallback(
             Script script,
             object obj
         )
@@ -796,7 +800,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         /// <returns></returns>
         public CallbackFunction GetCallbackFunction(Script script, object obj = null)
         {
-            return new CallbackFunction(GetCallback(script, obj), Name);
+            return new CallbackFunction(script, GetCallback(script, obj), Name);
         }
 
         /// <summary>
@@ -817,26 +821,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         }
 
         /// <summary>
-        /// Gets the value of this member as a <see cref="DynValue" /> to be exposed to scripts.
+        /// Gets the value of this member as a <see cref="LuaValue" /> to be exposed to scripts.
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object owning this member, or null if static.</param>
         /// <returns>
-        /// The value of this member as a <see cref="DynValue" />.
+        /// The value of this member as a <see cref="LuaValue" />.
         /// </returns>
-        public DynValue GetValue(Script script, object obj)
+        public LuaValue GetValue(Script script, object obj)
         {
-            return DynValue.NewCallback(GetCallbackFunction(script, obj));
+            return LuaValue.NewCallback(GetCallbackFunction(script, obj).BindToScript(script));
         }
 
         /// <summary>
-        /// Sets the value of this member from a <see cref="DynValue" />.
+        /// Sets the value of this member from a <see cref="LuaValue" />.
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object owning this member, or null if static.</param>
         /// <param name="value">The value to be set.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        public void SetValue(Script script, object obj, DynValue value)
+        public void SetValue(Script script, object obj, LuaValue value)
         {
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
         }
@@ -853,10 +857,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 throw new ArgumentNullException(nameof(t));
             }
 
-            t.Set("class", DynValue.NewString(GetType().FullName));
-            t.Set("name", DynValue.NewString(Name));
-            t.Set("decltype", DynValue.NewString(DeclaringType.FullName));
-            DynValue mst = DynValue.NewPrimeTable();
+            t.Set("class", LuaValue.NewString(GetType().FullName));
+            t.Set("name", LuaValue.NewString(Name));
+            t.Set("decltype", LuaValue.NewString(DeclaringType.FullName));
+            LuaValue mst = LuaValue.NewPrimeTable();
             t.Set("overloads", mst);
 
             int i = 0;
@@ -865,7 +869,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
             {
                 if (m is IWireableDescriptor sd)
                 {
-                    DynValue mt = DynValue.NewPrimeTable();
+                    LuaValue mt = LuaValue.NewPrimeTable();
                     mst.Table.Set(++i, mt);
                     sd.PrepareForWiring(mt.Table);
                 }
@@ -873,7 +877,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 {
                     mst.Table.Set(
                         ++i,
-                        DynValue.NewString(
+                        LuaValue.NewString(
                             ZString.Concat(
                                 "unsupported - ",
                                 m.GetType().FullName,

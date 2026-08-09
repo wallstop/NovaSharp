@@ -2,9 +2,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
 {
     using System;
     using System.Globalization;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
+    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     /// <summary>
@@ -40,7 +42,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         /// Parses a hexadecimal integer literal (prefixed with <c>0x</c> or <c>0X</c>).
         /// </summary>
         /// <param name="t">Token describing the literal text.</param>
-        /// <returns>The parsed integer represented as <see cref="double" /> for DynValue storage.</returns>
+        /// <returns>The parsed integer represented as <see cref="double" /> for LuaValue storage.</returns>
         /// <exception cref="SyntaxErrorException">Thrown when the literal is malformed.</exception>
         /// <exception cref="InternalErrorException">
         /// Thrown when the literal does not start with the expected prefix.
@@ -157,54 +159,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         public static double ParseHexFloat(Token t)
         {
             string s = t.text;
-
-            try
+            if ((s.Length < 2) || (s[0] != '0' && (char.ToUpperInvariant(s[1]) != 'X')))
             {
-                if ((s.Length < 2) || (s[0] != '0' && (char.ToUpperInvariant(s[1]) != 'X')))
-                {
-                    throw new InternalErrorException(
-                        "hex float must start with '0x' near '{0}'",
-                        s
-                    );
-                }
-
-                s = s.Substring(2);
-
-                double value = 0.0;
-                int dummy,
-                    exp = 0;
-
-                s = ReadHexProgressive(s, ref value, out dummy);
-
-                if (s.Length > 0 && s[0] == '.')
-                {
-                    s = s.Substring(1);
-                    s = ReadHexProgressive(s, ref value, out exp);
-                }
-
-                exp *= -4;
-
-                if (s.Length > 0 && char.ToUpperInvariant(s[0]) == 'P')
-                {
-                    if (s.Length == 1)
-                    {
-                        throw new SyntaxErrorException(t, "invalid hex float format near '{0}'", s);
-                    }
-
-                    s = s.Substring(s[1] == '+' ? 2 : 1);
-
-                    int exp1 = int.Parse(s, CultureInfo.InvariantCulture);
-
-                    exp += exp1;
-                }
-
-                double result = value * Math.Pow(2, exp);
-                return result;
+                throw new InternalErrorException("hex float must start with '0x' near '{0}'", s);
             }
-            catch (FormatException)
+
+            if (LuaNumber.TryParse(s, out LuaNumber value))
             {
-                throw new SyntaxErrorException(t, "malformed number near '{0}'", s);
+                return value.ToDouble;
             }
+
+            throw new SyntaxErrorException(t, "malformed number near '{0}'", s);
         }
 
         /// <summary>

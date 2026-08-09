@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.CodeDom;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Hardwire;
     using WallstopStudios.NovaSharp.Hardwire.Generators;
@@ -25,10 +26,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             HardwireGeneratorRegistry.Register(stubGenerator);
 
             Table descriptorTable = new(owner: null);
-            descriptorTable.Set("class", DynValue.NewString(managedType));
-            descriptorTable.Set("$key", DynValue.NewString(userDataType));
-            descriptorTable.Set("members", DynValue.NewTable(CreateMemberTable("Foo")));
-            descriptorTable.Set("metamembers", DynValue.NewTable(CreateMemberTable("__index")));
+            descriptorTable.Set("class", LuaValue.NewString(managedType));
+            descriptorTable.Set("$key", LuaValue.NewString(userDataType));
+            descriptorTable.Set("members", LuaValue.NewTable(CreateMemberTable("Foo")));
+            descriptorTable.Set("metamembers", LuaValue.NewTable(CreateMemberTable("__index")));
 
             StandardUserDataDescriptorGenerator generator = new();
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
@@ -86,8 +87,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             Table table = new(owner: null);
             Table descriptor = new(owner: null);
-            descriptor.Set("class", DynValue.NewString(StubMemberGenerator.ManagedTypeValue));
-            table.Set(name, DynValue.NewTable(descriptor));
+            descriptor.Set("class", LuaValue.NewString(StubMemberGenerator.ManagedTypeValue));
+            table.Set(name, LuaValue.NewTable(descriptor));
             return table;
         }
 

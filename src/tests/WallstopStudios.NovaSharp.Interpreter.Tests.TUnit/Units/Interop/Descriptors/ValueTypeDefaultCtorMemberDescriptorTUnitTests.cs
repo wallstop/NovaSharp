@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -39,11 +40,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             Script script = new();
             ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
 
-            DynValue result = descriptor.Execute(
+            LuaValue result = descriptor.Execute(
                 script,
                 obj: null,
                 context: null,
-                args: new CallbackArguments(new List<DynValue>(), isMethodCall: false)
+                args: new CallbackArguments(new List<LuaValue>(), isMethodCall: false)
             );
 
             await Assert.That(result.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
@@ -62,7 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             Script script = new();
             ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
 
-            DynValue result = descriptor.GetValue(script, obj: null);
+            LuaValue result = descriptor.GetValue(script, obj: null);
 
             await Assert.That(result.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
             await Assert
@@ -78,7 +79,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             ValueTypeDefaultCtorMemberDescriptor descriptor = new(typeof(SampleStruct));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                descriptor.SetValue(new Script(version), null, DynValue.NewNumber(1))
+                descriptor.SetValue(new Script(version), null, LuaValue.NewNumber(1))
             );
 
             await Assert

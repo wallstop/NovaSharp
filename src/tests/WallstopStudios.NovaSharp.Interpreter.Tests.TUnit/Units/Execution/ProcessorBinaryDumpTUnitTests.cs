@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using System.IO;
     using System.Text;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -69,7 +70,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task DumpThrowsWhenMetaInstructionMissing(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue chunk = script.LoadString("return 1");
+            LuaValue chunk = script.LoadString("return 1");
             Processor processor = script.GetMainProcessorForTests();
             ByteCode byteCode = script.GetByteCodeForTests();
 
@@ -102,8 +103,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             // Test that integer subtype is preserved through dump/load cycle
             Script script = new(version);
-            DynValue chunk = script.LoadString("return 9007199254740993"); // 2^53 + 1, beyond double precision
-            DynValue result1 = script.Call(chunk);
+            LuaValue chunk = script.LoadString("return 9007199254740993"); // 2^53 + 1, beyond double precision
+            LuaValue result1 = script.Call(chunk);
 
             // Verify the original result is an integer
             await Assert.That(result1.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -115,8 +116,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             stream.Position = 0;
             Script script2 = new(version);
-            DynValue loadedChunk = script2.LoadStream(stream);
-            DynValue result2 = script2.Call(loadedChunk);
+            LuaValue loadedChunk = script2.LoadStream(stream);
+            LuaValue result2 = script2.Call(loadedChunk);
 
             // Verify the loaded result is still an integer with same value
             await Assert.That(result2.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -133,8 +134,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             // Test that float subtype is preserved through dump/load cycle
             Script script = new(version);
-            DynValue chunk = script.LoadString("return 3.14159");
-            DynValue result1 = script.Call(chunk);
+            LuaValue chunk = script.LoadString("return 3.14159");
+            LuaValue result1 = script.Call(chunk);
 
             // Verify the original result is a float
             await Assert.That(result1.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -146,8 +147,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             stream.Position = 0;
             Script script2 = new(version);
-            DynValue loadedChunk = script2.LoadStream(stream);
-            DynValue result2 = script2.Call(loadedChunk);
+            LuaValue loadedChunk = script2.LoadStream(stream);
+            LuaValue result2 = script2.Call(loadedChunk);
 
             // Verify the loaded result is still a float with same value
             await Assert.That(result2.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -166,6 +167,107 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
             await AssertUndumpedLiteral("return 'constant'", DataType.String, version)
                 .ConfigureAwait(false);
+            await AssertInstructionValueRoundTrip(
+                    version,
+                    hasValue: false,
+                    LuaValue.Nil,
+                    DataType.Nil
+                )
+                .ConfigureAwait(false);
+            await AssertInstructionValueRoundTrip(
+                    version,
+                    hasValue: true,
+                    LuaValue.Nil,
+                    DataType.Nil
+                )
+                .ConfigureAwait(false);
+            await AssertInstructionValueRoundTrip(
+                    version,
+                    hasValue: true,
+                    LuaValue.Void,
+                    DataType.Void
+                )
+                .ConfigureAwait(false);
+            await AssertLegacyAbsentInstructionBytes(version).ConfigureAwait(false);
+        }
+
+        private static async Task AssertLegacyAbsentInstructionBytes(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            using MemoryStream stream = new();
+            using (BinaryWriter writer = new(stream, Encoding.UTF8, leaveOpen: true))
+            {
+                writer.Write((byte)OpCode.Meta);
+                writer.Write(0);
+                writer.Write((int)OpCodeMetadataType.ChunkEntrypoint);
+                writer.Write("legacy-presence");
+                writer.Write(false);
+            }
+
+            stream.Position = 0;
+            Instruction restored;
+            using (BinaryReader reader = new(stream, Encoding.UTF8, leaveOpen: true))
+            {
+                restored = Instruction.ReadBinary(
+                    chunkRef: null,
+                    reader,
+                    baseAddress: 0,
+                    script.Globals,
+                    Array.Empty<SymbolRef>()
+                );
+            }
+
+            await Assert.That(restored.OpCode).IsEqualTo(OpCode.Meta).ConfigureAwait(false);
+            await Assert.That(restored.HasValue).IsFalse().ConfigureAwait(false);
+            await Assert.That(restored.Value.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        private static async Task AssertInstructionValueRoundTrip(
+            LuaCompatibilityVersion version,
+            bool hasValue,
+            LuaValue value,
+            DataType expectedType
+        )
+        {
+            Script script = new(version);
+            Instruction instruction = new(null)
+            {
+                OpCode = OpCode.Meta,
+                Name = "presence",
+                NumVal2 = (int)OpCodeMetadataType.ChunkEntrypoint,
+            };
+            if (hasValue)
+            {
+                instruction.Value = value;
+            }
+
+            using MemoryStream stream = new();
+            using (BinaryWriter writer = new(stream, Encoding.UTF8, leaveOpen: true))
+            {
+                instruction.WriteBinary(
+                    writer,
+                    baseAddress: 0,
+                    new System.Collections.Generic.Dictionary<SymbolRef, int>()
+                );
+            }
+
+            stream.Position = 0;
+            Instruction restored;
+            using (BinaryReader reader = new(stream, Encoding.UTF8, leaveOpen: true))
+            {
+                restored = Instruction.ReadBinary(
+                    chunkRef: null,
+                    reader,
+                    baseAddress: 0,
+                    script.Globals,
+                    Array.Empty<SymbolRef>()
+                );
+            }
+
+            await Assert.That(restored.HasValue).IsEqualTo(hasValue).ConfigureAwait(false);
+            await Assert.That(restored.Value.Type).IsEqualTo(expectedType).ConfigureAwait(false);
         }
 
         private static async Task AssertUndumpedLiteral(
@@ -175,21 +277,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version);
-            DynValue chunk = script.LoadString(code);
+            LuaValue chunk = script.LoadString(code);
             using MemoryStream stream = new();
             script.Dump(chunk, stream);
 
             stream.Position = 0;
             Script loadedScript = new(version);
-            DynValue loadedChunk = loadedScript.LoadStream(stream);
+            LuaValue loadedChunk = loadedScript.LoadStream(stream);
             ByteCode byteCode = loadedScript.GetByteCodeForTests();
-            DynValue literal = FindLiteralValue(
+            LuaValue literal = FindLiteralValue(
                 byteCode,
                 loadedChunk.Function.EntryPointByteCodeLocation,
                 expectedType
             );
 
-            await Assert.That(literal).IsNotNull().ConfigureAwait(false);
             await Assert.That(literal.Type).IsEqualTo(expectedType).ConfigureAwait(false);
         }
 
@@ -201,8 +302,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             // Negative zero must remain a float to preserve IEEE 754 semantics
             Script script = new(version);
-            DynValue chunk = script.LoadString("return -0.0");
-            DynValue result1 = script.Call(chunk);
+            LuaValue chunk = script.LoadString("return -0.0");
+            LuaValue result1 = script.Call(chunk);
 
             // Verify the original result is a float
             await Assert.That(result1.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -214,8 +315,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             stream.Position = 0;
             Script script2 = new(version);
-            DynValue loadedChunk = script2.LoadStream(stream);
-            DynValue result2 = script2.Call(loadedChunk);
+            LuaValue loadedChunk = script2.LoadStream(stream);
+            LuaValue result2 = script2.Call(loadedChunk);
 
             // Verify the loaded result is still a float (negative zero must remain float)
             await Assert.That(result2.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -235,8 +336,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             // Test large integers near long.MaxValue
             Script script = new(version);
             // math.maxinteger = 2^63 - 1 = 9223372036854775807
-            DynValue chunk = script.LoadString("return 9223372036854775807");
-            DynValue result1 = script.Call(chunk);
+            LuaValue chunk = script.LoadString("return 9223372036854775807");
+            LuaValue result1 = script.Call(chunk);
 
             // Verify the original result
             await Assert.That(result1.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -248,8 +349,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             stream.Position = 0;
             Script script2 = new(version);
-            DynValue loadedChunk = script2.LoadStream(stream);
-            DynValue result2 = script2.Call(loadedChunk);
+            LuaValue loadedChunk = script2.LoadStream(stream);
+            LuaValue result2 = script2.Call(loadedChunk);
 
             // Verify exact integer preservation (would lose precision if stored as double)
             await Assert.That(result2.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -260,7 +361,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
         }
 
-        private static DynValue FindLiteralValue(
+        private static LuaValue FindLiteralValue(
             ByteCode byteCode,
             int startInstruction,
             DataType expectedType
@@ -271,7 +372,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 Instruction instruction = byteCode.Code[i];
                 if (
                     instruction.OpCode == OpCode.Literal
-                    && instruction.Value != null
+                    && instruction.HasValue
                     && instruction.Value.Type == expectedType
                 )
                 {

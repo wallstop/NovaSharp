@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 #pragma warning disable IDE1006 // Mirrors upstream Lua C API naming (snake_case preserved intentionally).
 
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
 
@@ -12,7 +13,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
     /// </summary>
     public class LuaState
     {
-        private readonly List<DynValue> _stack;
+        private readonly List<LuaValue> _stack;
 
         public ScriptExecutionContext ExecutionContext { get; private set; }
         public string FunctionName { get; private set; }
@@ -24,7 +25,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
         )
         {
             ExecutionContext = executionContext;
-            _stack = new List<DynValue>(16);
+            _stack = new List<LuaValue>(16);
 
             for (int i = 0; i < args.Count; i++)
             {
@@ -34,12 +35,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             FunctionName = functionName;
         }
 
-        public DynValue Top(int pos = 0)
+        public LuaValue Top(int pos = 0)
         {
             return _stack[_stack.Count - 1 - pos];
         }
 
-        public DynValue At(int pos)
+        public LuaValue At(int pos)
         {
             if (pos < 0)
             {
@@ -48,7 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
             if (pos > _stack.Count)
             {
-                return DynValue.Void;
+                return LuaValue.Void;
             }
 
             return _stack[pos - 1];
@@ -59,21 +60,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             get { return _stack.Count; }
         }
 
-        public void Push(DynValue v)
+        public void Push(LuaValue v)
         {
             _stack.Add(v);
         }
 
-        public DynValue Pop()
+        public LuaValue Pop()
         {
-            DynValue v = Top();
+            LuaValue v = Top();
             _stack.RemoveAt(_stack.Count - 1);
             return v;
         }
 
-        public DynValue[] GetTopArray(int num)
+        public LuaValue[] GetTopArray(int num)
         {
-            DynValue[] rets = new DynValue[num];
+            LuaValue[] rets = new LuaValue[num];
 
             for (int i = 0; i < num; i++)
             {
@@ -83,11 +84,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return rets;
         }
 
-        public DynValue GetReturnValue(int retvals)
+        public LuaValue GetReturnValue(int retvals)
         {
             if (retvals == 0)
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
             else if (retvals == 1)
             {
@@ -95,8 +96,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             }
             else
             {
-                DynValue[] rets = GetTopArray(retvals);
-                return DynValue.NewTupleNested(rets);
+                LuaValue[] rets = GetTopArray(retvals);
+                return LuaValue.NewTupleNested(rets);
             }
         }
 

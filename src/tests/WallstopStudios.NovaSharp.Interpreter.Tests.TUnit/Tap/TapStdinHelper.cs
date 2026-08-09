@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
     using System.Collections.Generic;
     using System.IO;
     using System.Text;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -47,11 +48,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
             TapStdinHelperContext context = new(compatibilityVersion, testDirectory);
             Table helperTable = new(script);
             CallbackFunction runFunction = new(Run, HelperName) { AdditionalData = context };
-            helperTable.Set("run", DynValue.NewCallback(runFunction));
-            platform.Set("stdin_helper", DynValue.NewTable(helperTable));
+            helperTable.Set("run", LuaValue.NewCallback(runFunction));
+            platform.Set("stdin_helper", LuaValue.NewTable(helperTable));
         }
 
-        private static DynValue Run(ScriptExecutionContext executionContext, CallbackArguments args)
+        private static LuaValue Run(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ArgumentNullException.ThrowIfNull(executionContext);
             TapStdinHelperContext context =
@@ -62,8 +63,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
                 throw new InvalidOperationException("stdin helper context is unavailable.");
             }
 
-            DynValue chunkValue = args.AsType(0, HelperName, DataType.String, false);
-            DynValue inputValue = args.AsType(1, HelperName, DataType.String, false);
+            LuaValue chunkValue = args.AsType(0, HelperName, DataType.String, false);
+            LuaValue inputValue = args.AsType(1, HelperName, DataType.String, false);
             string absoluteInputPath = context.ResolveInputPath(inputValue.String);
 
             List<string> outputLines = ExecuteChunk(
@@ -76,10 +77,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
 
             for (int index = 0; index < outputLines.Count; index++)
             {
-                result.Set(index + 1, DynValue.NewString(outputLines[index]));
+                result.Set(index + 1, LuaValue.NewString(outputLines[index]));
             }
 
-            return DynValue.NewTable(result);
+            return LuaValue.NewTable(result);
         }
 
         private static List<string> ExecuteChunk(
@@ -123,7 +124,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
             Script script = new(CoreModulePresets.Complete, options);
             script.Globals.Set(
                 "print",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (context, arguments) =>
                     {
                         StringBuilder builder = new StringBuilder();
@@ -144,7 +145,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
                         }
 
                         outputLines.Add(builder.ToString());
-                        return DynValue.Nil;
+                        return LuaValue.Nil;
                     }
                 )
             );

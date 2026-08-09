@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -13,7 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
     /// </summary>
     public class DynValueMemberDescriptor : IMemberDescriptor, IWireableDescriptor
     {
-        private readonly DynValue _value;
+        private readonly LuaValue _value;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DynValueMemberDescriptor" /> class.
@@ -24,7 +25,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         {
             Script s = new();
             DynamicExpression exp = s.CreateDynamicExpression(serializedTableValue);
-            DynValue val = exp.Evaluate(null);
+            LuaValue val = exp.Evaluate(null);
 
             _value = val.Table.Get(1);
             Name = name;
@@ -38,7 +39,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         protected DynValueMemberDescriptor(string name)
         {
             MemberAccess = MemberDescriptorAccess.CanRead;
-            _value = null;
+            _value = default;
             Name = name;
         }
 
@@ -47,13 +48,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="value">The value.</param>
-        public DynValueMemberDescriptor(string name, DynValue value)
+        public DynValueMemberDescriptor(string name, LuaValue value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             _value = value;
             Name = name;
 
@@ -93,32 +89,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
             "CA1721:The property name 'Value' is confusing given the existence of method 'GetValue'",
             Justification = "IMemberDescriptor exposes GetValue; this property predates the interface and remains for back-compat and hardwire generators."
         )]
-        public virtual DynValue Value
+        public virtual LuaValue Value
         {
             get { return _value; }
         }
 
         /// <summary>
-        /// Gets the value of this member as a <see cref="DynValue" /> to be exposed to scripts.
+        /// Gets the value of this member as a <see cref="LuaValue" /> to be exposed to scripts.
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object owning this member, or null if static.</param>
         /// <returns>
-        /// The value of this member as a <see cref="DynValue" />.
+        /// The value of this member as a <see cref="LuaValue" />.
         /// </returns>
-        public DynValue GetValue(Script script, object obj)
+        public LuaValue GetValue(Script script, object obj)
         {
             return Value;
         }
 
         /// <summary>
-        /// Sets the value of this member from a <see cref="DynValue" />.
+        /// Sets the value of this member from a <see cref="LuaValue" />.
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object owning this member, or null if static.</param>
         /// <param name="value">The value to be set.</param>
         /// <exception cref="ScriptRuntimeException">userdata '{0}' cannot be written to.</exception>
-        public void SetValue(Script script, object obj, DynValue value)
+        public void SetValue(Script script, object obj, LuaValue value)
         {
             throw new ScriptRuntimeException("userdata '{0}' cannot be written to.", Name);
         }
@@ -135,8 +131,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                 throw new ArgumentNullException(nameof(t));
             }
 
-            t.Set("class", DynValue.NewString(GetType().FullName));
-            t.Set("name", DynValue.NewString(Name));
+            t.Set("class", LuaValue.NewString(GetType().FullName));
+            t.Set("name", LuaValue.NewString(Name));
 
             switch (Value.Type)
             {
@@ -157,7 +153,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                     {
                         t.Set(
                             "error",
-                            DynValue.NewString(
+                            LuaValue.NewString(
                                 "Wiring of non-prime table value members not supported."
                             )
                         );
@@ -167,21 +163,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                 case DataType.UserData:
                     if (Value.UserData.Object == null)
                     {
-                        t.Set("type", DynValue.NewString("userdata"));
+                        t.Set("type", LuaValue.NewString("userdata"));
                         t.Set(
                             "staticType",
-                            DynValue.NewString(Value.UserData.Descriptor.Type.FullName)
+                            LuaValue.NewString(Value.UserData.Descriptor.Type.FullName)
                         );
                         t.Set(
                             "visibility",
-                            DynValue.NewString(Value.UserData.Descriptor.Type.GetClrVisibility())
+                            LuaValue.NewString(Value.UserData.Descriptor.Type.GetClrVisibility())
                         );
                     }
                     else
                     {
                         t.Set(
                             "error",
-                            DynValue.NewString(
+                            LuaValue.NewString(
                                 "Wiring of non-static userdata value members not supported."
                             )
                         );
@@ -190,7 +186,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                 default:
                     t.Set(
                         "error",
-                        DynValue.NewString(
+                        LuaValue.NewString(
                             ZString.Concat(
                                 "Wiring of '",
                                 Value.Type.ToErrorTypeString(),

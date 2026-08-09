@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -46,7 +47,7 @@ return caller()
             script.AttachDebugger(debugger);
             script.DebuggerEnabled = true;
 
-            DynValue result = script.DoString(Code);
+            LuaValue result = script.DoString(Code);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(result.Number).IsEqualTo(43).ConfigureAwait(false);

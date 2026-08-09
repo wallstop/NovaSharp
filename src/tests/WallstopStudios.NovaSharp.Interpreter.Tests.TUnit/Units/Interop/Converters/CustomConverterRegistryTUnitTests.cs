@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
     using System;
     using System.Reflection;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -14,29 +15,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         public async Task ScriptToClrConversionStoresReplacesAndRemovesConverters()
         {
             CustomConverterRegistry registry = new();
-            DynValue dynValue = DynValue.NewString("payload");
+            LuaValue dynValue = LuaValue.NewString("payload");
 
-            Func<DynValue, object> firstConverter = value => value.String + "-first";
+            Func<LuaValue, object> firstConverter = value => value.String + "-first";
             registry.SetScriptToClrCustomConversion(
                 DataType.String,
                 typeof(string),
                 firstConverter
             );
 
-            Func<DynValue, object> resolved = registry.GetScriptToClrCustomConversion(
+            Func<LuaValue, object> resolved = registry.GetScriptToClrCustomConversion(
                 DataType.String,
                 typeof(string)
             );
             await Assert.That(resolved(dynValue)).IsEqualTo("payload-first").ConfigureAwait(false);
 
-            Func<DynValue, object> secondConverter = value => value.String + "-second";
+            Func<LuaValue, object> secondConverter = value => value.String + "-second";
             registry.SetScriptToClrCustomConversion(
                 DataType.String,
                 typeof(string),
                 secondConverter
             );
 
-            Func<DynValue, object> updated = registry.GetScriptToClrCustomConversion(
+            Func<LuaValue, object> updated = registry.GetScriptToClrCustomConversion(
                 DataType.String,
                 typeof(string)
             );
@@ -75,7 +76,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             CustomConverterRegistry registry = new();
             DataType invalidType = (DataType)((int)LuaTypeExtensions.MaxConvertibleTypes + 1);
 
-            Func<DynValue, object> result = registry.GetScriptToClrCustomConversion(
+            Func<LuaValue, object> result = registry.GetScriptToClrCustomConversion(
                 invalidType,
                 typeof(string)
             );
@@ -89,25 +90,65 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             CustomConverterRegistry registry = new();
             Script script = new();
 
-            Func<Script, string, DynValue> converter = (s, value) =>
-                DynValue.NewString(value + "-converted");
+            Func<Script, string, LuaValue?> converter = (s, value) =>
+                LuaValue.NewString(value + "-converted");
             registry.SetClrToScriptCustomConversion(converter);
 
-            Func<Script, object, DynValue> resolved = registry.GetClrToScriptCustomConversion(
+            Func<Script, object, LuaValue?> resolved = registry.GetClrToScriptCustomConversion(
                 typeof(string)
             );
             await Assert.That(resolved).IsNotNull().ConfigureAwait(false);
-            DynValue converted = resolved(script, "value");
+            LuaValue converted = resolved(script, "value").Value;
             await Assert.That(converted.String).IsEqualTo("value-converted").ConfigureAwait(false);
+
+            ClrToScriptTryConverter adapted = registry.GetClrToScriptTryConversion(typeof(string));
+            await Assert.That(adapted).IsNotNull().ConfigureAwait(false);
+            bool handled = adapted(script, "value", out LuaValue adaptedValue);
+            await Assert.That(handled).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(adaptedValue.String)
+                .IsEqualTo("value-converted")
+                .ConfigureAwait(false);
+            bool handledDirectly = registry.TryConvertClrToScript(
+                typeof(string),
+                script,
+                "value",
+                out LuaValue directValue
+            );
+            await Assert.That(handledDirectly).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(directValue.String)
+                .IsEqualTo("value-converted")
+                .ConfigureAwait(false);
+
+            registry.SetClrToScriptCustomConversion(typeof(string), (Script _, object _) => null);
+            ClrToScriptTryConverter decliningAdapter = registry.GetClrToScriptTryConversion(
+                typeof(string)
+            );
+            bool declined = decliningAdapter(script, "value", out LuaValue declinedValue);
+            await Assert.That(declined).IsFalse().ConfigureAwait(false);
+            await Assert.That(declinedValue.IsNil).IsTrue().ConfigureAwait(false);
 
             registry.SetClrToScriptCustomConversion(
                 typeof(string),
-                (Func<Script, object, DynValue>)null
+                (Func<Script, object, LuaValue?>)null
             );
             await Assert
                 .That(registry.GetClrToScriptCustomConversion(typeof(string)))
                 .IsNull()
                 .ConfigureAwait(false);
+            await Assert
+                .That(registry.GetClrToScriptTryConversion(typeof(string)))
+                .IsNull()
+                .ConfigureAwait(false);
+            bool missing = registry.TryConvertClrToScript(
+                typeof(string),
+                script,
+                "value",
+                out LuaValue missingValue
+            );
+            await Assert.That(missing).IsFalse().ConfigureAwait(false);
+            await Assert.That(missingValue.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -118,16 +159,71 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             registry.SetClrToScriptCustomConversion<int>(
                 (s, number) =>
                 {
-                    return DynValue.NewNumber(number + 5);
+                    return LuaValue.NewNumber(number + 5);
                 }
             );
 
-            Func<Script, object, DynValue> resolved = registry.GetClrToScriptCustomConversion(
+            Func<Script, object, LuaValue?> resolved = registry.GetClrToScriptCustomConversion(
                 typeof(int)
             );
-            DynValue result = resolved(script, 10);
+            LuaValue result = resolved(script, 10).Value;
 
             await Assert.That(result.Number).IsEqualTo(15d).ConfigureAwait(false);
+
+            registry.SetClrToScriptTryConversion<int>(
+                (Script _, int number, out LuaValue converted) =>
+                {
+                    if (number == 10)
+                    {
+                        converted = LuaValue.Nil;
+                        return true;
+                    }
+
+                    if (number == 11)
+                    {
+                        converted = LuaValue.Void;
+                        return true;
+                    }
+
+                    converted = LuaValue.NewNumber(number);
+                    return false;
+                }
+            );
+
+            ClrToScriptTryConverter tryConverter = registry.GetClrToScriptTryConversion(
+                typeof(int)
+            );
+            bool handledNil = tryConverter(script, 10, out LuaValue nilResult);
+            bool handledVoid = tryConverter(script, 11, out LuaValue voidResult);
+            bool declined = tryConverter(script, 12, out LuaValue declinedResult);
+
+            await Assert.That(handledNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(nilResult.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(handledVoid).IsTrue().ConfigureAwait(false);
+            await Assert.That(voidResult.IsVoid()).IsTrue().ConfigureAwait(false);
+            await Assert.That(declined).IsFalse().ConfigureAwait(false);
+            await Assert.That(declinedResult.IsNil).IsTrue().ConfigureAwait(false);
+
+            Func<Script, object, LuaValue?> legacyView = registry.GetClrToScriptCustomConversion(
+                typeof(int)
+            );
+            await Assert.That(legacyView(script, 10).Value.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(legacyView(script, 11).Value.IsVoid()).IsTrue().ConfigureAwait(false);
+            await Assert.That(legacyView(script, 12)).IsNull().ConfigureAwait(false);
+
+            registry.SetClrToScriptTryConversion<int>(
+                (Script _, int _, out LuaValue converted) =>
+                {
+                    converted = default;
+                    return true;
+                }
+            );
+            ClrToScriptTryConverter invalidConverter = registry.GetClrToScriptTryConversion(
+                typeof(int)
+            );
+            bool handledDefault = invalidConverter(script, 10, out LuaValue defaultResult);
+            await Assert.That(handledDefault).IsTrue().ConfigureAwait(false);
+            await Assert.That(defaultResult.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -140,33 +236,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             InvokeLegacyClrToScriptConversion(
                 registry,
                 typeof(Guid),
-                value => DynValue.NewString(((Guid)value).ToString("N"))
+                value => LuaValue.NewString(((Guid)value).ToString("N"))
             );
             InvokeLegacyClrToScriptConversion<long>(
                 registry,
-                value => DynValue.NewNumber(value * 2)
+                value => LuaValue.NewNumber(value * 2)
             );
 
-            Func<Script, object, DynValue> guidConverter = registry.GetClrToScriptCustomConversion(
+            Func<Script, object, LuaValue?> guidConverter = registry.GetClrToScriptCustomConversion(
                 typeof(Guid)
             );
-            DynValue guidResult = guidConverter(script, sampleGuid);
+            LuaValue guidResult = guidConverter(script, sampleGuid).Value;
             await Assert
                 .That(guidResult.String)
                 .IsEqualTo(sampleGuid.ToString("N"))
                 .ConfigureAwait(false);
 
-            Func<Script, object, DynValue> longConverter = registry.GetClrToScriptCustomConversion(
+            Func<Script, object, LuaValue?> longConverter = registry.GetClrToScriptCustomConversion(
                 typeof(long)
             );
-            DynValue longResult = longConverter(script, 7L);
+            LuaValue longResult = longConverter(script, 7L).Value;
             await Assert.That(longResult.Number).IsEqualTo(14d).ConfigureAwait(false);
 
             registry.SetClrToScriptCustomConversion(
                 typeof(Guid),
-                (Func<Script, object, DynValue>)null
+                (Func<Script, object, LuaValue?>)null
             );
-            registry.SetClrToScriptCustomConversion<long>((Func<Script, long, DynValue>)null);
+            registry.SetClrToScriptCustomConversion<long>((Func<Script, long, LuaValue?>)null);
 
             await Assert
                 .That(registry.GetClrToScriptCustomConversion(typeof(Guid)))
@@ -185,7 +281,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             registry.SetClrToScriptCustomConversion<int>(
                 (script, value) =>
                 {
-                    return DynValue.NewNumber(value);
+                    return LuaValue.NewNumber(value);
                 }
             );
 
@@ -194,10 +290,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .IsNotNull()
                 .ConfigureAwait(false);
 
-            registry.SetClrToScriptCustomConversion<int>((Func<Script, int, DynValue>)null);
+            registry.SetClrToScriptCustomConversion<int>((Func<Script, int, LuaValue?>)null);
 
             await Assert
                 .That(registry.GetClrToScriptCustomConversion(typeof(int)))
+                .IsNull()
+                .ConfigureAwait(false);
+
+            registry.SetClrToScriptTryConversion<int>(
+                (Script _, int value, out LuaValue result) =>
+                {
+                    result = LuaValue.NewNumber(value);
+                    return true;
+                }
+            );
+            await Assert
+                .That(registry.GetClrToScriptTryConversion(typeof(int)))
+                .IsNotNull()
+                .ConfigureAwait(false);
+
+            registry.SetClrToScriptTryConversion<int>(null);
+
+            await Assert
+                .That(registry.GetClrToScriptCustomConversion(typeof(int)))
+                .IsNull()
+                .ConfigureAwait(false);
+            await Assert
+                .That(registry.GetClrToScriptTryConversion(typeof(int)))
                 .IsNull()
                 .ConfigureAwait(false);
         }
@@ -213,8 +332,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             );
             registry.SetClrToScriptCustomConversion(
                 typeof(int),
-                (s, value) => DynValue.NewNumber((int)value)
+                (s, value) => LuaValue.NewNumber((int)value)
             );
+            registry.SetClrToScriptTryConversion<Guid>(
+                (Script _, Guid _, out LuaValue result) =>
+                {
+                    result = LuaValue.Void;
+                    return true;
+                }
+            );
+
+            CustomConverterRegistry clone = registry.Clone();
 
             registry.Clear();
 
@@ -226,6 +354,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .That(registry.GetClrToScriptCustomConversion(typeof(int)))
                 .IsNull()
                 .ConfigureAwait(false);
+            await Assert
+                .That(registry.GetClrToScriptTryConversion(typeof(Guid)))
+                .IsNull()
+                .ConfigureAwait(false);
+
+            Func<LuaValue, object> clonedScriptConverter = clone.GetScriptToClrCustomConversion(
+                DataType.String,
+                typeof(string)
+            );
+            await Assert
+                .That(clonedScriptConverter(LuaValue.NewString("preserved")))
+                .IsEqualTo("preserved")
+                .ConfigureAwait(false);
+
+            ClrToScriptTryConverter clonedLegacyConverter = clone.GetClrToScriptTryConversion(
+                typeof(int)
+            );
+            bool handledLegacy = clonedLegacyConverter(
+                new Script(),
+                7,
+                out LuaValue clonedLegacyResult
+            );
+            await Assert.That(handledLegacy).IsTrue().ConfigureAwait(false);
+            await Assert.That(clonedLegacyResult.Number).IsEqualTo(7d).ConfigureAwait(false);
+
+            ClrToScriptTryConverter clonedTryConverter = clone.GetClrToScriptTryConversion(
+                typeof(Guid)
+            );
+            bool handledTry = clonedTryConverter(
+                new Script(),
+                Guid.Empty,
+                out LuaValue clonedTryResult
+            );
+            await Assert.That(handledTry).IsTrue().ConfigureAwait(false);
+            await Assert.That(clonedTryResult.IsVoid()).IsTrue().ConfigureAwait(false);
         }
 
         private static readonly MethodInfo LegacyClrToScriptConversionMethod =
@@ -237,7 +400,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         private static void InvokeLegacyClrToScriptConversion(
             CustomConverterRegistry registry,
             Type clrType,
-            Func<object, DynValue> converter
+            Func<object, LuaValue?> converter
         )
         {
             LegacyClrToScriptConversionMethod.Invoke(registry, new object[] { clrType, converter });
@@ -245,7 +408,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
 
         private static void InvokeLegacyClrToScriptConversion<T>(
             CustomConverterRegistry registry,
-            Func<T, DynValue> converter
+            Func<T, LuaValue?> converter
         )
         {
             MethodInfo method = LegacyTypedClrToScriptConversionMethod.MakeGenericMethod(typeof(T));
@@ -256,13 +419,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         {
             MethodInfo method = typeof(CustomConverterRegistry).GetMethod(
                 nameof(CustomConverterRegistry.SetClrToScriptCustomConversion),
-                new[] { typeof(Type), typeof(Func<object, DynValue>) }
+                new[] { typeof(Type), typeof(Func<object, LuaValue?>) }
             );
 
             if (method == null)
             {
                 throw new InvalidOperationException(
-                    "Could not locate the legacy SetClrToScriptCustomConversion(Type, Func<object, DynValue>) overload."
+                    "Could not locate the legacy SetClrToScriptCustomConversion(Type, Func<object, LuaValue?>) overload."
                 );
             }
 
@@ -299,37 +462,49 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             }
 
             throw new InvalidOperationException(
-                "Could not locate the legacy SetClrToScriptCustomConversion<T>(Func<T, DynValue>) overload."
+                "Could not locate the legacy SetClrToScriptCustomConversion<T>(Func<T, LuaValue?>) overload."
             );
         }
 
         [global::TUnit.Core.Test]
         public async Task ObsoleteTypedClrToScriptConversionNullBehavior()
         {
-            // The obsolete method SetClrToScriptCustomConversion<T>(Func<T, DynValue>) has a bug:
-            // when passed null, it should remove the converter, but instead it creates a lambda
-            // that throws NullReferenceException when invoked. This test documents the current behavior.
             CustomConverterRegistry registry = new();
-            InvokeLegacyClrToScriptConversion<double>(registry, value => DynValue.NewNumber(value));
+            Type stringType = typeof(string);
+            InvokeLegacyClrToScriptConversion<double>(registry, value => LuaValue.NewNumber(value));
+            InvokeLegacyClrToScriptConversion(
+                registry,
+                stringType,
+                value => LuaValue.NewString((string)value)
+            );
 
             await Assert
                 .That(registry.GetClrToScriptCustomConversion(typeof(double)))
                 .IsNotNull()
                 .ConfigureAwait(false);
-
-            // Passing null to the legacy method doesn't actually remove - it creates a broken lambda
-            InvokeLegacyClrToScriptConversion<double>(registry, null);
-
-            // The converter is still present (the bug) - it wraps a null converter
-            Func<Script, object, DynValue> brokenConverter =
-                registry.GetClrToScriptCustomConversion(typeof(double));
-            await Assert.That(brokenConverter).IsNotNull().ConfigureAwait(false);
-
-            // Invoking the broken converter throws NullReferenceException
-            Script script = new();
             await Assert
-                .That(() => brokenConverter(script, 1.0))
-                .Throws<NullReferenceException>()
+                .That(registry.GetClrToScriptCustomConversion(stringType))
+                .IsNotNull()
+                .ConfigureAwait(false);
+
+            InvokeLegacyClrToScriptConversion<double>(registry, null);
+            InvokeLegacyClrToScriptConversion(registry, stringType, null);
+
+            await Assert
+                .That(registry.GetClrToScriptCustomConversion(typeof(double)))
+                .IsNull()
+                .ConfigureAwait(false);
+            await Assert
+                .That(registry.GetClrToScriptTryConversion(typeof(double)))
+                .IsNull()
+                .ConfigureAwait(false);
+            await Assert
+                .That(registry.GetClrToScriptCustomConversion(stringType))
+                .IsNull()
+                .ConfigureAwait(false);
+            await Assert
+                .That(registry.GetClrToScriptTryConversion(stringType))
+                .IsNull()
                 .ConfigureAwait(false);
         }
     }

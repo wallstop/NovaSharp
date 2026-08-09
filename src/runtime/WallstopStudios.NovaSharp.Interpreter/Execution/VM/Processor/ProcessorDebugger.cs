@@ -2,11 +2,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using Cysharp.Text;
     using Debugging;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
 
     // This part is practically written procedural style - it looks more like C than C#.
     // This is intentional so to avoid this-calls and virtual-calls as much as possible.
@@ -516,12 +518,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 for (int i = 0; i < len; i++)
                 {
+                    ValueSlot slot = top.LocalScope[i];
                     locals.Add(
                         new WatchItem()
                         {
                             IsError = false,
                             LValue = top.DebugSymbols[i],
-                            Value = top.LocalScope[i]?.Value,
+                            Value = slot.IsActive ? slot.Value : null,
                             Name = top.DebugSymbols[i].NameValue,
                         }
                     );
@@ -542,7 +545,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             try
             {
                 SymbolRef l = dynExpr.FindSymbol(context);
-                DynValue v = dynExpr.Evaluate(context);
+                LuaValue v = dynExpr.Evaluate(context);
 
                 return new WatchItem()
                 {
@@ -557,7 +560,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return new WatchItem()
                 {
                     IsError = true,
-                    Value = DynValue.NewString(ex.DecoratedMessage ?? ex.Message),
+                    Value = LuaValue.NewString(ex.DecoratedMessage ?? ex.Message),
                     Name = dynExpr.ExpressionCode,
                 };
             }
@@ -572,7 +575,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return new WatchItem()
                 {
                     IsError = true,
-                    Value = DynValue.NewString(ex.Message),
+                    Value = LuaValue.NewString(ex.Message),
                     Name = dynExpr.ExpressionCode,
                 };
             }
@@ -606,7 +609,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             RetAddress = c.ReturnAddress,
                             Location = startingRef,
                             Name = c.ClrFunction.Name,
-                            Value = includeFunctions ? DynValue.FromCallback(c.ClrFunction) : null,
+                            Value = includeFunctions
+                                ? LuaValue.FromCallback(c.ClrFunction)
+                                : (LuaValue?)null,
                             IsTailCall = false,
                         }
                     );
@@ -620,7 +625,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             BasePtr = c.BasePointer,
                             RetAddress = c.ReturnAddress,
                             Name = callname,
-                            Value = includeFunctions ? GetFrameFunction(c) : null,
+                            Value = includeFunctions ? GetFrameFunction(c) : (LuaValue?)null,
                             Location = startingRef,
                             IsTailCall = (c.Flags & CallStackItemFlags.TailCall) != 0,
                         }
@@ -644,21 +649,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return wis;
         }
 
-        private DynValue GetFrameFunction(CallStackItem frame)
+        private LuaValue? GetFrameFunction(CallStackItem frame)
         {
-            DynValue function = frame.Function;
-            if (function != null)
+            LuaValue function = frame.Function;
+            if (function.IsNotNil())
             {
                 return function;
             }
 
             if (frame.ClrFunction != null || frame.ClosureScope == null)
             {
-                return null;
+                return (LuaValue?)null;
             }
 
             Closure closure = new(_script, frame.DebugEntryPoint, frame.ClosureScope);
-            function = DynValue.FromClosure(closure);
+            function = LuaValue.FromClosure(closure);
             frame.Function = function;
             return function;
         }

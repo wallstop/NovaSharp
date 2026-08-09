@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -87,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
         public async Task ResolveModuleNameUsesLuaPathGlobalWhenAllowed()
         {
             Script script = new();
-            script.Globals.Set("LUA_PATH", DynValue.NewString("lib/?.lua"));
+            script.Globals.Set("LUA_PATH", LuaValue.NewString("lib/?.lua"));
 
             TestScriptLoader loader = new();
             loader.AddExisting("lib/widget.lua");
@@ -214,7 +215,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
         public async Task ResolveModuleNameFallsBackToModulePathsWhenLuaPathNotString()
         {
             Script script = new();
-            script.Globals.Set("LUA_PATH", DynValue.NewNumber(42)); // Not a string
+            script.Globals.Set("LUA_PATH", LuaValue.NewNumber(42)); // Not a string
 
             TestScriptLoader loader = new() { ModulePaths = new[] { "fallback/?.lua" } };
             loader.AddExisting("fallback/test.lua");

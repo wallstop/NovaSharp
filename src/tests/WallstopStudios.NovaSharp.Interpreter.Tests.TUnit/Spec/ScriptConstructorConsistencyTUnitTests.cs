@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -317,8 +318,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 new ScriptOptions(Script.DefaultOptions) { RandomProvider = provider2 }
             );
 
-            DynValue rand1 = script1.DoString("return math.random(), math.random(), math.random()");
-            DynValue rand2 = script2.DoString("return math.random(), math.random(), math.random()");
+            LuaValue rand1 = script1.DoString("return math.random(), math.random(), math.random()");
+            LuaValue rand2 = script2.DoString("return math.random(), math.random(), math.random()");
 
             await Assert
                 .That(rand1.Tuple[0].Number)
@@ -469,13 +470,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 
             // StartTimeUtc is internal but affects os.clock calculations
             // We can verify indirectly through os.clock behavior
-            DynValue clock1 = script.DoString("return os.clock()");
+            LuaValue clock1 = script.DoString("return os.clock()");
             double elapsed1 = clock1.Number;
 
             // Advance time
             timeProvider.Advance(TimeSpan.FromSeconds(5));
 
-            DynValue clock2 = script.DoString("return os.clock()");
+            LuaValue clock2 = script.DoString("return os.clock()");
             double elapsed2 = clock2.Number;
 
             // Clock should show ~5 seconds difference

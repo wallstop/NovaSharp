@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -40,12 +41,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">
         /// Callback arguments containing either a string chunk or a prepared expression userdata.
         /// </param>
-        /// <returns>The evaluated result as a <see cref="DynValue"/>.</returns>
+        /// <returns>The evaluated result as a <see cref="LuaValue"/>.</returns>
         /// <exception cref="ScriptRuntimeException">
         /// Thrown when the input cannot be parsed or is not a prepared expression userdata.
         /// </exception>
         [NovaSharpModuleMethod(Name = "eval")]
-        public static DynValue Eval(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Eval(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -73,7 +74,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
                 else
                 {
-                    DynValue vs = args.AsType(0, "dynamic.eval", DataType.String, false);
+                    LuaValue vs = args.AsType(0, "dynamic.eval", DataType.String, false);
                     DynamicExpression expression = executionContext.Script.CreateDynamicExpression(
                         vs.String
                     );
@@ -99,7 +100,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Thrown when the supplied expression fails to parse.
         /// </exception>
         [NovaSharpModuleMethod(Name = "prepare")]
-        public static DynValue Prepare(
+        public static LuaValue Prepare(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -112,11 +113,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             try
             {
-                DynValue vs = args.AsType(0, "dynamic.prepare", DataType.String, false);
+                LuaValue vs = args.AsType(0, "dynamic.prepare", DataType.String, false);
                 DynamicExpression expression = executionContext.Script.CreateDynamicExpression(
                     vs.String
                 );
-                return UserData.Create(new DynamicExpressionWrapper() { Expression = expression });
+                DynamicExpressionWrapper wrapper = new() { Expression = expression };
+                return UserData.TryCreate(executionContext.Script, wrapper, out LuaValue value)
+                    ? value
+                    : LuaValue.Nil;
             }
             catch (SyntaxErrorException ex)
             {

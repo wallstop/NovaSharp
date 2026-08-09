@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
 
@@ -43,14 +44,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         }
 
         /// <inheritdoc/>
-        public override DynValue Eval(ScriptExecutionContext context)
+        public override LuaValue Eval(ScriptExecutionContext context)
         {
             if (_expressions.Count >= 1)
             {
                 return _expressions[0].Eval(context);
             }
 
-            return DynValue.Void;
+            return LuaValue.Void;
         }
     }
 }

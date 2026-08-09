@@ -63,14 +63,14 @@ ______________________________________________________________________
 
 ## DynValueArrayPool
 
-Fixed exact-size `DynValue[]` pool for VM frames and Lua calls.
+Fixed exact-size `LuaValue[]` pool for VM frames and Lua calls.
 
 ```csharp
 // Get exact-size array for VM call
-using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(5, out DynValue[] args);
+using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(5, out LuaValue[] args);
 // args.Length == 5 (exact)
-args[0] = DynValue.NewNumber(1);
-args[1] = DynValue.NewString("hello");
+args[0] = LuaValue.FromNumber(1);
+args[1] = LuaValue.FromString("hello");
 ```
 
 ______________________________________________________________________
@@ -202,7 +202,7 @@ ______________________________________________________________________
 ```text
 What kind of buffer do you need?
 |
-+-- DynValue array (VM frames, Lua calls)?
++-- LuaValue array (VM frames, Lua calls)?
 |   --> DynValueArrayPool.Get(exactSize, out array)
 |
 +-- Object array (reflection, interop)?

@@ -1,8 +1,8 @@
 -- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs
--- @test: StringArithmeticCoercionTUnitTests.StringArithmeticWorksWithNumberStrings
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs:123
+-- @test: StringArithmeticCoercionTUnitTests.AllArithmeticOperationsWorkWithStrings
 -- String-to-number coercion works in all Lua versions for arithmetic
 
 -- Test: String arithmetic with numeric strings works across all versions
@@ -30,6 +30,20 @@ assert("2" ^ "3" == 8, '"2" ^ "3" should equal 8')
 
 -- Unary minus
 assert(-"5" == -5, '-"5" should equal -5')
+
+local infinityAddOk, infinityAdd = pcall(function()
+    return "Infinity" + 0
+end)
+local infinityUnaryOk, infinityUnary = pcall(function()
+    return -"Infinity"
+end)
+print(
+    "symbolic-infinity",
+    infinityAddOk,
+    infinityAddOk and infinityAdd == math.huge,
+    infinityUnaryOk,
+    infinityUnaryOk and infinityUnary == -math.huge
+)
 
 print("String arithmetic with numeric strings works")
 return true

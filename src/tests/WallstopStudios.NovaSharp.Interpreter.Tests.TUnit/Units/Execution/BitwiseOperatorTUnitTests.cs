@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -57,7 +58,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task BitwiseAndEvaluatesUsingIntegerSemantics(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return 0xF0 & 0x0F");
+            LuaValue result = Script.RunString("return 0xF0 & 0x0F");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(result.Number).IsZero().ConfigureAwait(false);
@@ -71,7 +72,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task BitwiseOrEvaluatesCorrectly(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return 0xF0 | 0x0F");
+            LuaValue result = Script.RunString("return 0xF0 | 0x0F");
 
             await Assert.That(result.Number).IsEqualTo(255d).ConfigureAwait(false);
         }
@@ -84,7 +85,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task BitwiseXorEvaluatesCorrectly(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return 0xAA ~ 0x55");
+            LuaValue result = Script.RunString("return 0xAA ~ 0x55");
 
             await Assert.That(result.Number).IsEqualTo(0xFF).ConfigureAwait(false);
         }
@@ -100,7 +101,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             // Per Lua 5.3+ spec (§3.4.2): right shift is logical (unsigned), not arithmetic.
             // (-8) >> 2 = 0xFFFFFFFFFFFFFFF8 >> 2 = 0x3FFFFFFFFFFFFFFE = 4611686018427387902
             // (-1) >> 70 = 0 (shift by >= 64 returns 0 per spec)
-            DynValue result = Script.RunString("return 1 << 3, (-8) >> 2, 1 << 64, (-1) >> 70");
+            LuaValue result = Script.RunString("return 1 << 3, (-8) >> 2, 1 << 64, (-1) >> 70");
 
             await Assert.That(result.Tuple[0].Number).IsEqualTo(8d).ConfigureAwait(false);
             await Assert
@@ -119,7 +120,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task UnaryBitwiseNotProducesTwoComplement(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return ~0");
+            LuaValue result = Script.RunString("return ~0");
 
             await Assert.That(result.Number).IsEqualTo(-1d).ConfigureAwait(false);
         }
@@ -132,7 +133,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task BitwiseOperatorsAcceptConvertibleStrings(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return '3' & '1'");
+            LuaValue result = Script.RunString("return '3' & '1'");
 
             await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
         }
@@ -163,7 +164,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task FloorDivisionMatchesLuaSemantics(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return -5 // 2, 5 // 2, 5 // -2");
+            LuaValue result = Script.RunString("return -5 // 2, 5 // 2, 5 // -2");
 
             await Assert.That(result.Tuple[0].Number).IsEqualTo(-3d).ConfigureAwait(false);
             await Assert.That(result.Tuple[1].Number).IsEqualTo(2d).ConfigureAwait(false);

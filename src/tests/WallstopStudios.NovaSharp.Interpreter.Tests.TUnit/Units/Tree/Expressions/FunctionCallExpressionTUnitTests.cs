@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 {
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -162,7 +163,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
             public override void Compile(ByteCode bc)
             {
-                bc.EmitLiteral(DynValue.NewString("function-stub"));
+                bc.EmitLiteral(LuaValue.NewString("function-stub"));
             }
 
             public override string GetFriendlyDebugName()
@@ -170,9 +171,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 return _friendlyName;
             }
 
-            public override DynValue Eval(ScriptExecutionContext context)
+            public override LuaValue Eval(ScriptExecutionContext context)
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
         }
     }

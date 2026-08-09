@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using System;
     using System.IO;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -23,7 +24,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task RunStringExecutesCodeWithDefaultScript(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString("return 123");
+            LuaValue result = script.DoString("return 123");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number);
             await Assert.That(result.Number).IsEqualTo(123);
@@ -65,7 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 + $"Contents='{actualFileContents}', DefaultLoader={defaultLoaderType}, "
                 + $"ActualScriptLoader={actualScriptLoaderType}";
 
-            DynValue result = Script.RunFile(tempFile);
+            LuaValue result = Script.RunFile(tempFile);
 
             // Use diagnostic message in assertion failure
             await Assert
@@ -161,10 +162,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task RunStringExecutesBase64Dump(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue chunk = script.LoadString("return 77");
+            LuaValue chunk = script.LoadString("return 77");
 
             string encoded = EncodeFunctionAsBase64(script, chunk);
-            DynValue result = script.DoString(encoded);
+            LuaValue result = script.DoString(encoded);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number);
             await Assert.That(result.Number).IsEqualTo(77);
@@ -188,7 +189,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         )
         {
             Script script = new(version);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
 
             await Assert.That(result.Type).IsEqualTo(expectedType).ConfigureAwait(false);
 
@@ -225,7 +226,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 extension: ".lua"
             );
 
-            DynValue result = Script.RunFile(tempFileScope.FilePath);
+            LuaValue result = Script.RunFile(tempFileScope.FilePath);
 
             await Assert.That(result.Type).IsEqualTo(expectedType).ConfigureAwait(false);
 
@@ -263,7 +264,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
             using TempFileScope tempFileScope = TempFileScope.CreateEmpty(extension: ".lua");
 
-            DynValue result = Script.RunFile(tempFileScope.FilePath);
+            LuaValue result = Script.RunFile(tempFileScope.FilePath);
 
             // Empty file returns Void (no return statement)
             await Assert.That(result.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
@@ -279,7 +280,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 extension: ".lua"
             );
 
-            DynValue result = Script.RunFile(tempFileScope.FilePath);
+            LuaValue result = Script.RunFile(tempFileScope.FilePath);
 
             // Whitespace-only file returns Void (no return statement)
             await Assert.That(result.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
@@ -298,7 +299,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 extension: ".lua"
             );
 
-            DynValue result = Script.RunFile(tempFileScope.FilePath);
+            LuaValue result = Script.RunFile(tempFileScope.FilePath);
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("with-bom").ConfigureAwait(false);
@@ -314,7 +315,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 extension: ".lua"
             );
 
-            DynValue result = Script.RunFile(tempFileScope.FilePath);
+            LuaValue result = Script.RunFile(tempFileScope.FilePath);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(result.Number).IsEqualTo(30).ConfigureAwait(false);
@@ -346,7 +347,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             await Assert.That(loaderAfterScope).IsEqualTo(loaderBeforeScope).ConfigureAwait(false);
         }
 
-        private static string EncodeFunctionAsBase64(Script script, DynValue chunk)
+        private static string EncodeFunctionAsBase64(Script script, LuaValue chunk)
         {
             using MemoryStream stream = new();
             script.Dump(chunk, stream);

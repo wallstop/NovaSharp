@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -22,7 +23,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public void EmptyLongComment(LuaCompatibilityVersion version)
         {
             Script s = new(version, default(CoreModules));
-            DynValue res = s.DoString("--[[]]");
+            LuaValue res = s.DoString("--[[]]");
         }
 
         [global::TUnit.Core.Test]
@@ -30,14 +31,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public void EmptyChunk(LuaCompatibilityVersion version)
         {
             Script s = new(version, default(CoreModules));
-            DynValue res = s.DoString("");
+            LuaValue res = s.DoString("");
         }
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task CSharpStaticFunctionCallStatement(LuaCompatibilityVersion version)
         {
-            DynValue[] args = Array.Empty<DynValue>();
+            LuaValue[] args = Array.Empty<LuaValue>();
 
             string script = "print(\"hello\", \"world\");";
 
@@ -45,18 +46,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             s.Globals.Set(
                 "print",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     new CallbackFunction(
                         (x, a) =>
                         {
                             args = a.GetArray();
-                            return DynValue.NewNumber(1234.0);
+                            return LuaValue.NewNumber(1234.0);
                         }
                     )
                 )
             );
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
             await Assert.That(args.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -70,25 +71,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [AllLuaVersions]
         public async Task CSharpStaticFunctionCallRedef(LuaCompatibilityVersion version)
         {
-            DynValue[] args = Array.Empty<DynValue>();
+            LuaValue[] args = Array.Empty<LuaValue>();
 
             string script = "local print = print; print(\"hello\", \"world\");";
 
             Script s = new(version);
             s.Globals.Set(
                 "print",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     new CallbackFunction(
                         (x, a) =>
                         {
                             args = a.GetArray();
-                            return DynValue.NewNumber(1234.0);
+                            return LuaValue.NewNumber(1234.0);
                         }
                     )
                 )
             );
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(args.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(args[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
@@ -104,15 +105,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             string script = "return callback()();";
 
-            DynValue callback2 = DynValue.NewCallback(
+            LuaValue callback2 = LuaValue.NewCallback(
                 new CallbackFunction(
                     (x, a) =>
                     {
-                        return DynValue.NewNumber(1234.0);
+                        return LuaValue.NewNumber(1234.0);
                     }
                 )
             );
-            DynValue callback = DynValue.NewCallback(
+            LuaValue callback = LuaValue.NewCallback(
                 new CallbackFunction(
                     (x, a) =>
                     {
@@ -124,7 +125,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new(version);
             s.Globals.Set("callback", callback);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(1234.0).ConfigureAwait(false);
@@ -136,11 +137,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             string script = "return callback();";
 
-            DynValue callback = DynValue.NewCallback(
+            LuaValue callback = LuaValue.NewCallback(
                 new CallbackFunction(
                     (x, a) =>
                     {
-                        return DynValue.NewNumber(1234.0);
+                        return LuaValue.NewNumber(1234.0);
                     }
                 )
             );
@@ -148,7 +149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new(version);
             s.Globals.Set("callback", callback);
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(1234.0).ConfigureAwait(false);
@@ -158,25 +159,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [AllLuaVersions]
         public async Task CSharpStaticFunctionCall2(LuaCompatibilityVersion version)
         {
-            DynValue[] args = Array.Empty<DynValue>();
+            LuaValue[] args = Array.Empty<LuaValue>();
 
             string script = "return callback 'hello';";
 
             Script s = new(version);
             s.Globals.Set(
                 "callback",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     new CallbackFunction(
                         (x, a) =>
                         {
                             args = a.GetArray();
-                            return DynValue.NewNumber(1234.0);
+                            return LuaValue.NewNumber(1234.0);
                         }
                     )
                 )
             );
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(args.Length).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(args[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
@@ -189,25 +190,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [AllLuaVersions]
         public async Task CSharpStaticFunctionCall(LuaCompatibilityVersion version)
         {
-            DynValue[] args = Array.Empty<DynValue>();
+            LuaValue[] args = Array.Empty<LuaValue>();
 
             string script = "return print(\"hello\", \"world\");";
 
             Script s = new(version);
             s.Globals.Set(
                 "print",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     new CallbackFunction(
                         (x, a) =>
                         {
                             args = a.GetArray();
-                            return DynValue.NewNumber(1234.0);
+                            return LuaValue.NewNumber(1234.0);
                         }
                     )
                 )
             );
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(args.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(args[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
@@ -236,7 +237,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return x,y,z";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
@@ -263,7 +264,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return x;";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(res.String).IsEqualTo("ciaoA").ConfigureAwait(false);
@@ -298,7 +299,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return x;";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(res.String).IsEqualTo(keywrd).ConfigureAwait(false);
         }
@@ -317,7 +318,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new(version);
             try
             {
-                DynValue res = s.DoString(script);
+                LuaValue res = s.DoString(script);
             }
             catch (SyntaxErrorException ex)
             {
@@ -339,7 +340,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				c'";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
         }
@@ -355,7 +356,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				He was wrong.'";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
         }
@@ -374,7 +375,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new(version);
             s.DoString(script);
 
-            DynValue res = s.Globals.Get("boh").Function.Call(82);
+            LuaValue res = s.Globals.Get("boh").Function.Call(82);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(1994).ConfigureAwait(false);
@@ -387,7 +388,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return -42";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(-42).ConfigureAwait(false);
@@ -400,7 +401,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return 42";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(42).ConfigureAwait(false);
@@ -413,7 +414,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return 6*7";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(42).ConfigureAwait(false);
@@ -432,7 +433,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new(version);
             s.Globals.Set(
                 "crash",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     new CallbackFunction(
                         (x, a) =>
                         {
@@ -457,7 +458,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
@@ -472,7 +473,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(res.String).IsEqualTo("c").ConfigureAwait(false);
@@ -497,7 +498,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return false or f(), true or f(), false and f(), true and f(), i";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Tuple.Length).IsEqualTo(5).ConfigureAwait(false);
             await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
@@ -529,7 +530,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
         }
 
         [global::TUnit.Core.Test]
@@ -550,7 +551,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return fact(5)";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
@@ -572,7 +573,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return i, x";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -596,7 +597,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return i, x";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -621,7 +622,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return x";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(1).ConfigureAwait(false);
@@ -662,7 +663,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return x, y";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -703,7 +704,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return x, y";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -725,7 +726,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return #x, #y";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -754,7 +755,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return i, x";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -780,7 +781,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return fact(5)";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
@@ -793,7 +794,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return 7";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(7).ConfigureAwait(false);
@@ -806,7 +807,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return 1+2*3";
 
             Script s = new(version, default(CoreModules));
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(7).ConfigureAwait(false);
@@ -819,7 +820,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return 2*3+1";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(7).ConfigureAwait(false);
@@ -832,7 +833,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return 2^3^2";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(512).ConfigureAwait(false);
@@ -845,7 +846,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return 5-3-2";
             Script s = new(version, default(CoreModules));
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(0).ConfigureAwait(false);
@@ -858,7 +859,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return 3 + -1";
             Script s = new(version, default(CoreModules));
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(2).ConfigureAwait(false);
@@ -871,7 +872,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return 3 * -1 + 5 * 3";
             Script s = new(version, default(CoreModules));
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(12).ConfigureAwait(false);
@@ -884,7 +885,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return -2^2";
             Script s = new(version, default(CoreModules));
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(-4).ConfigureAwait(false);
@@ -897,7 +898,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return -7 / 0.5";
             Script s = new(version, default(CoreModules));
 
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(-14).ConfigureAwait(false);
@@ -910,7 +911,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return 5+3*7-2*5+2^3^2";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(528).ConfigureAwait(false);
@@ -923,7 +924,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"return (5+3)*7-2*5+(2^3)^2";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(110).ConfigureAwait(false);
@@ -936,7 +937,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script = @"x = 1; return x;";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(1).ConfigureAwait(false);
@@ -961,7 +962,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return w+x+y+z";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(6).ConfigureAwait(false);
@@ -985,7 +986,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return fact(5)";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
@@ -1012,7 +1013,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return fact(5)";
 
             Script s = new(version, default(CoreModules));
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
@@ -1033,7 +1034,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(6.0).ConfigureAwait(false);
@@ -1052,7 +1053,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return fact(3)";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(3).ConfigureAwait(false);
@@ -1077,7 +1078,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return fact(5)";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
@@ -1097,7 +1098,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Function).ConfigureAwait(false);
         }
@@ -1120,7 +1121,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(res.String).IsEqualTo("ciao").ConfigureAwait(false);
@@ -1144,7 +1145,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(res.String).IsEqualTo("ciao").ConfigureAwait(false);
@@ -1168,7 +1169,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
         }
@@ -1189,7 +1190,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -1215,7 +1216,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
         }
 
         [global::TUnit.Core.Test]
@@ -1235,7 +1236,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
         }
 
         [global::TUnit.Core.Test]
@@ -1258,7 +1259,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
         }
 
         [global::TUnit.Core.Test]
@@ -1276,7 +1277,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version, CoreModulePresets.Default);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(1).ConfigureAwait(false);
@@ -1296,7 +1297,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(res.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
@@ -1323,13 +1324,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                                 ";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(res.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
             await Assert.That(res.Tuple[0].Number).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(res.Tuple[1].String).IsEqualTo("a").ConfigureAwait(false);
-            await Assert.That(res.Tuple[2].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].IsNil).IsTrue().ConfigureAwait(false);
             await Assert.That(res.Tuple[3].String).IsEqualTo("c").ConfigureAwait(false);
         }
 
@@ -1383,17 +1384,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                                 ";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(res.Tuple.Length).IsEqualTo(10).ConfigureAwait(false);
             await Assert.That(res.Tuple[0].String).IsEqualTo("a").ConfigureAwait(false);
             await Assert.That(res.Tuple[1].String).IsEqualTo("tail").ConfigureAwait(false);
-            await Assert.That(res.Tuple[2].IsNil()).IsTrue().ConfigureAwait(false);
-            await Assert.That(res.Tuple[3].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(res.Tuple[3].IsNil).IsTrue().ConfigureAwait(false);
             await Assert.That(res.Tuple[4].String).IsEqualTo("head").ConfigureAwait(false);
             await Assert.That(res.Tuple[5].String).IsEqualTo("a").ConfigureAwait(false);
-            await Assert.That(res.Tuple[6].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(res.Tuple[6].IsNil).IsTrue().ConfigureAwait(false);
             await Assert.That(res.Tuple[7].String).IsEqualTo("c").ConfigureAwait(false);
             await Assert.That(res.Tuple[8].String).IsEqualTo("a").ConfigureAwait(false);
             await Assert.That(res.Tuple[9].Number).IsEqualTo(5).ConfigureAwait(false);
@@ -1418,7 +1419,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -1447,7 +1448,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(1).ConfigureAwait(false);
@@ -1474,7 +1475,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(10).ConfigureAwait(false);
@@ -1501,7 +1502,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(50).ConfigureAwait(false);
@@ -1528,7 +1529,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(10).ConfigureAwait(false);
@@ -1550,7 +1551,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(res.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
@@ -1576,7 +1577,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(res.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
@@ -1619,7 +1620,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version);
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
 
@@ -1657,7 +1658,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script s = new(version, default(CoreModules));
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
             await Assert.That(res.Boolean).IsEqualTo(true).ConfigureAwait(false);
@@ -1674,7 +1675,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script s = new(version, default(CoreModules));
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(res.String).IsEqualTo("aABCz").ConfigureAwait(false);
@@ -1692,7 +1693,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script s = new(version, default(CoreModules));
-            DynValue res = s.DoString(script);
+            LuaValue res = s.DoString(script);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(3).ConfigureAwait(false);
@@ -1715,9 +1716,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 								";
 
             Script s = new(version);
-            DynValue fn = s.LoadString(script);
+            LuaValue fn = s.LoadString(script);
 
-            DynValue res = fn.Function.Call(1, 2, 3, 4);
+            LuaValue res = fn.Function.Call(1, 2, 3, 4);
 
             await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(res.Number).IsEqualTo(10).ConfigureAwait(false);
@@ -1756,7 +1757,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             string script = "return 0x0.1E";
             Script s = new(version);
-            DynValue result = s.DoString(script);
+            LuaValue result = s.DoString(script);
             await Assert
                 .That(result.Number)
                 .IsEqualTo((double)0x1E / (double)0x100)
@@ -1767,10 +1768,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [AllLuaVersions]
         public async Task HexFloats2(LuaCompatibilityVersion version)
         {
-            string script = "return 0xA23p-4";
+            string compensatedLiteral = "0x" + new string('f', 400) + "p-1600";
+            string script =
+                "return 0xA23p-4, 0x1p999999999999, 0x1p-999999999999, "
+                + compensatedLiteral
+                + ", 0xffffffffffffffffp-1138, 0x220e087835b925585p376";
             Script s = new(version);
-            DynValue result = s.DoString(script);
-            await Assert.That(result.Number).IsEqualTo((double)0xA23 / 16.0).ConfigureAwait(false);
+            LuaValue result = s.DoString(script);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo((double)0xA23 / 16.0)
+                .ConfigureAwait(false);
+            await Assert.That(double.IsPositiveInfinity(result.Tuple[1].Number)).IsTrue();
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(double.Epsilon);
+            long expectedRoundingBits = ((long)(441 + 1023) << 52) | 0x107043C1ADC93L;
+            await Assert
+                .That(BitConverter.DoubleToInt64Bits(result.Tuple[5].Number))
+                .IsEqualTo(expectedRoundingBits);
         }
 
         [global::TUnit.Core.Test]
@@ -1779,7 +1795,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             string script = "return 0X1.921FB54442D18P+1";
             Script s = new(version);
-            DynValue result = s.DoString(script);
+            LuaValue result = s.DoString(script);
             await Assert
                 .That(result.Number)
                 .IsEqualTo((1 + (double)0x921FB54442D18 / (double)0x10000000000000) * 2)
@@ -1814,7 +1830,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public void MissingArgsDefaultToNil(LuaCompatibilityVersion version)
         {
             Script s = new(version, default(CoreModules));
-            DynValue res = s.DoString(
+            LuaValue res = s.DoString(
                 @"
 				function test(a)
 					return a;
@@ -1830,7 +1846,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public void ParsingTest(LuaCompatibilityVersion version)
         {
             Script s = new(version, default(CoreModules));
-            DynValue res = s.LoadString(
+            LuaValue res = s.LoadString(
                 @"
 				t = {'a', 'b', 'c', ['d'] = 'f', ['e'] = 5, [65] = true, [true] = false}
 				function myFunc()

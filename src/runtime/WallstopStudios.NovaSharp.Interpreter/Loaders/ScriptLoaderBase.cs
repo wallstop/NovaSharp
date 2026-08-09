@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Loaders
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Utilities;
 
@@ -132,9 +133,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Loaders
 
             if (!IgnoreLuaPathGlobal)
             {
-                DynValue s = globalContext.RawGet("LUA_PATH");
+                LuaValue s = globalContext.RawGet("LUA_PATH");
 
-                if (s != null && s.Type == DataType.String)
+                if (s.Type == DataType.String)
                 {
                     return ResolveModuleNameWithSearchedPaths(modname, UnpackStringPaths(s.String));
                 }
@@ -166,9 +167,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Loaders
 
             if (!IgnoreLuaPathGlobal)
             {
-                DynValue s = globalContext.RawGet("LUA_PATH");
+                LuaValue s = globalContext.RawGet("LUA_PATH");
 
-                if (s != null && s.Type == DataType.String)
+                if (s.Type == DataType.String)
                 {
                     return ResolveModuleName(modname, UnpackStringPaths(s.String));
                 }

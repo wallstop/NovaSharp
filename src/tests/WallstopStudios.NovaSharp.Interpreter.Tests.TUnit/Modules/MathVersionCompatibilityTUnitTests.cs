@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -34,10 +35,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return math.type");
+            LuaValue result = script.DoString("return math.type");
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because(
                     $"math.type should be nil in {version} (Lua 5.3+ feature). "
@@ -56,8 +57,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue intResult = script.DoString("return math.type(5)");
-            DynValue floatResult = script.DoString("return math.type(5.5)");
+            LuaValue intResult = script.DoString("return math.type(5)");
+            LuaValue floatResult = script.DoString("return math.type(5.5)");
 
             await Assert
                 .That(intResult.String)
@@ -92,10 +93,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString($"return math.type({input})");
+            LuaValue result = script.DoString($"return math.type({input})");
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because(
                     $"math.type({input}) should return nil for non-numbers in {version}. "
@@ -118,10 +119,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return math.tointeger");
+            LuaValue result = script.DoString("return math.tointeger");
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because(
                     $"math.tointeger should be nil in {version} (Lua 5.3+ feature). "
@@ -147,7 +148,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString($"return math.tointeger({input})");
+            LuaValue result = script.DoString($"return math.tointeger({input})");
 
             await Assert
                 .That(result.Number)
@@ -170,10 +171,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString($"return math.tointeger({input})");
+            LuaValue result = script.DoString($"return math.tointeger({input})");
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because($"math.tointeger({input}) should return nil (not integral) in {version}")
                 .ConfigureAwait(false);
@@ -192,10 +193,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return math.ult");
+            LuaValue result = script.DoString("return math.ult");
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because(
                     $"math.ult should be nil in {version} (Lua 5.3+ feature). "
@@ -214,9 +215,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // -1 in unsigned is MAX, so 0 < MAX should be true
-            DynValue zeroLtNegOne = script.DoString("return math.ult(0, -1)");
+            LuaValue zeroLtNegOne = script.DoString("return math.ult(0, -1)");
             // MAX > 0, so this should be false
-            DynValue negOneLtZero = script.DoString("return math.ult(-1, 0)");
+            LuaValue negOneLtZero = script.DoString("return math.ult(-1, 0)");
 
             await Assert
                 .That(zeroLtNegOne.Boolean)
@@ -244,11 +245,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue maxint = script.DoString("return math.maxinteger");
-            DynValue minint = script.DoString("return math.mininteger");
+            LuaValue maxint = script.DoString("return math.maxinteger");
+            LuaValue minint = script.DoString("return math.mininteger");
 
             await Assert
-                .That(maxint.IsNil())
+                .That(maxint.IsNil)
                 .IsTrue()
                 .Because(
                     $"math.maxinteger should be nil in {version}. "
@@ -257,7 +258,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
 
             await Assert
-                .That(minint.IsNil())
+                .That(minint.IsNil)
                 .IsTrue()
                 .Because(
                     $"math.mininteger should be nil in {version}. "
@@ -275,8 +276,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue maxint = script.DoString("return math.maxinteger");
-            DynValue minint = script.DoString("return math.mininteger");
+            LuaValue maxint = script.DoString("return math.maxinteger");
+            LuaValue minint = script.DoString("return math.mininteger");
 
             // long.MaxValue = 9223372036854775807
             // long.MinValue = -9223372036854775808
@@ -372,7 +373,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString($"return math.{function}");
+            LuaValue result = script.DoString($"return math.{function}");
 
             // Math functions are ClrFunction (bound C# methods), not Lua Function
             bool isCallable =
@@ -397,7 +398,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return math.pi");
+            LuaValue result = script.DoString("return math.pi");
 
             await Assert
                 .That(result.Number)
@@ -416,7 +417,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return math.huge");
+            LuaValue result = script.DoString("return math.huge");
 
             await Assert
                 .That(result.Number)
@@ -515,7 +516,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // Get all keys from math table
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local keys = {}
                 for k, v in pairs(math) do

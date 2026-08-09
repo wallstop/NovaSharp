@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -98,7 +99,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             );
 
             // load should work
-            DynValue result = script.DoString("return load('return 42')()");
+            LuaValue result = script.DoString("return load('return 42')()");
 
             await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
         }
@@ -115,7 +116,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             );
 
             // loadstring should work in 5.1
-            DynValue result = script.DoString("return loadstring('return 42')()");
+            LuaValue result = script.DoString("return loadstring('return 42')()");
 
             await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
         }
@@ -142,7 +143,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             );
 
             // Should succeed because callback allows it
-            DynValue result = script.DoString("return load('return 99')()");
+            LuaValue result = script.DoString("return load('return 99')()");
 
             await Assert.That(result.Number).IsEqualTo(99).ConfigureAwait(false);
             await Assert.That(callbackInvoked).IsTrue().ConfigureAwait(false);
@@ -170,7 +171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             );
 
             // Should succeed because callback allows it
-            DynValue result = script.DoString("return loadstring('return 99')()");
+            LuaValue result = script.DoString("return loadstring('return 99')()");
 
             await Assert.That(result.Number).IsEqualTo(99).ConfigureAwait(false);
             await Assert.That(callbackInvoked).IsTrue().ConfigureAwait(false);

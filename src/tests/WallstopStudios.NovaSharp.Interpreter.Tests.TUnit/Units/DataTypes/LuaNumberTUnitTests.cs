@@ -614,38 +614,157 @@ public sealed class LuaNumberTUnitTests
     public async Task TryParseIntegerSucceeds()
     {
         bool success = LuaNumber.TryParse("42", out LuaNumber result);
+        bool preciseSuccess = LuaNumber.TryParse("9007199254740993", out LuaNumber preciseResult);
+        bool lua52PreciseSuccess = LuaNumber.TryParse(
+            "9223372036854775807",
+            LuaCompatibilityVersion.Lua52,
+            out LuaNumber lua52PreciseResult
+        );
+        bool lua52NegativeZeroSuccess = LuaNumber.TryParse(
+            "-0",
+            LuaCompatibilityVersion.Lua52,
+            out LuaNumber lua52NegativeZero
+        );
 
         await Assert.That(success).IsTrue().ConfigureAwait(false);
         await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
         await Assert.That(result.AsInteger).IsEqualTo(42L).ConfigureAwait(false);
+        await Assert.That(preciseSuccess).IsTrue().ConfigureAwait(false);
+        await Assert.That(preciseResult.IsInteger).IsTrue().ConfigureAwait(false);
+        await Assert
+            .That(preciseResult.AsInteger)
+            .IsEqualTo(9007199254740993L)
+            .ConfigureAwait(false);
+        await Assert.That(lua52PreciseSuccess).IsTrue().ConfigureAwait(false);
+        await Assert.That(lua52PreciseResult.IsFloat).IsTrue().ConfigureAwait(false);
+        await Assert.That(lua52PreciseResult.AsFloat).IsGreaterThan(9e18).ConfigureAwait(false);
+        await Assert.That(lua52NegativeZeroSuccess).IsTrue().ConfigureAwait(false);
+        await Assert.That(lua52NegativeZero.IsFloat).IsTrue().ConfigureAwait(false);
+        await Assert
+            .That(1d / lua52NegativeZero.AsFloat)
+            .IsEqualTo(double.NegativeInfinity)
+            .ConfigureAwait(false);
     }
 
     [Test]
     public async Task TryParseFloatSucceeds()
     {
         bool success = LuaNumber.TryParse("3.14", out LuaNumber result);
+        bool trailingPointSuccess = LuaNumber.TryParse("1.", out LuaNumber trailingPoint);
+        bool exponentSuccess = LuaNumber.TryParse("1e0", out LuaNumber exponent);
+        bool overflowSuccess = LuaNumber.TryParse("1e999999", out LuaNumber overflow);
+        bool underflowSuccess = LuaNumber.TryParse("1e-999999", out LuaNumber underflow);
+        bool hexOverflowSuccess = LuaNumber.TryParse("0x1p999999999999", out LuaNumber hexOverflow);
+        bool hexUnderflowSuccess = LuaNumber.TryParse(
+            "0x1p-999999999999",
+            out LuaNumber hexUnderflow
+        );
+        bool compensatedSuccess = LuaNumber.TryParse(
+            "0x" + new string('f', 400) + "p-1600",
+            out LuaNumber compensated
+        );
+        bool subnormalSuccess = LuaNumber.TryParse(
+            "0xffffffffffffffffp-1138",
+            out LuaNumber subnormal
+        );
+        bool roundingSuccess = LuaNumber.TryParse(
+            "0x220e087835b925585p376",
+            out LuaNumber rounding
+        );
 
         await Assert.That(success).IsTrue().ConfigureAwait(false);
         await Assert.That(result.IsFloat).IsTrue().ConfigureAwait(false);
         await Assert.That(result.AsFloat).IsEqualTo(3.14).ConfigureAwait(false);
+        await Assert.That(trailingPointSuccess).IsTrue().ConfigureAwait(false);
+        await Assert.That(trailingPoint.IsFloat).IsTrue().ConfigureAwait(false);
+        await Assert.That(trailingPoint.AsFloat).IsEqualTo(1d).ConfigureAwait(false);
+        await Assert.That(exponentSuccess).IsTrue().ConfigureAwait(false);
+        await Assert.That(exponent.IsFloat).IsTrue().ConfigureAwait(false);
+        await Assert.That(exponent.AsFloat).IsEqualTo(1d).ConfigureAwait(false);
+        await Assert.That(overflowSuccess).IsTrue().ConfigureAwait(false);
+        await Assert.That(double.IsPositiveInfinity(overflow.AsFloat)).IsTrue();
+        await Assert.That(underflowSuccess).IsTrue().ConfigureAwait(false);
+        await Assert.That(underflow.IsFloat).IsTrue().ConfigureAwait(false);
+        await Assert.That(underflow.AsFloat).IsEqualTo(0d).ConfigureAwait(false);
+        await Assert.That(hexOverflowSuccess).IsTrue().ConfigureAwait(false);
+        await Assert.That(double.IsPositiveInfinity(hexOverflow.AsFloat)).IsTrue();
+        await Assert.That(hexUnderflowSuccess).IsTrue().ConfigureAwait(false);
+        await Assert.That(hexUnderflow.IsFloat).IsTrue().ConfigureAwait(false);
+        await Assert.That(hexUnderflow.AsFloat).IsEqualTo(0d).ConfigureAwait(false);
+        await Assert.That(compensatedSuccess).IsTrue().ConfigureAwait(false);
+        await Assert.That(compensated.IsFloat).IsTrue().ConfigureAwait(false);
+        await Assert.That(compensated.AsFloat).IsEqualTo(1d).ConfigureAwait(false);
+        long expectedRoundingBits = ((long)(441 + 1023) << 52) | 0x107043C1ADC93L;
+        await Assert.That(roundingSuccess).IsTrue().ConfigureAwait(false);
+        await Assert
+            .That(BitConverter.DoubleToInt64Bits(rounding.AsFloat))
+            .IsEqualTo(expectedRoundingBits)
+            .ConfigureAwait(false);
+        await Assert.That(subnormalSuccess).IsTrue().ConfigureAwait(false);
+        await Assert.That(subnormal.AsFloat).IsEqualTo(double.Epsilon).ConfigureAwait(false);
     }
 
     [Test]
     public async Task TryParseHexIntegerSucceeds()
     {
         bool success = LuaNumber.TryParse("0x1F", out LuaNumber result);
+        bool signedSuccess = LuaNumber.TryParse("-0x1", out LuaNumber signedResult);
+        bool floatSuccess = LuaNumber.TryParse("0x1p0", out LuaNumber floatResult);
+        bool lua52Success = LuaNumber.TryParse(
+            "0x1F",
+            LuaCompatibilityVersion.Lua52,
+            out LuaNumber lua52Result
+        );
+        bool lua52RoundingSuccess = LuaNumber.TryParse(
+            "0x220e087835b925585",
+            LuaCompatibilityVersion.Lua52,
+            out LuaNumber lua52RoundingResult
+        );
 
         await Assert.That(success).IsTrue().ConfigureAwait(false);
         await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
         await Assert.That(result.AsInteger).IsEqualTo(31L).ConfigureAwait(false);
+        await Assert.That(signedSuccess).IsTrue().ConfigureAwait(false);
+        await Assert.That(signedResult.IsInteger).IsTrue().ConfigureAwait(false);
+        await Assert.That(signedResult.AsInteger).IsEqualTo(-1L).ConfigureAwait(false);
+        await Assert.That(floatSuccess).IsTrue().ConfigureAwait(false);
+        await Assert.That(floatResult.IsFloat).IsTrue().ConfigureAwait(false);
+        await Assert.That(floatResult.AsFloat).IsEqualTo(1.0).ConfigureAwait(false);
+        await Assert.That(lua52Success).IsTrue().ConfigureAwait(false);
+        await Assert.That(lua52Result.IsFloat).IsTrue().ConfigureAwait(false);
+        await Assert.That(lua52Result.AsFloat).IsEqualTo(31d).ConfigureAwait(false);
+        await Assert.That(lua52RoundingSuccess).IsTrue().ConfigureAwait(false);
+        long expectedRoundingBits = ((long)(65 + 1023) << 52) | 0x107043C1ADC93L;
+        await Assert
+            .That(BitConverter.DoubleToInt64Bits(lua52RoundingResult.AsFloat))
+            .IsEqualTo(expectedRoundingBits)
+            .ConfigureAwait(false);
     }
 
     [Test]
     public async Task TryParseInvalidStringFails()
     {
         bool success = LuaNumber.TryParse("not a number", out LuaNumber result);
+        bool nanSuccess = LuaNumber.TryParse("NaN", out _);
+        bool infinitySuccess = LuaNumber.TryParse("Infinity", out _);
+        bool thousandsSuccess = LuaNumber.TryParse("1,000", out _);
+        bool unicodeExponentSuccess = LuaNumber.TryParse("0x1p١", out _);
+        bool lua51InfinitySuccess = LuaNumber.TryParse(
+            "Infinity",
+            LuaCompatibilityVersion.Lua51,
+            out LuaNumber lua51Infinity
+        );
 
         await Assert.That(success).IsFalse().ConfigureAwait(false);
+        await Assert.That(nanSuccess).IsFalse().ConfigureAwait(false);
+        await Assert.That(infinitySuccess).IsFalse().ConfigureAwait(false);
+        await Assert.That(thousandsSuccess).IsFalse().ConfigureAwait(false);
+        await Assert.That(unicodeExponentSuccess).IsFalse().ConfigureAwait(false);
+        await Assert.That(lua51InfinitySuccess).IsTrue().ConfigureAwait(false);
+        await Assert
+            .That(double.IsPositiveInfinity(lua51Infinity.AsFloat))
+            .IsTrue()
+            .ConfigureAwait(false);
     }
 
     [Test]

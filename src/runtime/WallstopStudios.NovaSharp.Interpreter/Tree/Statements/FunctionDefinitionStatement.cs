@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
 {
     using System.Collections.Generic;
+    using global::NovaSharp;
     using Cysharp.Text;
     using Debugging;
     using Expressions;
@@ -145,7 +146,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             {
                 if (_local)
                 {
-                    bc.EmitLiteral(DynValue.Nil);
+                    bc.EmitLiteral(LuaValue.Nil);
                     bc.EmitStore(_funcSymbol, 0, 0);
                     _funcDef.Compile(bc, new SetFunctionPostEmitter(this, 2), _friendlyName);
                 }
@@ -169,11 +170,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             for (int i = 0; i < _tableAccessors.Count; i++)
             {
                 string str = _tableAccessors[i];
-                bc.EmitIndex(DynValue.NewString(str), true);
+                bc.EmitIndex(LuaValue.NewString(str), true);
                 cnt += 1;
             }
 
-            bc.EmitIndexSet(0, 0, DynValue.NewString(_methodName), true);
+            bc.EmitIndexSet(0, 0, LuaValue.NewString(_methodName), true);
 
             return 1 + cnt;
         }

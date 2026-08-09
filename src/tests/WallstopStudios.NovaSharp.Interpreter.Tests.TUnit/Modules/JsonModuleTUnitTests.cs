@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -50,7 +51,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             script.DoString(
                 "local m = require('json'); json = { encode = m.serialize, decode = m.parse };"
             );
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local data = json.decode('{""name"":""nova"",""values"":[10,20]}')
                 return data.name, data.values[1], data.values[2]
@@ -69,11 +70,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue jsonModule = script.DoString("return require('json')");
-            DynValue parse = jsonModule.Table.Get("parse");
+            LuaValue jsonModule = script.DoString("return require('json')");
+            LuaValue parse = jsonModule.Table.Get("parse");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.Call(parse, DynValue.NewString("{invalid"))
+                script.Call(parse, LuaValue.NewString("{invalid"))
             );
             await Assert.That(exception).IsNotNull();
         }
@@ -85,11 +86,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScript(version);
-            DynValue jsonModule = script.DoString("return require('json')");
-            DynValue serialize = jsonModule.Table.Get("serialize");
+            LuaValue jsonModule = script.DoString("return require('json')");
+            LuaValue serialize = jsonModule.Table.Get("serialize");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.Call(serialize, DynValue.NewString("oops"))
+                script.Call(serialize, LuaValue.NewString("oops"))
             );
             await Assert.That(exception).IsNotNull();
         }
@@ -99,7 +100,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task IsNullDetectsJsonNullAndNil(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local json = require('json')
                 return json.isnull(json.null()),
@@ -118,7 +119,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Test]
         public async Task NullReturnsJsonNullDynValue()
         {
-            DynValue value = JsonNull.Create();
+            LuaValue value = JsonNull.Create();
 
             await Assert.That(value.Type).IsEqualTo(DataType.UserData);
             await Assert.That(JsonNull.IsJsonNull(value)).IsTrue();

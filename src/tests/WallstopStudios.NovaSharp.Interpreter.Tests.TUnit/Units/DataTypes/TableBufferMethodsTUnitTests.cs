@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -19,9 +20,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
-            table.Set("b", DynValue.NewNumber(2));
-            table.Set("c", DynValue.NewNumber(3));
+            table.Set("a", LuaValue.NewNumber(1));
+            table.Set("b", LuaValue.NewNumber(2));
+            table.Set("c", LuaValue.NewNumber(3));
 
             TablePair[] buffer = new TablePair[10];
             int count = table.FillPairs(buffer.AsSpan());
@@ -34,9 +35,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
-            table.Set("b", DynValue.NewNumber(2));
-            table.Set("c", DynValue.NewNumber(3));
+            table.Set("a", LuaValue.NewNumber(1));
+            table.Set("b", LuaValue.NewNumber(2));
+            table.Set("c", LuaValue.NewNumber(3));
 
             TablePair[] buffer = new TablePair[2];
             int count = table.FillPairs(buffer.AsSpan());
@@ -61,7 +62,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
+            table.Set("a", LuaValue.NewNumber(1));
 
             int count = table.FillPairs(Span<TablePair>.Empty);
 
@@ -70,17 +71,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
         #endregion
 
-        #region FillKeys(Span<DynValue>) Tests
+        #region FillKeys(Span<LuaValue>) Tests
 
         [Test]
         public async Task FillKeysSpanFillsCorrectly()
         {
             Script script = new();
             Table table = new(script);
-            table.Set("x", DynValue.NewNumber(10));
-            table.Set("y", DynValue.NewNumber(20));
+            table.Set("x", LuaValue.NewNumber(10));
+            table.Set("y", LuaValue.NewNumber(20));
 
-            DynValue[] buffer = new DynValue[5];
+            LuaValue[] buffer = new LuaValue[5];
             int count = table.FillKeys(buffer.AsSpan());
 
             await Assert.That(count).IsEqualTo(2).ConfigureAwait(false);
@@ -93,11 +94,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
-            table.Set("b", DynValue.NewNumber(2));
-            table.Set("c", DynValue.NewNumber(3));
+            table.Set("a", LuaValue.NewNumber(1));
+            table.Set("b", LuaValue.NewNumber(2));
+            table.Set("c", LuaValue.NewNumber(3));
 
-            DynValue[] buffer = new DynValue[1];
+            LuaValue[] buffer = new LuaValue[1];
             int count = table.FillKeys(buffer.AsSpan());
 
             await Assert.That(count).IsEqualTo(1).ConfigureAwait(false);
@@ -109,7 +110,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Script script = new();
             Table table = new(script);
 
-            DynValue[] buffer = new DynValue[3];
+            LuaValue[] buffer = new LuaValue[3];
             int count = table.FillKeys(buffer.AsSpan());
 
             await Assert.That(count).IsEqualTo(0).ConfigureAwait(false);
@@ -117,17 +118,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
         #endregion
 
-        #region FillValues(Span<DynValue>) Tests
+        #region FillValues(Span<LuaValue>) Tests
 
         [Test]
         public async Task FillValuesSpanFillsCorrectly()
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(100));
-            table.Set("b", DynValue.NewNumber(200));
+            table.Set("a", LuaValue.NewNumber(100));
+            table.Set("b", LuaValue.NewNumber(200));
 
-            DynValue[] buffer = new DynValue[5];
+            LuaValue[] buffer = new LuaValue[5];
             int count = table.FillValues(buffer.AsSpan());
 
             await Assert.That(count).IsEqualTo(2).ConfigureAwait(false);
@@ -140,10 +141,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
-            table.Set("b", DynValue.NewNumber(2));
+            table.Set("a", LuaValue.NewNumber(1));
+            table.Set("b", LuaValue.NewNumber(2));
 
-            DynValue[] buffer = new DynValue[1];
+            LuaValue[] buffer = new LuaValue[1];
             int count = table.FillValues(buffer.AsSpan());
 
             await Assert.That(count).IsEqualTo(1).ConfigureAwait(false);
@@ -155,7 +156,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Script script = new();
             Table table = new(script);
 
-            DynValue[] buffer = new DynValue[3];
+            LuaValue[] buffer = new LuaValue[3];
             int count = table.FillValues(buffer.AsSpan());
 
             await Assert.That(count).IsEqualTo(0).ConfigureAwait(false);
@@ -170,8 +171,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
-            table.Set("b", DynValue.NewNumber(2));
+            table.Set("a", LuaValue.NewNumber(1));
+            table.Set("b", LuaValue.NewNumber(2));
 
             List<TablePair> list = new() { default }; // Pre-populate to verify Clear
             List<TablePair> result = table.FillPairs(list);
@@ -185,11 +186,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
+            table.Set("a", LuaValue.NewNumber(1));
 
             List<TablePair> list = new()
             {
-                new TablePair(DynValue.NewString("old"), DynValue.NewNumber(999)),
+                new TablePair(LuaValue.NewString("old"), LuaValue.NewNumber(999)),
             };
 
             List<TablePair> result = table.FillPairs(list);
@@ -230,8 +231,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
-            table.Set("b", DynValue.NewNumber(2));
+            table.Set("a", LuaValue.NewNumber(1));
+            table.Set("b", LuaValue.NewNumber(2));
 
             // Fluent API allows direct iteration
             int count = 0;
@@ -245,18 +246,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
         #endregion
 
-        #region FillKeys(ICollection<DynValue>) Tests
+        #region FillKeys(ICollection<LuaValue>) Tests
 
         [Test]
         public async Task FillKeysCollectionFillsCorrectly()
         {
             Script script = new();
             Table table = new(script);
-            table.Set("key1", DynValue.NewNumber(1));
-            table.Set("key2", DynValue.NewNumber(2));
+            table.Set("key1", LuaValue.NewNumber(1));
+            table.Set("key2", LuaValue.NewNumber(2));
 
-            List<DynValue> list = new();
-            List<DynValue> result = table.FillKeys(list);
+            List<LuaValue> list = new();
+            List<LuaValue> result = table.FillKeys(list);
 
             await Assert.That(result).IsSameReferenceAs(list).ConfigureAwait(false);
             await Assert.That(result.Count).IsEqualTo(2).ConfigureAwait(false);
@@ -267,10 +268,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("new", DynValue.NewNumber(1));
+            table.Set("new", LuaValue.NewNumber(1));
 
-            List<DynValue> list = new() { DynValue.NewString("old") };
-            List<DynValue> result = table.FillKeys(list);
+            List<LuaValue> list = new() { LuaValue.NewString("old") };
+            List<LuaValue> result = table.FillKeys(list);
 
             await Assert.That(result).IsSameReferenceAs(list).ConfigureAwait(false);
             await Assert.That(list.Count).IsEqualTo(1).ConfigureAwait(false);
@@ -284,7 +285,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(script);
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                table.FillKeys<List<DynValue>>(null)
+                table.FillKeys<List<LuaValue>>(null)
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("destination").ConfigureAwait(false);
@@ -295,12 +296,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
-            table.Set("b", DynValue.NewNumber(2));
+            table.Set("a", LuaValue.NewNumber(1));
+            table.Set("b", LuaValue.NewNumber(2));
 
             // Fluent API allows direct iteration
             int count = 0;
-            foreach (DynValue key in table.FillKeys(new List<DynValue>()))
+            foreach (LuaValue key in table.FillKeys(new List<LuaValue>()))
             {
                 count++;
             }
@@ -310,18 +311,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
         #endregion
 
-        #region FillValues(ICollection<DynValue>) Tests
+        #region FillValues(ICollection<LuaValue>) Tests
 
         [Test]
         public async Task FillValuesCollectionFillsCorrectly()
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(50));
-            table.Set("b", DynValue.NewNumber(60));
+            table.Set("a", LuaValue.NewNumber(50));
+            table.Set("b", LuaValue.NewNumber(60));
 
-            List<DynValue> list = new();
-            List<DynValue> result = table.FillValues(list);
+            List<LuaValue> list = new();
+            List<LuaValue> result = table.FillValues(list);
 
             await Assert.That(result).IsSameReferenceAs(list).ConfigureAwait(false);
             await Assert.That(result.Count).IsEqualTo(2).ConfigureAwait(false);
@@ -332,10 +333,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("x", DynValue.NewNumber(42));
+            table.Set("x", LuaValue.NewNumber(42));
 
-            List<DynValue> list = new() { DynValue.NewNumber(999) };
-            List<DynValue> result = table.FillValues(list);
+            List<LuaValue> list = new() { LuaValue.NewNumber(999) };
+            List<LuaValue> result = table.FillValues(list);
 
             await Assert.That(result).IsSameReferenceAs(list).ConfigureAwait(false);
             await Assert.That(list.Count).IsEqualTo(1).ConfigureAwait(false);
@@ -349,7 +350,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(script);
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                table.FillValues<List<DynValue>>(null)
+                table.FillValues<List<LuaValue>>(null)
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("destination").ConfigureAwait(false);
@@ -360,12 +361,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(50));
-            table.Set("b", DynValue.NewNumber(60));
+            table.Set("a", LuaValue.NewNumber(50));
+            table.Set("b", LuaValue.NewNumber(60));
 
             // Fluent API allows direct iteration
             int count = 0;
-            foreach (DynValue value in table.FillValues(new List<DynValue>()))
+            foreach (LuaValue value in table.FillValues(new List<LuaValue>()))
             {
                 count++;
             }
@@ -385,13 +386,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             await Assert.That(table.Count).IsEqualTo(0).ConfigureAwait(false);
 
-            table.Set("a", DynValue.NewNumber(1));
+            table.Set("a", LuaValue.NewNumber(1));
             await Assert.That(table.Count).IsEqualTo(1).ConfigureAwait(false);
 
-            table.Set("b", DynValue.NewNumber(2));
+            table.Set("b", LuaValue.NewNumber(2));
             await Assert.That(table.Count).IsEqualTo(2).ConfigureAwait(false);
 
-            table.Set("c", DynValue.NewNumber(3));
+            table.Set("c", LuaValue.NewNumber(3));
             await Assert.That(table.Count).IsEqualTo(3).ConfigureAwait(false);
         }
 
@@ -400,14 +401,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
-            table.Set("b", DynValue.NewNumber(2));
-            table.Set("c", DynValue.NewNumber(3));
+            table.Set("a", LuaValue.NewNumber(1));
+            table.Set("b", LuaValue.NewNumber(2));
+            table.Set("c", LuaValue.NewNumber(3));
 
             await Assert.That(table.Count).IsEqualTo(3).ConfigureAwait(false);
 
             // Setting to nil keeps the entry in Count (use GetNonNilPairsEnumerator to skip nils)
-            table.Set("b", DynValue.Nil);
+            table.Set("b", LuaValue.Nil);
 
             // Count still includes the nil entry in the internal structure
             await Assert.That(table.Count).IsEqualTo(3).ConfigureAwait(false);

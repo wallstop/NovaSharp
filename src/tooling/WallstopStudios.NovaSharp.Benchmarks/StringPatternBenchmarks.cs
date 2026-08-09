@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using global::NovaSharp;
     using BenchmarkDotNet.Attributes;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -146,8 +147,8 @@ end";
     public class StringPatternBenchmarks
     {
         private Script _script = null!;
-        private DynValue _compiledEntry = DynValue.Nil;
-        private Func<DynValue> _scenarioRunner = null!;
+        private LuaValue _compiledEntry = LuaValue.Nil;
+        private Func<LuaValue> _scenarioRunner = null!;
 
         /// <summary>
         /// Scenario that will be executed for the next benchmark iteration.
@@ -186,13 +187,13 @@ end";
             );
 
             // All scenarios return a function that we call directly
-            _scenarioRunner = () => _script.Call(_script.Call(_compiledEntry));
+            _scenarioRunner = () => _script.CallValues(_script.CallValues(_compiledEntry));
         }
 
         /// <summary>
         /// Executes the selected string pattern scenario and returns its result.
         /// </summary>
         [Benchmark(Description = "String Pattern Scenario")]
-        public DynValue ExecuteScenario() => _scenarioRunner();
+        public LuaValue ExecuteScenario() => _scenarioRunner();
     }
 }

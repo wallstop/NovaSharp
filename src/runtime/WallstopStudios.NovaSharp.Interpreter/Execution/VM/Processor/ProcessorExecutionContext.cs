@@ -1,7 +1,9 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Interop;
 
     /// <content>
     /// Provides script-facing helpers for metatable and script access.
@@ -12,7 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// Gets the metatable associated with the specified value, honoring type metatables when needed.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal Table GetMetatable(DynValue value)
+        internal Table GetMetatable(LuaValue value)
         {
             if (value.Type == DataType.Table)
             {
@@ -29,103 +31,150 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
-        /// Resolves the metamethod invoked for a binary operation between <paramref name="op1"/> and <paramref name="op2"/>.
+        /// Attempts to resolve the metamethod invoked for a binary operation between
+        /// <paramref name="op1"/> and <paramref name="op2"/>.
         /// </summary>
-        internal DynValue GetBinaryMetamethod(DynValue op1, DynValue op2, string eventName)
+        internal bool TryGetBinaryMetamethod(
+            LuaValue op1,
+            LuaValue op2,
+            string eventName,
+            out LuaValue metamethod
+        )
         {
             Table op1MetaTable = GetMetatable(op1);
             if (op1MetaTable != null)
             {
-                DynValue meta1 = op1MetaTable.RawGet(eventName);
-                if (meta1 != null && meta1.IsNotNil())
+                if (op1MetaTable.TryRawGet(eventName, out LuaValue meta1) && meta1.IsNotNil())
                 {
-                    return meta1;
+                    metamethod = meta1;
+                    return true;
                 }
             }
 
             Table op2MetaTable = GetMetatable(op2);
             if (op2MetaTable != null)
             {
-                DynValue meta2 = op2MetaTable.RawGet(eventName);
-                if (meta2 != null && meta2.IsNotNil())
+                if (op2MetaTable.TryRawGet(eventName, out LuaValue meta2) && meta2.IsNotNil())
                 {
-                    return meta2;
+                    metamethod = meta2;
+                    return true;
                 }
             }
 
             if (op1.Type == DataType.UserData)
             {
-                DynValue meta = op1.UserData.Descriptor.MetaIndex(
-                    _script,
-                    op1.UserData.Object,
-                    eventName
-                );
-
-                if (meta != null)
+                if (
+                    UserDataAccess.TryMetaIndex(
+                        op1.UserData.Descriptor,
+                        _script,
+                        op1.UserData.Object,
+                        eventName,
+                        out metamethod
+                    )
+                )
                 {
-                    return meta;
+                    return true;
                 }
             }
 
             if (op2.Type == DataType.UserData)
             {
-                DynValue meta = op2.UserData.Descriptor.MetaIndex(
-                    _script,
-                    op2.UserData.Object,
-                    eventName
-                );
-
-                if (meta != null)
+                if (
+                    UserDataAccess.TryMetaIndex(
+                        op2.UserData.Descriptor,
+                        _script,
+                        op2.UserData.Object,
+                        eventName,
+                        out metamethod
+                    )
+                )
                 {
-                    return meta;
+                    return true;
                 }
             }
 
-            return null;
+            metamethod = LuaValue.Nil;
+            return false;
         }
 
         /// <summary>
-        /// Resolves the metamethod for the given value, probing userdata descriptors first.
+        /// Attempts to resolve the metamethod for the given value, probing userdata descriptors first.
         /// </summary>
-        internal DynValue GetMetamethod(DynValue value, string metamethod)
+        internal bool TryGetMetamethod(
+            LuaValue value,
+            string metamethod,
+            out LuaValue resolvedMetamethod
+        )
         {
             if (value.Type == DataType.UserData)
             {
-                DynValue v = value.UserData.Descriptor.MetaIndex(
-                    _script,
-                    value.UserData.Object,
-                    metamethod
-                );
-                if (v != null)
+                if (
+                    UserDataAccess.TryMetaIndex(
+                        value.UserData.Descriptor,
+                        _script,
+                        value.UserData.Object,
+                        metamethod,
+                        out resolvedMetamethod
+                    )
+                )
                 {
-                    return v;
+                    return true;
                 }
             }
 
-            return GetMetamethodRaw(value, metamethod);
+            return TryGetMetamethodRaw(value, metamethod, out resolvedMetamethod);
         }
 
         /// <summary>
-        /// Resolves the metamethod from the metatable only (no userdata descriptor lookup).
+        /// Resolves the metamethod for the given value, or returns <see cref="LuaValue.Nil"/> when
+        /// none is available.
+        /// </summary>
+        internal LuaValue GetMetamethod(LuaValue value, string metamethod)
+        {
+            return TryGetMetamethod(value, metamethod, out LuaValue resolvedMetamethod)
+                ? resolvedMetamethod
+                : LuaValue.Nil;
+        }
+
+        /// <summary>
+        /// Attempts to resolve the metamethod from the metatable only (no userdata descriptor lookup).
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal DynValue GetMetamethodRaw(DynValue value, string metamethod)
+        internal bool TryGetMetamethodRaw(
+            LuaValue value,
+            string metamethod,
+            out LuaValue resolvedMetamethod
+        )
         {
             Table metatable = GetMetatable(value);
 
             if (metatable == null)
             {
-                return null;
+                resolvedMetamethod = LuaValue.Nil;
+                return false;
             }
 
-            DynValue metameth = metatable.RawGet(metamethod);
-
-            if (metameth == null || metameth.IsNil())
+            if (
+                !metatable.TryRawGet(metamethod, out resolvedMetamethod) || resolvedMetamethod.IsNil
+            )
             {
-                return null;
+                resolvedMetamethod = LuaValue.Nil;
+                return false;
             }
 
-            return metameth;
+            return true;
+        }
+
+        /// <summary>
+        /// Resolves the metamethod from the metatable only, or returns <see cref="LuaValue.Nil"/>
+        /// when none is available.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal LuaValue GetMetamethodRaw(LuaValue value, string metamethod)
+        {
+            return TryGetMetamethodRaw(value, metamethod, out LuaValue resolvedMetamethod)
+                ? resolvedMetamethod
+                : LuaValue.Nil;
         }
 
         /// <summary>

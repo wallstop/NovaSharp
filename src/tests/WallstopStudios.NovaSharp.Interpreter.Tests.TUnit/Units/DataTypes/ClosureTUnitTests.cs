@@ -5,11 +5,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System.Globalization;
     using System.Text;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ClosureTUnitTests
@@ -21,7 +23,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             // For Lua 5.1: _ENV is always present for setfenv/getfenv compatibility, so upvalue count is 1.
             // For Lua 5.2+: _ENV is only included when globals are referenced, so upvalue count is 0.
             Script script = new(version);
-            DynValue function = script.DoString("return function(a) return a end");
+            LuaValue function = script.DoString("return function(a) return a end");
 
             Closure closure = function.Function;
 
@@ -54,7 +56,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function() return 42 end");
+            LuaValue function = script.DoString("return function() return 42 end");
             Closure closure = function.Function;
 
             await Assert.That(closure.OwnerScript).IsSameReferenceAs(script).ConfigureAwait(false);
@@ -69,7 +71,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task GetUpValuesTypeDetectsEnvironmentUpValue(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function() return _ENV end");
+            LuaValue function = script.DoString("return function() return _ENV end");
 
             Closure closure = function.Function;
 
@@ -91,7 +93,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             // This closure captures x and y. For Lua 5.1, _ENV is also included.
             // For Lua 5.2+, _ENV is NOT included since no globals are referenced.
             Script script = new(version);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 @"
                 local x = 3
                 local y = 4
@@ -149,7 +151,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 @"
                 local x = 7
                 return function()
@@ -159,7 +161,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             );
 
             Closure closure = function.Function;
-            IReadOnlyList<DynValue> context = closure.Context;
+            IReadOnlyList<LuaValue> context = closure.Context;
             int xIndex = -1;
 
             for (int i = 0; i < closure.UpValuesCount; i++)
@@ -175,11 +177,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(context.Count).IsEqualTo(closure.UpValuesCount).ConfigureAwait(false);
             await Assert.That(context[xIndex].Number).IsEqualTo(7d).ConfigureAwait(false);
 
-            closure.SetUpValue(xIndex, DynValue.NewNumber(11d));
+            closure.SetUpValue(xIndex, LuaValue.NewNumber(11d));
 
             await Assert.That(context[xIndex].Number).IsEqualTo(11d).ConfigureAwait(false);
 
-            IEnumerator<DynValue> enumerator = context.GetEnumerator();
+            IEnumerator<LuaValue> enumerator = context.GetEnumerator();
             Assert.Throws<InvalidOperationException>(() => _ = enumerator.Current);
 
             int enumeratedCount = 0;
@@ -236,9 +238,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             }
             builder.AppendLine(" end");
 
-            DynValue function = script.DoString(builder.ToString());
+            LuaValue function = script.DoString(builder.ToString());
             Closure closure = function.Function;
-            DynValue result = script.Call(function);
+            LuaValue result = script.Call(function);
 
             int expectedUpValueCount =
                 version == LuaCompatibilityVersion.Lua51 ? capturedCount + 1 : capturedCount;
@@ -270,7 +272,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task DelegatesInvokeScriptFunction(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function(a, b) return a + b end");
+            LuaValue function = script.DoString("return function(a, b) return a + b end");
             Closure closure = function.Function;
 
             ScriptFunctionCallback generic = closure.GetDelegate();
@@ -289,37 +291,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        [ScriptGlobalOptionsIsolation]
         public async Task CallOverloadsInvokeUnderlyingFunction(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 "return function(a, b, c, d, e) return (a or 0) + (b or 0) + (c or 0) + (d or 0) + (e or 0) end"
             );
             Closure closure = function.Function;
 
-            DynValue noArgs = closure.Call();
-            DynValue oneDynValue = closure.Call(DynValue.NewNumber(12));
-            DynValue objectArgs = closure.Call(2, 3);
-            DynValue fourObjectArgs = closure.Call(1, 2, 3, 4);
-            DynValue fiveObjectArgs = closure.Call(1, 2, 3, 4, 5);
-            DynValue twoDynValues = closure.Call(DynValue.NewNumber(10), DynValue.NewNumber(5));
-            DynValue threeDynValues = closure.Call(
-                DynValue.NewNumber(10),
-                DynValue.NewNumber(5),
-                DynValue.NewNumber(2)
+            LuaValue noArgs = closure.Call();
+            LuaValue oneDynValue = closure.CallValues(LuaValue.NewNumber(12));
+            LuaValue objectArgs = closure.Call(2, 3);
+            LuaValue fourObjectArgs = closure.Call(1, 2, 3, 4);
+            LuaValue fiveObjectArgs = closure.Call(1, 2, 3, 4, 5);
+            LuaValue twoDynValues = closure.CallValues(
+                LuaValue.NewNumber(10),
+                LuaValue.NewNumber(5)
             );
-            DynValue fourDynValues = closure.Call(
-                DynValue.NewNumber(10),
-                DynValue.NewNumber(5),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(1)
+            LuaValue threeDynValues = closure.CallValues(
+                LuaValue.NewNumber(10),
+                LuaValue.NewNumber(5),
+                LuaValue.NewNumber(2)
             );
-            DynValue fiveDynValues = closure.Call(
-                DynValue.NewNumber(10),
-                DynValue.NewNumber(5),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(4)
+            LuaValue fourDynValues = closure.CallValues(
+                LuaValue.NewNumber(10),
+                LuaValue.NewNumber(5),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(1)
+            );
+            LuaValue fiveDynValues = closure.CallValues(
+                LuaValue.NewNumber(10),
+                LuaValue.NewNumber(5),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(4)
             );
 
             await Assert.That(noArgs.Number).IsEqualTo(0d).ConfigureAwait(false);
@@ -331,6 +337,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(threeDynValues.Number).IsEqualTo(17d).ConfigureAwait(false);
             await Assert.That(fourDynValues.Number).IsEqualTo(18d).ConfigureAwait(false);
             await Assert.That(fiveDynValues.Number).IsEqualTo(22d).ConfigureAwait(false);
+
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
+                registry =>
+                {
+                    registry.SetClrToScriptCustomConversion<int>(
+                        (_, value) => LuaValue.NewString("custom-int:" + value)
+                    );
+                    registry.SetClrToScriptCustomConversion<string>(
+                        (_, value) => LuaValue.NewString("custom-string:" + value)
+                    );
+                }
+            );
+            Closure capture = script.DoString("return function(value) return value end").Function;
+
+            LuaValue convertedInteger = capture.Call(42);
+            LuaValue convertedString = capture.Call("value");
+
+            await Assert
+                .That(convertedInteger.String)
+                .IsEqualTo("custom-int:42")
+                .ConfigureAwait(false);
+            await Assert
+                .That(convertedString.String)
+                .IsEqualTo("custom-string:value")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -343,7 +374,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ReadOnlySpanCallInvokesUnderlyingFunction(int arity)
         {
             Script script = new();
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 @"
                 return function(...)
                     local sum = 0
@@ -355,13 +386,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 "
             );
             Closure closure = function.Function;
-            DynValue[] args = new DynValue[arity];
+            LuaValue[] args = new LuaValue[arity];
             for (int i = 0; i < args.Length; i++)
             {
-                args[i] = DynValue.NewNumber(i + 1d);
+                args[i] = LuaValue.NewNumber(i + 1d);
             }
 
-            DynValue result = closure.Call(args.AsSpan());
+            LuaValue result = closure.Call(args.AsSpan());
 
             await Assert
                 .That(result.Number)
@@ -376,11 +407,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function(...) return select('#', ...) end");
+            LuaValue function = script.DoString("return function(...) return select('#', ...) end");
             Closure closure = function.Function;
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                closure.Call((DynValue[])null)
+                closure.Call((LuaValue[])null)
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
@@ -391,7 +422,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task MultipleNullCallArgumentsRemainLuaNil(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue capture = script.DoString(
+            LuaValue capture = script.DoString(
                 @"
                 return function(...)
                     local a, b, c, d, e = ...
@@ -401,12 +432,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             );
             Closure closure = capture.Function;
 
-            DynValue twoArgs = closure.Call(null, null);
-            DynValue threeArgs = closure.Call(null, DynValue.NewNumber(3), null);
-            DynValue fourArgs = closure.Call(null, null, null, null);
-            DynValue fiveArgs = closure.Call((DynValue)null, null, null, null, null);
-            DynValue paramsArrayArgs = closure.Call(
-                new DynValue[] { null, DynValue.NewNumber(3), null }
+            LuaValue twoArgs = closure.CallValues(default, default);
+            LuaValue threeArgs = closure.CallValues(default, LuaValue.NewNumber(3), default);
+            LuaValue fourArgs = closure.CallValues(default, default, default, default);
+            LuaValue fiveArgs = closure.CallValues(default, default, default, default, default);
+            LuaValue paramsArrayArgs = closure.Call(
+                new LuaValue[] { default, LuaValue.NewNumber(3), default }
             );
 
             await Assert.That(twoArgs.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
@@ -456,21 +487,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version);
             Script foreignScript = new(version);
-            DynValue function = script.DoString("return function(...) return ... end");
+            LuaValue function = script.DoString("return function(...) return ... end");
             Closure closure = function.Function;
-            DynValue foreignTable = DynValue.NewTable(new Table(foreignScript));
+            LuaValue foreignTable = LuaValue.NewTable(new Table(foreignScript));
 
             ScriptRuntimeException twoArgException = Assert.Throws<ScriptRuntimeException>(() =>
-                closure.Call(DynValue.Nil, foreignTable)
+                closure.CallValues(LuaValue.Nil, foreignTable)
             );
             ScriptRuntimeException threeArgException = Assert.Throws<ScriptRuntimeException>(() =>
-                closure.Call(DynValue.Nil, DynValue.Nil, foreignTable)
+                closure.CallValues(LuaValue.Nil, LuaValue.Nil, foreignTable)
             );
             ScriptRuntimeException fourArgException = Assert.Throws<ScriptRuntimeException>(() =>
-                closure.Call(DynValue.Nil, DynValue.Nil, DynValue.Nil, foreignTable)
+                closure.CallValues(LuaValue.Nil, LuaValue.Nil, LuaValue.Nil, foreignTable)
             );
             ScriptRuntimeException fiveArgException = Assert.Throws<ScriptRuntimeException>(() =>
-                closure.Call(DynValue.Nil, DynValue.Nil, DynValue.Nil, DynValue.Nil, foreignTable)
+                closure.CallValues(
+                    LuaValue.Nil,
+                    LuaValue.Nil,
+                    LuaValue.Nil,
+                    LuaValue.Nil,
+                    foreignTable
+                )
             );
 
             await Assert.That(twoArgException).IsNotNull().ConfigureAwait(false);
@@ -486,13 +523,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version);
-            DynValue capture = script.DoString(
+            LuaValue capture = script.DoString(
                 "return function(...) return select('#', ...), type((...)), ... end"
             );
             Closure closure = capture.Function;
             object[] args = new object[] { 1, 2 };
 
-            DynValue spread = closure.Call(args);
+            LuaValue spread = closure.Call(args);
             await Assert.That(spread.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(spread.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
             await Assert.That(spread.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
@@ -500,7 +537,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(spread.Tuple[2].Number).IsEqualTo(1d).ConfigureAwait(false);
             await Assert.That(spread.Tuple[3].Number).IsEqualTo(2d).ConfigureAwait(false);
 
-            DynValue cast = closure.Call((object)args);
+            LuaValue cast = closure.Call((object)args);
             await Assert.That(cast.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(cast.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(cast.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
@@ -516,7 +553,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 script,
                 idx: 0,
                 symbols: System.Array.Empty<SymbolRef>(),
-                resolvedLocals: System.Array.Empty<WallstopStudios.NovaSharp.Interpreter.Execution.Scopes.ValueSlot>()
+                resolvedLocals: System.Array.Empty<WallstopStudios.NovaSharp.Interpreter.Execution.Scopes.UpvalueCell>()
             );
 
             await Assert.That(closure.UpValuesCount).IsEqualTo(0).ConfigureAwait(false);
@@ -531,7 +568,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ContextPropertySurfacesCapturedUpValues(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 @"
                 local captured = 99
                 return function()
@@ -541,7 +578,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             );
 
             Closure closure = function.Function;
-            IReadOnlyList<DynValue> context = closure.Context;
+            IReadOnlyList<LuaValue> context = closure.Context;
             int capturedIndex = -1;
 
             for (int i = 0; i < closure.UpValuesCount; i++)

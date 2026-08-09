@@ -47,12 +47,11 @@ CALLBACK_CONTEXT_NAMED_ARGUMENT_PATTERN = re.compile(
     r"\b(?:context|executionContext)\s*:\s*new\s*\("
 )
 IMPLICIT_ARRAY_NEW_PATTERN = re.compile(r"\bnew\s*\[\s*\]")
-QUALIFIED_DYNVALUE = r"(?:(?:global::)?(?:\w+\.)*)?DynValue"
-QUALIFIED_LIST_DYNVALUE = (
-    rf"(?:(?:global::)?System\.Collections\.Generic\.)?List\s*<\s*{QUALIFIED_DYNVALUE}\s*>"
+QUALIFIED_LUAVALUE = r"(?:(?:global::)?(?:\w+\.)*)?LuaValue"
+QUALIFIED_LIST_LUAVALUE = (
+    rf"(?:(?:global::)?System\.Collections\.Generic\.)?List\s*<\s*{QUALIFIED_LUAVALUE}\s*>"
 )
-DYNVALUE_MEMBER_PATTERN = re.compile(rf"\b{QUALIFIED_DYNVALUE}\.")
-TARGET_TYPED_DYNVALUE_PUSH_PATTERN = re.compile(r"\b\w+(?:\.\w+)*\.Push\s*\(\s*new\s*\(")
+LUAVALUE_MEMBER_PATTERN = re.compile(rf"\b{QUALIFIED_LUAVALUE}\.")
 TARGET_TYPED_NEW_EXPRESSION_PATTERN = re.compile(
     r"^\s*(?:(?:context|executionContext)\s*:\s*)?new\s*\("
 )
@@ -62,41 +61,22 @@ CONTEXT_AFTER_LINES = 7
 
 RULES = [
     Rule(
-        "new-dynvalue",
+        "new-list-luavalue",
         re.compile(
             rf"\b(?:"
-            rf"new\s+{QUALIFIED_DYNVALUE}\s*\(|"
-            rf"{QUALIFIED_DYNVALUE}\s+\w+\s*=\s*new\s*\()"
+            rf"new\s+{QUALIFIED_LIST_LUAVALUE}\s*\(|"
+            rf"{QUALIFIED_LIST_LUAVALUE}\s+\w+\s*=\s*new\s*\()"
         ),
-        "new DynValue in a VM opcode/call path allocates a Lua scalar wrapper.",
+        "new List<LuaValue> in a VM opcode/call path allocates a collection.",
     ),
     Rule(
-        "dynvalue-new-number",
-        re.compile(rf"\b{QUALIFIED_DYNVALUE}\.NewNumber\s*\("),
-        "DynValue.NewNumber in a VM opcode/call path allocates a numeric wrapper.",
-    ),
-    Rule(
-        "dynvalue-new-integer",
-        re.compile(rf"\b{QUALIFIED_DYNVALUE}\.NewInteger\s*\("),
-        "DynValue.NewInteger in a VM opcode/call path allocates an integer wrapper.",
-    ),
-    Rule(
-        "new-list-dynvalue",
+        "new-luavalue-array",
         re.compile(
-            rf"\b(?:"
-            rf"new\s+{QUALIFIED_LIST_DYNVALUE}\s*\(|"
-            rf"{QUALIFIED_LIST_DYNVALUE}\s+\w+\s*=\s*new\s*\()"
+            rf"\b(?:new\s+{QUALIFIED_LUAVALUE}\s*\[|"
+            rf"{QUALIFIED_LUAVALUE}\s*\[\s*\]\s+\w+\s*=\s*new\s*\[\s*\]|"
+            rf"new\s*\[\s*\]\s*\{{[^;\n]*\b{QUALIFIED_LUAVALUE}\.)"
         ),
-        "new List<DynValue> in a VM opcode/call path allocates a collection.",
-    ),
-    Rule(
-        "new-dynvalue-array",
-        re.compile(
-            rf"\b(?:new\s+{QUALIFIED_DYNVALUE}\s*\[|"
-            rf"{QUALIFIED_DYNVALUE}\s*\[\s*\]\s+\w+\s*=\s*new\s*\[\s*\]|"
-            rf"new\s*\[\s*\]\s*\{{[^;\n]*\b{QUALIFIED_DYNVALUE}\.)"
-        ),
-        "new DynValue[] in a VM opcode/call path allocates an argument or return buffer.",
+        "new LuaValue[] in a VM opcode/call path allocates an argument or return buffer.",
     ),
     Rule(
         "new-script-execution-context",
@@ -120,59 +100,52 @@ TARGET_FILE_GLOBS = [
 
 ALLOWLIST = [
     AllowedMatch(
-        "new-dynvalue-array",
+        "new-luavalue-array",
         "src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/CallbackFunction.cs",
         "InvokeLegacySpan",
-        re.compile(r"new\s+DynValue\s*\[\s*args\.Length\s*\]"),
+        re.compile(r"new\s+LuaValue\s*\[\s*args\.Length\s*\]"),
         "Legacy callback fallback copies escaped arguments until A5 span callbacks replace this path.",
     ),
     AllowedMatch(
-        "new-dynvalue-array",
+        "new-luavalue-array",
         "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/ScriptExecutionContext.cs",
         "CreateCallMetamethodArguments",
-        re.compile(r"new\s+DynValue\s*\[\s*args\.Length\s*\+\s*1\s*\]"),
+        re.compile(r"new\s+LuaValue\s*\[\s*args\.Length\s*\+\s*1\s*\]"),
         "Callable metamethod slow path materializes adjusted arguments until A5 stack windows land.",
     ),
     AllowedMatch(
-        "new-dynvalue-array",
+        "new-luavalue-array",
         "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs",
         "ToTuple",
-        re.compile(r"new\s+DynValue\s*\[\s*_count\s*\]"),
+        re.compile(r"new\s+LuaValue\s*\[\s*_count\s*\]"),
         "Escaped tuple materialization remains allowed for coroutine resume and vararg tuple cases.",
     ),
     AllowedMatch(
-        "new-dynvalue-array",
-        "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs",
-        "ToTuple",
-        re.compile(r"new\s+DynValue\s*\[\s*_count\s*\]"),
-        "Escaped tuple materialization remains allowed for coroutine resume and vararg tuple cases.",
-    ),
-    AllowedMatch(
-        "new-dynvalue-array",
+        "new-luavalue-array",
         "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs",
         "CreateTupleFromSpan",
-        re.compile(r"new\s+DynValue\s*\[\s*values\.Length\s*\]"),
+        re.compile(r"new\s+LuaValue\s*\[\s*values\.Length\s*\]"),
         "Escaped tuple materialization remains allowed for caller-owned spans with more than five values.",
     ),
     AllowedMatch(
-        "new-dynvalue-array",
+        "new-luavalue-array",
         "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs",
         "ExecRet",
-        re.compile(r"new\s+DynValue\s*\[\]\s*\{\s*continuationArgument\s*\}"),
+        re.compile(r"new\s+LuaValue\s*\[\]\s*\{\s*continuationArgument\s*\}"),
         "Continuation resume materializes a one-value escaped argument until A5 removes this allocation.",
     ),
     AllowedMatch(
-        "new-dynvalue-array",
+        "new-luavalue-array",
         "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorUtilityFunctions.cs",
         "InternalAdjustTuple",
-        re.compile(r"new\s+DynValue\s*\[\s*baseLen\s*\]"),
+        re.compile(r"new\s+LuaValue\s*\[\s*baseLen\s*\]"),
         "Tuple expansion returns escaped multi-result arrays by design until a return-buffer API lands.",
     ),
     AllowedMatch(
-        "new-dynvalue-array",
+        "new-luavalue-array",
         "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorUtilityFunctions.cs",
         "InternalAdjustTuple",
-        re.compile(r"new\s+DynValue\s*\[\s*values\.Count\s*\]"),
+        re.compile(r"new\s+LuaValue\s*\[\s*values\.Count\s*\]"),
         "Tuple expansion returns escaped multi-result arrays by design until a return-buffer API lands.",
     ),
     AllowedMatch(
@@ -197,18 +170,18 @@ ALLOWLIST = [
         "Lua 5.4 close-metamethod CLR callback path allocates context until A5 span callbacks remove it.",
     ),
     AllowedMatch(
-        "new-list-dynvalue",
+        "new-list-luavalue",
         "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs",
         "CreateArgsListForFunctionCall",
-        re.compile(r"List\s*<\s*DynValue\s*>\s+values\s*=\s*new\s*\(\s*numargs\s*\)"),
+        re.compile(r"List\s*<\s*LuaValue\s*>\s+values\s*=\s*new\s*\(\s*numargs\s*\)"),
         "Tuple expansion currently materializes an escaped argument list until A5 stack windows land.",
     ),
     AllowedMatch(
-        "new-list-dynvalue",
+        "new-list-luavalue",
         "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs",
         "CreateArgsListForFunctionCall",
         re.compile(
-            r"List\s*<\s*DynValue\s*>\s+expandedValues\s*=\s*new\s*\(\s*numargs\s*-\s*1\s*\+\s*tupleLength\s*\)"
+            r"List\s*<\s*LuaValue\s*>\s+expandedValues\s*=\s*new\s*\(\s*numargs\s*-\s*1\s*\+\s*tupleLength\s*\)"
         ),
         "Tuple expansion currently materializes an escaped argument list until A5 stack windows land.",
     ),
@@ -234,73 +207,6 @@ ALLOWLIST = [
         "Debugger refresh is an instrumented non-hot path.",
     ),
 ]
-
-NUMBER_FACTORY_ALLOWLIST_CONTEXTS = {
-    "ExecToNum": [r"DynValue\.NewNumber\s*\(\s*v\.Value\s*\)"],
-    "ExecIncr": [
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Add\s*\(\s*top\.LuaNumber\s*,\s*btm\.LuaNumber\s*\)\s*\)"
-    ],
-    "ExecAdd": [
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Add\s*\(\s*lnFast\s*,\s*rnFast\s*\)\s*\)",
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Add\s*\(\s*ln\.Value\s*,\s*rn\.Value\s*\)\s*\)",
-    ],
-    "ExecSub": [
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Subtract\s*\(\s*lnFast\s*,\s*rnFast\s*\)\s*\)",
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Subtract\s*\(\s*ln\.Value\s*,\s*rn\.Value\s*\)\s*\)",
-    ],
-    "ExecMul": [
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Multiply\s*\(\s*lnFast\s*,\s*rnFast\s*\)\s*\)",
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Multiply\s*\(\s*ln\.Value\s*,\s*rn\.Value\s*\)\s*\)",
-    ],
-    "ExecMod": [
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Modulo\s*\(\s*lnFast\s*,\s*rnFast\s*,\s*_script\.Options\.CompatibilityVersion\s*\)",
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Modulo\s*\(\s*ln\.Value\s*,\s*rn\.Value\s*,\s*_script\.Options\.CompatibilityVersion\s*\)",
-    ],
-    "ExecDiv": [
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Divide\s*\(\s*lnFast\s*,\s*rnFast\s*\)\s*\)",
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Divide\s*\(\s*ln\.Value\s*,\s*rn\.Value\s*\)\s*\)",
-    ],
-    "ExecFloorDiv": [
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.FloorDivide\s*\(\s*lnFast\s*,\s*rnFast\s*\)\s*\)",
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.FloorDivide\s*\(\s*ln\.Value\s*,\s*rn\.Value\s*\)\s*\)",
-    ],
-    "ExecPower": [
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Power\s*\(\s*lnFast\s*,\s*rnFast\s*\)\s*\)",
-        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Power\s*\(\s*ln\.Value\s*,\s*rn\.Value\s*\)\s*\)",
-    ],
-    "ExecNeg": [
-        r"if\s*\(\s*r\.Type\s*==\s*DataType\.Number\s*\).*DynValue\.NewNumber\s*\(\s*result\s*\)",
-        r"if\s*\(\s*rn\.HasValue\s*\).*DynValue\.NewNumber\s*\(\s*result\s*\)",
-    ],
-}
-
-for symbol, contexts in NUMBER_FACTORY_ALLOWLIST_CONTEXTS.items():
-    for context in contexts:
-        ALLOWLIST.append(
-            AllowedMatch(
-                "dynvalue-new-number",
-                "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs",
-                symbol,
-                re.compile(context),
-                "Current A1 red allocation: numeric opcode paths must write inline LuaValue slots after the value-struct conversion.",
-            )
-        )
-
-INTEGER_FACTORY_ALLOWLIST_CONTEXTS = {
-    "ExecBitNot": r"DynValue\.NewInteger\s*\(\s*~operand\s*\)",
-    "ExecBitwiseBinary": r"DynValue\.NewInteger\s*\(\s*operation\s*\(\s*left\s*,\s*right\s*\)\s*\)",
-}
-
-for symbol, context in INTEGER_FACTORY_ALLOWLIST_CONTEXTS.items():
-    ALLOWLIST.append(
-        AllowedMatch(
-            "dynvalue-new-integer",
-            "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs",
-            symbol,
-            re.compile(context),
-            "Current A1 red allocation: integer opcode paths must write inline LuaValue slots after the value-struct conversion.",
-        )
-    )
 
 METHOD_PATTERN = re.compile(
     r"^\s*(?:(?:public|private|internal|protected)\s+)+"
@@ -434,11 +340,11 @@ def type_matches(type_name: str, expected_name: str) -> bool:
     return normalized == expected_name or normalized.endswith(f".{expected_name}")
 
 
-def type_is_list_dynvalue(type_name: str) -> bool:
+def type_is_list_luavalue(type_name: str) -> bool:
     normalized = normalize_type_name(type_name)
     return (
         re.fullmatch(
-            r"(?:[\w.]+\.)?List<(?:(?:[\w]+\.)*)?DynValue>",
+            r"(?:[\w.]+\.)?List<(?:(?:[\w]+\.)*)?LuaValue>",
             normalized,
         )
         is not None
@@ -461,21 +367,16 @@ def matching_rules(
     rules_by_id = {rule.rule_id: rule for rule in RULES if rule.pattern.search(code)}
 
     if TARGET_TYPED_RETURN_NEW_PATTERN.search(code) and current_return_type is not None:
-        if type_matches(current_return_type, "DynValue"):
-            rules_by_id["new-dynvalue"] = RULES_BY_ID["new-dynvalue"]
-        elif type_matches(current_return_type, "ScriptExecutionContext"):
+        if type_matches(current_return_type, "ScriptExecutionContext"):
             rules_by_id["new-script-execution-context"] = RULES_BY_ID[
                 "new-script-execution-context"
             ]
-        elif type_is_list_dynvalue(current_return_type):
-            rules_by_id["new-list-dynvalue"] = RULES_BY_ID["new-list-dynvalue"]
+        elif type_is_list_luavalue(current_return_type):
+            rules_by_id["new-list-luavalue"] = RULES_BY_ID["new-list-luavalue"]
 
     if TARGET_TYPED_RETURN_ARRAY_NEW_PATTERN.search(code) and current_return_type is not None:
-        if type_matches(current_return_type, "DynValue[]"):
-            rules_by_id["new-dynvalue-array"] = RULES_BY_ID["new-dynvalue-array"]
-
-    if TARGET_TYPED_DYNVALUE_PUSH_PATTERN.search(code):
-        rules_by_id["new-dynvalue"] = RULES_BY_ID["new-dynvalue"]
+        if type_matches(current_return_type, "LuaValue[]"):
+            rules_by_id["new-luavalue-array"] = RULES_BY_ID["new-luavalue-array"]
 
     if pending_callback_invoke_context and TARGET_TYPED_NEW_EXPRESSION_PATTERN.match(code):
         rules_by_id["new-script-execution-context"] = RULES_BY_ID[
@@ -487,8 +388,8 @@ def matching_rules(
             "new-script-execution-context"
         ]
 
-    if pending_implicit_array_initializer and DYNVALUE_MEMBER_PATTERN.search(code):
-        rules_by_id["new-dynvalue-array"] = RULES_BY_ID["new-dynvalue-array"]
+    if pending_implicit_array_initializer and LUAVALUE_MEMBER_PATTERN.search(code):
+        rules_by_id["new-luavalue-array"] = RULES_BY_ID["new-luavalue-array"]
 
     return list(rules_by_id.values())
 
@@ -512,25 +413,25 @@ def update_pending_implicit_array_initializer(current_pending: bool, code: str) 
     if not IMPLICIT_ARRAY_NEW_PATTERN.search(code):
         return False
 
-    return DYNVALUE_MEMBER_PATTERN.search(code) is None and ";" not in code
+    return LUAVALUE_MEMBER_PATTERN.search(code) is None and ";" not in code
 
 
 def run_self_tests() -> None:
     cases = [
-        ("DynValue value = new();", None, {"new-dynvalue"}),
-        ("DynValue.NewNumber(1);", None, {"dynvalue-new-number"}),
-        ("DynValue.NewInteger(1);", None, {"dynvalue-new-integer"}),
+        ("LuaValue value = new();", None, set()),
+        ("LuaValue.NewNumber(1);", None, set()),
+        ("LuaValue.NewInteger(1);", None, set()),
         (
-            "WallstopStudios.NovaSharp.Interpreter.DataTypes.DynValue.NewNumber(1);",
+            "NovaSharp.LuaValue.NewNumber(1);",
             None,
-            {"dynvalue-new-number"},
+            set(),
         ),
         (
-            "global::WallstopStudios.NovaSharp.Interpreter.DataTypes.DynValue.NewInteger(1);",
+            "global::NovaSharp.LuaValue.NewInteger(1);",
             None,
-            {"dynvalue-new-integer"},
+            set(),
         ),
-        ("return new(DataType.Nil, null);", "DynValue", {"new-dynvalue"}),
+        ("return new(DataType.Nil, null);", "LuaValue", set()),
         (
             "return new(this, callback, sourceRef);",
             "ScriptExecutionContext",
@@ -565,42 +466,42 @@ def run_self_tests() -> None:
             {"new-script-execution-context"},
             True,
         ),
-        ("DynValue[] values = new[] { DynValue.Nil };", None, {"new-dynvalue-array"}),
-        ("DynValue.Nil,", None, {"new-dynvalue-array"}, False, False, True),
-        ("return new[] { DynValue.Nil };", "DynValue[]", {"new-dynvalue-array"}),
-        ("private static DynValue Make() => new(DataType.Nil, null);", "DynValue", {"new-dynvalue"}),
+        ("LuaValue[] values = new[] { LuaValue.Nil };", None, {"new-luavalue-array"}),
+        ("LuaValue.Nil,", None, {"new-luavalue-array"}, False, False, True),
+        ("return new[] { LuaValue.Nil };", "LuaValue[]", {"new-luavalue-array"}),
+        ("private static LuaValue Make() => new(DataType.Nil, null);", "LuaValue", set()),
         (
-            "private static List<DynValue> Make() => new();",
-            "List<DynValue>",
-            {"new-list-dynvalue"},
+            "private static List<LuaValue> Make() => new();",
+            "List<LuaValue>",
+            {"new-list-luavalue"},
         ),
         (
-            "private static System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.DataTypes.DynValue> Make() => new();",
-            "System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.DataTypes.DynValue>",
-            {"new-list-dynvalue"},
+            "private static System.Collections.Generic.List<NovaSharp.LuaValue> Make() => new();",
+            "System.Collections.Generic.List<NovaSharp.LuaValue>",
+            {"new-list-luavalue"},
         ),
-        ("_valueStack.Push(new(DataType.Number, null));", None, {"new-dynvalue"}),
+        ("_valueStack.Push(new(DataType.Number, null));", None, set()),
         (
-            "new global::WallstopStudios.NovaSharp.Interpreter.DataTypes.DynValue();",
+            "new global::NovaSharp.LuaValue();",
             None,
-            {"new-dynvalue"},
+            set(),
         ),
         (
-            "System.Collections.Generic.List<DynValue> values = new();",
+            "System.Collections.Generic.List<LuaValue> values = new();",
             None,
-            {"new-list-dynvalue"},
+            {"new-list-luavalue"},
         ),
         (
-            "System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.DataTypes.DynValue> values = new();",
+            "System.Collections.Generic.List<NovaSharp.LuaValue> values = new();",
             None,
-            {"new-list-dynvalue"},
+            {"new-list-luavalue"},
         ),
         (
-            "new System.Collections.Generic.List<DynValue>();",
+            "new System.Collections.Generic.List<LuaValue>();",
             None,
-            {"new-list-dynvalue"},
+            {"new-list-luavalue"},
         ),
-        ("FixedCallArguments args = new(func);", "DynValue", set()),
+        ("FixedCallArguments args = new(func);", "LuaValue", set()),
     ]
 
     for case in cases:
@@ -628,14 +529,14 @@ def run_self_tests() -> None:
 
     multiline_cases = [
         (
-            "multiline_implicit_dynvalue_array",
+            "multiline_implicit_luavalue_array",
             [
                 "var values = new[]",
                 "{",
-                "    DynValue.Nil,",
+                "    LuaValue.Nil,",
                 "};",
             ],
-            ["new-dynvalue-array"],
+            ["new-luavalue-array"],
         ),
         (
             "multiline_named_callback_context",
@@ -649,24 +550,24 @@ def run_self_tests() -> None:
         (
             "target_typed_list_return",
             [
-                "private static System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.DataTypes.DynValue> Make() => new();",
+                "private static System.Collections.Generic.List<NovaSharp.LuaValue> Make() => new();",
             ],
-            ["new-list-dynvalue"],
+            ["new-list-luavalue"],
         ),
         (
             "global_target_typed_list_return",
             [
-                "private static global::System.Collections.Generic.List<global::WallstopStudios.NovaSharp.Interpreter.DataTypes.DynValue> Make() => new();",
+                "private static global::System.Collections.Generic.List<global::NovaSharp.LuaValue> Make() => new();",
             ],
-            ["new-list-dynvalue"],
+            ["new-list-luavalue"],
         ),
         (
             "comments_and_strings_are_ignored",
             [
-                "// DynValue.NewNumber(1)",
-                "string text = \"new DynValue()\";",
+                "// new LuaValue[] { LuaValue.Nil }",
+                "string text = \"new List<LuaValue>()\";",
                 "/* new ScriptExecutionContext(",
-                "DynValue.NewInteger(1) */",
+                "new LuaValue[] { LuaValue.Nil } */",
             ],
             [],
         ),
@@ -674,8 +575,8 @@ def run_self_tests() -> None:
             "verbatim_multiline_strings_are_ignored",
             [
                 "string script = @\"",
-                "new DynValue();",
-                "DynValue.NewNumber(1);",
+                "new LuaValue[] { LuaValue.Nil };",
+                "new List<LuaValue>();",
                 "\";",
             ],
             [],
@@ -684,7 +585,7 @@ def run_self_tests() -> None:
             "interpolated_verbatim_multiline_strings_are_ignored",
             [
                 "string script = $@\"",
-                "new List<DynValue>();",
+                "new List<LuaValue>();",
                 "\";",
             ],
             [],
@@ -692,7 +593,7 @@ def run_self_tests() -> None:
         (
             "verbatim_strings_with_escaped_quotes_are_ignored",
             [
-                "string script = @\"prefix \"\" quoted new DynValue(); \"\" suffix\";",
+                "string script = @\"prefix \"\" quoted new List<LuaValue>(); \"\" suffix\";",
             ],
             [],
         ),
@@ -700,8 +601,8 @@ def run_self_tests() -> None:
             "raw_multiline_strings_are_ignored",
             [
                 "string script = \"\"\"",
-                "new DynValue();",
-                "DynValue.NewNumber(1);",
+                "new LuaValue[] { LuaValue.Nil };",
+                "new List<LuaValue>();",
                 "\"\"\";",
             ],
             [],
@@ -710,7 +611,7 @@ def run_self_tests() -> None:
             "interpolated_raw_multiline_strings_are_ignored",
             [
                 "string script = $$\"\"\"",
-                "new List<DynValue>();",
+                "new List<LuaValue>();",
                 "\"\"\";",
             ],
             [],

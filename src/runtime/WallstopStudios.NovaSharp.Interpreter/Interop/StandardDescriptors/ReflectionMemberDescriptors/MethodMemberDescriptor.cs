@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
     using System.Runtime.CompilerServices;
     using System.Runtime.ExceptionServices;
     using System.Threading;
+    using global::NovaSharp;
     using Diagnostics;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -273,7 +274,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         /// <param name="context">The context.</param>
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
-        public override DynValue Execute(
+        public override LuaValue Execute(
             Script script,
             object obj,
             ScriptExecutionContext context,
@@ -310,12 +311,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 else if (_optimizedAction != null)
                 {
                     _optimizedAction(obj, pars);
-                    retv = DynValue.Void;
+                    retv = LuaValue.Void;
                 }
                 else if (_isAction)
                 {
                     MethodInfo.Invoke(obj, pars);
-                    retv = DynValue.Void;
+                    retv = LuaValue.Void;
                 }
                 else
                 {
@@ -426,37 +427,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 throw new ArgumentNullException(nameof(t));
             }
 
-            t.Set("class", DynValue.NewString(GetType().FullName));
-            t.Set("name", DynValue.NewString(Name));
-            t.Set("ctor", DynValue.NewBoolean(IsConstructor));
-            t.Set("special", DynValue.NewBoolean(MethodInfo.IsSpecialName));
-            t.Set("visibility", DynValue.NewString(MethodInfo.GetClrVisibility()));
+            t.Set("class", LuaValue.NewString(GetType().FullName));
+            t.Set("name", LuaValue.NewString(Name));
+            t.Set("ctor", LuaValue.NewBoolean(IsConstructor));
+            t.Set("special", LuaValue.NewBoolean(MethodInfo.IsSpecialName));
+            t.Set("visibility", LuaValue.NewString(MethodInfo.GetClrVisibility()));
 
             if (IsConstructor)
             {
                 t.Set(
                     "ret",
-                    DynValue.NewString(((ConstructorInfo)MethodInfo).DeclaringType.FullName)
+                    LuaValue.NewString(((ConstructorInfo)MethodInfo).DeclaringType.FullName)
                 );
             }
             else
             {
-                t.Set("ret", DynValue.NewString(((MethodInfo)MethodInfo).ReturnType.FullName));
+                t.Set("ret", LuaValue.NewString(((MethodInfo)MethodInfo).ReturnType.FullName));
             }
 
             if (_isArrayCtor)
             {
                 t.Set(
                     "arraytype",
-                    DynValue.NewString(MethodInfo.DeclaringType.GetElementType().FullName)
+                    LuaValue.NewString(MethodInfo.DeclaringType.GetElementType().FullName)
                 );
             }
 
-            t.Set("decltype", DynValue.NewString(MethodInfo.DeclaringType.FullName));
-            t.Set("static", DynValue.NewBoolean(IsStatic));
-            t.Set("extension", DynValue.NewBoolean(ExtensionMethodType != null));
+            t.Set("decltype", LuaValue.NewString(MethodInfo.DeclaringType.FullName));
+            t.Set("static", LuaValue.NewBoolean(IsStatic));
+            t.Set("extension", LuaValue.NewBoolean(ExtensionMethodType != null));
 
-            DynValue pars = DynValue.NewPrimeTable();
+            LuaValue pars = LuaValue.NewPrimeTable();
 
             t.Set("params", pars);
 
@@ -464,7 +465,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
 
             foreach (ParameterDescriptor p in Parameters)
             {
-                DynValue pt = DynValue.NewPrimeTable();
+                LuaValue pt = LuaValue.NewPrimeTable();
                 pars.Table.Set(++i, pt);
                 p.PrepareForWiring(pt.Table);
             }

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -28,7 +29,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task GetGlobalSymbolThrowsWhenEnvIsNotTable()
         {
             InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
-                Processor.GetGlobalSymbolForTests(DynValue.NewNumber(1), "value")
+                Processor.GetGlobalSymbolForTests(LuaValue.NewNumber(1), "value")
             );
             await Assert.That(exception.Message).Contains("_ENV is not a table");
         }
@@ -36,21 +37,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task InternalAdjustTupleReturnsEmptyArrayWhenValuesNull()
         {
-            DynValue[] result = Processor.InternalAdjustTupleForTests(null);
+            LuaValue[] result = Processor.InternalAdjustTupleForTests(null);
             await Assert.That(result.Length).IsEqualTo(0);
         }
 
         [global::TUnit.Core.Test]
         public async Task InternalAdjustTupleFlattensNestedTupleTail()
         {
-            DynValue nested = DynValue.NewTuple(DynValue.NewNumber(3));
-            DynValue[] values =
+            LuaValue nested = LuaValue.NewTuple(LuaValue.NewNumber(3));
+            LuaValue[] values =
             {
-                DynValue.NewNumber(1),
-                DynValue.NewTuple(DynValue.NewNumber(2), nested),
+                LuaValue.NewNumber(1),
+                LuaValue.NewTuple(LuaValue.NewNumber(2), nested),
             };
 
-            DynValue[] result = Processor.InternalAdjustTupleForTests(values);
+            LuaValue[] result = Processor.InternalAdjustTupleForTests(values);
 
             double[] numbers = result.Select(v => v.Number).ToArray();
             await Assert.That(numbers.Length).IsEqualTo(3);

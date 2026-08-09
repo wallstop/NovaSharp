@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -38,14 +39,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete));
 
-            DynValue pending = interpreter.Evaluate("function sample()");
-            await Assert.That(pending).IsNull().ConfigureAwait(false);
+            LuaValue? pending = interpreter.Evaluate("function sample()");
+            await Assert.That(pending.HasValue).IsFalse().ConfigureAwait(false);
             await Assert
                 .That(interpreter.CurrentPendingCommand)
                 .StartsWith("function sample()")
                 .ConfigureAwait(false);
-            DynValue completion = interpreter.Evaluate("end");
-            await Assert.That(completion).IsEqualTo(DynValue.Void).ConfigureAwait(false);
+            LuaValue? completion = interpreter.Evaluate("end");
+            await Assert.That(completion.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(completion.Value).IsEqualTo(LuaValue.Void).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -61,9 +63,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
                 HandleClassicExprsSyntax = true,
             };
 
-            DynValue result = interpreter.Evaluate("=1 + 41");
-            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
-            await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
+            LuaValue? result = interpreter.Evaluate("=1 + 41");
+            await Assert.That(result.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Value.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Value.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -82,9 +85,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
             interpreter.Evaluate("x = 10");
             interpreter.Evaluate(string.Empty);
 
-            DynValue result = interpreter.Evaluate("?x * 2");
-            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
-            await Assert.That(result.Number).IsEqualTo(20).ConfigureAwait(false);
+            LuaValue? result = interpreter.Evaluate("?x * 2");
+            await Assert.That(result.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Value.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Value.Number).IsEqualTo(20).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -97,17 +101,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete));
 
-            DynValue first = interpreter.Evaluate("function foo()");
-            await Assert.That(first).IsNull().ConfigureAwait(false);
+            LuaValue? first = interpreter.Evaluate("function foo()");
+            await Assert.That(first.HasValue).IsFalse().ConfigureAwait(false);
             await Assert.That(interpreter.HasPendingCommand).IsTrue().ConfigureAwait(false);
 
-            DynValue second = interpreter.Evaluate("return 99 end");
-            await Assert.That(second).IsNotNull().ConfigureAwait(false);
-            await Assert.That(second.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
+            LuaValue? second = interpreter.Evaluate("return 99 end");
+            await Assert.That(second.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(second.Value.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
 
-            DynValue third = interpreter.Evaluate("return foo()");
-            await Assert.That(third.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
-            await Assert.That(third.Number).IsEqualTo(99).ConfigureAwait(false);
+            LuaValue? third = interpreter.Evaluate("return foo()");
+            await Assert.That(third.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(third.Value.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(third.Value.Number).IsEqualTo(99).ConfigureAwait(false);
             await Assert.That(interpreter.HasPendingCommand).IsFalse().ConfigureAwait(false);
         }
 
@@ -126,9 +131,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
                 HandleDynamicExprs = true,
             };
 
-            DynValue result = interpreter.Evaluate("?1 + 41");
-            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
-            await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
+            LuaValue? result = interpreter.Evaluate("?1 + 41");
+            await Assert.That(result.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Value.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Value.Number).IsEqualTo(42).ConfigureAwait(false);
             await Assert.That(interpreter.HasPendingCommand).IsFalse().ConfigureAwait(false);
         }
 
@@ -142,8 +148,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete));
 
-            DynValue result = interpreter.Evaluate(string.Empty);
-            await Assert.That(result).IsEqualTo(DynValue.Void).ConfigureAwait(false);
+            LuaValue? result = interpreter.Evaluate(string.Empty);
+            await Assert.That(result.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Value).IsEqualTo(LuaValue.Void).ConfigureAwait(false);
             await Assert.That(interpreter.HasPendingCommand).IsFalse().ConfigureAwait(false);
         }
 
@@ -163,8 +170,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
             interpreter.Evaluate("x = 7");
             interpreter.Evaluate(string.Empty);
 
-            DynValue result = interpreter.Evaluate("?   ");
-            await Assert.That(result).IsEqualTo(DynValue.Void).ConfigureAwait(false);
+            LuaValue? result = interpreter.Evaluate("?   ");
+            await Assert.That(result.HasValue).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Value).IsEqualTo(LuaValue.Void).ConfigureAwait(false);
             await Assert.That(interpreter.HasPendingCommand).IsFalse().ConfigureAwait(false);
         }
 
@@ -180,8 +188,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete));
 
-            DynValue pending = interpreter.Evaluate("function foo()");
-            await Assert.That(pending).IsNull().ConfigureAwait(false);
+            LuaValue? pending = interpreter.Evaluate("function foo()");
+            await Assert.That(pending.HasValue).IsFalse().ConfigureAwait(false);
             await Assert.That(interpreter.HasPendingCommand).IsTrue().ConfigureAwait(false);
 
             SyntaxErrorException exception = ExpectException<SyntaxErrorException>(() =>

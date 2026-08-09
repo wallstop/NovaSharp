@@ -1,16 +1,16 @@
 namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
 {
+    using global::NovaSharp;
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
 
     using System.Collections.Generic;
     using System.Globalization;
-    using System.Runtime.CompilerServices;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using SDK;
 
     /// <summary>
-    /// Helpers that expand <see cref="DynValue"/> instances into VS Code variable payloads.
+    /// Helpers that expand <see cref="LuaValue"/> instances into VS Code variable payloads.
     /// </summary>
     internal static class VariableInspector
     {
@@ -19,16 +19,8 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
         /// </summary>
         /// <param name="v">Lua value to inspect.</param>
         /// <param name="variables">Collection receiving formatted entries.</param>
-        internal static void InspectVariable(DynValue v, List<Variable> variables)
+        internal static void InspectVariable(LuaValue v, List<Variable> variables)
         {
-            if (v == null)
-            {
-                variables.Add(new Variable("(value)", "(null)"));
-                variables.Add(new Variable("(type)", "(null)"));
-                variables.Add(new Variable("(val #id)", "0"));
-                return;
-            }
-
             variables.Add(new Variable("(value)", v.ToPrintString()));
             variables.Add(new Variable("(type)", v.Type.ToLuaDebuggerString()));
             variables.Add(
@@ -43,9 +35,7 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
                 case DataType.Tuple:
                     for (int i = 0; i < v.Tuple.Length; i++)
                     {
-                        variables.Add(
-                            new Variable("[i]", (v.Tuple[i] ?? DynValue.Void).ToDebugPrintString())
-                        );
+                        variables.Add(new Variable("[i]", v.Tuple[i].ToDebugPrintString()));
                     }
 
                     break;
@@ -168,9 +158,9 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
-        private static int GetValueIdentity(DynValue value)
+        private static int GetValueIdentity(LuaValue value)
         {
-            return value == null ? 0 : RuntimeHelpers.GetHashCode(value);
+            return value.GetHashCode();
         }
     }
 }

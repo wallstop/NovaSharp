@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -87,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
             loader.MarkExisting("lua_path/pkg/mod.lua");
 
             Table globals = new(new Script(version));
-            globals.Set("LUA_PATH", DynValue.NewString("lua_path/?.lua"));
+            globals.Set("LUA_PATH", LuaValue.NewString("lua_path/?.lua"));
 
             string result = loader.ResolveModuleName("pkg.mod", globals);
             await Assert.That(result).IsEqualTo("lua_path/pkg/mod.lua");
@@ -120,7 +121,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
             loader.MarkExisting("global/pkg/mod.lua");
 
             Table globals = new(new Script(version));
-            globals.Set("LUA_PATH", DynValue.NewNumber(42));
+            globals.Set("LUA_PATH", LuaValue.NewNumber(42));
 
             string result = loader.ResolveModuleName("pkg.mod", globals);
             await Assert.That(result).IsEqualTo("global/pkg/mod.lua");
@@ -136,7 +137,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
             loader.SetModulePaths("global/?.lua");
 
             Table globals = new(new Script(version));
-            globals.Set("LUA_PATH", DynValue.NewString("missing/?.lua"));
+            globals.Set("LUA_PATH", LuaValue.NewString("missing/?.lua"));
 
             string result = loader.ResolveModuleName("pkg.mod", globals);
             await Assert.That(result).IsNull();

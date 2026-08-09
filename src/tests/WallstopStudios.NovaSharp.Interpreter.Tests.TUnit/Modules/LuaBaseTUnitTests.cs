@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -28,27 +29,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
             registrationScope.RegisterType<SampleUserData>();
-            DynValue coroutineValue = script.CreateCoroutine(
+            LuaValue coroutineValue = script.CreateCoroutine(
                 script.LoadString("return function(...) return ... end").Function
             );
+            bool createdStaticUserData = UserData.TryCreateStatic<SampleUserData>(
+                out LuaValue staticUserData
+            );
 
-            (DynValue Value, int Expected)[] cases =
+            (LuaValue Value, int Expected)[] cases =
             {
-                (DynValue.Void, LuaBaseProxy.TNone),
-                (DynValue.Nil, LuaBaseProxy.TNil),
-                (DynValue.NewNumber(42), LuaBaseProxy.TNumber),
-                (UserData.CreateStatic<SampleUserData>(), LuaBaseProxy.TUserData),
+                (LuaValue.Void, LuaBaseProxy.TNone),
+                (LuaValue.Nil, LuaBaseProxy.TNil),
+                (LuaValue.NewNumber(42), LuaBaseProxy.TNumber),
+                (staticUserData, LuaBaseProxy.TUserData),
                 (coroutineValue, LuaBaseProxy.TThread),
             };
 
-            foreach ((DynValue value, int expected) in cases)
+            await Assert.That(createdStaticUserData).IsTrue().ConfigureAwait(false);
+
+            foreach ((LuaValue value, int expected) in cases)
             {
                 LuaState state = CreateLuaState(script, value);
                 await Assert.That(LuaBaseProxy.GetLuaType(state, 1)).IsEqualTo(expected);
             }
 
             LuaState invalidState = CreateLuaState(script);
-            invalidState.Push(DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2)));
+            invalidState.Push(LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewNumber(2)));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 LuaBaseProxy.GetLuaType(invalidState, 1)
@@ -60,24 +66,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LuaTypeHandlesBooleansStringsFunctionsAndTables()
         {
             Script script = new();
-            DynValue scriptFunction = script.DoString("return function() end");
-            DynValue clrFunction = DynValue.NewCallback((_, _) => DynValue.Nil);
+            LuaValue scriptFunction = script.DoString("return function() end");
+            LuaValue clrFunction = LuaValue.NewCallback((_, _) => LuaValue.Nil);
             Table table = new(script);
 
-            (DynValue Value, int Expected)[] cases =
+            (LuaValue Value, int Expected)[] cases =
             {
-                (DynValue.NewBoolean(true), LuaBaseProxy.TNil),
+                (LuaValue.NewBoolean(true), LuaBaseProxy.TNil),
                 (script.DoString("return true"), LuaBaseProxy.TNil),
-                (DynValue.NewString("txt"), LuaBaseProxy.TString),
+                (LuaValue.NewString("txt"), LuaBaseProxy.TString),
                 (script.DoString("return 'txt'"), LuaBaseProxy.TString),
-                (DynValue.NewTable(table), LuaBaseProxy.TTable),
+                (LuaValue.NewTable(table), LuaBaseProxy.TTable),
                 (script.DoString("return { key = 'value' }"), LuaBaseProxy.TTable),
                 (scriptFunction, LuaBaseProxy.TFunction),
                 (clrFunction, LuaBaseProxy.TFunction),
                 (script.DoString("return function() end"), LuaBaseProxy.TFunction),
             };
 
-            foreach ((DynValue value, int expected) in cases)
+            foreach ((LuaValue value, int expected) in cases)
             {
                 LuaState state = CreateLuaState(script, value);
                 await Assert.That(LuaBaseProxy.GetLuaType(state, 1)).IsEqualTo(expected);
@@ -88,15 +94,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LuaTypeRejectsSyntheticTailCallYieldAndTupleRequests()
         {
             Script script = new();
-            DynValue tailCall = DynValue.NewTailCallReq(
-                DynValue.NewCallback((_, _) => DynValue.NewNumber(1)),
-                DynValue.NewNumber(5)
+            LuaValue tailCall = LuaValue.NewTailCallReq(
+                LuaValue.NewCallback((_, _) => LuaValue.NewNumber(1)),
+                LuaValue.NewNumber(5)
             );
-            DynValue yieldRequest = DynValue.NewYieldReq(new[] { DynValue.NewNumber(6) });
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewString("two"));
-            DynValue luaTuple = script.DoString("return (function() return 1, 'two' end)()");
+            LuaValue yieldRequest = LuaValue.NewYieldReq(new[] { LuaValue.NewNumber(6) });
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewString("two"));
+            LuaValue luaTuple = script.DoString("return (function() return 1, 'two' end)()");
 
-            foreach (DynValue value in new[] { tailCall, yieldRequest, tuple, luaTuple })
+            foreach (LuaValue value in new[] { tailCall, yieldRequest, tuple, luaTuple })
             {
                 LuaState state = CreateLuaState(script);
                 state.Push(value);
@@ -111,11 +117,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LuaTypeClassifiesValuesProducedByLuaScripts()
         {
             Script script = new();
-            DynValue boolValue = script.DoString("return true");
-            DynValue stringValue = script.DoString("return 'scripted'");
-            DynValue tableValue = script.DoString("return { key = 'value' }");
-            DynValue functionValue = script.DoString("return function() return 'noop' end");
-            DynValue threadValue = script.DoString(
+            LuaValue boolValue = script.DoString("return true");
+            LuaValue stringValue = script.DoString("return 'scripted'");
+            LuaValue tableValue = script.DoString("return { key = 'value' }");
+            LuaValue functionValue = script.DoString("return function() return 'noop' end");
+            LuaValue threadValue = script.DoString(
                 "return coroutine.create(function() coroutine.yield('hi') end)"
             );
 
@@ -139,9 +145,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LuaStringHelpersExposeRawStringValues()
         {
             Script script = new();
-            DynValue[] values = { DynValue.NewString("abc"), script.DoString("return 'abc'") };
+            LuaValue[] values = { LuaValue.NewString("abc"), script.DoString("return 'abc'") };
 
-            foreach (DynValue value in values)
+            foreach (LuaValue value in values)
             {
                 LuaState state = CreateLuaState(script, value);
 
@@ -159,9 +165,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LuaIntegerChecksValidateNumbers()
         {
             Script script = new();
-            DynValue[] numericValues = { DynValue.NewNumber(1337), script.DoString("return 1337") };
+            LuaValue[] numericValues = { LuaValue.NewNumber(1337), script.DoString("return 1337") };
 
-            foreach (DynValue value in numericValues)
+            foreach (LuaValue value in numericValues)
             {
                 LuaState state = CreateLuaState(script, value);
 
@@ -177,13 +183,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LuaArgCheckThrowsWhenConditionFails()
         {
             Script script = new();
-            DynValue[] payloads =
+            LuaValue[] payloads =
             {
-                DynValue.NewString("input"),
+                LuaValue.NewString("input"),
                 script.DoString("return 'input'"),
             };
 
-            foreach (DynValue payload in payloads)
+            foreach (LuaValue payload in payloads)
             {
                 LuaState state = CreateLuaState(script, payload);
 
@@ -199,31 +205,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new();
             Table table = new(script);
-            table.Set("answer", DynValue.NewNumber(42));
+            table.Set("answer", LuaValue.NewNumber(42));
 
-            DynValue[] tableVariants =
+            LuaValue[] tableVariants =
             {
-                DynValue.NewTable(table),
+                LuaValue.NewTable(table),
                 script.DoString("return { answer = 42 }"),
             };
 
-            foreach (DynValue tableValue in tableVariants)
+            foreach (LuaValue tableValue in tableVariants)
             {
                 LuaState successState = CreateLuaState(script);
                 successState.Push(tableValue);
-                successState.Push(DynValue.NewString("answer"));
+                successState.Push(LuaValue.NewString("answer"));
 
                 LuaBaseProxy.GetTable(successState, 1);
                 await Assert.That(successState.Pop().Number).IsEqualTo(42d);
             }
 
-            DynValue[] nonTableVariants = { DynValue.NewNumber(10), script.DoString("return 10") };
+            LuaValue[] nonTableVariants = { LuaValue.NewNumber(10), script.DoString("return 10") };
 
-            foreach (DynValue nonTable in nonTableVariants)
+            foreach (LuaValue nonTable in nonTableVariants)
             {
                 LuaState failureState = CreateLuaState(script);
                 failureState.Push(nonTable);
-                failureState.Push(DynValue.NewString("answer"));
+                failureState.Push(LuaValue.NewString("answer"));
 
                 NotImplementedException exception = Assert.Throws<NotImplementedException>(() =>
                     LuaBaseProxy.GetTable(failureState, 1)
@@ -237,16 +243,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new();
 
-            DynValue multiFunction = DynValue.NewCallback(
-                (_, _) => DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2))
+            LuaValue multiFunction = LuaValue.NewCallback(
+                (_, _) => LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewNumber(2))
             );
-            DynValue luaMultiFunction = script.DoString("return function(input) return 1, 2 end");
+            LuaValue luaMultiFunction = script.DoString("return function(input) return 1, 2 end");
 
-            foreach (DynValue function in new[] { multiFunction, luaMultiFunction })
+            foreach (LuaValue function in new[] { multiFunction, luaMultiFunction })
             {
                 LuaState multiReturnState = CreateLuaState(script);
                 multiReturnState.Push(function);
-                multiReturnState.Push(DynValue.NewNumber(10));
+                multiReturnState.Push(LuaValue.NewNumber(10));
 
                 LuaBaseProxy.Call(multiReturnState, 1);
 
@@ -254,11 +260,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 await Assert.That(multiReturnState.Pop().Number).IsEqualTo(1d);
             }
 
-            DynValue singleFunction = DynValue.NewCallback((_, _) => DynValue.NewNumber(7));
-            DynValue luaSingleFunction = script.DoString("return function(value) return value end");
+            LuaValue singleFunction = LuaValue.NewCallback((_, _) => LuaValue.NewNumber(7));
+            LuaValue luaSingleFunction = script.DoString("return function(value) return value end");
 
             foreach (
-                (DynValue Function, double Expected) testCase in new[]
+                (LuaValue Function, double Expected) testCase in new[]
                 {
                     (singleFunction, 7d),
                     (luaSingleFunction, 5d),
@@ -267,11 +273,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             {
                 LuaState paddedState = CreateLuaState(script);
                 paddedState.Push(testCase.Function);
-                paddedState.Push(DynValue.NewNumber(5));
+                paddedState.Push(LuaValue.NewNumber(5));
 
                 LuaBaseProxy.Call(paddedState, 1, 2);
 
-                await Assert.That(paddedState.Pop()).IsEqualTo(DynValue.Nil);
+                await Assert.That(paddedState.Pop()).IsEqualTo(LuaValue.Nil);
                 await Assert.That(paddedState.Pop().Number).IsEqualTo(testCase.Expected);
             }
         }
@@ -280,20 +286,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LuaBufferAndStackHelpersOperateOnValues()
         {
             Script script = new();
-            DynValue[] sourceVariants =
+            LuaValue[] sourceVariants =
             {
-                DynValue.NewString("source"),
+                LuaValue.NewString("source"),
                 script.DoString("return 'source'"),
             };
 
-            foreach (DynValue source in sourceVariants)
+            foreach (LuaValue source in sourceVariants)
             {
                 LuaState state = CreateLuaState(
                     script,
-                    DynValue.Nil,
-                    DynValue.NewNumber(21),
+                    LuaValue.Nil,
+                    LuaValue.NewNumber(21),
                     source,
-                    DynValue.NewBoolean(true)
+                    LuaValue.NewBoolean(true)
                 );
 
                 await Assert.That(LuaBaseProxy.OptionalInteger(state, 1, 99)).IsEqualTo(99);
@@ -314,7 +320,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 LuaBaseProxy.AddChar(buffer, 'A');
                 LuaBaseProxy.AddString(buffer, "B");
                 LuaBaseProxy.AddLString(buffer, new CharPtr("CDEF"), 2);
-                state.Push(DynValue.NewString("tail"));
+                state.Push(LuaValue.NewString("tail"));
                 LuaBaseProxy.AddValue(buffer);
                 LuaBaseProxy.PushResult(buffer);
                 await Assert.That(state.Pop().String).IsEqualTo("ABCDtail");
@@ -338,10 +344,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             LuaState finalState = CreateLuaState(
                 script,
-                DynValue.Nil,
-                DynValue.NewNumber(21),
-                DynValue.NewString("source"),
-                DynValue.NewBoolean(true)
+                LuaValue.Nil,
+                LuaValue.NewNumber(21),
+                LuaValue.NewString("source"),
+                LuaValue.NewBoolean(true)
             );
 
             LuaBaseProxy.AssertCondition(false);
@@ -517,7 +523,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(new CharPtr(buffer).ToString()).IsEqualTo("100%");
         }
 
-        private static LuaState CreateLuaState(Script script, params DynValue[] args)
+        private static LuaState CreateLuaState(Script script, params LuaValue[] args)
         {
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             CallbackArguments callbackArguments = TestHelpers.CreateArguments(args);

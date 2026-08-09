@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System;
     using System.IO;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -29,12 +30,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             };
             script.Options.ScriptLoader = loader;
 
-            DynValue requireFunc = script.Globals.Get("require");
+            LuaValue requireFunc = script.Globals.Get("require");
 
             await Assert.That(requireFunc.Type).IsEqualTo(DataType.Function);
 
-            DynValue first = script.Call(requireFunc, DynValue.NewString("modules.sample"));
-            DynValue second = script.Call(requireFunc, DynValue.NewString("modules.sample"));
+            LuaValue first = script.Call(requireFunc, LuaValue.NewString("modules.sample"));
+            LuaValue second = script.Call(requireFunc, LuaValue.NewString("modules.sample"));
 
             await Assert.That(first.Type).IsEqualTo(DataType.Table);
             await Assert.That(first.Table.Get("value").String).IsEqualTo("modules.sample");
@@ -130,7 +131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue loadResult = script.DoString(
+            LuaValue loadResult = script.DoString(
                 @"
                 local called = false
                 local function badreader()
@@ -146,7 +147,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             await Assert.That(loadResult.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(loadResult.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(loadResult.Tuple[0].IsNil).IsTrue();
             await Assert
                 .That(loadResult.Tuple[1].String)
                 .Contains("reader function must return a string");
@@ -163,11 +164,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScriptWithVersion(version);
-            script.Globals["throw_reader_helper"] = DynValue.NewCallback(
+            script.Globals["throw_reader_helper"] = LuaValue.NewCallback(
                 (_, _) => throw new SyntaxErrorException("reader failure")
             );
 
-            DynValue loadResult = script.DoString(
+            LuaValue loadResult = script.DoString(
                 @"
                 local function throwing_reader()
                     return throw_reader_helper()
@@ -177,7 +178,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             await Assert.That(loadResult.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(loadResult.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(loadResult.Tuple[0].IsNil).IsTrue();
             await Assert.That(loadResult.Tuple[1].String).Contains("reader failure");
             await Assert.That(loadResult.Tuple[1].String).Contains("chunk_");
         }
@@ -193,7 +194,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local fragments = { 'return ', 'value', nil }
                 local index = 0
@@ -228,7 +229,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local fragment_count = {fragmentCount}
                 local emitted = 0
@@ -268,7 +269,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local emitted = 0
                 local reader = function()
@@ -299,7 +300,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             }
             else
             {
-                await Assert.That(result.IsNil()).IsTrue();
+                await Assert.That(result.IsNil).IsTrue();
             }
         }
 
@@ -314,7 +315,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = CreateScriptWithVersion(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local emitted = false
                 local reader = function()
@@ -347,14 +348,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
             Table env = new(script);
-            env["value"] = DynValue.NewNumber(321);
+            env["value"] = LuaValue.NewNumber(321);
 
-            DynValue chunk = script.LoadString("return value", env, "chunk-string");
-            DynValue result = script.Call(chunk);
+            LuaValue chunk = script.LoadString("return value", env, "chunk-string");
+            LuaValue result = script.Call(chunk);
 
             await Assert.That(result.Number).IsEqualTo(321d);
 
-            DynValue failingChunk = script.LoadString(
+            LuaValue failingChunk = script.LoadString(
                 "error('boom')",
                 new Table(script),
                 "chunk-string"
@@ -398,10 +399,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Lua 5.2+ load() accepts strings directly
             Script script = CreateScriptWithVersion(version);
-            DynValue result = script.DoString("return load('function(')");
+            LuaValue result = script.DoString("return load('function(')");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("unexpected symbol near '('");
         }
 
@@ -427,10 +428,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Lua 5.1 uses loadstring for string chunks
             Script script = CreateScriptWithVersion(version);
-            DynValue result = script.DoString("return loadstring('function(')");
+            LuaValue result = script.DoString("return loadstring('function(')");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("unexpected symbol near '('");
         }
 
@@ -447,9 +448,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScriptWithVersion(version);
             RecordingScriptLoader loader = new() { ModuleBody = "return marker" };
             script.Options.ScriptLoader = loader;
-            script.Globals["marker"] = DynValue.NewString("global");
+            script.Globals["marker"] = LuaValue.NewString("global");
 
-            DynValue executionResult = script.DoString(
+            LuaValue executionResult = script.DoString(
                 "local fn = loadfilesafe('safe.lua'); return fn()"
             );
 
@@ -471,7 +472,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // The inner function must NOT reference any globals (otherwise it would fail before calling loadsafe).
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local original_env = _ENV
                 local ls = loadsafe
@@ -504,7 +505,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // as an upvalue. In this case, loadsafe should successfully use the script's global environment.
             Script script = CreateScriptWithVersion(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local ls = loadsafe
                 -- This function only uses the local 'ls', so it has no _ENV upvalue in Lua 5.2+.
@@ -530,9 +531,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScriptWithVersion(version);
             RecordingScriptLoader loader = new() { ModuleBody = "return value" };
             script.Options.ScriptLoader = loader;
-            script.Globals["value"] = DynValue.NewString("global");
+            script.Globals["value"] = LuaValue.NewString("global");
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local env = { value = 'from-env' }
                 local fn = loadfile('module.lua', 't', env)
@@ -557,10 +558,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScriptWithVersion(version);
             script.Options.ScriptLoader = new SyntaxErrorScriptLoader();
 
-            DynValue loadFileResult = script.DoString("return loadfile('broken.lua')");
+            LuaValue loadFileResult = script.DoString("return loadfile('broken.lua')");
 
             await Assert.That(loadFileResult.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(loadFileResult.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(loadFileResult.Tuple[0].IsNil).IsTrue();
             await Assert
                 .That(loadFileResult.Tuple[1].String)
                 .Contains("unexpected symbol near '('");
@@ -579,10 +580,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScriptWithVersion(version);
             script.Options.ScriptLoader = new ThrowingSyntaxErrorScriptLoader();
 
-            DynValue result = script.DoString("return loadfile('anything.lua')");
+            LuaValue result = script.DoString("return loadfile('anything.lua')");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).IsEqualTo("loader failure");
         }
 
@@ -648,7 +649,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             RecordingScriptLoader loader = new() { ModuleBody = "return 777" };
             script.Options.ScriptLoader = loader;
 
-            DynValue value = script.DoString("return dofile('script.lua')");
+            LuaValue value = script.DoString("return dofile('script.lua')");
 
             await Assert.That(value.Number).IsEqualTo(777d);
             await Assert.That(loader.LoadCount).IsEqualTo(1);
@@ -690,7 +691,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             LoadModule.NovaSharpInit(globals, ioTable);
 
-            DynValue package = globals.Get("package");
+            LuaValue package = globals.Get("package");
             await Assert.That(package.Type).IsEqualTo(DataType.Table);
             await Assert
                 .That(package.Table.Get("config").String)
@@ -707,7 +708,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScriptWithVersion(version);
             Table globals = new(script);
-            globals["package"] = DynValue.NewNumber(42);
+            globals["package"] = LuaValue.NewNumber(42);
 
             InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
                 LoadModule.NovaSharpInit(globals, new Table(script))

@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -90,7 +91,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 return f()  -- Should be 0, not 1
             ";
-            DynValue result = script.DoString(lua);
+            LuaValue result = script.DoString(lua);
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert
                 .That(result.Number)
@@ -117,7 +118,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 local ok, count = pcall(f)
                 return ok, count
             ";
-            DynValue result = script.DoString(lua);
+            LuaValue result = script.DoString(lua);
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert
@@ -150,7 +151,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 local ok, count = xpcall(f, function(err) end)
                 return ok, count
             ";
-            DynValue result = script.DoString(lua);
+            LuaValue result = script.DoString(lua);
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert
@@ -182,7 +183,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 local oneNilArg = f(nil)
                 return zeroArgs, oneNilArg
             ";
-            DynValue result = script.DoString(lua);
+            LuaValue result = script.DoString(lua);
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert
@@ -216,7 +217,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 return printf('hello')
             ";
-            DynValue result = script.DoString(lua);
+            LuaValue result = script.DoString(lua);
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert
                 .That(result.String)
@@ -264,7 +265,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 "
             );
 
-            DynValue result = script.DoString("return " + code);
+            LuaValue result = script.DoString("return " + code);
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo(expected).ConfigureAwait(false);
         }

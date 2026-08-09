@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
@@ -35,9 +36,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
 
             foreach (System.Collections.DictionaryEntry kvp in dict)
             {
-                DynValue key = ClrToScriptConversions.ObjectToDynValue(script, kvp.Key);
-                DynValue val = ClrToScriptConversions.ObjectToDynValue(script, kvp.Value);
-                t.Set(key, val);
+                LuaValue key = ClrToScriptConversions.ObjectToDynValue(script, kvp.Key);
+                LuaValue val = ClrToScriptConversions.ObjectToDynValue(script, kvp.Value);
+                t.SetValue(key, val);
             }
 
             return t;
@@ -55,7 +56,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
             {
                 return true;
             }
-            else if (Framework.Do.IsAssignableFrom(t, typeof(Dictionary<DynValue, DynValue>)))
+            else if (Framework.Do.IsAssignableFrom(t, typeof(Dictionary<LuaValue, LuaValue>)))
             {
                 return true;
             }
@@ -63,7 +64,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
             {
                 return true;
             }
-            else if (Framework.Do.IsAssignableFrom(t, typeof(List<DynValue>)))
+            else if (Framework.Do.IsAssignableFrom(t, typeof(List<LuaValue>)))
             {
                 return true;
             }
@@ -71,7 +72,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
             {
                 return true;
             }
-            else if (Framework.Do.IsAssignableFrom(t, typeof(DynValue[])))
+            else if (Framework.Do.IsAssignableFrom(t, typeof(LuaValue[])))
             {
                 return true;
             }
@@ -116,25 +117,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                     v => v.ToObject()
                 );
             }
-            else if (Framework.Do.IsAssignableFrom(t, typeof(Dictionary<DynValue, DynValue>)))
+            else if (Framework.Do.IsAssignableFrom(t, typeof(Dictionary<LuaValue, LuaValue>)))
             {
-                return TableToDictionary<DynValue, DynValue>(table, v => v, v => v);
+                return TableToDictionary<LuaValue, LuaValue>(table, v => v, v => v);
             }
             else if (Framework.Do.IsAssignableFrom(t, typeof(List<object>)))
             {
                 return TableToList<object>(table, v => v.ToObject());
             }
-            else if (Framework.Do.IsAssignableFrom(t, typeof(List<DynValue>)))
+            else if (Framework.Do.IsAssignableFrom(t, typeof(List<LuaValue>)))
             {
-                return TableToList<DynValue>(table, v => v);
+                return TableToList<LuaValue>(table, v => v);
             }
             else if (Framework.Do.IsAssignableFrom(t, typeof(object[])))
             {
                 return TableToList<object>(table, v => v.ToObject()).ToArray();
             }
-            else if (Framework.Do.IsAssignableFrom(t, typeof(DynValue[])))
+            else if (Framework.Do.IsAssignableFrom(t, typeof(LuaValue[])))
             {
-                return TableToList<DynValue>(table, v => v).ToArray();
+                return TableToList<LuaValue>(table, v => v).ToArray();
             }
 
             if (Framework.Do.IsGenericType(t))
@@ -226,7 +227,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
 
             for (int i = 1, l = table.Length; i <= l; i++)
             {
-                DynValue v = table.Get(i);
+                LuaValue v = table.Get(i);
                 object o = ScriptToClrConversions.DynValueToObjectOfType(v, itemType, null, false);
                 lst.Add(o);
             }
@@ -262,7 +263,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
 
             for (int i = 1, l = table.Length; i <= l; i++)
             {
-                DynValue v = table.Get(i);
+                LuaValue v = table.Get(i);
                 object o = ScriptToClrConversions.DynValueToObjectOfType(v, itemType, null, false);
                 lst.Add(o);
             }
@@ -273,13 +274,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         /// <summary>
         /// Converts a table to a <see cref="List{T}"/>, known in advance
         /// </summary>
-        internal static List<T> TableToList<T>(Table table, Func<DynValue, T> converter)
+        internal static List<T> TableToList<T>(Table table, Func<LuaValue, T> converter)
         {
             List<T> lst = new();
 
             for (int i = 1, l = table.Length; i <= l; i++)
             {
-                DynValue v = table.Get(i);
+                LuaValue v = table.Get(i);
                 T o = converter(v);
                 lst.Add(o);
             }
@@ -292,8 +293,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         /// </summary>
         internal static Dictionary<TK, TV> TableToDictionary<TK, TV>(
             Table table,
-            Func<DynValue, TK> keyconverter,
-            Func<DynValue, TV> valconverter
+            Func<LuaValue, TK> keyconverter,
+            Func<LuaValue, TV> valconverter
         )
         {
             Dictionary<TK, TV> dict = new();

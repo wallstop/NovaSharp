@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -26,9 +27,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function simple() return 5 end");
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("simple"));
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("simple"));
 
-            DynValue first = coroutineValue.Coroutine.Resume();
+            LuaValue first = coroutineValue.Coroutine.Resume();
             await Assert.That(first.Number).IsEqualTo(5d);
             await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Dead);
 
@@ -42,7 +43,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task CallDelegatesToParentCoroutineStackTop()
         {
             Script script = new();
-            DynValue function = script.LoadString("return 321");
+            LuaValue function = script.LoadString("return 321");
 
             Processor parent = script.GetMainProcessorForTests();
             Processor child = Processor.CreateChildProcessorForTests(parent);
@@ -50,7 +51,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             parent.ReplaceCoroutineStackForTests(new List<Processor> { delegated });
 
-            DynValue result = child.Call(function, Array.Empty<DynValue>());
+            LuaValue result = child.Call(function, Array.Empty<LuaValue>());
             await Assert.That(result.Number).IsEqualTo(321d);
         }
 
@@ -70,8 +71,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("worker"));
-            DynValue yielded = coroutineValue.Coroutine.Resume();
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("worker"));
+            LuaValue yielded = coroutineValue.Coroutine.Resume();
 
             await Assert.That(yielded.Type).IsEqualTo(DataType.String);
             await Assert.That(yielded.String).IsEqualTo("pause");
@@ -110,7 +111,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("boundary"));
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("boundary"));
             Processor coroutineProcessor = coroutineValue.Coroutine.GetProcessorForTests();
             using ProcessorYieldScope yieldScope = ProcessorYieldScope.Override(
                 coroutineProcessor,

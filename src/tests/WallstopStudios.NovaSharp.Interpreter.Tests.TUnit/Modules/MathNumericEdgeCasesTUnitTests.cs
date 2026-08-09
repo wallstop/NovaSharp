@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -27,7 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task MaxintegerMatchesExpectedValue(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.maxinteger");
+            LuaValue result = script.DoString("return math.maxinteger");
 
             // Lua 5.3+ maxinteger = 2^63 - 1 = 9223372036854775807
             await Assert.That(result.Number).IsEqualTo(9223372036854775807d).ConfigureAwait(false);
@@ -41,7 +42,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task MinintegerMatchesExpectedValue(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.mininteger");
+            LuaValue result = script.DoString("return math.mininteger");
 
             // Lua 5.3+ mininteger = -2^63 = -9223372036854775808
             await Assert.That(result.Number).IsEqualTo(-9223372036854775808d).ConfigureAwait(false);
@@ -55,7 +56,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task MaxintegerIsInteger(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.type(math.maxinteger)");
+            LuaValue result = script.DoString("return math.type(math.maxinteger)");
 
             await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
         }
@@ -68,7 +69,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task MinintegerIsInteger(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.type(math.mininteger)");
+            LuaValue result = script.DoString("return math.type(math.mininteger)");
 
             await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
         }
@@ -81,9 +82,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task MaxintegerNotAvailableInPreLua53(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.maxinteger");
+            LuaValue result = script.DoString("return math.maxinteger");
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -94,9 +95,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task MinintegerNotAvailableInPreLua53(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.mininteger");
+            LuaValue result = script.DoString("return math.mininteger");
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -109,7 +110,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Per Lua 5.3+ spec: integer overflow wraps in two's complement
             // maxinteger + 1 = mininteger
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.maxinteger + 1");
+            LuaValue result = script.DoString("return math.maxinteger + 1");
 
             // Should wrap to mininteger (stays integer type)
             await Assert.That(result.Number).IsEqualTo(-9223372036854775808d).ConfigureAwait(false);
@@ -126,7 +127,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Per Lua 5.3+ spec: integer underflow wraps in two's complement
             // mininteger - 1 = maxinteger
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.mininteger - 1");
+            LuaValue result = script.DoString("return math.mininteger - 1");
 
             // Should wrap to maxinteger (stays integer type)
             await Assert.That(result.Number).IsEqualTo(9223372036854775807d).ConfigureAwait(false);
@@ -142,7 +143,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Now that LuaNumber stores integers natively, math.maxinteger is preserved exactly
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.maxinteger | 0");
+            LuaValue result = script.DoString("return math.maxinteger | 0");
 
             await Assert.That(result.Number).IsEqualTo(9223372036854775807d).ConfigureAwait(false);
             await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
@@ -156,7 +157,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task MinintegerBitwiseOrWorksCorrectly(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.mininteger | 0");
+            LuaValue result = script.DoString("return math.mininteger | 0");
 
             await Assert.That(result.Number).IsEqualTo(-9223372036854775808d).ConfigureAwait(false);
         }
@@ -173,7 +174,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Per Lua spec: x/0 where x > 0 produces +inf
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return 1.0 / 0");
+            LuaValue result = script.DoString("return 1.0 / 0");
 
             await Assert
                 .That(double.IsPositiveInfinity(result.Number))
@@ -192,7 +193,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return 1.0 / -0.0");
+            LuaValue result = script.DoString("return 1.0 / -0.0");
 
             await Assert
                 .That(double.IsNegativeInfinity(result.Number))
@@ -211,7 +212,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return -1.0 / 0");
+            LuaValue result = script.DoString("return -1.0 / 0");
 
             await Assert
                 .That(double.IsNegativeInfinity(result.Number))
@@ -229,7 +230,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Per IEEE 754 and Lua: 0/0 = NaN
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return 0 / 0");
+            LuaValue result = script.DoString("return 0 / 0");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
         }
@@ -261,7 +262,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // When operands are floats, // follows IEEE 754 (returns inf)
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return 5.0 // 0.0");
+            LuaValue result = script.DoString("return 5.0 // 0.0");
 
             await Assert.That(double.IsInfinity(result.Number)).IsTrue().ConfigureAwait(false);
         }
@@ -290,7 +291,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Verified with: lua5.1 -e "print(1 % 0)"  -> -nan
             //                lua5.2 -e "print(1 % 0)"  -> -nan
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return 5 % 0");
+            LuaValue result = script.DoString("return 5 % 0");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
         }
@@ -319,7 +320,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Float modulo by zero returns NaN in all Lua versions (IEEE 754)
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return 5.0 % 0.0");
+            LuaValue result = script.DoString("return 5.0 % 0.0");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
         }
@@ -333,7 +334,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // math.huge is IEEE 754 positive infinity per Lua spec
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.huge + math.huge");
+            LuaValue result = script.DoString("return math.huge + math.huge");
 
             await Assert
                 .That(double.IsPositiveInfinity(result.Number))
@@ -350,7 +351,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // math.huge is IEEE 754 positive infinity per Lua spec
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.huge - math.huge");
+            LuaValue result = script.DoString("return math.huge - math.huge");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
         }
@@ -364,7 +365,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // math.huge is IEEE 754 positive infinity per Lua spec
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.huge * 0");
+            LuaValue result = script.DoString("return math.huge * 0");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
         }
@@ -378,7 +379,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Per IEEE 754: NaN ~= NaN
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("local nan = 0/0; return nan == nan");
+            LuaValue result = script.DoString("local nan = 0/0; return nan == nan");
 
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
@@ -391,7 +392,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task NaNNotLessThanItself(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("local nan = 0/0; return nan < nan");
+            LuaValue result = script.DoString("local nan = 0/0; return nan < nan");
 
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
@@ -404,7 +405,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task NaNNotGreaterThanItself(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("local nan = 0/0; return nan > nan");
+            LuaValue result = script.DoString("local nan = 0/0; return nan > nan");
 
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
@@ -417,7 +418,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task MathTypeReturnsFloatForNaN(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.type(0/0)");
+            LuaValue result = script.DoString("return math.type(0/0)");
 
             await Assert.That(result.String).IsEqualTo("float").ConfigureAwait(false);
         }
@@ -430,7 +431,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task MathTypeReturnsFloatForInfinity(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.type(math.huge)");
+            LuaValue result = script.DoString("return math.type(math.huge)");
 
             await Assert.That(result.String).IsEqualTo("float").ConfigureAwait(false);
         }
@@ -446,7 +447,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Per Lua spec: ~mininteger = maxinteger (two's complement)
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return ~math.mininteger");
+            LuaValue result = script.DoString("return ~math.mininteger");
 
             // In two's complement: ~(-2^63) = 2^63 - 1 = maxinteger
             await Assert.That(result.Number).IsEqualTo(9223372036854775807d).ConfigureAwait(false);
@@ -461,7 +462,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Per Lua 5.3+ spec: -mininteger wraps to mininteger (two's complement)
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return -math.mininteger");
+            LuaValue result = script.DoString("return -math.mininteger");
 
             // Should wrap to mininteger (stays integer type)
             await Assert.That(result.Number).IsEqualTo(-9223372036854775808d).ConfigureAwait(false);
@@ -478,7 +479,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Per Lua 5.3+ spec: integer multiplication wraps in two's complement
             // maxinteger * 2 = -2 (0x7FFFFFFFFFFFFFFF * 2 = -2 in two's complement)
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.maxinteger * 2");
+            LuaValue result = script.DoString("return math.maxinteger * 2");
 
             await Assert.That(result.Number).IsEqualTo(-2d).ConfigureAwait(false);
             await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
@@ -492,7 +493,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task IntegerLeftShiftOverflow(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return 1 << 63");
+            LuaValue result = script.DoString("return 1 << 63");
 
             // 1 << 63 = -2^63 = mininteger (wraps in integer representation)
             await Assert.That(result.Number).IsEqualTo(-9223372036854775808d).ConfigureAwait(false);
@@ -507,7 +508,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Shift by >= 64 bits returns 0
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return 1 << 64");
+            LuaValue result = script.DoString("return 1 << 64");
 
             await Assert.That(result.Number).IsEqualTo(0d).ConfigureAwait(false);
         }
@@ -520,7 +521,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task IntegerRightShiftBy64ReturnsZero(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.maxinteger >> 64");
+            LuaValue result = script.DoString("return math.maxinteger >> 64");
 
             await Assert.That(result.Number).IsEqualTo(0d).ConfigureAwait(false);
         }
@@ -533,7 +534,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task VeryLargeNumberIsFloat(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.type(1e100)");
+            LuaValue result = script.DoString("return math.type(1e100)");
 
             await Assert.That(result.String).IsEqualTo("float").ConfigureAwait(false);
         }
@@ -546,7 +547,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LargeLiteralParsedCorrectly(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return 9223372036854775807");
+            LuaValue result = script.DoString("return 9223372036854775807");
 
             await Assert.That(result.Number).IsEqualTo(9223372036854775807d).ConfigureAwait(false);
         }
@@ -560,7 +561,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
             // Note: Parser treats this as unary minus applied to positive literal
-            DynValue result = script.DoString("return -9223372036854775808");
+            LuaValue result = script.DoString("return -9223372036854775808");
 
             await Assert.That(result.Number).IsEqualTo(-9223372036854775808d).ConfigureAwait(false);
         }
@@ -573,7 +574,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task MaxintegerEqualToLiteral(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.maxinteger == 9223372036854775807");
+            LuaValue result = script.DoString("return math.maxinteger == 9223372036854775807");
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -586,7 +587,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task MinintegerEqualToLiteral(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.mininteger == -9223372036854775808");
+            LuaValue result = script.DoString("return math.mininteger == -9223372036854775808");
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -600,7 +601,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Now that LuaNumber stores integers natively, math.maxinteger is preserved exactly
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.tointeger(math.maxinteger)");
+            LuaValue result = script.DoString("return math.tointeger(math.maxinteger)");
 
             await Assert.That(result.Number).IsEqualTo(9223372036854775807d).ConfigureAwait(false);
             await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
@@ -614,7 +615,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task TointegerOfMinintegerReturnsMininteger(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.tointeger(math.mininteger)");
+            LuaValue result = script.DoString("return math.tointeger(math.mininteger)");
 
             await Assert.That(result.Number).IsEqualTo(-9223372036854775808d).ConfigureAwait(false);
         }
@@ -627,9 +628,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task TointegerOfInfinityReturnsNil(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.tointeger(math.huge)");
+            LuaValue result = script.DoString("return math.tointeger(math.huge)");
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -640,9 +641,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task TointegerOfNaNReturnsNil(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.tointeger(0/0)");
+            LuaValue result = script.DoString("return math.tointeger(0/0)");
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -655,9 +656,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Per Lua 5.3+ spec: math.tointeger returns nil for values outside integer range.
             // 2^63 is exactly one beyond maxinteger and should return nil.
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.tointeger(2^63)");
+            LuaValue result = script.DoString("return math.tointeger(2^63)");
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -669,7 +670,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // math.maxinteger (0x7FFFFFFFFFFFFFFF) < math.mininteger (0x8000000000000000) as unsigned = true
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.ult(math.maxinteger, math.mininteger)");
+            LuaValue result = script.DoString("return math.ult(math.maxinteger, math.mininteger)");
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -682,7 +683,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task UltWithZeroAndMinusOne(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.ult(0, -1)");
+            LuaValue result = script.DoString("return math.ult(0, -1)");
 
             // 0 < -1 (as unsigned, -1 = max unsigned value)
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
@@ -696,7 +697,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task UltWithMinusOneAndZero(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.ult(-1, 0)");
+            LuaValue result = script.DoString("return math.ult(-1, 0)");
 
             // -1 (max unsigned) is not < 0
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
@@ -900,7 +901,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString($"return string.format('%d', {luaExpression})");
+            LuaValue result = script.DoString($"return string.format('%d', {luaExpression})");
 
             await Assert
                 .That(result.String)
@@ -923,7 +924,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             // math.maxinteger + 0.5 should round to 9223372036854775808.0 (2^63)
             // due to double precision limitations
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local v = math.maxinteger + 0.5
                 return v, math.type(v), v == 2^63
@@ -1003,7 +1004,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             // This value is within range but at the edge where double precision is limited
             // The largest double strictly less than 2^63 is 9223372036854774784
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local just_under = 9223372036854774784.0  -- largest double < 2^63
                 local at_boundary = 9223372036854775808.0  -- exactly 2^63
@@ -1049,7 +1050,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             // math.floor(math.maxinteger + 0.5) should return a FLOAT because the result (2^63)
             // does not fit in a signed 64-bit integer
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local v = math.floor(math.maxinteger + 0.5)
                 return math.type(v), v
@@ -1082,7 +1083,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.ceil on a large value that exceeds integer range should return float
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local v = math.ceil(math.mininteger - 10000000000.0)
                 return math.type(v), v
@@ -1184,7 +1185,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local v = math.floor({luaExpression})
                 return math.type(v), v
@@ -1222,7 +1223,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local v = math.ceil({luaExpression})
                 return math.type(v), v
@@ -1257,7 +1258,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // In Lua 5.1/5.2, math.floor just returns a number (no type distinction)
-            DynValue result = script.DoString("return math.floor(3.7)");
+            LuaValue result = script.DoString("return math.floor(3.7)");
 
             // The value should be 3.0 and of type number
             await Assert.That(result.Number).IsEqualTo(3.0).ConfigureAwait(false);

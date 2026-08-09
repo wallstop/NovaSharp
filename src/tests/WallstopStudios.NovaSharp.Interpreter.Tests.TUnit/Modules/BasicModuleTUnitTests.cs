@@ -1,8 +1,10 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -39,15 +41,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new(version, CoreModulePresets.Complete);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            DynValue value = script.DoString(
+            LuaValue value = script.DoString(
                 "return setmetatable({}, { __tostring = function() return 'value' end })"
             );
             CallbackArguments args = new(new[] { value }, isMethodCall: false);
 
-            DynValue first = BasicModule.ToString(context, args);
-            DynValue second = BasicModule.ToString(context, args);
+            LuaValue first = BasicModule.ToString(context, args);
+            LuaValue second = BasicModule.ToString(context, args);
             second.TailCallData.Continuation.AdditionalData = "dirty";
-            DynValue third = BasicModule.ToString(context, args);
+            LuaValue third = BasicModule.ToString(context, args);
 
             await Assert.That(first.Type).IsEqualTo(DataType.TailCallRequest).ConfigureAwait(false);
             await Assert
@@ -94,7 +96,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task TypeThrowsWhenNoArgumentsProvided(LuaCompatibilityVersion version)
         {
-            CallbackArguments args = new(Array.Empty<DynValue>(), isMethodCall: false);
+            CallbackArguments args = new(Array.Empty<LuaValue>(), isMethodCall: false);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 BasicModule.Type(null, args)
@@ -126,11 +128,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CollectGarbageRunsWhenModeIsCollect(LuaCompatibilityVersion version)
         {
-            CallbackArguments args = new(new[] { DynValue.Nil }, isMethodCall: false);
+            CallbackArguments args = new(new[] { LuaValue.Nil }, isMethodCall: false);
 
-            DynValue result = BasicModule.CollectGarbage(null, args);
+            LuaValue result = BasicModule.CollectGarbage(null, args);
 
-            await Assert.That(result).IsEqualTo(DynValue.Nil);
+            await Assert.That(result).IsEqualTo(LuaValue.Nil);
         }
 
         [global::TUnit.Core.Test]
@@ -141,11 +143,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CollectGarbageSkipsWhenModeIsNotSupported(LuaCompatibilityVersion version)
         {
-            CallbackArguments args = new(new[] { DynValue.NewString("stop") }, isMethodCall: false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("stop") }, isMethodCall: false);
 
-            DynValue result = BasicModule.CollectGarbage(null, args);
+            LuaValue result = BasicModule.CollectGarbage(null, args);
 
-            await Assert.That(result).IsEqualTo(DynValue.Nil);
+            await Assert.That(result).IsEqualTo(LuaValue.Nil);
         }
 
         /// <summary>
@@ -155,7 +157,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ToStringContinuationThrowsWhenExecutionContextIsNull()
         {
-            CallbackArguments args = new(new[] { DynValue.NewString("test") }, isMethodCall: false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("test") }, isMethodCall: false);
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 BasicModule.ToStringContinuation(null, args)
@@ -192,13 +194,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             LuaCompatibilityVersion version
         )
         {
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewNumber(2));
             CallbackArguments args = new(
-                new[] { DynValue.NewString("#"), DynValue.NewNumber(10), tuple },
+                new[] { LuaValue.NewString("#"), LuaValue.NewNumber(10), tuple },
                 false
             );
 
-            DynValue result = BasicModule.Select(null, args);
+            LuaValue result = BasicModule.Select(null, args);
 
             await Assert.That(result.Number).IsEqualTo(3d);
         }
@@ -211,7 +213,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task WarnThrowsWhenExecutionContextIsNull(LuaCompatibilityVersion version)
         {
-            CallbackArguments args = new(new[] { DynValue.NewString("payload") }, false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("payload") }, false);
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 BasicModule.Warn(null, args)
@@ -233,16 +235,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             string observed = null;
             script.Globals.Set(
                 "_WARN",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (_, warnArgs) =>
                     {
                         observed = warnArgs[0].String;
-                        return DynValue.Nil;
+                        return LuaValue.Nil;
                     }
                 )
             );
 
-            CallbackArguments args = new(new[] { DynValue.NewString("custom-warning") }, false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("custom-warning") }, false);
             BasicModule.Warn(context, args);
 
             await Assert.That(observed).IsEqualTo("custom-warning");
@@ -257,12 +259,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task WarnUsesDebugPrintWhenHandlerMissing(LuaCompatibilityVersion version)
         {
             Script script = new();
-            script.Globals.Set("_WARN", DynValue.Nil);
+            script.Globals.Set("_WARN", LuaValue.Nil);
             string observed = null;
             script.Options.DebugPrint = s => observed = s;
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
-            CallbackArguments args = new(new[] { DynValue.NewString("debug-warning") }, false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("debug-warning") }, false);
             BasicModule.Warn(context, args);
 
             await Assert.That(observed).IsEqualTo("debug-warning");
@@ -279,7 +281,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new();
-            script.Globals.Set("_WARN", DynValue.Nil);
+            script.Globals.Set("_WARN", LuaValue.Nil);
             script.Options.DebugPrint = null;
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
@@ -289,7 +291,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                     consoleScope =>
                     {
                         CallbackArguments args = new(
-                            new[] { DynValue.NewString("console-warning") },
+                            new[] { LuaValue.NewString("console-warning") },
                             false
                         );
                         BasicModule.Warn(context, args);
@@ -316,13 +318,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new();
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString("17"), DynValue.NewNumber(6) },
+                new[] { LuaValue.NewString("17"), LuaValue.NewNumber(6) },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -336,7 +338,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new();
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString("FF"), DynValue.NewNumber(double.NaN) },
+                new[] { LuaValue.NewString("FF"), LuaValue.NewNumber(double.NaN) },
                 isMethodCall: false
             );
 
@@ -358,7 +360,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new();
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString("FF"), DynValue.NewNumber(double.PositiveInfinity) },
+                new[] { LuaValue.NewString("FF"), LuaValue.NewNumber(double.PositiveInfinity) },
                 isMethodCall: false
             );
 
@@ -380,7 +382,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new();
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString("FF"), DynValue.NewNumber(double.NegativeInfinity) },
+                new[] { LuaValue.NewString("FF"), LuaValue.NewNumber(double.NegativeInfinity) },
                 isMethodCall: false
             );
 
@@ -402,7 +404,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new();
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString("FF"), DynValue.NewNumber(16.5) },
+                new[] { LuaValue.NewString("FF"), LuaValue.NewNumber(16.5) },
                 isMethodCall: false
             );
 
@@ -428,9 +430,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new();
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            CallbackArguments args = new(new[] { DynValue.NewString("0xFF") }, isMethodCall: false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("0xFF") }, isMethodCall: false);
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(result.Number).IsEqualTo(255d).ConfigureAwait(false);
         }
@@ -447,9 +449,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new();
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            CallbackArguments args = new(new[] { DynValue.NewString("0x1a") }, isMethodCall: false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("0x1a") }, isMethodCall: false);
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(result.Number).IsEqualTo(26d).ConfigureAwait(false);
         }
@@ -466,9 +468,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new();
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            CallbackArguments args = new(new[] { DynValue.NewString("0X1A") }, isMethodCall: false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("0X1A") }, isMethodCall: false);
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(result.Number).IsEqualTo(26d).ConfigureAwait(false);
         }
@@ -486,11 +488,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new();
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString("-0x10") },
+                new[] { LuaValue.NewString("-0x10") },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(result.Number).IsEqualTo(-16d).ConfigureAwait(false);
         }
@@ -508,11 +510,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new();
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString("+0x10") },
+                new[] { LuaValue.NewString("+0x10") },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(result.Number).IsEqualTo(16d).ConfigureAwait(false);
         }
@@ -528,11 +530,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new();
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString("  0xFF  ") },
+                new[] { LuaValue.NewString("  0xFF  ") },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(result.Number).IsEqualTo(255d).ConfigureAwait(false);
         }
@@ -545,14 +547,129 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task ToNumberReturnsNilForInvalidHexString(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             // "0x" without digits is invalid
-            CallbackArguments args = new(new[] { DynValue.NewString("0x") }, isMethodCall: false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("0x") }, isMethodCall: false);
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
+            LuaValue thousandsResult = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("1,000") }, isMethodCall: false)
+            );
+            LuaValue trailingPoint = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("1.") }, isMethodCall: false)
+            );
+            LuaValue exponent = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("1e0") }, isMethodCall: false)
+            );
+            LuaValue overflow = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("1e999999") }, isMethodCall: false)
+            );
+            LuaValue underflow = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("1e-999999") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue highDecimal = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("9223372036854775807") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue highDecimalPlusOne = script.DoString(
+                "return tonumber('9223372036854775807') + 1"
+            );
+            LuaValue negativeZero = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("-0") }, isMethodCall: false)
+            );
+            LuaValue compensatedHexFloat = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0x" + new string('f', 400) + "p-1600") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue subnormalHexFloat = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0xffffffffffffffffp-1138") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue roundingHexFloat = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0x220e087835b925585p376") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue unicodeExponent = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("0x1p١") }, isMethodCall: false)
+            );
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(thousandsResult.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(trailingPoint.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(trailingPoint.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(exponent.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(exponent.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(double.IsPositiveInfinity(overflow.Number)).IsTrue();
+            await Assert.That(underflow.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(underflow.Number).IsEqualTo(0d).ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(compensatedHexFloat.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(subnormalHexFloat.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(roundingHexFloat.IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(compensatedHexFloat.Number).IsEqualTo(1d).ConfigureAwait(false);
+                await Assert
+                    .That(subnormalHexFloat.Number)
+                    .IsEqualTo(double.Epsilon)
+                    .ConfigureAwait(false);
+                long expectedRoundingBits = ((long)(441 + 1023) << 52) | 0x107043C1ADC93L;
+                await Assert
+                    .That(BitConverter.DoubleToInt64Bits(roundingHexFloat.Number))
+                    .IsEqualTo(expectedRoundingBits)
+                    .ConfigureAwait(false);
+            }
+            await Assert.That(unicodeExponent.IsNil).IsTrue().ConfigureAwait(false);
+            if (version <= LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(highDecimal.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(highDecimalPlusOne.LuaNumber.IsFloat)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert.That(highDecimalPlusOne.Number).IsGreaterThan(9e18);
+                await Assert.That(negativeZero.LuaNumber.IsFloat).IsTrue();
+                await Assert.That(1d / negativeZero.Number).IsEqualTo(double.NegativeInfinity);
+            }
+            else
+            {
+                await Assert.That(highDecimal.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(highDecimal.LuaNumber.AsInteger)
+                    .IsEqualTo(long.MaxValue)
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(highDecimalPlusOne.LuaNumber.AsInteger)
+                    .IsEqualTo(long.MinValue)
+                    .ConfigureAwait(false);
+                await Assert.That(negativeZero.LuaNumber.IsInteger).IsTrue();
+                await Assert.That(negativeZero.LuaNumber.AsInteger).IsEqualTo(0L);
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -568,11 +685,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new();
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             // "0xG" contains invalid hex digit
-            CallbackArguments args = new(new[] { DynValue.NewString("0xG") }, isMethodCall: false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("0xG") }, isMethodCall: false);
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -586,11 +703,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new();
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString("0xDeAdBeEf") },
+                new[] { LuaValue.NewString("0xDeAdBeEf") },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(result.Number).IsEqualTo(3735928559d).ConfigureAwait(false);
         }
@@ -607,11 +724,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             // 0x1.8 = 1 + 8/16 = 1.5, p0 means * 2^0 = 1.5
             CallbackArguments args = new(
-                new[] { DynValue.NewString("0x1.8p0") },
+                new[] { LuaValue.NewString("0x1.8p0") },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(result.Number).IsEqualTo(1.5d).ConfigureAwait(false);
         }
@@ -628,11 +745,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             // 0x1p2 = 1 * 2^2 = 4
             CallbackArguments args = new(
-                new[] { DynValue.NewString("0x1p2") },
+                new[] { LuaValue.NewString("0x1p2") },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
         }
@@ -651,11 +768,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             // 0x10p-2 = 16 * 2^(-2) = 16 / 4 = 4
             CallbackArguments args = new(
-                new[] { DynValue.NewString("0x10p-2") },
+                new[] { LuaValue.NewString("0x10p-2") },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
         }
@@ -677,11 +794,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // In Lua 5.1, tonumber('0xFF') without a base should return nil
             Script script = CreateScript(LuaCompatibilityVersion.Lua51);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            CallbackArguments args = new(new[] { DynValue.NewString("0xFF") }, isMethodCall: false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("0xFF") }, isMethodCall: false);
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -694,9 +811,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // In Lua 5.2+, tonumber('0xFF') without a base should parse the hex string
             Script script = new Script(version, CoreModulePresets.Complete);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            CallbackArguments args = new(new[] { DynValue.NewString("0xFF") }, isMethodCall: false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("0xFF") }, isMethodCall: false);
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(result.Number).IsEqualTo(255d).ConfigureAwait(false);
         }
@@ -715,13 +832,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript(LuaCompatibilityVersion.Lua51);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString("-0x10") },
+                new[] { LuaValue.NewString("-0x10") },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -732,17 +849,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task ToNumberReturnsNilForHexFloatInLua51(LuaCompatibilityVersion version)
         {
-            // In Lua 5.1, tonumber('0x1.8p0') without a base should return nil
-            Script script = CreateScript(LuaCompatibilityVersion.Lua51);
+            Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            CallbackArguments args = new(
-                new[] { DynValue.NewString("0x1.8p0") },
-                isMethodCall: false
+            LuaValue normal = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(new[] { LuaValue.NewString("0x1.8p0") }, isMethodCall: false)
+            );
+            LuaValue overflow = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0x1p999999999999") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue underflow = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0x1p-999999999999") },
+                    isMethodCall: false
+                )
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
-
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(normal.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(overflow.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(underflow.IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(normal.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(normal.Number).IsEqualTo(1.5d).ConfigureAwait(false);
+                await Assert.That(double.IsPositiveInfinity(overflow.Number)).IsTrue();
+                await Assert.That(underflow.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(underflow.Number).IsEqualTo(0d).ConfigureAwait(false);
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -757,21 +898,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Test that large hex integers are parsed with full 64-bit precision
             // 0x7FFFFFFFFFFFFFFF = long.MaxValue = 9223372036854775807
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString("0x7FFFFFFFFFFFFFFF") },
+                new[] { LuaValue.NewString("0x7FFFFFFFFFFFFFFF") },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
-            // Should be stored as integer with exact value
-            await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
-            await Assert
-                .That(result.LuaNumber.AsInteger)
-                .IsEqualTo(9223372036854775807L)
-                .ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else if (version == LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(result.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(result.Number).IsGreaterThan(9e18).ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(result.LuaNumber.AsInteger)
+                    .IsEqualTo(long.MaxValue)
+                    .ConfigureAwait(false);
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -785,20 +937,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             // 0x123456789ABCDEF = 81985529216486895 (within long range)
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString("0x123456789ABCDEF") },
+                new[] { LuaValue.NewString("0x123456789ABCDEF") },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
-            await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
-            await Assert
-                .That(result.LuaNumber.AsInteger)
-                .IsEqualTo(81985529216486895L)
-                .ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else if (version == LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(result.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(result.Number).IsGreaterThan(8e16).ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(result.LuaNumber.AsInteger)
+                    .IsEqualTo(81985529216486895L)
+                    .ConfigureAwait(false);
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -811,20 +975,89 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             LuaCompatibilityVersion version
         )
         {
-            // 0xFFFFFFFFFFFFFFFF = 18446744073709551615 (exceeds long.MaxValue)
-            // Should be parsed as float since it can't fit in a signed 64-bit integer
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            CallbackArguments args = new(
-                new[] { DynValue.NewString("0xFFFFFFFFFFFFFFFF") },
-                isMethodCall: false
+            LuaValue fullMask = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0xFFFFFFFFFFFFFFFF") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue wrappedZero = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0x10000000000000000") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue negativeFullMask = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("-0xFFFFFFFFFFFFFFFF") },
+                    isMethodCall: false
+                )
+            );
+            LuaValue roundingValue = BasicModule.ToNumber(
+                context,
+                new CallbackArguments(
+                    new[] { LuaValue.NewString("0x220e087835b925585") },
+                    isMethodCall: false
+                )
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
-
-            await Assert.That(result.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
-            // Due to double precision limits, the value will be approximately 1.844674407370955e+19
-            await Assert.That(result.LuaNumber.AsFloat).IsGreaterThan(1.8e19).ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(fullMask.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(wrappedZero.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(negativeFullMask.IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(roundingValue.IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else if (version == LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(fullMask.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(fullMask.Number).IsGreaterThan(1.8e19).ConfigureAwait(false);
+                await Assert.That(wrappedZero.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(wrappedZero.Number).IsGreaterThan(1.8e19).ConfigureAwait(false);
+                await Assert
+                    .That(negativeFullMask.LuaNumber.IsFloat)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(negativeFullMask.Number)
+                    .IsLessThan(-1.8e19)
+                    .ConfigureAwait(false);
+                long expectedRoundingBits = ((long)(65 + 1023) << 52) | 0x107043C1ADC93L;
+                await Assert
+                    .That(BitConverter.DoubleToInt64Bits(roundingValue.Number))
+                    .IsEqualTo(expectedRoundingBits)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(fullMask.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(fullMask.LuaNumber.AsInteger)
+                    .IsEqualTo(-1L)
+                    .ConfigureAwait(false);
+                await Assert.That(wrappedZero.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(wrappedZero.LuaNumber.AsInteger)
+                    .IsEqualTo(0L)
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(negativeFullMask.LuaNumber.IsInteger)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(negativeFullMask.LuaNumber.AsInteger)
+                    .IsEqualTo(1L)
+                    .ConfigureAwait(false);
+                await Assert.That(roundingValue.LuaNumber.IsInteger).IsTrue();
+                await Assert
+                    .That(roundingValue.LuaNumber.AsInteger)
+                    .IsEqualTo(unchecked((long)0x20E087835B925585UL));
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -836,20 +1069,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task ToNumberParsesNegativeMaxLongCorrectly(LuaCompatibilityVersion version)
         {
             // -0x8000000000000000 = long.MinValue = -9223372036854775808
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString("-0x8000000000000000") },
+                new[] { LuaValue.NewString("-0x8000000000000000") },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
-            await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
-            await Assert
-                .That(result.LuaNumber.AsInteger)
-                .IsEqualTo(long.MinValue)
-                .ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
+            }
+            else if (version == LuaCompatibilityVersion.Lua52)
+            {
+                await Assert.That(result.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+                await Assert.That(result.Number).IsLessThan(-9e18).ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(result.LuaNumber.AsInteger)
+                    .IsEqualTo(long.MinValue)
+                    .ConfigureAwait(false);
+            }
         }
 
         // ========================================
@@ -871,11 +1116,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript(LuaCompatibilityVersion.Lua51);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString(infString) },
+                new[] { LuaValue.NewString(infString) },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert
                 .That(double.IsPositiveInfinity(result.Number))
@@ -896,11 +1141,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript(LuaCompatibilityVersion.Lua51);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString(infString) },
+                new[] { LuaValue.NewString(infString) },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert
                 .That(double.IsNegativeInfinity(result.Number))
@@ -918,11 +1163,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // In Lua 5.2+, tonumber('inf') returns nil
             Script script = new Script(version, CoreModulePresets.Complete);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            CallbackArguments args = new(new[] { DynValue.NewString("inf") }, isMethodCall: false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("inf") }, isMethodCall: false);
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -938,11 +1183,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript(LuaCompatibilityVersion.Lua51);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString(nanString) },
+                new[] { LuaValue.NewString(nanString) },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
             // Verify it's a positive NaN (sign bit not set)
@@ -960,11 +1205,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript(LuaCompatibilityVersion.Lua51);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
-                new[] { DynValue.NewString(nanString) },
+                new[] { LuaValue.NewString(nanString) },
                 isMethodCall: false
             );
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
             // Verify it's a negative NaN (sign bit set)
@@ -981,11 +1226,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // In Lua 5.2+, tonumber('nan') returns nil
             Script script = new Script(version, CoreModulePresets.Complete);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            CallbackArguments args = new(new[] { DynValue.NewString("nan") }, isMethodCall: false);
+            CallbackArguments args = new(new[] { LuaValue.NewString("nan") }, isMethodCall: false);
 
-            DynValue result = BasicModule.ToNumber(context, args);
+            LuaValue result = BasicModule.ToNumber(context, args);
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1011,7 +1256,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // select(1.5, 'a', 'b', 'c') should truncate to 1 and return all elements
-            DynValue result = script.DoString("return select(1.5, 'a', 'b', 'c')");
+            LuaValue result = script.DoString("return select(1.5, 'a', 'b', 'c')");
 
             // 1.5 floors to 1, so returns all 3 arguments
             await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
@@ -1026,7 +1271,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new Script(version, CoreModulePresets.Complete);
 
             // select(2.0, 'a', 'b', 'c') should work since 2.0 has integer representation
-            DynValue result = script.DoString("return select(2.0, 'a', 'b', 'c')");
+            LuaValue result = script.DoString("return select(2.0, 'a', 'b', 'c')");
 
             // 2.0 is treated as integer 2, so returns 'b' and 'c'
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -1136,24 +1381,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            string output = null;
-            script.Options.DebugPrint = s => output = s;
+            List<string> output = new();
+            script.Options.DebugPrint = output.Add;
 
-            // Override global tostring but use a plain table without __tostring
+            // Override global tostring and cover both a present metatable without __tostring
+            // and an explicitly nil __tostring entry.
             script.DoString(
                 @"
                 function tostring(v)
                     return 'CUSTOM:' .. type(v)
                 end
-                t = {}  -- plain table, no metatable
-                print(t)
+                no_field = setmetatable({}, {})
+                nil_field = setmetatable({}, { __tostring = nil })
+                print(no_field)
+                print(nil_field)
             "
             );
 
             // In Lua 5.4+, print uses default formatting for tables without __tostring
             // Should print something like "table: 0x..." not "CUSTOM:table"
-            await Assert.That(output).Contains("table:").ConfigureAwait(false);
-            await Assert.That(output).DoesNotContain("CUSTOM").ConfigureAwait(false);
+            await Assert.That(output.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(output[0]).Contains("table:").ConfigureAwait(false);
+            await Assert.That(output[1]).Contains("table:").ConfigureAwait(false);
+            await Assert.That(output[0]).DoesNotContain("CUSTOM").ConfigureAwait(false);
+            await Assert.That(output[1]).DoesNotContain("CUSTOM").ConfigureAwait(false);
         }
 
         /// <summary>
@@ -1285,10 +1536,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             script.Options.DebugPrint = s => output = s;
 
             // Replace global tostring with a CLR callback
-            script.Globals["tostring"] = DynValue.NewCallback(
+            script.Globals["tostring"] = LuaValue.NewCallback(
                 (_, args) =>
                 {
-                    return DynValue.NewString("CLR:" + args[0].Type);
+                    return LuaValue.NewString("CLR:" + args[0].Type);
                 }
             );
 
@@ -1302,11 +1553,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScript(LuaCompatibilityVersion.Lua54);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            DynValue value = script.DoString(
+            LuaValue value = script.DoString(
                 "return setmetatable({}, { __tostring = function() return 'value' end })"
             );
             CallbackArguments args = new(new[] { value }, isMethodCall: false);
-            DynValue request = BasicModule.ToString(context, args);
+            LuaValue request = BasicModule.ToString(context, args);
 
             if (request.Type != DataType.TailCallRequest)
             {

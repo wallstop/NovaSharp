@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -48,7 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             );
 
             // Simple script that should complete well under 1000 instructions
-            DynValue result = script.DoString("return 1 + 2");
+            LuaValue result = script.DoString("return 1 + 2");
 
             await Assert.That(result.Number).IsEqualTo(3).ConfigureAwait(false);
         }
@@ -64,7 +65,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             );
 
             // Run a moderately long script
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local sum = 0
                 for i = 1, 100 do
@@ -140,7 +141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             );
 
             // Should complete because callback always allows reset
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local sum = 0
                 for i = 1, 500 do

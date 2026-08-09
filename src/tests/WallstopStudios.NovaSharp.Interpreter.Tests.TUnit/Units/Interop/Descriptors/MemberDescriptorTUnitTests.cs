@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -65,7 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         public async Task GetGetterCallbackExecutesDescriptorGetValue()
         {
             Script script = new();
-            DynValue expected = DynValue.NewNumber(42);
+            LuaValue expected = LuaValue.NewNumber(42);
             StubDescriptor descriptor = new(
                 name: "answer",
                 isStatic: true,
@@ -73,15 +74,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 valueFactory: () => expected
             );
 
-            DynValue getter = descriptor.GetGetterCallbackAsDynValue(script, obj: null);
+            LuaValue getter = descriptor.GetGetterCallbackAsDynValue(script, obj: null);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            DynValue result = getter.Callback.Invoke(
+            LuaValue result = getter.Callback.Invoke(
                 context,
-                Array.Empty<DynValue>(),
+                Array.Empty<LuaValue>(),
                 isMethodCall: false
             );
 
-            await Assert.That(ReferenceEquals(result, expected)).IsTrue();
+            await Assert.That(result).IsEqualTo(expected);
         }
 
         [global::TUnit.Core.Test]
@@ -187,19 +188,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
         private sealed class StubDescriptor : IMemberDescriptor
         {
-            private readonly Func<DynValue> _valueFactory;
+            private readonly Func<LuaValue> _valueFactory;
 
             internal StubDescriptor(
                 string name,
                 bool isStatic,
                 MemberDescriptorAccess access,
-                Func<DynValue> valueFactory = null
+                Func<LuaValue> valueFactory = null
             )
             {
                 Name = name;
                 IsStatic = isStatic;
                 MemberAccess = access;
-                _valueFactory = valueFactory ?? (() => DynValue.NewNil());
+                _valueFactory = valueFactory ?? (() => LuaValue.NewNil());
             }
 
             public bool IsStatic { get; }
@@ -208,12 +209,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
             public MemberDescriptorAccess MemberAccess { get; }
 
-            public DynValue GetValue(Script script, object obj)
+            public LuaValue GetValue(Script script, object obj)
             {
                 return _valueFactory();
             }
 
-            public void SetValue(Script script, object obj, DynValue value) { }
+            public void SetValue(Script script, object obj, LuaValue value) { }
         }
     }
 }

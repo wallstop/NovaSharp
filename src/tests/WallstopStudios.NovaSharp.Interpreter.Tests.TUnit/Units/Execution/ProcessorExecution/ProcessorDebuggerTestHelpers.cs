@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
@@ -46,7 +47,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 _message = message;
             }
 
-            public override DynValue Eval(ScriptExecutionContext context)
+            public override LuaValue Eval(ScriptExecutionContext context)
             {
                 throw new InvalidOperationException(_message);
             }

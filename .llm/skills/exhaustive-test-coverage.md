@@ -47,8 +47,8 @@ ______________________________________________________________________
 public async Task MathFloorReturnsCorrectValue(LuaCompatibilityVersion version)
 {
     Script script = CreateScript(version);
-    DynValue result = script.DoString("return math.floor(3.7)");
-    await Assert.That(result.Number).IsEqualTo(3).ConfigureAwait(false);
+    LuaValue result = script.DoString("return math.floor(3.7)");
+    await Assert.That(result.AsNumber()).IsEqualTo(3).ConfigureAwait(false);
 }
 ```
 
@@ -66,8 +66,8 @@ public async Task MathFloorHandlesEdgeCases(LuaCompatibilityVersion version, dou
 {
     Script script = CreateScript(version);
     double expected = Math.Floor(input);
-    DynValue result = script.DoString($"return math.floor({input:R})");
-    await Assert.That(result.Number).IsEqualTo(expected).ConfigureAwait(false);
+    LuaValue result = script.DoString($"return math.floor({input:R})");
+    await Assert.That(result.AsNumber()).IsEqualTo(expected).ConfigureAwait(false);
 }
 ```
 
@@ -98,8 +98,8 @@ public async Task MathFloorThrowsOnInvalidTypes(LuaCompatibilityVersion version,
 public async Task MathTypeDoesNotExistInLua52AndEarlier(LuaCompatibilityVersion version)
 {
     Script script = CreateScript(version);
-    DynValue result = script.DoString("return math.type");
-    await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+    LuaValue result = script.DoString("return math.type");
+    await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
 }
 ```
 
@@ -111,8 +111,8 @@ public async Task MathTypeDoesNotExistInLua52AndEarlier(LuaCompatibilityVersion 
 public async Task MathFloorHandlesInfinity(LuaCompatibilityVersion version)
 {
     Script script = CreateScript(version);
-    DynValue posInf = script.DoString("return math.floor(math.huge)");
-    await Assert.That(double.IsPositiveInfinity(posInf.Number)).IsTrue().ConfigureAwait(false);
+    LuaValue posInf = script.DoString("return math.floor(math.huge)");
+    await Assert.That(double.IsPositiveInfinity(posInf.AsNumber())).IsTrue().ConfigureAwait(false);
 }
 ```
 
@@ -132,8 +132,8 @@ public async Task MathFloorReturnsExpectedResults(
     LuaCompatibilityVersion version, double input, double expected)
 {
     Script script = CreateScript(version);
-    DynValue result = script.DoString($"return math.floor({input:R})");
-    await Assert.That(result.Number).IsEqualTo(expected).ConfigureAwait(false);
+    LuaValue result = script.DoString($"return math.floor({input:R})");
+    await Assert.That(result.AsNumber()).IsEqualTo(expected).ConfigureAwait(false);
 }
 ```
 

@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
     using System.Collections.Generic;
     using System.Globalization;
+    using global::NovaSharp;
     using Debugging;
     using Execution.Scopes;
     using Statements;
@@ -274,7 +275,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// <param name="context">Execution context requesting the function value.</param>
         /// <returns>Nothing; this method always throws.</returns>
         /// <exception cref="DynamicExpressionException">Always thrown to signal invalid usage.</exception>
-        public override DynValue Eval(ScriptExecutionContext context)
+        public override LuaValue Eval(ScriptExecutionContext context)
         {
             throw new DynamicExpressionException(
                 "Dynamic Expressions cannot define new functions."

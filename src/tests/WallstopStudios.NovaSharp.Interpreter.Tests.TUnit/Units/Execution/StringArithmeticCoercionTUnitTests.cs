@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -37,7 +38,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new Script(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local mt = getmetatable('')
                 return mt and mt.__add or nil
@@ -45,7 +46,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             );
 
             await Assert
-                .That(result.IsNil())
+                .That(result.IsNil)
                 .IsTrue()
                 .Because(
                     $"String metatable should not have __add in {version}. "
@@ -65,7 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new Script(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local mt = getmetatable('')
                 local hasAll = mt and
@@ -105,7 +106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new Script(version);
 
-            DynValue result = script.DoString("return '10' + 1");
+            LuaValue result = script.DoString("return '10' + 1");
 
             await Assert
                 .That(result.Number)
@@ -124,7 +125,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new Script(version);
 
             // Test addition
-            DynValue addResult = script.DoString("return '10' + 1");
+            LuaValue addResult = script.DoString("return '10' + 1");
             await Assert
                 .That(addResult.Number)
                 .IsEqualTo(11.0)
@@ -132,7 +133,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
 
             // Test subtraction
-            DynValue subResult = script.DoString("return '10' - 1");
+            LuaValue subResult = script.DoString("return '10' - 1");
             await Assert
                 .That(subResult.Number)
                 .IsEqualTo(9.0)
@@ -140,7 +141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
 
             // Test multiplication
-            DynValue mulResult = script.DoString("return '10' * 2");
+            LuaValue mulResult = script.DoString("return '10' * 2");
             await Assert
                 .That(mulResult.Number)
                 .IsEqualTo(20.0)
@@ -148,7 +149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
 
             // Test division
-            DynValue divResult = script.DoString("return '10' / 2");
+            LuaValue divResult = script.DoString("return '10' / 2");
             await Assert
                 .That(divResult.Number)
                 .IsEqualTo(5.0)
@@ -156,7 +157,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
 
             // Test modulo
-            DynValue modResult = script.DoString("return '10' % 3");
+            LuaValue modResult = script.DoString("return '10' % 3");
             await Assert
                 .That(modResult.Number)
                 .IsEqualTo(1.0)
@@ -164,7 +165,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
 
             // Test power
-            DynValue powResult = script.DoString("return '2' ^ 3");
+            LuaValue powResult = script.DoString("return '2' ^ 3");
             await Assert
                 .That(powResult.Number)
                 .IsEqualTo(8.0)
@@ -172,12 +173,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
 
             // Test unary minus
-            DynValue unmResult = script.DoString("return -'10'");
+            LuaValue unmResult = script.DoString("return -'10'");
             await Assert
                 .That(unmResult.Number)
                 .IsEqualTo(-10.0)
                 .Because("String unary minus should work")
                 .ConfigureAwait(false);
+
+            LuaValue infinityResult = script.DoString(
+                @"
+                local addOk, addResult = pcall(function() return 'Infinity' + 0 end)
+                local unaryOk, unaryResult = pcall(function() return -'Infinity' end)
+                return addOk, addResult, unaryOk, unaryResult
+                "
+            );
+            bool acceptsSymbolicInfinity = version == LuaCompatibilityVersion.Lua51;
+            await Assert.That(infinityResult.Tuple[0].Boolean).IsEqualTo(acceptsSymbolicInfinity);
+            await Assert.That(infinityResult.Tuple[2].Boolean).IsEqualTo(acceptsSymbolicInfinity);
+            if (acceptsSymbolicInfinity)
+            {
+                await Assert
+                    .That(double.IsPositiveInfinity(infinityResult.Tuple[1].Number))
+                    .IsTrue();
+                await Assert
+                    .That(double.IsNegativeInfinity(infinityResult.Tuple[3].Number))
+                    .IsTrue();
+            }
         }
 
         /// <summary>
@@ -189,7 +210,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new Script(version);
 
-            DynValue result = script.DoString("return '10' // 3");
+            LuaValue result = script.DoString("return '10' // 3");
 
             await Assert
                 .That(result.Number)
@@ -212,7 +233,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new Script(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local mt = getmetatable('')
                 local original_add = mt.__add
@@ -250,7 +271,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new Script(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local mt = getmetatable('')
                 local called = false

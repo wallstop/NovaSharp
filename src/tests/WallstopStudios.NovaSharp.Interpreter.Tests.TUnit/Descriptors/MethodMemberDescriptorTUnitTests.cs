@@ -9,6 +9,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.Runtime.CompilerServices;
     using System.Text;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -40,9 +41,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            CallbackArguments args = TestHelpers.CreateArguments(DynValue.NewString("Lua"));
+            CallbackArguments args = TestHelpers.CreateArguments(LuaValue.NewString("Lua"));
 
-            DynValue result = descriptor.Execute(script, host, context, args);
+            LuaValue result = descriptor.Execute(script, host, context, args);
 
             await Assert.That(host.LastName).IsEqualTo("Lua");
             await Assert.That(result.IsVoid()).IsTrue();
@@ -57,11 +58,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             CallbackArguments args = TestHelpers.CreateArguments(
-                DynValue.NewNumber(4),
-                DynValue.NewNumber(5)
+                LuaValue.NewNumber(4),
+                LuaValue.NewNumber(5)
             );
 
-            DynValue result = descriptor.Execute(script, null, context, args);
+            LuaValue result = descriptor.Execute(script, null, context, args);
 
             await Assert.That(result.Number).IsEqualTo(9d);
         }
@@ -76,11 +77,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             CallbackArguments args = TestHelpers.CreateArguments(
-                DynValue.NewNumber(6),
-                DynValue.NewNumber(7)
+                LuaValue.NewNumber(6),
+                LuaValue.NewNumber(7)
             );
 
-            DynValue result = descriptor.Execute(script, host, context, args);
+            LuaValue result = descriptor.Execute(script, host, context, args);
 
             await Assert.That(result.Number).IsEqualTo(42d);
         }
@@ -94,8 +95,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             CallbackArguments args = TestHelpers.CreateArguments(
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2)
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2)
             );
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
@@ -114,9 +115,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            CallbackArguments args = TestHelpers.CreateArguments(DynValue.NewString("Reflection"));
+            CallbackArguments args = TestHelpers.CreateArguments(LuaValue.NewString("Reflection"));
 
-            DynValue result = descriptor.Execute(script, host, context, args);
+            LuaValue result = descriptor.Execute(script, host, context, args);
 
             await Assert.That(host.LastName).IsEqualTo("Reflection");
             await Assert.That(result.IsVoid()).IsTrue();
@@ -133,11 +134,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             CallbackArguments args = TestHelpers.CreateArguments(
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3)
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3)
             );
 
-            DynValue result = descriptor.Execute(script, null, context, args);
+            LuaValue result = descriptor.Execute(script, null, context, args);
 
             await Assert.That(result.Type).IsEqualTo(DataType.UserData);
             int[,] array = (int[,])result.UserData.Object;
@@ -155,9 +156,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            CallbackArguments args = TestHelpers.CreateArguments(DynValue.NewString("Sharp"));
+            CallbackArguments args = TestHelpers.CreateArguments(LuaValue.NewString("Sharp"));
 
-            DynValue result = descriptor.Execute(script, host, context, args);
+            LuaValue result = descriptor.Execute(script, host, context, args);
 
             await Assert.That(result.String).IsEqualTo("NovaSharp");
         }
@@ -171,9 +172,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            CallbackArguments args = TestHelpers.CreateArguments(DynValue.NewNumber(21));
+            CallbackArguments args = TestHelpers.CreateArguments(LuaValue.NewNumber(21));
 
-            DynValue result = descriptor.Execute(script, host, context, args);
+            LuaValue result = descriptor.Execute(script, host, context, args);
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2);
             await Assert.That(result.Tuple[0].Boolean).IsTrue();

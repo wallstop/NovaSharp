@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System;
+    using global::NovaSharp;
 
     /// <summary>
     /// A disposable struct that wraps a pooled resource and automatically returns it to the pool when disposed.
@@ -12,7 +13,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// properly returned even when exceptions occur. The pattern is:
     /// </para>
     /// <code>
-    /// using (PooledResource&lt;DynValue[]&gt; pooled = DynValueArrayPool.Rent(8, out DynValue[] array))
+    /// using (PooledResource&lt;LuaValue[]&gt; pooled = DynValueArrayPool.Rent(8, out LuaValue[] array))
     /// {
     ///     // Use array...
     /// } // Automatically returned to pool here
