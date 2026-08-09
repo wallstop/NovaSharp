@@ -1,7 +1,8 @@
 namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System;
-    using System.Collections.Concurrent;
+    using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using System.Threading;
 
     /// <summary>
@@ -10,7 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// <typeparam name="T">The type of objects to pool.</typeparam>
     /// <remarks>
     /// This implementation follows the WallstopStudios.UnityHelpers pattern:
-    /// - Thread-safe via ConcurrentStack with serialized lifecycle accounting
+    /// - Thread-safe via serialized lifecycle accounting
     /// - RAII pattern via PooledResource
     /// - Configurable callbacks for get/release/dispose lifecycle
     /// </remarks>
@@ -36,11 +37,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         private readonly Action<T> _onGet;
         private readonly Action<T> _onRelease;
         private readonly Action<T> _onDispose;
+        private readonly Action<T> _returnAction;
         private readonly Func<T, bool> _shouldRetainOnReturn;
         private readonly Func<T, int> _estimateSizeBytes;
         private readonly IPoolClock _clock;
         private readonly object _syncRoot = new();
-        private readonly ConcurrentStack<PoolEntry> _pool = new();
+        private readonly Stack<PoolEntry> _pool = new();
         private readonly int _maxRetainedCount;
         private readonly TimeSpan _idleTimeout;
         private int _retainedCount;
@@ -115,6 +117,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             _onGet = onGet;
             _onRelease = onRelease;
             _onDispose = onDispose;
+            _returnAction = Return;
             _shouldRetainOnReturn = shouldRetainOnReturn;
             _estimateSizeBytes = estimateSizeBytes;
             _clock = clock;
@@ -167,13 +170,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <returns>A PooledResource wrapping the retrieved instance.</returns>
         public PooledResource<T> Get(out T value)
         {
+            value = RentCore();
+            return new PooledResource<T>(value, _returnAction);
+        }
+
+        /// <summary>
+        /// Rents a pooled instance for manual lifetime management.
+        /// </summary>
+        /// <returns>The retrieved instance.</returns>
+        /// <remarks>The caller must return the instance through <see cref="Return"/>.</remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Rent()
+        {
+            return RentCore();
+        }
+
+        private T RentCore()
+        {
             PoolEntry entry = default;
             bool hasEntry;
             lock (_syncRoot)
             {
-                hasEntry = _pool.TryPop(out entry);
+                hasEntry = _pool.Count > 0;
                 if (hasEntry)
                 {
+                    entry = _pool.Pop();
                     Interlocked.Decrement(ref _retainedCount);
                     Interlocked.Add(ref _estimatedRetainedBytes, -entry.EstimatedSizeBytes);
                 }
@@ -181,18 +202,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 
             if (hasEntry)
             {
-                value = entry.Value;
-            }
-            else
-            {
-                value = _producer();
+                return CompleteRent(entry.Value);
             }
 
+            return CompleteRent(_producer());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private T CompleteRent(T value)
+        {
             if (_onGet != null)
             {
                 _onGet(value);
             }
-            return new PooledResource<T>(value, Return);
+
+            return value;
         }
 
         /// <summary>
@@ -329,8 +353,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 _disposed = true;
                 SharedPoolRegistry.Unregister(this);
 
-                while (_pool.TryPop(out PoolEntry entry))
+                while (_pool.Count > 0)
                 {
+                    PoolEntry entry = _pool.Pop();
                     Interlocked.Decrement(ref _retainedCount);
                     Interlocked.Add(ref _estimatedRetainedBytes, -entry.EstimatedSizeBytes);
                     DisposeValue(entry.Value);
@@ -349,8 +374,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             PoolEntry[] entries = new PoolEntry[initialCount];
             int index = 0;
 
-            while (index < entries.Length && _pool.TryPop(out PoolEntry entry))
+            while (index < entries.Length && _pool.Count > 0)
             {
+                PoolEntry entry = _pool.Pop();
                 entries[index] = entry;
                 index++;
                 Interlocked.Decrement(ref _retainedCount);

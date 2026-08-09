@@ -32,6 +32,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             object first;
             using (pool.Get(out first)) { }
 
+            MeasureGenericPoolGetAllocations(pool, iterations: 8);
+            long allocated = MeasureGenericPoolGetAllocations(pool, iterations: 1_024);
+
             PoolStatistics before = pool.GetStatistics();
             PoolTrimResult early = pool.Trim(PoolTrimLevel.Idle);
             clock.Advance(TimeSpan.FromSeconds(61));
@@ -42,6 +45,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             await Assert.That(early.TrimmedCount).IsEqualTo(0).ConfigureAwait(false);
             await Assert.That(afterIdle.TrimmedCount).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(after.RetainedCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert
+                .That(allocated)
+                .IsEqualTo(0)
+                .Because(
+                    $"Warmed GenericPool.Get/Dispose cycles allocated {allocated} bytes across 1024 iterations."
+                )
+                .ConfigureAwait(false);
         }
 
         [Test]
@@ -365,6 +375,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
 
             await Assert.That(trimWhileRented.TrimmedCount).IsEqualTo(0).ConfigureAwait(false);
             await Assert.That(next).IsSameReferenceAs(rented).ConfigureAwait(false);
+
+            const int allocationIterations = 1_024;
+            MeasureManualCollectionPoolAllocations(iterations: 8);
+            long allocated = MeasureManualCollectionPoolAllocations(allocationIterations);
+
+            await Assert
+                .That(allocated)
+                .IsEqualTo(0)
+                .Because(
+                    $"Warmed manual ListPool/HashSetPool rent-return cycles allocated {allocated} bytes across {allocationIterations} iterations."
+                )
+                .ConfigureAwait(false);
         }
 
         [Test]
@@ -664,6 +686,42 @@ return recurse(80)
                 DynValue coroutine = script.CreateCoroutine(function);
                 GC.KeepAlive(coroutine);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static long MeasureGenericPoolGetAllocations(
+            GenericPool<object> pool,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+            {
+                using PooledResource<object> pooled = pool.Get(out object value);
+                GC.KeepAlive(value);
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static long MeasureManualCollectionPoolAllocations(int iterations)
+        {
+            List<RentedProbe> warmList = ListPool<RentedProbe>.Rent();
+            ListPool<RentedProbe>.Return(warmList);
+            HashSet<RentedProbe> warmSet = HashSetPool<RentedProbe>.Rent();
+            HashSetPool<RentedProbe>.Return(warmSet);
+
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+            {
+                List<RentedProbe> list = ListPool<RentedProbe>.Rent();
+                ListPool<RentedProbe>.Return(list);
+                HashSet<RentedProbe> set = HashSetPool<RentedProbe>.Rent();
+                HashSetPool<RentedProbe>.Return(set);
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
         }
 
         private static void ForceFullCollection()

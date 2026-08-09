@@ -41,16 +41,16 @@ Found 171 undocumented public/internal type declarations.
   - line 33: missing XML docs for `Strict`
   - line 35: missing XML docs for `Lax`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/CollectionPools.cs
-  - line 148: missing XML docs for `GetStatistics()`
-  - line 153: missing XML docs for `Trim()`
-  - line 220: missing XML docs for `GetStatistics()`
-  - line 225: missing XML docs for `Trim()`
-  - line 279: missing XML docs for `GetStatistics()`
-  - line 284: missing XML docs for `Trim()`
-  - line 327: missing XML docs for `GetStatistics()`
-  - line 332: missing XML docs for `Trim()`
-  - line 375: missing XML docs for `GetStatistics()`
-  - line 380: missing XML docs for `Trim()`
+  - line 147: missing XML docs for `GetStatistics()`
+  - line 152: missing XML docs for `Trim()`
+  - line 218: missing XML docs for `GetStatistics()`
+  - line 223: missing XML docs for `Trim()`
+  - line 277: missing XML docs for `GetStatistics()`
+  - line 282: missing XML docs for `Trim()`
+  - line 325: missing XML docs for `GetStatistics()`
+  - line 330: missing XML docs for `Trim()`
+  - line 373: missing XML docs for `GetStatistics()`
+  - line 378: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/DynValueArrayPool.cs
   - line 61: missing XML docs for `Array`
   - line 63: missing XML docs for `ReturnedAt`
@@ -59,9 +59,9 @@ Found 171 undocumented public/internal type declarations.
   - line 288: missing XML docs for `GetStatistics()`
   - line 322: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/GenericPool.cs
-  - line 28: missing XML docs for `Value`
-  - line 30: missing XML docs for `ReturnedAt`
-  - line 32: missing XML docs for `EstimatedSizeBytes`
+  - line 29: missing XML docs for `Value`
+  - line 31: missing XML docs for `ReturnedAt`
+  - line 33: missing XML docs for `EstimatedSizeBytes`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/ObjectArrayPool.cs
   - line 60: missing XML docs for `Array`
   - line 62: missing XML docs for `ReturnedAt`

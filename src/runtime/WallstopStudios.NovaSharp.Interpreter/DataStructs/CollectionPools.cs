@@ -93,8 +93,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <returns>A list instance from the pool.</returns>
         public static List<T> Rent()
         {
-            Pool.Get(out List<T> list);
-            return list;
+            return Pool.Rent();
         }
 
         /// <summary>
@@ -105,7 +104,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <returns>A list instance from the pool with at least the specified capacity.</returns>
         public static List<T> Rent(int capacity)
         {
-            Pool.Get(out List<T> list);
+            List<T> list = Pool.Rent();
             if (list.Capacity < capacity)
             {
                 list.Capacity = capacity;
@@ -201,8 +200,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <returns>A hash set instance from the pool.</returns>
         public static HashSet<T> Rent()
         {
-            Pool.Get(out HashSet<T> set);
-            return set;
+            return Pool.Rent();
         }
 
         /// <summary>
