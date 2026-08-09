@@ -4,7 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
-    using System.Runtime.CompilerServices;
+    using System.Runtime.InteropServices;
     using System.Text;
     using Compatibility;
     using Cysharp.Text;
@@ -13,27 +13,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using Execution;
 
     /// <summary>
-    /// A class representing a value in a Lua/NovaSharp script.
+    /// A value in a Lua/NovaSharp script.
     /// </summary>
     /// <remarks>
     /// Values are immutable once constructed. Mutable storage lives in the VM's local/upvalue
     /// slots instead, so a value can be shared freely (pushed on the value stack, used as a table
     /// key, embedded in an instruction literal) without defensive copying.
     /// </remarks>
-    public sealed class DynValue
+    [StructLayout(LayoutKind.Auto)]
+    public readonly struct DynValue : IEquatable<DynValue>
     {
-        private LuaNumber _number;
-        private object _object;
-        private DataType _type;
+        private readonly LuaNumber _number;
+        private readonly object _object;
+        private readonly DataType _type;
 
-        /// <summary>
-        /// Gets a transitional wrapper identity. Reference-backed Lua values should use their
-        /// underlying object identity instead; this member remains only to avoid a source break
-        /// before the A1 struct conversion removes wrapper identity altogether.
-        /// </summary>
-        public int ReferenceId
+        private DynValue(DataType type)
         {
-            get { return RuntimeHelpers.GetHashCode(this); }
+            _type = type;
+            _number = default;
+            _object = null;
+        }
+
+        private DynValue(DataType type, LuaNumber number)
+        {
+            _type = type;
+            _number = number;
+            _object = null;
+        }
+
+        private DynValue(DataType type, object reference)
+        {
+            _type = type;
+            _number = default;
+            _object = reference;
         }
 
         /// <summary>
@@ -56,6 +68,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         internal object ReferencePayload
         {
             get { return _object; }
+        }
+
+        /// <summary>
+        /// Determines whether two reference-backed values carry the same Lua identity.
+        /// </summary>
+        /// <remarks>
+        /// This is deliberately narrower than <see cref="Equals(DynValue)"/>. In particular,
+        /// userdata equality can use descriptor/CLR-object semantics after the VM has given an
+        /// identical userdata payload the raw-identity fast path required by Lua.
+        /// </remarks>
+        internal bool HasSameReferenceIdentity(DynValue other)
+        {
+            if (_type != other._type)
+            {
+                return false;
+            }
+
+            switch (_type)
+            {
+                case DataType.String:
+                case DataType.Function:
+                case DataType.Table:
+                case DataType.Tuple:
+                case DataType.UserData:
+                case DataType.Thread:
+                case DataType.ClrFunction:
+                case DataType.TailCallRequest:
+                case DataType.YieldRequest:
+                    return ReferenceEquals(_object, other._object);
+                default:
+                    return false;
+            }
         }
 
         /// <summary>
@@ -186,7 +230,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Returns the nil value. Values are immutable, so this is the shared <see cref="Nil"/> instance.
+        /// Returns the nil value.
         /// </summary>
         public static DynValue NewNil()
         {
@@ -194,212 +238,98 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Creates a value equal to the specified boolean. Prefer <see cref="FromBoolean"/>, which
-        /// returns the shared instance instead of allocating.
+        /// Creates a value equal to the specified boolean.
         /// </summary>
         public static DynValue NewBoolean(bool v)
         {
-            return new DynValue()
-            {
-                _number = LuaNumber.FromInteger(v ? 1L : 0L),
-                _type = DataType.Boolean,
-            };
+            return new DynValue(DataType.Boolean, LuaNumber.FromInteger(v ? 1L : 0L));
         }
 
         /// <summary>
-        /// Returns a cached readonly boolean value. Use this instead of <see cref="NewBoolean"/>
-        /// when a readonly value is acceptable (most common case in VM operations).
+        /// Returns a boolean value.
         /// </summary>
         /// <param name="value">The boolean value.</param>
-        /// <returns>A cached readonly <see cref="DynValue"/> representing the boolean.</returns>
+        /// <returns>A <see cref="DynValue"/> representing the boolean.</returns>
         public static DynValue FromBoolean(bool value)
         {
             return value ? True : False;
         }
 
-        // Cache for small non-negative integers (0-255) commonly used as Lua array indices
-        private static readonly DynValue[] SmallIntegerCache = InitializeSmallIntegerCache();
-
-        // Cache for small negative integers (-256 to -1) commonly used in loops and offsets
-        private static readonly DynValue[] NegativeIntegerCache = InitializeNegativeIntegerCache();
-
-        // Cache for common float values used frequently in Lua scripts
-        private static readonly Dictionary<double, DynValue> CommonFloatCache =
-            InitializeCommonFloatCache();
-
-        private const int SmallIntegerCacheSize = 256;
-        private const int NegativeIntegerCacheSize = 256;
-
-        private static DynValue[] InitializeSmallIntegerCache()
-        {
-            DynValue[] cache = new DynValue[SmallIntegerCacheSize];
-            for (int i = 0; i < SmallIntegerCacheSize; i++)
-            {
-                cache[i] = new DynValue()
-                {
-                    _number = LuaNumber.FromInteger(i),
-                    _type = DataType.Number,
-                };
-            }
-            return cache;
-        }
-
-        private static DynValue[] InitializeNegativeIntegerCache()
-        {
-            DynValue[] cache = new DynValue[NegativeIntegerCacheSize];
-            for (int i = 0; i < NegativeIntegerCacheSize; i++)
-            {
-                // Cache values -256 to -1: index 0 = -256, index 255 = -1
-                long value = i - NegativeIntegerCacheSize;
-                cache[i] = new DynValue()
-                {
-                    _number = LuaNumber.FromInteger(value),
-                    _type = DataType.Number,
-                };
-            }
-            return cache;
-        }
-
-        private static Dictionary<double, DynValue> InitializeCommonFloatCache()
-        {
-            // Common float values frequently used in Lua scripts
-            double[] commonValues = new double[]
-            {
-                0.0,
-                1.0,
-                -1.0,
-                2.0,
-                -2.0,
-                0.5,
-                -0.5,
-                0.25,
-                0.1,
-                10.0,
-                100.0,
-                1000.0,
-                double.PositiveInfinity,
-                double.NegativeInfinity,
-                // Note: NaN cannot be reliably used as a dictionary key due to NaN != NaN
-            };
-
-            Dictionary<double, DynValue> cache = new Dictionary<double, DynValue>(
-                commonValues.Length
-            );
-            foreach (double value in commonValues)
-            {
-                cache[value] = new DynValue()
-                {
-                    _number = LuaNumber.FromFloat(value),
-                    _type = DataType.Number,
-                };
-            }
-            return cache;
-        }
-
         /// <summary>
-        /// Creates a new writable value initialized to the specified number as a float subtype.
+        /// Creates a value initialized to the specified number as a float subtype.
         /// </summary>
         public static DynValue NewNumber(double num)
         {
-            return new DynValue() { _number = LuaNumber.FromDouble(num), _type = DataType.Number };
+            return new DynValue(DataType.Number, LuaNumber.FromDouble(num));
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to the specified number with explicit float subtype.
+        /// Creates a value initialized to the specified number with explicit float subtype.
         /// Unlike <see cref="NewNumber(double)"/>, this method preserves the float subtype even for
         /// whole numbers like 3.0, which is required for Lua 5.3+ compliance with numeric literals.
         /// </summary>
         public static DynValue NewFloat(double num)
         {
-            return new DynValue() { _number = LuaNumber.FromFloat(num), _type = DataType.Number };
+            return new DynValue(DataType.Number, LuaNumber.FromFloat(num));
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to the specified integer.
+        /// Creates a value initialized to the specified integer.
         /// The resulting value will have the Lua "integer" subtype.
         /// </summary>
         public static DynValue NewInteger(long num)
         {
-            return new DynValue() { _number = LuaNumber.FromInteger(num), _type = DataType.Number };
+            return new DynValue(DataType.Number, LuaNumber.FromInteger(num));
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to the specified <see cref="LuaNumber"/>.
+        /// Creates a value initialized to the specified <see cref="LuaNumber"/>.
         /// </summary>
         public static DynValue NewNumber(LuaNumber num)
         {
-            return new DynValue() { _number = num, _type = DataType.Number };
+            return new DynValue(DataType.Number, num);
         }
 
         /// <summary>
-        /// Returns a cached readonly number value for small non-negative integers (0-255).
-        /// Falls back to <see cref="NewNumber(double)"/> for values outside the cache range.
-        /// Use this in hot paths where readonly values are acceptable.
+        /// Returns a number value.
         /// </summary>
         /// <param name="num">The number value.</param>
-        /// <returns>A cached or new <see cref="DynValue"/> representing the number.</returns>
+        /// <returns>A <see cref="DynValue"/> representing the number.</returns>
         public static DynValue FromNumber(double num)
         {
-            // Check if the number is a small non-negative integer in cache range
-            int intVal = (int)num;
-            if (intVal >= 0 && intVal < SmallIntegerCacheSize && intVal == num)
-            {
-                return SmallIntegerCache[intVal];
-            }
             return NewNumber(num);
         }
 
         /// <summary>
-        /// Returns a cached readonly float value for common float constants (0.0, 1.0, -1.0, etc.).
-        /// Falls back to <see cref="NewFloat(double)"/> for values outside the cache.
-        /// Use this in hot paths where readonly values are acceptable and float subtype must be preserved.
+        /// Returns a float value while preserving its Lua float subtype.
         /// </summary>
         /// <param name="num">The float value.</param>
-        /// <returns>A cached or new <see cref="DynValue"/> representing the float.</returns>
+        /// <returns>A <see cref="DynValue"/> representing the float.</returns>
         public static DynValue FromFloat(double num)
         {
-            // Check common float cache first
-            if (CommonFloatCache.TryGetValue(num, out DynValue cached))
-            {
-                return cached;
-            }
             return NewFloat(num);
         }
 
         /// <summary>
-        /// Returns a cached readonly number value for small integers (-256 to 255).
-        /// Falls back to <see cref="NewInteger(long)"/> for values outside the cache range.
-        /// Use this in hot paths where readonly values are acceptable.
-        /// The resulting value will have the Lua "integer" subtype.
+        /// Returns an integer value with the Lua integer subtype.
         /// </summary>
         /// <param name="num">The integer value.</param>
-        /// <returns>A cached or new <see cref="DynValue"/> representing the integer.</returns>
+        /// <returns>A <see cref="DynValue"/> representing the integer.</returns>
         public static DynValue FromInteger(long num)
         {
-            // Check if the number is a small non-negative integer in cache range
-            if (num >= 0 && num < SmallIntegerCacheSize)
-            {
-                return SmallIntegerCache[num];
-            }
-            // Check if the number is a small negative integer in cache range (-256 to -1)
-            if (num >= -NegativeIntegerCacheSize && num < 0)
-            {
-                // Map -256..-1 to indices 0..255
-                return NegativeIntegerCache[num + NegativeIntegerCacheSize];
-            }
             return NewInteger(num);
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to the specified string.
+        /// Creates a value initialized to the specified string.
         /// </summary>
         public static DynValue NewString(string str)
         {
-            return new DynValue() { _object = str, _type = DataType.String };
+            return new DynValue(DataType.String, str);
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to the specified StringBuilder.
+        /// Creates a value initialized to the specified StringBuilder.
         /// </summary>
         public static DynValue NewString(StringBuilder sb)
         {
@@ -408,11 +338,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(sb));
             }
 
-            return new DynValue() { _object = sb.ToString(), _type = DataType.String };
+            return new DynValue(DataType.String, sb.ToString());
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to the specified string using String.Format like syntax
+        /// Creates a value initialized to the specified string using String.Format like syntax
         /// </summary>
         public static DynValue NewString(string format, params object[] args)
         {
@@ -428,7 +358,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     ? format
                     : string.Format(CultureInfo.InvariantCulture, format, formatArgs);
 
-            return new DynValue() { _object = formattedValue, _type = DataType.String };
+            return new DynValue(DataType.String, formattedValue);
         }
 
         /// <summary>
@@ -446,11 +376,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </remarks>
         internal static DynValue NewConcatenatedString(string left, string right)
         {
-            return new DynValue()
-            {
-                _object = ZString.Concat(left, right),
-                _type = DataType.String,
-            };
+            return new DynValue(DataType.String, ZString.Concat(left, right));
         }
 
         /// <summary>
@@ -462,7 +388,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns>A new <see cref="DynValue"/> containing the concatenated string.</returns>
         internal static DynValue NewConcatenatedString(string s1, string s2, string s3)
         {
-            return new DynValue() { _object = ZString.Concat(s1, s2, s3), _type = DataType.String };
+            return new DynValue(DataType.String, ZString.Concat(s1, s2, s3));
         }
 
         /// <summary>
@@ -475,11 +401,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns>A new <see cref="DynValue"/> containing the concatenated string.</returns>
         internal static DynValue NewConcatenatedString(string s1, string s2, string s3, string s4)
         {
-            return new DynValue()
-            {
-                _object = ZString.Concat(s1, s2, s3, s4),
-                _type = DataType.String,
-            };
+            return new DynValue(DataType.String, ZString.Concat(s1, s2, s3, s4));
         }
 
         /// <summary>
@@ -500,38 +422,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </remarks>
         internal static DynValue NewStringFromBuilder(Utf16ValueStringBuilder builder)
         {
-            return new DynValue() { _object = builder.ToString(), _type = DataType.String };
+            return new DynValue(DataType.String, builder.ToString());
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to the specified coroutine.
+        /// Creates a value initialized to the specified coroutine.
         /// Internal use only, for external use, see Script.CoroutineCreate
         /// </summary>
         /// <param name="coroutine">The coroutine object.</param>
         /// <returns></returns>
         public static DynValue NewCoroutine(Coroutine coroutine)
         {
-            return new DynValue() { _object = coroutine, _type = DataType.Thread };
+            return new DynValue(DataType.Thread, coroutine);
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to the specified closure (function).
+        /// Creates a value initialized to the specified closure (function).
         /// </summary>
         public static DynValue NewClosure(Closure function)
         {
-            return new DynValue() { _object = function, _type = DataType.Function };
+            return new DynValue(DataType.Function, function);
         }
 
         /// <summary>
-        /// Returns a DynValue wrapping the specified closure. This is an optimized path
-        /// that reuses a DynValue if the closure already has one cached.
+        /// Returns a DynValue wrapping the specified closure.
         /// </summary>
         /// <param name="closure">The closure to wrap.</param>
         /// <returns>A <see cref="DynValue"/> representing the closure.</returns>
-        /// <remarks>
-        /// This method checks if the closure has a cached DynValue and returns it if available,
-        /// avoiding allocation in hot paths like coroutine creation.
-        /// </remarks>
         internal static DynValue FromClosure(Closure closure)
         {
             if (closure == null)
@@ -539,27 +456,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return Nil;
             }
 
-            DynValue cached = closure.CachedDynValue;
-            if (cached != null)
-            {
-                return cached;
-            }
-
-            DynValue newValue = NewClosure(closure);
-            closure.CachedDynValue = newValue;
-            return newValue;
+            return NewClosure(closure);
         }
 
         /// <summary>
-        /// Returns a DynValue wrapping the specified table, reusing the table's cached wrapper when available.
+        /// Returns a DynValue wrapping the specified table.
         /// </summary>
         /// <param name="table">The table to wrap.</param>
         /// <returns>A <see cref="DynValue"/> representing the table.</returns>
-        /// <remarks>
-        /// Mirrors <see cref="FromClosure"/>. Sharing one wrapper per table is safe because values
-        /// are immutable, so a chunk entry point can bind <c>_ENV</c> without allocating a wrapper
-        /// on every load from the compilation cache.
-        /// </remarks>
         internal static DynValue FromTable(Table table)
         {
             if (table == null)
@@ -567,19 +471,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return Nil;
             }
 
-            DynValue cached = table.CachedDynValue;
-            if (cached != null)
-            {
-                return cached;
-            }
-
-            DynValue newValue = NewTable(table);
-            table.CachedDynValue = newValue;
-            return newValue;
+            return NewTable(table);
         }
 
         /// <summary>
-        /// Returns a DynValue wrapping the specified CLR callback, reusing the callback's cached wrapper when available.
+        /// Returns a DynValue wrapping the specified CLR callback.
         /// </summary>
         internal static DynValue FromCallback(CallbackFunction function)
         {
@@ -588,49 +484,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return Nil;
             }
 
-            DynValue cached = function.CachedDynValue;
-            if (cached != null)
-            {
-                return cached;
-            }
-
-            DynValue newValue = NewCallback(function);
-            function.CachedDynValue = newValue;
-            return newValue;
+            return NewCallback(function);
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to the specified CLR callback.
+        /// Creates a value initialized to the specified CLR callback.
         /// </summary>
         public static DynValue NewCallback(
             Func<ScriptExecutionContext, CallbackArguments, DynValue> callBack,
             string name = null
         )
         {
-            return new DynValue()
-            {
-                _object = new CallbackFunction(callBack, name),
-                _type = DataType.ClrFunction,
-            };
+            return new DynValue(DataType.ClrFunction, new CallbackFunction(callBack, name));
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to a CLR callback that receives a stack-only argument view.
+        /// Creates a value initialized to a CLR callback that receives a stack-only argument view.
         /// </summary>
         public static DynValue NewCallbackView(
             ScriptFunctionCallbackView callBack,
             string name = null
         )
         {
-            return new DynValue()
-            {
-                _object = CallbackFunction.FromArgumentView(callBack, name),
-                _type = DataType.ClrFunction,
-            };
+            return new DynValue(
+                DataType.ClrFunction,
+                CallbackFunction.FromArgumentView(callBack, name)
+            );
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to a CLR callback that receives a stack-only
+        /// Creates a value initialized to a CLR callback that receives a stack-only
         /// argument view and does not require a script execution context.
         /// </summary>
         public static DynValue NewCallbackView(
@@ -638,32 +521,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             string name = null
         )
         {
-            return new DynValue()
-            {
-                _object = CallbackFunction.FromArgumentView(callBack, name),
-                _type = DataType.ClrFunction,
-            };
+            return new DynValue(
+                DataType.ClrFunction,
+                CallbackFunction.FromArgumentView(callBack, name)
+            );
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to the specified CLR callback.
+        /// Creates a value initialized to the specified CLR callback.
         /// See also CallbackFunction.FromDelegate and CallbackFunction.FromMethodInfo factory methods.
         /// </summary>
         public static DynValue NewCallback(CallbackFunction function)
         {
-            return new DynValue() { _object = function, _type = DataType.ClrFunction };
+            return new DynValue(DataType.ClrFunction, function);
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to the specified table.
+        /// Creates a value initialized to the specified table.
         /// </summary>
         public static DynValue NewTable(Table table)
         {
-            return new DynValue() { _object = table, _type = DataType.Table };
+            return new DynValue(DataType.Table, table);
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to an empty prime table (a
+        /// Creates a value initialized to an empty prime table (a
         /// prime table is a table made only of numbers, strings, booleans and other
         /// prime tables).
         /// </summary>
@@ -673,7 +555,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to an empty table.
+        /// Creates a value initialized to an empty table.
         /// </summary>
         public static DynValue NewTable(Script script)
         {
@@ -681,7 +563,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to with array contents.
+        /// Creates a value initialized with array contents.
         /// </summary>
         public static DynValue NewTable(Script script, params DynValue[] arrayValues)
         {
@@ -695,11 +577,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static DynValue NewTailCallReq(DynValue tailFn)
         {
-            return new DynValue()
-            {
-                _object = new TailCallData() { Args = Array.Empty<DynValue>(), Function = tailFn },
-                _type = DataType.TailCallRequest,
-            };
+            return new DynValue(
+                DataType.TailCallRequest,
+                new TailCallData() { Args = Array.Empty<DynValue>(), Function = tailFn }
+            );
         }
 
         /// <summary>
@@ -714,11 +595,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static DynValue NewTailCallReq(DynValue tailFn, params DynValue[] args)
         {
-            return new DynValue()
-            {
-                _object = new TailCallData() { Args = args, Function = tailFn },
-                _type = DataType.TailCallRequest,
-            };
+            return new DynValue(
+                DataType.TailCallRequest,
+                new TailCallData() { Args = args, Function = tailFn }
+            );
         }
 
         /// <summary>
@@ -732,7 +612,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static DynValue NewTailCallReq(TailCallData tailCallData)
         {
-            return new DynValue() { _object = tailCallData, _type = DataType.TailCallRequest };
+            return new DynValue(DataType.TailCallRequest, tailCallData);
         }
 
         /// <summary>
@@ -742,11 +622,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static DynValue NewYieldReq(DynValue[] args)
         {
-            return new DynValue()
-            {
-                _object = new YieldRequest() { ReturnValues = args },
-                _type = DataType.YieldRequest,
-            };
+            return new DynValue(DataType.YieldRequest, new YieldRequest() { ReturnValues = args });
         }
 
         /// <summary>
@@ -755,7 +631,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns>A yield request <see cref="DynValue"/>.</returns>
         internal static DynValue NewYieldReq()
         {
-            return new DynValue() { _object = new YieldRequest(), _type = DataType.YieldRequest };
+            return new DynValue(DataType.YieldRequest, new YieldRequest());
         }
 
         /// <summary>
@@ -765,11 +641,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns>A yield request <see cref="DynValue"/>.</returns>
         internal static DynValue NewYieldReq(DynValue arg)
         {
-            return new DynValue()
-            {
-                _object = YieldRequest.New(arg),
-                _type = DataType.YieldRequest,
-            };
+            return new DynValue(DataType.YieldRequest, YieldRequest.New(arg));
         }
 
         /// <summary>
@@ -780,11 +652,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns>A yield request <see cref="DynValue"/>.</returns>
         internal static DynValue NewYieldReq(DynValue arg0, DynValue arg1)
         {
-            return new DynValue()
-            {
-                _object = YieldRequest.New(arg0, arg1),
-                _type = DataType.YieldRequest,
-            };
+            return new DynValue(DataType.YieldRequest, YieldRequest.New(arg0, arg1));
         }
 
         /// <summary>
@@ -796,11 +664,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns>A yield request <see cref="DynValue"/>.</returns>
         internal static DynValue NewYieldReq(DynValue arg0, DynValue arg1, DynValue arg2)
         {
-            return new DynValue()
-            {
-                _object = YieldRequest.New(arg0, arg1, arg2),
-                _type = DataType.YieldRequest,
-            };
+            return new DynValue(DataType.YieldRequest, YieldRequest.New(arg0, arg1, arg2));
         }
 
         /// <summary>
@@ -818,11 +682,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue arg3
         )
         {
-            return new DynValue()
-            {
-                _object = YieldRequest.New(arg0, arg1, arg2, arg3),
-                _type = DataType.YieldRequest,
-            };
+            return new DynValue(DataType.YieldRequest, YieldRequest.New(arg0, arg1, arg2, arg3));
         }
 
         /// <summary>
@@ -832,11 +692,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         internal static DynValue NewForcedYieldReq()
         {
-            return new DynValue()
-            {
-                _object = new YieldRequest() { Forced = true },
-                _type = DataType.YieldRequest,
-            };
+            return new DynValue(DataType.YieldRequest, new YieldRequest() { Forced = true });
         }
 
         /// <summary>
@@ -845,7 +701,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTuple(DynValue value)
         {
-            return value ?? Nil;
+            return value;
         }
 
         /// <summary>
@@ -854,11 +710,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTuple(DynValue value1, DynValue value2)
         {
-            return new DynValue()
-            {
-                _object = new[] { value1 ?? Nil, value2 ?? Nil },
-                _type = DataType.Tuple,
-            };
+            return new DynValue(DataType.Tuple, new[] { value1, value2 });
         }
 
         /// <summary>
@@ -867,11 +719,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTuple(DynValue value1, DynValue value2, DynValue value3)
         {
-            return new DynValue()
-            {
-                _object = new[] { value1 ?? Nil, value2 ?? Nil, value3 ?? Nil },
-                _type = DataType.Tuple,
-            };
+            return new DynValue(DataType.Tuple, new[] { value1, value2, value3 });
         }
 
         /// <summary>
@@ -885,11 +733,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue value4
         )
         {
-            return new DynValue()
-            {
-                _object = new[] { value1 ?? Nil, value2 ?? Nil, value3 ?? Nil, value4 ?? Nil },
-                _type = DataType.Tuple,
-            };
+            return new DynValue(DataType.Tuple, new[] { value1, value2, value3, value4 });
         }
 
         /// <summary>
@@ -904,18 +748,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue value5
         )
         {
-            return new DynValue()
-            {
-                _object = new[]
-                {
-                    value1 ?? Nil,
-                    value2 ?? Nil,
-                    value3 ?? Nil,
-                    value4 ?? Nil,
-                    value5 ?? Nil,
-                },
-                _type = DataType.Tuple,
-            };
+            return new DynValue(DataType.Tuple, new[] { value1, value2, value3, value4, value5 });
         }
 
         /// <summary>
@@ -935,38 +768,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (values.Length == 1)
             {
-                return values[0] ?? Nil;
+                return values[0];
             }
 
-            return new DynValue()
-            {
-                _object = NormalizeTupleValues(values),
-                _type = DataType.Tuple,
-            };
-        }
-
-        private static DynValue[] NormalizeTupleValues(DynValue[] values)
-        {
-            for (int i = 0; i < values.Length; ++i)
-            {
-                if (values[i] != null)
-                {
-                    continue;
-                }
-
-                DynValue[] normalized = new DynValue[values.Length];
-                Array.Copy(values, normalized, values.Length);
-                normalized[i] = Nil;
-
-                for (int j = i + 1; j < normalized.Length; ++j)
-                {
-                    normalized[j] ??= Nil;
-                }
-
-                return normalized;
-            }
-
-            return values;
+            return new DynValue(DataType.Tuple, values);
         }
 
         /// <summary>
@@ -975,11 +780,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTupleNested(DynValue value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             return value;
         }
 
@@ -989,16 +789,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTupleNested(DynValue value1, DynValue value2)
         {
-            if (value1 == null)
-            {
-                throw new ArgumentNullException(nameof(value1));
-            }
-
-            if (value2 == null)
-            {
-                throw new ArgumentNullException(nameof(value2));
-            }
-
             // Fast path: neither is a tuple
             if (value1.Type != DataType.Tuple && value2.Type != DataType.Tuple)
             {
@@ -1029,11 +819,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     vals.Add(value2);
                 }
 
-                return new DynValue()
-                {
-                    _object = ListPool<DynValue>.ToExactArray(vals),
-                    _type = DataType.Tuple,
-                };
+                return new DynValue(DataType.Tuple, ListPool<DynValue>.ToExactArray(vals));
             }
         }
 
@@ -1043,21 +829,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTupleNested(DynValue value1, DynValue value2, DynValue value3)
         {
-            if (value1 == null)
-            {
-                throw new ArgumentNullException(nameof(value1));
-            }
-
-            if (value2 == null)
-            {
-                throw new ArgumentNullException(nameof(value2));
-            }
-
-            if (value3 == null)
-            {
-                throw new ArgumentNullException(nameof(value3));
-            }
-
             // Fast path: none are tuples
             if (
                 value1.Type != DataType.Tuple
@@ -1102,11 +873,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     vals.Add(value3);
                 }
 
-                return new DynValue()
-                {
-                    _object = ListPool<DynValue>.ToExactArray(vals),
-                    _type = DataType.Tuple,
-                };
+                return new DynValue(DataType.Tuple, ListPool<DynValue>.ToExactArray(vals));
             }
         }
 
@@ -1156,11 +923,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     }
                 }
 
-                return new DynValue()
-                {
-                    _object = ListPool<DynValue>.ToExactArray(vals),
-                    _type = DataType.Tuple,
-                };
+                return new DynValue(DataType.Tuple, ListPool<DynValue>.ToExactArray(vals));
             }
         }
 
@@ -1169,34 +932,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewUserData(UserData userData)
         {
-            return new DynValue() { _object = userData, _type = DataType.UserData };
+            return new DynValue(DataType.UserData, userData);
         }
 
         /// <summary>
         /// <summary>
         /// A preinitialized, readonly instance, equaling Void
         /// </summary>
-        public static DynValue Void { get; private set; }
+        public static DynValue Void { get; }
 
         /// <summary>
         /// A preinitialized, readonly instance, equaling Nil
         /// </summary>
-        public static DynValue Nil { get; private set; }
+        public static DynValue Nil { get; }
 
         /// <summary>
         /// A preinitialized, readonly instance, equaling True
         /// </summary>
-        public static DynValue True { get; private set; }
+        public static DynValue True { get; }
 
         /// <summary>
         /// A preinitialized, readonly instance, equaling False
         /// </summary>
-        public static DynValue False { get; private set; }
+        public static DynValue False { get; }
 
         /// <summary>
         /// A preinitialized, readonly instance, equaling an empty string
         /// </summary>
-        public static DynValue EmptyString { get; private set; }
+        public static DynValue EmptyString { get; }
 
         /// <summary>
         /// A preinitialized, readonly instance representing an empty tuple (0 elements).
@@ -1204,20 +967,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// while Nil means "the value nil". This distinction is important for varargs
         /// handling where select("#", ...) should return 0 for empty varargs, not 1.
         /// </summary>
-        public static DynValue EmptyTuple { get; private set; }
+        public static DynValue EmptyTuple { get; }
 
         static DynValue()
         {
-            Nil = new DynValue() { _type = DataType.Nil };
-            Void = new DynValue() { _type = DataType.Void };
+            Nil = default;
+            Void = new DynValue(DataType.Void);
             True = NewBoolean(true);
             False = NewBoolean(false);
             EmptyString = NewString(string.Empty);
-            EmptyTuple = new DynValue()
-            {
-                _object = Array.Empty<DynValue>(),
-                _type = DataType.Tuple,
-            };
+            EmptyTuple = new DynValue(DataType.Tuple, Array.Empty<DynValue>());
         }
 
         /// <summary>
@@ -1410,7 +1169,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     return hash.ToHashCode();
                 case DataType.Number:
                     // Use LuaNumber's hash code to ensure equal numbers have equal hashes
-                    hash.AddInt(LuaNumber.GetHashCode());
+                    hash.AddInt(
+                        Number == 0.0 ? LuaNumber.Zero.GetHashCode() : LuaNumber.GetHashCode()
+                    );
                     return hash.ToHashCode();
                 case DataType.String:
                     hash.Add(String);
@@ -1425,8 +1186,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     hash.Add(Table);
                     return hash.ToHashCode();
                 case DataType.Tuple:
-                case DataType.TailCallRequest:
                     hash.Add(Tuple);
+                    return hash.ToHashCode();
+                case DataType.TailCallRequest:
+                case DataType.YieldRequest:
+                    hash.Add(_object);
                     return hash.ToHashCode();
                 case DataType.UserData:
                     if (UserData != null)
@@ -1454,11 +1218,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </returns>
         public override bool Equals(object obj)
         {
-            if (obj is not DynValue other)
-            {
-                return false;
-            }
+            return obj is DynValue other && Equals(other);
+        }
 
+        /// <inheritdoc />
+        public bool Equals(DynValue other)
+        {
             if (
                 (other.Type == DataType.Nil && Type == DataType.Void)
                 || (other.Type == DataType.Void && Type == DataType.Nil)
@@ -1491,8 +1256,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.Table:
                     return Table == other.Table;
                 case DataType.Tuple:
-                case DataType.TailCallRequest:
                     return Tuple == other.Tuple;
+                case DataType.TailCallRequest:
+                case DataType.YieldRequest:
+                    return ReferenceEquals(_object, other._object);
                 case DataType.Thread:
                     return Coroutine == other.Coroutine;
                 case DataType.UserData:
@@ -1523,8 +1290,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     return false;
                 }
                 default:
-                    return ReferenceEquals(this, other);
+                    return false;
             }
+        }
+
+        /// <summary>
+        /// Determines whether two Lua values are equal.
+        /// </summary>
+        public static bool operator ==(DynValue left, DynValue right)
+        {
+            return left.Equals(right);
+        }
+
+        /// <summary>
+        /// Determines whether two Lua values are not equal.
+        /// </summary>
+        public static bool operator !=(DynValue left, DynValue right)
+        {
+            return !left.Equals(right);
         }
 
         /// <summary>

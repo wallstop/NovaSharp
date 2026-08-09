@@ -195,12 +195,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
             internal FixedChainedCallArguments(DynValue arg0)
             {
                 _arg0 = arg0;
-                _arg1 = null;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg1 = default;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 Count = 1;
             }
 
@@ -208,11 +208,11 @@ namespace WallstopStudios.NovaSharp.Interpreter
             {
                 _arg0 = arg0;
                 _arg1 = arg1;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 Count = 2;
             }
 
@@ -221,10 +221,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 _arg0 = arg0;
                 _arg1 = arg1;
                 _arg2 = arg2;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 Count = 3;
             }
 
@@ -239,9 +239,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 _arg1 = arg1;
                 _arg2 = arg2;
                 _arg3 = arg3;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 Count = 4;
             }
 
@@ -258,8 +258,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 _arg2 = arg2;
                 _arg3 = arg3;
                 _arg4 = arg4;
-                _arg5 = null;
-                _arg6 = null;
+                _arg5 = default;
+                _arg6 = default;
                 Count = 5;
             }
 
@@ -278,7 +278,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 _arg3 = arg3;
                 _arg4 = arg4;
                 _arg5 = arg5;
-                _arg6 = null;
+                _arg6 = default;
                 Count = 6;
             }
 
@@ -1273,11 +1273,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </exception>
         internal void ValidateCompiledScriptTarget(DynValue function)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
 
             if (!IsDirectCallTarget(function))
@@ -2071,11 +2066,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </exception>
         public void Dump(DynValue function, Stream stream)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             if (stream == null)
             {
                 throw new ArgumentNullException(nameof(stream));
@@ -2257,7 +2247,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             out DynValue result
         )
         {
-            result = null;
+            result = DynValue.Nil;
 
             if (_compilationCache == null)
             {
@@ -2467,11 +2457,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
 
             if (function.Type == DataType.Function)
@@ -2505,11 +2490,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, DynValue arg)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg);
 
@@ -2549,11 +2529,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, DynValue arg1, DynValue arg2)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
@@ -2596,11 +2571,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, DynValue arg1, DynValue arg2, DynValue arg3)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
@@ -2653,11 +2623,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue arg4
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
@@ -2720,11 +2685,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue arg5
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
@@ -2799,11 +2759,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue arg6
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
@@ -2884,11 +2839,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue arg7
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
@@ -2958,11 +2908,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, ReadOnlySpan<DynValue> args)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(args);
 
@@ -3065,11 +3010,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, params DynValue[] args)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
@@ -3170,7 +3110,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         {
             if (!IsDirectCallTarget(metafunction))
             {
-                result = null;
+                result = DynValue.Nil;
                 return false;
             }
 
@@ -3215,7 +3155,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     );
                     return true;
                 default:
-                    result = null;
+                    result = DynValue.Nil;
                     return false;
             }
         }
@@ -3693,11 +3633,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, params object[] args)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
@@ -3736,11 +3671,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
         public DynValue CallObjectArguments(DynValue function, ReadOnlySpan<object> args)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             switch (args.Length)
             {
                 case 0:
@@ -3823,11 +3753,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, object arg)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             return Call(function, DynValue.FromObject(this, arg));
         }
 
@@ -3843,11 +3768,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, object arg1, object arg2)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             return Call(function, DynValue.FromObject(this, arg1), DynValue.FromObject(this, arg2));
         }
 
@@ -3864,11 +3784,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, object arg1, object arg2, object arg3)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             return Call(
                 function,
                 DynValue.FromObject(this, arg1),
@@ -3891,11 +3806,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, object arg1, object arg2, object arg3, object arg4)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             return Call(
                 function,
                 DynValue.FromObject(this, arg1),
@@ -3927,11 +3837,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
             object arg5
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             return Call(
                 function,
                 DynValue.FromObject(this, arg1),
@@ -3966,11 +3871,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
             object arg6
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             return Call(
                 function,
                 DynValue.FromObject(this, arg1),
@@ -4008,11 +3908,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
             object arg7
         )
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             return Call(
                 function,
                 DynValue.FromObject(this, arg1),
@@ -4264,11 +4159,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function or DataType.ClrFunction</exception>
         public DynValue CreateCoroutine(DynValue function)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
             this.CheckScriptOwnership(function);
 
             // Check coroutine limit before creating
@@ -4344,7 +4234,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 throw new InvalidOperationException("coroutine is not CoroutineType.Coroutine");
             }
 
-            if (function == null || function.Type != DataType.Function)
+            if (function.Type != DataType.Function)
             {
                 throw new InvalidOperationException("function is not DataType.Function");
             }

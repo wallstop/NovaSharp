@@ -39,13 +39,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue table = args[0];
 
-            DynValue meta = executionContext.GetMetamethodTailCall(
-                table,
-                Metamethods.IPairs,
-                args.GetArray()
-            );
-
-            if (meta != null)
+            if (
+                executionContext.TryGetMetamethodTailCall(
+                    table,
+                    Metamethods.IPairs,
+                    out DynValue meta,
+                    args.GetArray()
+                )
+            )
             {
                 return meta;
             }
@@ -88,13 +89,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue table = args[0];
 
-            DynValue meta = executionContext.GetMetamethodTailCall(
-                table,
-                Metamethods.Pairs,
-                args.GetArray()
-            );
-
-            if (meta != null)
+            if (
+                executionContext.TryGetMetamethodTailCall(
+                    table,
+                    Metamethods.Pairs,
+                    out DynValue meta,
+                    args.GetArray()
+                )
+            )
             {
                 return meta;
             }

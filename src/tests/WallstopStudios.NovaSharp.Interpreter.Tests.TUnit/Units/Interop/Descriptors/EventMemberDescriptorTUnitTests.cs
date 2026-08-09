@@ -631,12 +631,12 @@ end";
 
         private sealed class SampleEventSource
         {
-            private event EventHandler<DynValue> _event;
+            private event EventHandler<object> _event;
 
             public int AddInvokeCount { get; private set; }
             public int RemoveInvokeCount { get; private set; }
 
-            public event EventHandler<DynValue> PublicEvent
+            public event EventHandler<object> PublicEvent
             {
                 add
                 {
@@ -650,7 +650,7 @@ end";
                 }
             }
 
-            public void RaiseEvent(DynValue arg)
+            public void RaiseEvent(object arg)
             {
                 _event?.Invoke(null, arg);
             }
@@ -1118,12 +1118,12 @@ end";
 
         private static class StaticSampleEventSource
         {
-            private static event EventHandler<DynValue> _event;
+            private static event EventHandler<object> _event;
 
             public static int AddInvokeCount { get; private set; }
             public static int RemoveInvokeCount { get; private set; }
 
-            public static event EventHandler<DynValue> GlobalEvent
+            public static event EventHandler<object> GlobalEvent
             {
                 add
                 {
@@ -1137,7 +1137,7 @@ end";
                 }
             }
 
-            public static void Raise(DynValue arg)
+            public static void Raise(object arg)
             {
                 _event?.Invoke(null, arg);
             }

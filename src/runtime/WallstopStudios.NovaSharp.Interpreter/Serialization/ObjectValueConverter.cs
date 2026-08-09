@@ -33,10 +33,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
         public static DynValue SerializeObjectToDynValue(
             Script script,
             object o,
-            DynValue valueForNulls
+            DynValue? valueForNulls
         )
         {
-            return SerializeObjectToDynValueCore(script, o, valueForNulls ?? DynValue.Nil);
+            return SerializeObjectToDynValueCore(script, o, valueForNulls.GetValueOrDefault());
         }
 
         private static DynValue SerializeObjectToDynValueCore(

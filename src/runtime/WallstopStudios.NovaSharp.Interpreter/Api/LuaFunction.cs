@@ -14,7 +14,7 @@ namespace NovaSharp
         internal LuaFunction(LuaEngine owner, DynValue function)
         {
             _owner = owner ?? throw new ArgumentNullException(nameof(owner));
-            _function = function ?? throw new ArgumentNullException(nameof(function));
+            _function = function;
         }
 
         /// <summary>

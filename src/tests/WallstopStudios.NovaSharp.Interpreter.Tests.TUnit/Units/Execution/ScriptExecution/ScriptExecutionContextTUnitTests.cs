@@ -24,7 +24,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 (context, _) =>
                 {
                     DynValue local = context.EvaluateSymbolByName("localValue");
-                    return local ?? DynValue.Nil;
+                    return local;
                 }
             );
             script.Globals["assertLocal"] = callback;
@@ -109,7 +109,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         )
         {
             Script script = CreateScript(version);
-            DynValue lastTailCall = null;
+            DynValue lastTailCall = DynValue.Nil;
             DynValue resolvedMetamethod = DynValue.Nil;
             bool foundMetamethod = false;
             DynValue callback = DynValue.NewCallback(
@@ -142,7 +142,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             DynValue tail = lastTailCall;
             await Assert.That(foundMetamethod).IsTrue();
             await Assert.That(resolvedMetamethod.Type).IsEqualTo(DataType.Function);
-            await Assert.That(tail).IsNotNull();
             await Assert.That(tail.Type).IsEqualTo(DataType.TailCallRequest);
             await Assert.That(tail.TailCallData.Function.Type).IsEqualTo(DataType.Function);
             await Assert.That(tail.TailCallData.Args.Span[1].Number).IsEqualTo(7);
@@ -391,10 +390,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             DynValue[] values =
             {
                 DynValue.NewNumber(1),
-                null,
+                DynValue.Nil,
                 DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                 DynValue.NewNumber(3),
-                DynValue.NewTuple(DynValue.NewNumber(4), null),
+                DynValue.NewTuple(DynValue.NewNumber(4), DynValue.Nil),
             };
 
             DynValue result = context.Call(inspect, values.AsSpan());
@@ -1098,10 +1097,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             DynValue[] values =
             {
                 DynValue.NewNumber(1),
-                null,
+                DynValue.Nil,
                 DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                 DynValue.NewNumber(3),
-                DynValue.NewTuple(DynValue.NewNumber(4), null),
+                DynValue.NewTuple(DynValue.NewNumber(4), DynValue.Nil),
             };
 
             callable.MetaTable = meta;
@@ -1601,15 +1600,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             callable.MetaTable = meta;
             DynValue[] spanArgs =
             {
-                null,
+                DynValue.Nil,
                 DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                 DynValue.NewNumber(3),
-                DynValue.NewTuple(DynValue.NewNumber(4), null),
+                DynValue.NewTuple(DynValue.NewNumber(4), DynValue.Nil),
             };
             DynValue[] arrayArgs =
             {
                 DynValue.NewNumber(1),
-                null,
+                DynValue.Nil,
                 DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                 DynValue.NewNumber(3),
                 DynValue.Void,
@@ -1637,8 +1636,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             DynValue expanded = context.Call(
                 inspect,
-                null,
-                DynValue.NewTuple(DynValue.NewNumber(2), null)
+                DynValue.Nil,
+                DynValue.NewTuple(DynValue.NewNumber(2), DynValue.Nil)
             );
             DynValue voidTrimmed = context.Call(countVoid, DynValue.NewNumber(1), DynValue.Void);
 
@@ -1731,47 +1730,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             DynValue[] values = arity switch
             {
-                1 => new DynValue[] { null },
+                1 => new[] { DynValue.Nil },
                 2 => new[] { DynValue.NewNumber(1), DynValue.Void },
                 3 => new[]
                 {
                     DynValue.NewNumber(1),
                     DynValue.NewNumber(2),
-                    DynValue.NewTuple(DynValue.NewNumber(3), null),
+                    DynValue.NewTuple(DynValue.NewNumber(3), DynValue.Nil),
                 },
                 4 => new DynValue[]
                 {
-                    null,
+                    DynValue.Nil,
                     DynValue.NewNumber(2),
                     DynValue.NewNumber(3),
-                    DynValue.NewTuple(DynValue.NewNumber(4), null),
+                    DynValue.NewTuple(DynValue.NewNumber(4), DynValue.Nil),
                 },
                 5 => new[]
                 {
                     DynValue.NewNumber(1),
-                    null,
+                    DynValue.Nil,
                     DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                     DynValue.NewNumber(3),
-                    DynValue.NewTuple(DynValue.NewNumber(4), null),
+                    DynValue.NewTuple(DynValue.NewNumber(4), DynValue.Nil),
                 },
                 6 => new[]
                 {
                     DynValue.NewNumber(1),
-                    null,
+                    DynValue.Nil,
                     DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                     DynValue.NewNumber(3),
                     DynValue.NewNumber(5),
-                    DynValue.NewTuple(DynValue.NewNumber(4), null),
+                    DynValue.NewTuple(DynValue.NewNumber(4), DynValue.Nil),
                 },
                 7 => new[]
                 {
                     DynValue.NewNumber(1),
-                    null,
+                    DynValue.Nil,
                     DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                     DynValue.NewNumber(3),
                     DynValue.NewTuple(DynValue.NewNumber(4), DynValue.NewNumber(40)),
                     DynValue.NewNumber(5),
-                    DynValue.NewTuple(DynValue.NewNumber(6), null),
+                    DynValue.NewTuple(DynValue.NewNumber(6), DynValue.Nil),
                 },
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
@@ -2046,10 +2045,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script script = new(default(CoreModules));
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
-            ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                context.GetMetatable(null)
-            );
-            await Assert.That(exception.ParamName).IsEqualTo("value");
+            Table metatable = context.GetMetatable(DynValue.Nil);
+
+            await Assert.That(metatable).IsNull();
         }
 
         [global::TUnit.Core.Test]
@@ -2059,22 +2057,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             DynValue value = DynValue.NewNumber(1);
 
-            ArgumentNullException valueException = ExpectException<ArgumentNullException>(() =>
-                context.GetMetamethod(null, "__call")
-            );
+            DynValue missing = context.GetMetamethod(DynValue.Nil, "__call");
+            bool found = context.TryGetMetamethod(DynValue.Nil, "__call", out DynValue resolved);
             ArgumentNullException methodException = ExpectException<ArgumentNullException>(() =>
                 context.GetMetamethod(value, null)
-            );
-            ArgumentNullException tryValueException = ExpectException<ArgumentNullException>(() =>
-                context.TryGetMetamethod(null, "__call", out DynValue _)
             );
             ArgumentNullException tryMethodException = ExpectException<ArgumentNullException>(() =>
                 context.TryGetMetamethod(value, null, out DynValue _)
             );
 
-            await Assert.That(valueException.ParamName).IsEqualTo("value");
+            await Assert.That(missing.IsNil()).IsTrue();
+            await Assert.That(found).IsFalse();
+            await Assert.That(resolved.IsNil()).IsTrue();
             await Assert.That(methodException.ParamName).IsEqualTo("metamethod");
-            await Assert.That(tryValueException.ParamName).IsEqualTo("value");
             await Assert.That(tryMethodException.ParamName).IsEqualTo("metamethod");
         }
 
@@ -2085,20 +2080,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             DynValue operand = DynValue.NewNumber(1);
 
-            ArgumentNullException op1Exception = ExpectException<ArgumentNullException>(() =>
-                context.GetBinaryMetamethod(null, operand, "__add")
+            DynValue nilOperandMetamethod = context.GetBinaryMetamethod(
+                DynValue.Nil,
+                operand,
+                "__add"
             );
-            ArgumentNullException op2Exception = ExpectException<ArgumentNullException>(() =>
-                context.GetBinaryMetamethod(operand, null, "__add")
+            bool foundNilOperand = context.TryGetBinaryMetamethod(
+                operand,
+                DynValue.Nil,
+                "__add",
+                out DynValue nilOperandResolved
             );
             ArgumentNullException eventException = ExpectException<ArgumentNullException>(() =>
                 context.GetBinaryMetamethod(operand, operand, null)
-            );
-            ArgumentNullException tryOp1Exception = ExpectException<ArgumentNullException>(() =>
-                context.TryGetBinaryMetamethod(null, operand, "__add", out DynValue _)
-            );
-            ArgumentNullException tryOp2Exception = ExpectException<ArgumentNullException>(() =>
-                context.TryGetBinaryMetamethod(operand, null, "__add", out DynValue _)
             );
             ArgumentNullException tryEventException = ExpectException<ArgumentNullException>(() =>
                 context.TryGetBinaryMetamethod(operand, operand, null, out DynValue _)
@@ -2155,18 +2149,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 out DynValue missingDescriptorValue
             );
 
-            await Assert.That(op1Exception.ParamName).IsEqualTo("op1");
-            await Assert.That(op2Exception.ParamName).IsEqualTo("op2");
+            await Assert.That(nilOperandMetamethod.IsNil()).IsTrue();
+            await Assert.That(foundNilOperand).IsFalse();
+            await Assert.That(nilOperandResolved.IsNil()).IsTrue();
             await Assert.That(eventException.ParamName).IsEqualTo("eventName");
-            await Assert.That(tryOp1Exception.ParamName).IsEqualTo("op1");
-            await Assert.That(tryOp2Exception.ParamName).IsEqualTo("op2");
             await Assert.That(tryEventException.ParamName).IsEqualTo("eventName");
             await Assert.That(found).IsTrue();
             await Assert.That(resolved).IsEqualTo(addMetamethod);
             await Assert.That(missing).IsFalse();
             await Assert.That(absent.IsNil()).IsTrue();
             await Assert.That(legacyResolved).IsEqualTo(addMetamethod);
-            await Assert.That(legacyAbsent).IsNull();
+            await Assert.That(legacyAbsent.IsNil()).IsTrue();
             await Assert.That(foundExplicitNil).IsFalse();
             await Assert.That(explicitNil.IsNil()).IsTrue();
             await Assert.That(foundDescriptorVoid).IsTrue();
@@ -2199,11 +2192,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script script = new(default(CoreModules));
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
-            ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                context.Call(null)
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                context.Call(DynValue.Nil)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("func");
+            await Assert.That(exception.Message).Contains("call");
+            await Assert.That(exception.Message).Contains("nil");
         }
 
         [global::TUnit.Core.Test]
@@ -2219,8 +2213,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             DynValue tail = context.GetMetamethodTailCall(target, "__call");
             await Assert.That(found).IsFalse();
             await Assert.That(metamethod.IsNil()).IsTrue();
-            await Assert.That(legacyMetamethod).IsNull();
-            await Assert.That(tail).IsNull();
+            await Assert.That(legacyMetamethod.IsNil()).IsTrue();
+            await Assert.That(tail.IsNil()).IsTrue();
 
             Table metatable = new(script);
             metatable.Set("__call", DynValue.Nil);
@@ -2259,7 +2253,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             ScriptRuntimeException exception = new("boom");
 
-            context.PerformMessageDecorationBeforeUnwind(null, exception);
+            ScriptExecutionContext.PerformMessageDecorationBeforeUnwind(exception);
             await Assert.That(exception.DecoratedMessage).IsEqualTo("boom");
         }
 
@@ -2764,7 +2758,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
             {
-                return null;
+                return TryIndex(script, obj, index, isDirectIndexing, out DynValue value)
+                    ? value
+                    : DynValue.Nil;
             }
 
             public bool TryIndex(
@@ -2797,7 +2793,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             public DynValue MetaIndex(Script script, object obj, string metaname)
             {
-                return HandlesMetaIndex ? MetaIndexValue : null;
+                return HandlesMetaIndex ? MetaIndexValue : DynValue.Nil;
             }
 
             public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)

@@ -47,7 +47,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 UserDataRegistrationScope.Track<IndexerTestClass>(ensureUnregistered: true);
             registrationScope.RegisterType<IndexerTestClass>();
 
-            script.Globals.Set("o", UserData.Create(obj));
+            script.Globals.Set("o", UserData.Create(obj).Value);
 
             DynValue result = script.DoString(code);
 

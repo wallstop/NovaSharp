@@ -26,7 +26,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <param name="index">The index.</param>
         /// <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
         /// <returns></returns>
-        public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing);
+        public bool TryIndex(
+            Script script,
+            object obj,
+            DynValue index,
+            bool isDirectIndexing,
+            out DynValue value
+        );
 
         /// <summary>
         /// Performs an "index" "set" operation.
@@ -54,8 +60,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
 
         /// <summary>
         ///
-        /// Gets a "meta" operation on this userdata. If a descriptor does not support this functionality,
-        /// it should return "null" (not a nil).
+        /// Attempts to get a "meta" operation on this userdata.
         ///
         /// These standard metamethods can be supported (the return value should be a function accepting the
         /// classic parameters of the corresponding metamethod):
@@ -70,7 +75,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <param name="obj">The object (null if a static request is done)</param>
         /// <param name="metaname">The name of the metamember.</param>
         /// <returns></returns>
-        public DynValue MetaIndex(Script script, object obj, string metaname);
+        public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value);
 
         /// <summary>
         /// Determines whether the specified object is compatible with the specified type.

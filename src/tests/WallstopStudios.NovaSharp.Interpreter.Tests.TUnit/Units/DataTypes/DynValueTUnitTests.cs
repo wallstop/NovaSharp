@@ -23,16 +23,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue single = DynValue.NewNumber(42);
             DynValue wrappedSingle = DynValue.NewTuple(single);
 
-            await Assert.That(empty).IsSameReferenceAs(DynValue.EmptyTuple).ConfigureAwait(false);
+            await Assert.That(empty).IsEqualTo(DynValue.EmptyTuple).ConfigureAwait(false);
 
-            await Assert.That(wrappedSingle).IsSameReferenceAs(single).ConfigureAwait(false);
+            await Assert.That(wrappedSingle).IsEqualTo(single).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task NewTupleTreatsSingleNullInputAsNil()
         {
-            DynValue singleOverload = DynValue.NewTuple((DynValue)null);
-            DynValue paramsOverload = DynValue.NewTuple(new DynValue[] { null });
+            DynValue singleOverload = DynValue.NewTuple(default(DynValue));
+            DynValue paramsOverload = DynValue.NewTuple(new DynValue[] { default });
 
             await Assert.That(singleOverload.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(paramsOverload.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
@@ -53,11 +53,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue two = DynValue.NewNumber(2);
             DynValue tuple = (arity, useParamsArray) switch
             {
-                (2, false) => DynValue.NewTuple(null, one),
-                (3, false) => DynValue.NewTuple(one, null, two),
-                (4, false) => DynValue.NewTuple(null, one, null, two),
+                (2, false) => DynValue.NewTuple(default, one),
+                (3, false) => DynValue.NewTuple(one, default, two),
+                (4, false) => DynValue.NewTuple(default, one, default, two),
                 (5, true) => DynValue.NewTuple(
-                    new DynValue[] { one, null, two, null, DynValue.NewBoolean(true) }
+                    new DynValue[] { one, default, two, default, DynValue.NewBoolean(true) }
                 ),
                 _ => throw new ArgumentOutOfRangeException(nameof(arity), arity, null),
             };
@@ -68,7 +68,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             int nilCount = 0;
             foreach (DynValue value in tuple.Tuple)
             {
-                await Assert.That(value).IsNotNull().ConfigureAwait(false);
                 if (value.Type == DataType.Nil)
                 {
                     ++nilCount;
@@ -121,7 +120,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             DynValue nested = DynValue.NewTupleNested(tuple);
 
-            await Assert.That(nested).IsSameReferenceAs(tuple).ConfigureAwait(false);
+            await Assert.That(nested).IsEqualTo(tuple).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -143,7 +142,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             DynValue nested = DynValue.NewTupleNested(tuple);
 
-            await Assert.That(nested).IsSameReferenceAs(tuple).ConfigureAwait(false);
+            await Assert.That(nested).IsEqualTo(tuple).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -157,9 +156,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
-            await Assert.That(result.Tuple[0]).IsSameReferenceAs(first).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0]).IsEqualTo(first).ConfigureAwait(false);
 
-            await Assert.That(result.Tuple[1]).IsSameReferenceAs(second).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1]).IsEqualTo(second).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -256,7 +255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue first = DynValue.FromInteger(value);
             DynValue second = DynValue.FromInteger(value);
 
-            await Assert.That(first).IsSameReferenceAs(second).ConfigureAwait(false);
+            await Assert.That(first).IsEqualTo(second).ConfigureAwait(false);
             await Assert.That(first.IsInteger).IsTrue().ConfigureAwait(false);
             await Assert.That(first.Number).IsEqualTo(value).ConfigureAwait(false);
         }
@@ -270,7 +269,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue first = DynValue.FromInteger(value);
             DynValue second = DynValue.FromInteger(value);
 
-            await Assert.That(first).IsSameReferenceAs(second).ConfigureAwait(false);
+            await Assert.That(first).IsEqualTo(second).ConfigureAwait(false);
             await Assert.That(first.IsInteger).IsTrue().ConfigureAwait(false);
             await Assert.That(first.Number).IsEqualTo(value).ConfigureAwait(false);
         }
@@ -285,7 +284,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue first = DynValue.FromInteger(value);
             DynValue second = DynValue.FromInteger(value);
 
-            await Assert.That(first).IsNotSameReferenceAs(second).ConfigureAwait(false);
+            await Assert.That(first).IsEqualTo(second).ConfigureAwait(false);
             await Assert.That(first.IsInteger).IsTrue().ConfigureAwait(false);
             await Assert.That(first.Number).IsEqualTo(value).ConfigureAwait(false);
         }
@@ -303,7 +302,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue first = DynValue.FromFloat(value);
             DynValue second = DynValue.FromFloat(value);
 
-            await Assert.That(first).IsSameReferenceAs(second).ConfigureAwait(false);
+            await Assert.That(first).IsEqualTo(second).ConfigureAwait(false);
             await Assert.That(first.IsFloat).IsTrue().ConfigureAwait(false);
             await Assert.That(first.Number).IsEqualTo(value).ConfigureAwait(false);
         }
@@ -317,7 +316,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue first = DynValue.FromFloat(value);
             DynValue second = DynValue.FromFloat(value);
 
-            await Assert.That(first).IsNotSameReferenceAs(second).ConfigureAwait(false);
+            await Assert.That(first).IsEqualTo(second).ConfigureAwait(false);
             await Assert.That(first.IsFloat).IsTrue().ConfigureAwait(false);
             await Assert.That(first.Number).IsEqualTo(value).ConfigureAwait(false);
         }
@@ -325,7 +324,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task FromFloatPreservesFloatSubtypeForWholeNumbers()
         {
-            // 1.0 from cache should be float subtype, not integer
             DynValue one = DynValue.FromFloat(1.0);
 
             await Assert.That(one.IsFloat).IsTrue().ConfigureAwait(false);
@@ -336,14 +334,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task FromIntegerPreservesIntegerSubtype()
         {
-            // Both cached and uncached should be integer subtype
-            DynValue cachedOne = DynValue.FromInteger(1);
-            DynValue uncachedLarge = DynValue.FromInteger(1000);
+            DynValue smallInteger = DynValue.FromInteger(1);
+            DynValue largeInteger = DynValue.FromInteger(1000);
 
-            await Assert.That(cachedOne.IsInteger).IsTrue().ConfigureAwait(false);
-            await Assert.That(cachedOne.IsFloat).IsFalse().ConfigureAwait(false);
-            await Assert.That(uncachedLarge.IsInteger).IsTrue().ConfigureAwait(false);
-            await Assert.That(uncachedLarge.IsFloat).IsFalse().ConfigureAwait(false);
+            await Assert.That(smallInteger.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(smallInteger.IsFloat).IsFalse().ConfigureAwait(false);
+            await Assert.That(largeInteger.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(largeInteger.IsFloat).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -469,14 +466,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 flags: TypeValidationOptions.AllowNil
             );
 
-            await Assert.That(result).IsSameReferenceAs(DynValue.Nil).ConfigureAwait(false);
+            await Assert.That(result).IsEqualTo(DynValue.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CheckUserDataTypeReturnsManagedInstance()
         {
             using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
-            DynValue userData = UserData.Create(new SampleUserData("ud"));
+            bool created = UserData.TryCreate(new SampleUserData("ud"), out DynValue userData);
+            await Assert.That(created).IsTrue().ConfigureAwait(false);
 
             SampleUserData result = userData.CheckUserDataType<SampleUserData>("func");
 
@@ -487,7 +485,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task CheckUserDataTypeThrowsWhenTypeMismatch()
         {
             using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
-            DynValue userData = UserData.Create(new SampleUserData("ud"));
+            bool created = UserData.TryCreate(new SampleUserData("ud"), out DynValue userData);
+            await Assert.That(created).IsTrue().ConfigureAwait(false);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 userData.CheckUserDataType<string>("func")
@@ -593,7 +592,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue tableValue = DynValue.NewTable(new Table(script));
             DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewString("two"));
             using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
-            DynValue userData = UserData.Create(new SampleUserData("ignored"));
+            bool created = UserData.TryCreate(new SampleUserData("ignored"), out DynValue userData);
+            await Assert.That(created).IsTrue().ConfigureAwait(false);
             DynValue yield = DynValue.NewYieldReq(Array.Empty<DynValue>());
 
             await Assert.That(DynValue.Void.ToString()).IsEqualTo("void").ConfigureAwait(false);
@@ -651,7 +651,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 flags: TypeValidationOptions.AutoConvert
             );
 
-            await Assert.That(result).IsSameReferenceAs(original).ConfigureAwait(false);
+            await Assert.That(result).IsEqualTo(original).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -669,7 +669,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ToPrintStringReflectsUserDataDescriptor()
         {
             using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
-            DynValue userData = UserData.Create(new SampleUserData("Printable"));
+            bool created = UserData.TryCreate(
+                new SampleUserData("Printable"),
+                out DynValue userData
+            );
+            await Assert.That(created).IsTrue().ConfigureAwait(false);
 
             await Assert
                 .That(userData.ToPrintString())
@@ -722,21 +726,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task GetHashCodeIsStableForUnchangedValue()
         {
             DynValue str = DynValue.NewString("hash-me");
+            DynValue integerZero = DynValue.NewInteger(0);
+            DynValue positiveZero = DynValue.NewFloat(0.0);
+            DynValue negativeZero = DynValue.NewFloat(-0.0);
 
             int first = str.GetHashCode();
             int second = str.GetHashCode();
 
             await Assert.That(second).IsEqualTo(first).ConfigureAwait(false);
+            await Assert.That(integerZero.Equals(positiveZero)).IsTrue().ConfigureAwait(false);
+            await Assert.That(integerZero.Equals(negativeZero)).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(integerZero.GetHashCode())
+                .IsEqualTo(positiveZero.GetHashCode())
+                .ConfigureAwait(false);
+            await Assert
+                .That(integerZero.GetHashCode())
+                .IsEqualTo(negativeZero.GetHashCode())
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task GetHashCodeHandlesNilAndTupleCases()
         {
+            DynValue defaultValue = default;
             int nilHash = DynValue.Nil.GetHashCode();
             DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
             int tupleHash = tuple.GetHashCode();
 
+            await Assert.That(defaultValue.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(defaultValue).IsEqualTo(DynValue.Nil).ConfigureAwait(false);
+            await Assert.That(DynValue.Void.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
+            await Assert.That(DynValue.Void).IsEqualTo(DynValue.Nil).ConfigureAwait(false);
             await Assert.That(nilHash).IsEqualTo(DynValue.Nil.GetHashCode()).ConfigureAwait(false);
+            await Assert.That(nilHash).IsEqualTo(DynValue.Void.GetHashCode()).ConfigureAwait(false);
 
             await Assert.That(tupleHash).IsEqualTo(tuple.GetHashCode()).ConfigureAwait(false);
         }
@@ -749,8 +772,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue alias = DynValue.NewTuple(tuple.Tuple);
             DynValue tupleCopy = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
             DynValue nullUserData = DynValue.NewUserData(null);
-            DynValue userData = UserData.Create(new SampleUserData("value"));
+            bool createdUserData = UserData.TryCreate(
+                new SampleUserData("value"),
+                out DynValue userData
+            );
             DynValue forcedYield = DynValue.NewForcedYieldReq();
+            DynValue separateForcedYield = DynValue.NewForcedYieldReq();
+            DynValue nan = DynValue.NewFloat(double.NaN);
+            Table table = new(null);
+            DynValue tableValue = DynValue.NewTable(table);
+            DynValue tableAlias = DynValue.NewTable(table);
+            DynValue separateTable = DynValue.NewTable(new Table(null));
+            SampleUserData managed = new("shared");
+            bool createdFirstWrapper = UserData.TryCreate(
+                managed,
+                out DynValue firstManagedWrapper
+            );
+            bool createdSecondWrapper = UserData.TryCreate(
+                managed,
+                out DynValue secondManagedWrapper
+            );
+
+            await Assert.That(createdUserData).IsTrue().ConfigureAwait(false);
+            await Assert.That(createdFirstWrapper).IsTrue().ConfigureAwait(false);
+            await Assert.That(createdSecondWrapper).IsTrue().ConfigureAwait(false);
 
             await Assert.That(tuple.Equals("value")).IsFalse().ConfigureAwait(false);
 
@@ -761,6 +806,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(nullUserData.Equals(userData)).IsFalse().ConfigureAwait(false);
 
             await Assert.That(forcedYield.Equals(forcedYield)).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(forcedYield.Equals(separateForcedYield))
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert.That(nan.Equals(nan)).IsFalse().ConfigureAwait(false);
+            await Assert.That(tableValue.Equals(tableAlias)).IsTrue().ConfigureAwait(false);
+            await Assert.That(tableValue.Equals(separateTable)).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tableValue.HasSameReferenceIdentity(tableAlias))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(tableValue.HasSameReferenceIdentity(separateTable))
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(firstManagedWrapper.Equals(secondManagedWrapper))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(firstManagedWrapper.HasSameReferenceIdentity(secondManagedWrapper))
+                .IsFalse()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -881,9 +949,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             public Type Type => typeof(object);
 
-            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+            public bool TryIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                bool isDirectIndexing,
+                out DynValue value
+            )
             {
-                return DynValue.Nil;
+                value = DynValue.Nil;
+                return true;
             }
 
             public bool SetIndex(
@@ -902,9 +977,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 return null;
             }
 
-            public DynValue MetaIndex(Script script, object obj, string metaname)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
             {
-                return null;
+                value = DynValue.Nil;
+                return false;
             }
 
             public bool IsTypeCompatible(Type type, object obj)

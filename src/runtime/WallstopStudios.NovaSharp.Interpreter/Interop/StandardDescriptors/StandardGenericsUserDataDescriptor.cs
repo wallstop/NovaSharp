@@ -47,9 +47,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         public Type Type { get; private set; }
 
         /// <inheritdoc/>
-        public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+        public DynValue? Index(Script script, object obj, DynValue index, bool isDirectIndexing)
         {
-            return null;
+            return TryIndex(script, obj, index, isDirectIndexing, out DynValue value)
+                ? value
+                : null;
         }
 
         /// <inheritdoc/>
@@ -89,9 +91,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         }
 
         /// <inheritdoc/>
-        public DynValue MetaIndex(Script script, object obj, string metaname)
+        public DynValue? MetaIndex(Script script, object obj, string metaname)
         {
-            return null;
+            return TryMetaIndex(script, obj, metaname, out DynValue value) ? value : null;
         }
 
         /// <inheritdoc/>

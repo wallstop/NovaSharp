@@ -403,7 +403,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             {
                 DynValue result = descriptor.Execute(script, array, context, args);
 
-                if (!ReferenceEquals(result, expectedValue))
+                if (result != expectedValue)
                 {
                     throw new InvalidOperationException(
                         "Rank-one array getter allocation probe returned an unexpected value."

@@ -23,9 +23,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task ArithmeticOnNonNumberThrowsArgumentNullExceptionForNullLeft()
         {
+            ScriptRuntimeException exception = ScriptRuntimeException.ArithmeticOnNonNumber(
+                default
+            );
             await Assert
-                .That(() => ScriptRuntimeException.ArithmeticOnNonNumber(null))
-                .ThrowsExactly<ArgumentNullException>()
+                .That(exception.Message)
+                .IsEqualTo("attempt to perform arithmetic on a nil value")
                 .ConfigureAwait(false);
         }
 
@@ -79,9 +82,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task BitwiseOnNonIntegerThrowsArgumentNullExceptionForNull()
         {
+            ScriptRuntimeException exception = ScriptRuntimeException.BitwiseOnNonInteger(default);
             await Assert
-                .That(() => ScriptRuntimeException.BitwiseOnNonInteger(null))
-                .ThrowsExactly<ArgumentNullException>()
+                .That(exception.Message)
+                .IsEqualTo("attempt to perform bitwise operation on a nil value")
                 .ConfigureAwait(false);
         }
 
@@ -110,9 +114,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task ConcatOnNonStringThrowsArgumentNullExceptionForNullLeft()
         {
+            ScriptRuntimeException exception = ScriptRuntimeException.ConcatOnNonString(
+                default,
+                DynValue.NewNumber(5)
+            );
             await Assert
-                .That(() => ScriptRuntimeException.ConcatOnNonString(null, DynValue.NewNumber(5)))
-                .ThrowsExactly<ArgumentNullException>()
+                .That(exception.Message)
+                .IsEqualTo("attempt to concatenate a nil value")
                 .ConfigureAwait(false);
         }
 
@@ -153,9 +161,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task LenOnInvalidTypeThrowsArgumentNullExceptionForNull()
         {
+            ScriptRuntimeException exception = ScriptRuntimeException.LenOnInvalidType(default);
             await Assert
-                .That(() => ScriptRuntimeException.LenOnInvalidType(null))
-                .ThrowsExactly<ArgumentNullException>()
+                .That(exception.Message)
+                .IsEqualTo("attempt to get length of a nil value")
                 .ConfigureAwait(false);
         }
 
@@ -164,18 +173,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task CompareInvalidTypeThrowsArgumentNullExceptionForNullLeft()
         {
+            ScriptRuntimeException exception = ScriptRuntimeException.CompareInvalidType(
+                default,
+                DynValue.NewNumber(5)
+            );
             await Assert
-                .That(() => ScriptRuntimeException.CompareInvalidType(null, DynValue.NewNumber(5)))
-                .ThrowsExactly<ArgumentNullException>()
+                .That(exception.Message)
+                .IsEqualTo("attempt to compare nil with number")
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CompareInvalidTypeThrowsArgumentNullExceptionForNullRight()
         {
+            ScriptRuntimeException exception = ScriptRuntimeException.CompareInvalidType(
+                DynValue.NewNumber(5),
+                default
+            );
             await Assert
-                .That(() => ScriptRuntimeException.CompareInvalidType(DynValue.NewNumber(5), null))
-                .ThrowsExactly<ArgumentNullException>()
+                .That(exception.Message)
+                .IsEqualTo("attempt to compare number with nil")
                 .ConfigureAwait(false);
         }
 
@@ -184,9 +201,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task IndexTypeThrowsArgumentNullExceptionForNull()
         {
+            ScriptRuntimeException exception = ScriptRuntimeException.IndexType(default);
             await Assert
-                .That(() => ScriptRuntimeException.IndexType(null))
-                .ThrowsExactly<ArgumentNullException>()
+                .That(exception.Message)
+                .IsEqualTo("attempt to index a nil value")
                 .ConfigureAwait(false);
         }
 
@@ -635,7 +653,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task CloseMetamethodExpectedHandlesNullValue()
         {
-            ScriptRuntimeException ex = ScriptRuntimeException.CloseMetamethodExpected(null);
+            ScriptRuntimeException ex = ScriptRuntimeException.CloseMetamethodExpected(
+                DynValue.Nil
+            );
             await Assert.That(ex.Message).IsEqualTo("__close metamethod expected (got nil)");
         }
 
@@ -698,11 +718,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             public Type Type => typeof(object);
 
-            public DynValue Index(
+            public bool TryIndex(
                 Script script,
                 object obj,
                 DynValue index,
-                bool isDirectIndexing
+                bool isDirectIndexing,
+                out DynValue value
             ) => throw new NotSupportedException();
 
             public bool SetIndex(
@@ -715,8 +736,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             public string AsString(object obj) => throw new NotSupportedException();
 
-            public DynValue MetaIndex(Script script, object obj, string metaname) =>
-                throw new NotSupportedException();
+            public bool TryMetaIndex(
+                Script script,
+                object obj,
+                string metaname,
+                out DynValue value
+            ) => throw new NotSupportedException();
 
             public bool IsTypeCompatible(Type type, object obj) =>
                 throw new NotSupportedException();

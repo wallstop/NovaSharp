@@ -47,8 +47,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             table.Clear();
 
             await Assert.That(table.Length).IsEqualTo(0).ConfigureAwait(false);
-            await Assert.That(table.RawGet(1)).IsNull().ConfigureAwait(false);
-            await Assert.That(table.RawGet("name")).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet(1).Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("name").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -210,9 +213,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(table.Count).IsEqualTo(5).ConfigureAwait(false);
             table.CollectDeadKeys();
 
-            await Assert.That(table.RawGet(2)).IsNull().ConfigureAwait(false);
-            await Assert.That(table.RawGet("dead")).IsNull().ConfigureAwait(false);
-            await Assert.That(table.RawGet(valueKey)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet(2).Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("dead").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet(valueKey).Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
             await Assert.That(table.Count).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(table.Length).IsEqualTo(1).ConfigureAwait(false);
         }
@@ -577,7 +586,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             );
 
             await Assert.That(fixedGet.IsNil()).IsTrue().ConfigureAwait(false);
-            await Assert.That(fixedRawGet).IsNull().ConfigureAwait(false);
+            await Assert.That(fixedRawGet.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(removed).IsFalse().ConfigureAwait(false);
             await Assert
                 .That(exception.Message)
@@ -607,7 +616,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(getValue.String).IsEqualTo("array").ConfigureAwait(false);
             await Assert.That(rawValue.String).IsEqualTo("array").ConfigureAwait(false);
             await Assert.That(castGetValue.IsNil()).IsTrue().ConfigureAwait(false);
-            await Assert.That(castRawValue).IsNull().ConfigureAwait(false);
+            await Assert.That(castRawValue.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -802,7 +811,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             DynValue value = table.RawGet(Array.Empty<object>());
 
-            await Assert.That(value).IsNull().ConfigureAwait(false);
+            await Assert.That(value.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -977,7 +986,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Table table = new(new Script());
 
-            await Assert.That(table.RawGet((object)null)).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet((object)null).Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1008,7 +1020,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             DynValue value = table.RawGet((object[])null);
 
-            await Assert.That(value).IsNull().ConfigureAwait(false);
+            await Assert.That(value.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1045,7 +1057,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             bool removed = table.Remove("key");
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
-            await Assert.That(table.RawGet("key")).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("key").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1124,7 +1139,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             bool removed = table.Remove(DynValue.NewNumber(1));
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
-            await Assert.That(table.RawGet(1)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet(1).Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1141,7 +1156,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             bool removed = table.Remove(DynValue.NewString("value"));
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
-            await Assert.That(table.RawGet("value")).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("value").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1158,7 +1176,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             bool removed = table.Remove((object)"boxed");
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
-            await Assert.That(table.RawGet("boxed")).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("boxed").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1175,7 +1196,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             bool removed = table.Remove((object)3);
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
-            await Assert.That(table.RawGet(3)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet(3).Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1196,7 +1217,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             bool removed = table.Remove((object)fractionalKey);
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
-            await Assert.That(table.RawGet(fractionalKey)).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet(fractionalKey).Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1214,7 +1238,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             bool removed = table.Remove(new object[] { "branch", "leaf" });
 
-            DynValue value = table.Get("branch", "leaf") ?? DynValue.Nil;
+            DynValue value = table.Get("branch", "leaf");
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
             await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
@@ -1244,8 +1268,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             await Assert.That(removedTwoKey).IsTrue().ConfigureAwait(false);
             await Assert.That(removedThreeKey).IsTrue().ConfigureAwait(false);
-            await Assert.That(child.RawGet("leaf")).IsNull().ConfigureAwait(false);
-            await Assert.That(grandchild.RawGet("leaf")).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(child.RawGet("leaf").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(grandchild.RawGet("leaf").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1330,7 +1360,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             table.Set(rootKey.AsSpan(), DynValue.NewString("rooted"));
             string rootGet = table.Get(rootKey.AsSpan()).String;
             bool rootRemoved = table.Remove(rootKey.AsSpan());
-            bool rootMissingAfterRemove = table.RawGet("root") == null;
+            bool rootMissingAfterRemove = table.RawGet("root").Type == DataType.Nil;
             string twoKeyGet = table.Get(twoKeys.AsSpan()).String;
             string twoKeySliceRawGet = table.RawGet(paddedTwoKeys.AsSpan(1, 2)).String;
             string threeKeySliceRawGet = table.RawGet(paddedThreeKeys.AsSpan(1, 3)).String;
@@ -1339,11 +1369,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             string updatedLeaf = child.RawGet("leaf").String;
 
             bool removedTwoKey = table.Remove(twoKeys.AsSpan());
-            bool twoKeyMissingAfterRemove = child.RawGet("leaf") == null;
+            bool twoKeyMissingAfterRemove = child.RawGet("leaf").Type == DataType.Nil;
 
             table.Set(threeKeys.AsSpan(), DynValue.NewString("reset"));
             bool removedThreeKey = table.Remove(paddedThreeKeys.AsSpan(1, 3));
-            bool threeKeyMissingAfterRemove = grandchild.RawGet("leaf") == null;
+            bool threeKeyMissingAfterRemove = grandchild.RawGet("leaf").Type == DataType.Nil;
 
             return (
                 rootGet,
@@ -1377,8 +1407,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             return (
                 table.Get(ReadOnlySpan<object>.Empty).IsNil(),
                 table.Get(defaultKeys).IsNil(),
-                table.RawGet(ReadOnlySpan<object>.Empty) == null,
-                table.RawGet(defaultKeys) == null,
+                table.RawGet(ReadOnlySpan<object>.Empty).Type == DataType.Nil,
+                table.RawGet(defaultKeys).Type == DataType.Nil,
                 table.Remove(ReadOnlySpan<object>.Empty),
                 table.Remove(defaultKeys),
                 CaptureSpanSetExceptionMessage(table, ReadOnlySpan<object>.Empty),
@@ -1400,7 +1430,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             return (
                 table.Get(keys.AsSpan()).IsNil(),
-                table.RawGet(keys.AsSpan()) == null,
+                table.RawGet(keys.AsSpan()).Type == DataType.Nil,
                 table.Remove(keys.AsSpan()),
                 CaptureSpanSetExceptionMessage(table, keys.AsSpan())
             );

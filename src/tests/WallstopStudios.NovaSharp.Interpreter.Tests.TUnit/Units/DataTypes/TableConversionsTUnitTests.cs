@@ -153,7 +153,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .IsTypeOf<Dictionary<DynValue, DynValue>>()
                 .ConfigureAwait(false);
             Dictionary<DynValue, DynValue> dictionary = (Dictionary<DynValue, DynValue>)result;
-            await Assert.That(dictionary[key]).IsSameReferenceAs(value).ConfigureAwait(false);
+            await Assert.That(dictionary[key]).IsEqualTo(value).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -320,7 +320,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(actual.Count).IsEqualTo(expected.Length).ConfigureAwait(false);
             for (int i = 0; i < expected.Length; i++)
             {
-                await Assert.That(actual[i]).IsSameReferenceAs(expected[i]).ConfigureAwait(false);
+                await Assert.That(actual[i]).IsEqualTo(expected[i]).ConfigureAwait(false);
             }
         }
 

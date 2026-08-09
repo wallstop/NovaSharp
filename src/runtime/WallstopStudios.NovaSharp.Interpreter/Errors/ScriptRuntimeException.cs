@@ -83,16 +83,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// an arithmetic operation was attempted on non-numbers
         /// </summary>
         /// <param name="l">The left operand.</param>
-        /// <param name="r">The right operand (or null).</param>
         /// <returns>The exception to be raised.</returns>
         /// <exception cref="InternalErrorException">If both are numbers</exception>
-        public static ScriptRuntimeException ArithmeticOnNonNumber(DynValue l, DynValue r = null)
+        public static ScriptRuntimeException ArithmeticOnNonNumber(DynValue l)
         {
-            if (l == null)
-            {
-                throw new ArgumentNullException(nameof(l));
-            }
+            return ArithmeticOnNonNumber(l, DynValue.Nil, hasRightOperand: false);
+        }
 
+        /// <summary>
+        /// Creates an arithmetic type error for a binary operation.
+        /// </summary>
+        public static ScriptRuntimeException ArithmeticOnNonNumber(DynValue l, DynValue r)
+        {
+            return ArithmeticOnNonNumber(l, r, hasRightOperand: true);
+        }
+
+        private static ScriptRuntimeException ArithmeticOnNonNumber(
+            DynValue l,
+            DynValue r,
+            bool hasRightOperand
+        )
+        {
             if (l.Type != DataType.Number && l.Type != DataType.String)
             {
                 return new ScriptRuntimeException(
@@ -100,14 +111,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
                     l.Type.ToLuaTypeString()
                 );
             }
-            else if (r != null && r.Type != DataType.Number && r.Type != DataType.String)
+            else if (hasRightOperand && r.Type != DataType.Number && r.Type != DataType.String)
             {
                 return new ScriptRuntimeException(
                     "attempt to perform arithmetic on a {0} value",
                     r.Type.ToLuaTypeString()
                 );
             }
-            else if (l.Type == DataType.String || (r != null && r.Type == DataType.String))
+            else if (l.Type == DataType.String || (hasRightOperand && r.Type == DataType.String))
             {
                 return new ScriptRuntimeException(
                     "attempt to perform arithmetic on a string value"
@@ -124,11 +135,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// </summary>
         public static ScriptRuntimeException BitwiseOnNonInteger(DynValue value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             string descriptor = value.Type switch
             {
                 DataType.Number => "float",
@@ -152,11 +158,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// <exception cref="InternalErrorException">If both are numbers or strings</exception>
         public static ScriptRuntimeException ConcatOnNonString(DynValue l, DynValue r)
         {
-            if (l == null)
-            {
-                throw new ArgumentNullException(nameof(l));
-            }
-
             if (l.Type != DataType.Number && l.Type != DataType.String)
             {
                 return new ScriptRuntimeException(
@@ -164,7 +165,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
                     l.Type.ToLuaTypeString()
                 );
             }
-            else if (r != null && r.Type != DataType.Number && r.Type != DataType.String)
+            else if (r.Type != DataType.Number && r.Type != DataType.String)
             {
                 return new ScriptRuntimeException(
                     "attempt to concatenate a {0} value",
@@ -185,11 +186,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// <returns>The exception to be raised.</returns>
         public static ScriptRuntimeException LenOnInvalidType(DynValue r)
         {
-            if (r == null)
-            {
-                throw new ArgumentNullException(nameof(r));
-            }
-
             return new ScriptRuntimeException(
                 "attempt to get length of a {0} value",
                 r.Type.ToLuaTypeString()
@@ -205,16 +201,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// <returns>The exception to be raised.</returns>
         public static ScriptRuntimeException CompareInvalidType(DynValue l, DynValue r)
         {
-            if (l == null)
-            {
-                throw new ArgumentNullException(nameof(l));
-            }
-
-            if (r == null)
-            {
-                throw new ArgumentNullException(nameof(r));
-            }
-
             if (l.Type.ToLuaTypeString() == r.Type.ToLuaTypeString())
             {
                 return new ScriptRuntimeException(
@@ -448,11 +434,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
             string variableDescription = null
         )
         {
-            if (obj == null)
-            {
-                throw new ArgumentNullException(nameof(obj));
-            }
-
             if (variableDescription != null)
             {
                 return new ScriptRuntimeException(
@@ -524,7 +505,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// <returns>The exception to be raised.</returns>
         public static ScriptRuntimeException CloseMetamethodExpected(DynValue value)
         {
-            string typeName = value?.Type.ToLuaTypeString() ?? DataType.Nil.ToLuaTypeString();
+            string typeName = value.Type.ToLuaTypeString();
             return new ScriptRuntimeException("__close metamethod expected (got {0})", typeName);
         }
 

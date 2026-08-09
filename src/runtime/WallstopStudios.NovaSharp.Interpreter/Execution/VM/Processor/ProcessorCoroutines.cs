@@ -180,7 +180,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     entrypoint = PushClrToScriptStackFrame(
                         CallStackItemFlagsPresets.ResumeEntryPoint,
-                        null,
                         args
                     );
                 }
@@ -318,7 +317,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         private DynValue BuildCloseResultFromLastError()
         {
-            if (_lastCloseError != null && !_lastCloseError.IsNil())
+            if (!_lastCloseError.IsNil())
             {
                 return DynValue.NewTuple(DynValue.False, _lastCloseError);
             }

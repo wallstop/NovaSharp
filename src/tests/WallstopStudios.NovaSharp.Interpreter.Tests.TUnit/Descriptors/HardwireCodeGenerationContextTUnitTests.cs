@@ -286,7 +286,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             )
             {
                 InvocationCount++;
-                LastKey = table?.Get("$key")?.String;
+                LastKey = table != null ? table.Get("$key").String : null;
                 return new CodeExpression[] { new CodeTypeOfExpression(typeof(object)) };
             }
         }

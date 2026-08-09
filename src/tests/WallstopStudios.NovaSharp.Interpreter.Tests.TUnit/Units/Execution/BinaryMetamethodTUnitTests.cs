@@ -30,7 +30,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             "
             );
 
-            await Assert.That(result).IsNotNull().ConfigureAwait(false);
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(result.Number).IsEqualTo(13d).ConfigureAwait(false);
         }
@@ -55,7 +54,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             "
             );
 
-            await Assert.That(result).IsNotNull().ConfigureAwait(false);
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(result.Number).IsEqualTo(64d).ConfigureAwait(false);
         }

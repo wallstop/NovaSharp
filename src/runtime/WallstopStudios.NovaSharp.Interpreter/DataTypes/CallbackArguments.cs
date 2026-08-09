@@ -26,35 +26,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             internal FixedArgumentStorage(DynValue arg0)
             {
-                _arg0 = arg0 ?? DynValue.Nil;
-                _arg1 = null;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg0 = arg0;
+                _arg1 = default;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
             }
 
             internal FixedArgumentStorage(DynValue arg0, DynValue arg1)
             {
-                _arg0 = arg0 ?? DynValue.Nil;
-                _arg1 = arg1 ?? DynValue.Nil;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
             }
 
             internal FixedArgumentStorage(DynValue arg0, DynValue arg1, DynValue arg2)
             {
-                _arg0 = arg0 ?? DynValue.Nil;
-                _arg1 = arg1 ?? DynValue.Nil;
-                _arg2 = arg2 ?? DynValue.Nil;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
             }
 
             internal FixedArgumentStorage(
@@ -64,13 +64,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 DynValue arg3
             )
             {
-                _arg0 = arg0 ?? DynValue.Nil;
-                _arg1 = arg1 ?? DynValue.Nil;
-                _arg2 = arg2 ?? DynValue.Nil;
-                _arg3 = arg3 ?? DynValue.Nil;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = arg3;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
             }
 
             internal FixedArgumentStorage(
@@ -81,13 +81,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 DynValue arg4
             )
             {
-                _arg0 = arg0 ?? DynValue.Nil;
-                _arg1 = arg1 ?? DynValue.Nil;
-                _arg2 = arg2 ?? DynValue.Nil;
-                _arg3 = arg3 ?? DynValue.Nil;
-                _arg4 = arg4 ?? DynValue.Nil;
-                _arg5 = null;
-                _arg6 = null;
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = arg3;
+                _arg4 = arg4;
+                _arg5 = default;
+                _arg6 = default;
             }
 
             internal FixedArgumentStorage(
@@ -99,13 +99,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 DynValue arg5
             )
             {
-                _arg0 = arg0 ?? DynValue.Nil;
-                _arg1 = arg1 ?? DynValue.Nil;
-                _arg2 = arg2 ?? DynValue.Nil;
-                _arg3 = arg3 ?? DynValue.Nil;
-                _arg4 = arg4 ?? DynValue.Nil;
-                _arg5 = arg5 ?? DynValue.Nil;
-                _arg6 = null;
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = arg3;
+                _arg4 = arg4;
+                _arg5 = arg5;
+                _arg6 = default;
             }
 
             internal FixedArgumentStorage(
@@ -118,13 +118,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 DynValue arg6
             )
             {
-                _arg0 = arg0 ?? DynValue.Nil;
-                _arg1 = arg1 ?? DynValue.Nil;
-                _arg2 = arg2 ?? DynValue.Nil;
-                _arg3 = arg3 ?? DynValue.Nil;
-                _arg4 = arg4 ?? DynValue.Nil;
-                _arg5 = arg5 ?? DynValue.Nil;
-                _arg6 = arg6 ?? DynValue.Nil;
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = arg3;
+                _arg4 = arg4;
+                _arg5 = arg5;
+                _arg6 = arg6;
             }
 
             /// <summary>
@@ -173,7 +173,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (_args.Count > 0)
             {
-                DynValue last = _args[^1] ?? DynValue.Nil;
+                DynValue last = _args[^1];
 
                 _count = CalculateExpandedCount(_args.Count, last, out _lastIsTuple);
             }
@@ -308,8 +308,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             get
             {
-                TryRawGet(index, translateVoids: true, out DynValue value);
-                return value;
+                return TryRawGet(index, translateVoids: true, out DynValue value)
+                    ? value
+                    : DynValue.Void;
             }
         }
 
@@ -323,7 +324,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Retained for compatibility. Use <see cref="TryRawGet(int, bool, out DynValue)"/> when
         /// argument presence must be distinguished from an explicit nil or void value.
         /// </remarks>
-        public DynValue RawGet(int index, bool translateVoids)
+        public DynValue? RawGet(int index, bool translateVoids)
         {
             return TryRawGet(index, translateVoids, out DynValue value) ? value : null;
         }
@@ -353,20 +354,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 }
                 else
                 {
-                    value =
-                        GetFixedArgument(_fixedCount - 1).Tuple[index - (_fixedCount - 1)]
-                        ?? DynValue.Nil;
+                    value = GetFixedArgument(_fixedCount - 1).Tuple[index - (_fixedCount - 1)];
                 }
             }
             else
             {
                 if (!_lastIsTuple || index < _args.Count - 1)
                 {
-                    value = _args[index] ?? DynValue.Nil;
+                    value = _args[index];
                 }
                 else
                 {
-                    value = _args[^1].Tuple[index - (_args.Count - 1)] ?? DynValue.Nil;
+                    value = _args[^1].Tuple[index - (_args.Count - 1)];
                 }
             }
 
@@ -374,7 +373,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 if (value.Tuple.Length > 0)
                 {
-                    value = value.Tuple[0] ?? DynValue.Nil;
+                    value = value.Tuple[0];
                 }
                 else
                 {
@@ -532,14 +531,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue argument = this[argNum];
             if ((argument.Type == DataType.Table) && (argument.Table.MetaTable != null))
             {
-                DynValue stringMeta = argument.Table.MetaTable.RawGet(Metamethods.ToStringMeta);
-                if (stringMeta == null)
+                DynValue? stringMeta = argument.Table.MetaTable.RawGet(Metamethods.ToStringMeta);
+                if (!stringMeta.HasValue)
                 {
                     return argument.ToPrintString(version);
                     ;
                 }
 
-                DynValue v = executionContext.Script.Call(stringMeta, argument);
+                DynValue v = executionContext.Script.Call(stringMeta.Value, argument);
 
                 if (v.Type != DataType.String)
                 {
@@ -629,10 +628,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Tries to get a read-only span of the arguments when the backing storage is contiguous.
         /// </summary>
         /// <param name="span">When successful, contains the arguments as a span.</param>
-        /// <returns><c>true</c> if the span could be obtained; <c>false</c> if the backing is not contiguous, contains tuple expansion, or requires null-to-nil normalization.</returns>
+        /// <returns><c>true</c> if the span could be obtained; otherwise, <c>false</c>.</returns>
         /// <remarks>
         /// This method only succeeds when the arguments are stored in contiguous array-backed or
-        /// fixed-field storage and there is no tuple expansion or null normalization required.
+        /// fixed-field storage and there is no tuple expansion or void translation required.
         /// Use this in hot paths where avoiding allocation is critical.
         /// </remarks>
         public bool TryGetSpan(out ReadOnlySpan<DynValue> span)
@@ -701,7 +700,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             for (int i = 0; i < span.Length; i++)
             {
                 DynValue value = span[i];
-                if (value == null || value.Type == DataType.Tuple || value.Type == DataType.Void)
+                if (value.Type == DataType.Tuple || value.Type == DataType.Void)
                 {
                     return true;
                 }

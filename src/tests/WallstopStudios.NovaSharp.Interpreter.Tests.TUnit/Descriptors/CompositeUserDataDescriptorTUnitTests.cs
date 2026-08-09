@@ -22,14 +22,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             StubDescriptor second = new(indexResult: expected);
             CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
-            DynValue value = descriptor.Index(
-                new Script(version),
-                new object(),
-                DynValue.NewString("name"),
-                true
-            );
+            DynValue value = descriptor
+                .Index(new Script(version), new object(), DynValue.NewString("name"), true)
+                .Value;
 
-            await Assert.That(value).IsSameReferenceAs(expected);
+            await Assert.That(value).IsEqualTo(expected);
             await Assert.That(first.IndexCallCount).IsEqualTo(1);
             await Assert.That(second.IndexCallCount).IsEqualTo(1);
         }
@@ -42,12 +39,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             StubDescriptor second = new(indexResult: DynValue.Nil);
             CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
-            DynValue value = descriptor.Index(
-                new Script(version),
-                new object(),
-                DynValue.NewString("name"),
-                isDirectIndexing: true
-            );
+            DynValue value = descriptor
+                .Index(
+                    new Script(version),
+                    new object(),
+                    DynValue.NewString("name"),
+                    isDirectIndexing: true
+                )
+                .Value;
 
             await Assert.That(value.IsNil()).IsTrue();
             await Assert.That(first.IndexCallCount).IsEqualTo(1);
@@ -63,7 +62,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new StubDescriptor(indexResult: null)
             );
 
-            DynValue value = descriptor.Index(
+            DynValue? value = descriptor.Index(
                 new Script(version),
                 new object(),
                 DynValue.NewString("missing"),
@@ -134,7 +133,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             StubDescriptor second = new(indexResult: null, metaResult: expected);
             CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
-            DynValue value = descriptor.MetaIndex(new Script(version), new object(), "__call");
+            DynValue value = descriptor
+                .MetaIndex(new Script(version), new object(), "__call")
+                .Value;
 
             await Assert.That(value.IsVoid()).IsTrue();
             await Assert.That(first.MetaCallCount).IsEqualTo(1);
@@ -152,7 +153,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new StubDescriptor(indexResult: null, metaResult: null)
             );
 
-            DynValue value = descriptor.MetaIndex(new Script(version), new object(), "__add");
+            DynValue? value = descriptor.MetaIndex(new Script(version), new object(), "__add");
 
             await Assert.That(value).IsNull();
         }
@@ -166,14 +167,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             descriptor.Descriptors.Add(new StubDescriptor(indexResult: expected));
 
-            DynValue value = descriptor.Index(
-                new Script(version),
-                new object(),
-                DynValue.NewString("value"),
-                true
-            );
+            DynValue value = descriptor
+                .Index(new Script(version), new object(), DynValue.NewString("value"), true)
+                .Value;
 
-            await Assert.That(value).IsSameReferenceAs(expected);
+            await Assert.That(value).IsEqualTo(expected);
         }
 
         [global::TUnit.Core.Test]
@@ -267,14 +265,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
         private sealed class StubDescriptor : IUserDataDescriptor
         {
-            private readonly DynValue _indexResult;
+            private readonly DynValue? _indexResult;
             private readonly bool _setResult;
-            private readonly DynValue _metaResult;
+            private readonly DynValue? _metaResult;
 
             public StubDescriptor(
-                DynValue indexResult,
+                DynValue? indexResult,
                 bool setResult = false,
-                DynValue metaResult = null
+                DynValue? metaResult = null
             )
             {
                 _indexResult = indexResult;
@@ -290,10 +288,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             public Type Type => typeof(object);
 
-            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+            public bool TryIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                bool isDirectIndexing,
+                out DynValue value
+            )
             {
                 IndexCallCount++;
-                return _indexResult;
+                value = _indexResult.GetValueOrDefault();
+                return _indexResult.HasValue;
             }
 
             public bool SetIndex(
@@ -313,10 +318,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 return obj?.ToString();
             }
 
-            public DynValue MetaIndex(Script script, object obj, string metaname)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
             {
                 MetaCallCount++;
-                return _metaResult;
+                value = _metaResult.GetValueOrDefault();
+                return _metaResult.HasValue;
             }
 
             public bool IsTypeCompatible(Type type, object obj)

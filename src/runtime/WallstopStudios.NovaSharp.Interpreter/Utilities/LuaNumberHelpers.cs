@@ -142,7 +142,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
             int argIndex
         )
         {
-            if (dynValue == null || dynValue.IsNil())
+            if (dynValue.IsNil())
             {
                 return; // Nil values are handled by default argument logic
             }
@@ -176,12 +176,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
             }
 
             // Lua 5.3+: require exact integer representation
-            if (startValue != null && !startValue.IsNil())
+            if (!startValue.IsNil())
             {
                 RequireIntegerRepresentation(startValue.LuaNumber, functionName, 2);
             }
 
-            if (endValue != null && !endValue.IsNil())
+            if (!endValue.IsNil())
             {
                 RequireIntegerRepresentation(endValue.LuaNumber, functionName, 3);
             }
@@ -213,7 +213,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
             }
 
             // Lua 5.3+: require exact integer representation
-            if (value != null && !value.IsNil())
+            if (!value.IsNil())
             {
                 RequireIntegerRepresentation(value.LuaNumber, functionName, argIndex);
             }

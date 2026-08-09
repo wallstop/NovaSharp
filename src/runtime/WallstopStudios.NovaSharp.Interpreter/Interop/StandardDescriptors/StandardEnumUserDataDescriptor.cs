@@ -496,7 +496,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <param name="obj"></param>
         /// <param name="metaname"></param>
         /// <returns></returns>
-        public override DynValue MetaIndex(Script script, object obj, string metaname)
+        public override DynValue? MetaIndex(Script script, object obj, string metaname)
         {
             if (metaname == Metamethods.Concat && IsFlags)
             {

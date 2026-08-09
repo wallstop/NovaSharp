@@ -401,12 +401,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             );
             Closure closure = capture.Function;
 
-            DynValue twoArgs = closure.Call(null, null);
-            DynValue threeArgs = closure.Call(null, DynValue.NewNumber(3), null);
-            DynValue fourArgs = closure.Call(null, null, null, null);
-            DynValue fiveArgs = closure.Call((DynValue)null, null, null, null, null);
+            DynValue twoArgs = closure.Call(default, default);
+            DynValue threeArgs = closure.Call(default, DynValue.NewNumber(3), default);
+            DynValue fourArgs = closure.Call(default, default, default, default);
+            DynValue fiveArgs = closure.Call(default, default, default, default, default);
             DynValue paramsArrayArgs = closure.Call(
-                new DynValue[] { null, DynValue.NewNumber(3), null }
+                new DynValue[] { default, DynValue.NewNumber(3), default }
             );
 
             await Assert.That(twoArgs.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);

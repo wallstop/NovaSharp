@@ -531,7 +531,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
 
-            DynValue meta = descriptor.MetaIndex(new Script(version), SampleFlags.Fast, "__concat");
+            DynValue meta = descriptor
+                .MetaIndex(new Script(version), SampleFlags.Fast, "__concat")
+                .Value;
 
             await Assert.That(meta.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
@@ -542,7 +544,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleEnum));
             Script script = new(version);
-            DynValue meta = descriptor.MetaIndex(script, SampleEnum.One, "__concat");
+            DynValue? meta = descriptor.MetaIndex(script, SampleEnum.One, "__concat");
             bool found = descriptor.TryMetaIndex(
                 script,
                 SampleEnum.One,

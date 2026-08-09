@@ -52,7 +52,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <summary>
         /// Exposes <c>add</c> and <c>remove</c> members that wire into the underlying CLR event.
         /// </summary>
-        public DynValue Index(Script script, DynValue index, bool isDirectIndexing)
+        public DynValue? Index(Script script, DynValue index, bool isDirectIndexing)
         {
             TryIndex(script, index, isDirectIndexing, out DynValue value);
             return value;
@@ -94,9 +94,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <summary>
         /// Event facades do not expose any metamethods.
         /// </summary>
-        public DynValue MetaIndex(Script script, string metaname)
+        public DynValue? MetaIndex(Script script, string metaname)
         {
-            return null;
+            return TryMetaIndex(script, metaname, out DynValue value) ? value : null;
         }
 
         /// <inheritdoc/>

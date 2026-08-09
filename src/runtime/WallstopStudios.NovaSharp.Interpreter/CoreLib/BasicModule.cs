@@ -227,9 +227,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             DynValue v = args[0];
-            DynValue tail = executionContext.GetMetamethodTailCall(v, Metamethods.ToStringMeta, v);
-
-            if (tail == null || tail.IsNil())
+            if (
+                !executionContext.TryGetMetamethodTailCall(
+                    v,
+                    Metamethods.ToStringMeta,
+                    out DynValue tail,
+                    v
+                )
+            )
             {
                 // Use version-aware formatting for numbers
                 LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
@@ -1122,13 +1127,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // Get the global tostring function
             DynValue tostringFunc = script.Globals.RawGet("tostring");
 
-            if (
-                tostringFunc != null
-                && (
-                    tostringFunc.Type == DataType.Function
-                    || tostringFunc.Type == DataType.ClrFunction
-                )
-            )
+            if (tostringFunc.Type == DataType.Function || tostringFunc.Type == DataType.ClrFunction)
             {
                 // Call the global tostring function (user-overridable, including CLR callbacks)
                 DynValue result = script.Call(tostringFunc, value);
@@ -1527,13 +1526,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             Script script = executionContext.Script;
             DynValue warnHandler = script.Globals.RawGet("_WARN");
 
-            if (
-                warnHandler != null
-                && (
-                    warnHandler.Type == DataType.Function
-                    || warnHandler.Type == DataType.ClrFunction
-                )
-            )
+            if (warnHandler.Type == DataType.Function || warnHandler.Type == DataType.ClrFunction)
             {
                 script.Call(warnHandler, DynValue.NewString(payload));
             }

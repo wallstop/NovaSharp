@@ -61,10 +61,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new(version, CoreModulePresets.Complete);
 
-            ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                script.Call((DynValue)null)
+            ArgumentException exception = ExpectException<ArgumentException>(() =>
+                script.Call(DynValue.Nil)
             );
-            await Assert.That(exception.ParamName).IsEqualTo("function");
+            await Assert.That(exception.Message).Contains("not a function");
         }
 
         [global::TUnit.Core.Test]
@@ -347,10 +347,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new(version, CoreModulePresets.Complete);
 
-            ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                script.CreateCoroutine((DynValue)null)
+            ArgumentException exception = ExpectException<ArgumentException>(() =>
+                script.CreateCoroutine(DynValue.Nil)
             );
-            await Assert.That(exception.ParamName).IsEqualTo("function");
+            await Assert.That(exception.Message).Contains("DataType.Function");
         }
 
         [global::TUnit.Core.Test]

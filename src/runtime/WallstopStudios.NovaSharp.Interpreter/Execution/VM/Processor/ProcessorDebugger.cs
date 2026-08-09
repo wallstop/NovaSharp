@@ -644,10 +644,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return wis;
         }
 
-        private DynValue GetFrameFunction(CallStackItem frame)
+        private DynValue? GetFrameFunction(CallStackItem frame)
         {
             DynValue function = frame.Function;
-            if (function != null)
+            if (function.IsNotNil())
             {
                 return function;
             }

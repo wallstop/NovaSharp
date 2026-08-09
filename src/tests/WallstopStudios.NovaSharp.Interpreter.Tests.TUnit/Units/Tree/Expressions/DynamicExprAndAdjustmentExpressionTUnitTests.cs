@@ -99,7 +99,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         )
             : base(context)
         {
-            _value = value ?? DynValue.Void;
+            _value = value;
             _dynamic = dynamicRef;
         }
 

@@ -66,7 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.REPL
         /// </summary>
         /// <param name="input">The input.</param>
         /// <returns>This method returns the result of the computation, or null if more input is needed for a computation.</returns>
-        public virtual DynValue Evaluate(string input)
+        public virtual DynValue? Evaluate(string input)
         {
             if (input == null)
             {

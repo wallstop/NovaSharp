@@ -143,13 +143,6 @@ ALLOWLIST = [
     AllowedMatch(
         "new-dynvalue-array",
         "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs",
-        "ToTuple",
-        re.compile(r"new\s+DynValue\s*\[\s*_count\s*\]"),
-        "Escaped tuple materialization remains allowed for coroutine resume and vararg tuple cases.",
-    ),
-    AllowedMatch(
-        "new-dynvalue-array",
-        "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs",
         "CreateTupleFromSpan",
         re.compile(r"new\s+DynValue\s*\[\s*values\.Length\s*\]"),
         "Escaped tuple materialization remains allowed for caller-owned spans with more than five values.",

@@ -41,7 +41,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.REPL
         /// <returns>
         /// This method returns the result of the computation, or null if more input is needed for a computation.
         /// </returns>
-        public override DynValue Evaluate(string input)
+        public override DynValue? Evaluate(string input)
         {
             _navi = -1;
             _last = (_last + 1) % _history.Length;

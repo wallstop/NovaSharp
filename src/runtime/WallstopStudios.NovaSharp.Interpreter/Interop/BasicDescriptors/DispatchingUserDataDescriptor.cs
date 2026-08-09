@@ -246,7 +246,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="index">The index.</param>
         /// <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
         /// <returns></returns>
-        public virtual DynValue Index(
+        public virtual DynValue? Index(
             Script script,
             object obj,
             DynValue index,
@@ -256,11 +256,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             if (script == null)
             {
                 throw new ArgumentNullException(nameof(script));
-            }
-
-            if (index == null)
-            {
-                throw new ArgumentNullException(nameof(index));
             }
 
             if (!isDirectIndexing)
@@ -287,7 +282,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 Script.GlobalOptions.FuzzySymbolMatching
             );
 
-            DynValue v = null;
+            DynValue? v = null;
 
             foreach (string candidate in candidates)
             {
@@ -323,9 +318,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             out DynValue value
         )
         {
-            value = Index(script, obj, index, isDirectIndexing);
-            if (value != null)
+            DynValue? indexedValue = Index(script, obj, index, isDirectIndexing);
+            if (indexedValue.HasValue)
             {
+                value = indexedValue.Value;
                 return true;
             }
 
@@ -341,7 +337,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="indexName">Member name to be indexed.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        private DynValue TryIndexOnExtMethod(Script script, object obj, string indexName)
+        private DynValue? TryIndexOnExtMethod(Script script, object obj, string indexName)
         {
             if (script == null)
             {
@@ -399,7 +395,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="obj">The object.</param>
         /// <param name="indexName">Member name to be indexed.</param>
         /// <returns></returns>
-        protected virtual DynValue TryIndex(Script script, object obj, string indexName)
+        protected virtual DynValue? TryIndex(Script script, object obj, string indexName)
         {
             if (script == null)
             {
@@ -434,16 +430,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             if (script == null)
             {
                 throw new ArgumentNullException(nameof(script));
-            }
-
-            if (index == null)
-            {
-                throw new ArgumentNullException(nameof(index));
-            }
-
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
             }
 
             if (!isDirectIndexing)
@@ -500,11 +486,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             if (script == null)
             {
                 throw new ArgumentNullException(nameof(script));
-            }
-
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
             }
 
             IMemberDescriptor descr = _members.GetOrDefault(indexName);
@@ -653,7 +634,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             Script script,
             object obj,
             DynValue index,
-            DynValue value
+            DynValue? value
         )
         {
             if (mdesc == null)
@@ -664,11 +645,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             if (script == null)
             {
                 throw new ArgumentNullException(nameof(script));
-            }
-
-            if (index == null)
-            {
-                throw new ArgumentNullException(nameof(index));
             }
 
             if (mdesc is OverloadedMethodMemberDescriptor overloads)
@@ -693,33 +669,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             {
                 if (callback.HasArgumentViewNoContextCallback)
                 {
-                    return value == null
+                    return !value.HasValue
                         ? callback.InvokeArgumentViewFixed(script, index)
-                        : callback.InvokeArgumentViewFixed(script, index, value);
+                        : callback.InvokeArgumentViewFixed(script, index, value.Value);
                 }
 
                 ScriptExecutionContext execCtx = script.CreateDynamicExecutionContext();
                 if (callback.HasArgumentViewCallback)
                 {
-                    return value == null
+                    return !value.HasValue
                         ? callback.InvokeArgumentViewFixed(execCtx, index)
-                        : callback.InvokeArgumentViewFixed(execCtx, index, value);
+                        : callback.InvokeArgumentViewFixed(execCtx, index, value.Value);
                 }
 
-                return value == null
+                return !value.HasValue
                     ? callback.InvokeLegacyFixed(execCtx, index)
-                    : callback.InvokeLegacyFixed(execCtx, index, value);
+                    : callback.InvokeLegacyFixed(execCtx, index, value.Value);
             }
 
             IList<DynValue> values;
-            if (value == null)
+            if (!value.HasValue)
             {
                 values = index.Tuple;
             }
             else
             {
                 values = new List<DynValue>(index.Tuple);
-                values.Add(value);
+                values.Add(value.Value);
             }
 
             CallbackArguments args = new(values, false);
@@ -732,28 +708,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             Script script,
             object obj,
             DynValue index,
-            DynValue value
+            DynValue? value
         )
         {
             CallbackArguments args;
             if (index.Type != DataType.Tuple)
             {
-                args =
-                    value == null
-                        ? new CallbackArguments(index, false)
-                        : new CallbackArguments(index, value, false);
+                args = !value.HasValue
+                    ? new CallbackArguments(index, false)
+                    : new CallbackArguments(index, value.Value, false);
             }
             else
             {
                 IList<DynValue> values;
-                if (value == null)
+                if (!value.HasValue)
                 {
                     values = index.Tuple;
                 }
                 else
                 {
                     values = new List<DynValue>(index.Tuple);
-                    values.Add(value);
+                    values.Add(value.Value);
                 }
 
                 args = new CallbackArguments(values, false);
@@ -786,7 +761,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="metaname">The name of the metamember.</param>
         /// </summary>
         /// <returns></returns>
-        public virtual DynValue MetaIndex(Script script, object obj, string metaname)
+        public virtual DynValue? MetaIndex(Script script, object obj, string metaname)
         {
             if (script == null)
             {
@@ -845,9 +820,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             out DynValue value
         )
         {
-            value = MetaIndex(script, obj, metaname);
-            if (value != null)
+            DynValue? metaValue = MetaIndex(script, obj, metaname);
+            if (metaValue.HasValue)
             {
+                value = metaValue.Value;
                 return true;
             }
 
@@ -874,7 +850,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             throw new InternalErrorException("unexpected case");
         }
 
-        private static DynValue MultiDispatchLessThanOrEqual(Script script, object obj)
+        private static DynValue? MultiDispatchLessThanOrEqual(Script script, object obj)
         {
             if (obj is IComparable comp)
             {
@@ -889,7 +865,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             return null;
         }
 
-        private static DynValue MultiDispatchLessThan(Script script, object obj)
+        private static DynValue? MultiDispatchLessThan(Script script, object obj)
         {
             if (obj is IComparable comp)
             {
@@ -904,7 +880,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             return null;
         }
 
-        private DynValue TryDispatchLength(Script script, object obj)
+        private DynValue? TryDispatchLength(Script script, object obj)
         {
             if (obj == null)
             {
@@ -951,7 +927,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             return Equals(p1, p2);
         }
 
-        private DynValue DispatchMetaOnMethod(Script script, object obj, string methodName)
+        private DynValue? DispatchMetaOnMethod(Script script, object obj, string methodName)
         {
             IMemberDescriptor desc = _members.GetOrDefault(methodName);
 
@@ -965,13 +941,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             }
         }
 
-        private DynValue TryDispatchToNumber(Script script, object obj)
+        private DynValue? TryDispatchToNumber(Script script, object obj)
         {
             foreach (Type t in NumericConversions.NumericTypesOrdered)
             {
                 string name = t.GetConversionMethodName();
-                DynValue v = DispatchMetaOnMethod(script, obj, name);
-                if (v != null)
+                DynValue? v = DispatchMetaOnMethod(script, obj, name);
+                if (v.HasValue)
                 {
                     return v;
                 }
@@ -979,11 +955,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             return null;
         }
 
-        private DynValue TryDispatchToBool(Script script, object obj)
+        private DynValue? TryDispatchToBool(Script script, object obj)
         {
             string name = typeof(bool).GetConversionMethodName();
-            DynValue v = DispatchMetaOnMethod(script, obj, name);
-            if (v != null)
+            DynValue? v = DispatchMetaOnMethod(script, obj, name);
+            if (v.HasValue)
             {
                 return v;
             }

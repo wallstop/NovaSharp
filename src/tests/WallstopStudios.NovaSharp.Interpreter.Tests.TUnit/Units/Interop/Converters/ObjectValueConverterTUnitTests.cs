@@ -37,7 +37,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 DynValue.Void
             );
 
-            await Assert.That(result).IsSameReferenceAs(fallback).ConfigureAwait(false);
+            await Assert.That(result).IsEqualTo(fallback).ConfigureAwait(false);
             await Assert.That(defaultResult.IsNil()).IsTrue().ConfigureAwait(false);
             await Assert.That(explicitNil.IsNil()).IsTrue().ConfigureAwait(false);
             await Assert.That(legacyNull.IsNil()).IsTrue().ConfigureAwait(false);

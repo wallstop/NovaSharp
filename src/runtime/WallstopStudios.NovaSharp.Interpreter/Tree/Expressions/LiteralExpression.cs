@@ -1,6 +1,5 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
-    using System;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -24,7 +23,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         public LiteralExpression(ScriptLoadingContext lcontext, DynValue value)
             : base(lcontext)
         {
-            _value = value ?? throw new ArgumentNullException(nameof(value));
+            _value = value;
         }
 
         public LiteralExpression(ScriptLoadingContext lcontext, Token t)
@@ -69,12 +68,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 default:
                     throw new InternalErrorException("type mismatch");
             }
-
-            if (_value == null)
-            {
-                throw new SyntaxErrorException(t, "unknown literal format near '{0}'", t.text);
-            }
-
             lcontext.Lexer.Next();
         }
 

@@ -31,7 +31,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         {
             UserData.UnregisterType<UnregisteredHost>();
 
-            DynValue result = UserData.Create(new UnregisteredHost());
+            DynValue? result = UserData.Create(new UnregisteredHost());
             bool created = UserData.TryCreate(new UnregisteredHost(), out DynValue missing);
 
             await Assert.That(result).IsNull().ConfigureAwait(false);
@@ -47,7 +47,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             descriptorScope.RegisterType<CustomDescriptorHost>(descriptor);
             CustomDescriptorHost instance = new("tracked");
 
-            DynValue dynValue = UserData.Create(instance);
+            DynValue dynValue = UserData.Create(instance).Value;
             bool created = UserData.TryCreate(instance, out DynValue explicitValue);
             Table description = UserData.GetDescriptionOfRegisteredTypes();
 
@@ -97,7 +97,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 target
             ));
 
-            DynValue proxied = UserData.Create(new ProxyTarget("proxy"));
+            DynValue proxied = UserData.Create(new ProxyTarget("proxy")).Value;
 
             await Assert
                 .That(UserData.IsTypeRegistered<ProxySurface>())
@@ -153,7 +153,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         [global::TUnit.Core.Test]
         public async Task CreateStaticReturnsNullWhenDescriptorMissing()
         {
-            DynValue result = UserData.CreateStatic((IUserDataDescriptor)null);
+            DynValue? result = UserData.CreateStatic((IUserDataDescriptor)null);
             bool created = UserData.TryCreateStatic(
                 (IUserDataDescriptor)null,
                 out DynValue missing
@@ -168,7 +168,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         {
             UserData.UnregisterType<UnregisteredHost>();
 
-            DynValue result = UserData.CreateStatic<UnregisteredHost>();
+            DynValue? result = UserData.CreateStatic<UnregisteredHost>();
             bool created = UserData.TryCreateStatic<UnregisteredHost>(out DynValue missing);
 
             await Assert.That(result).IsNull().ConfigureAwait(false);
@@ -199,8 +199,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             using UserDataRegistrationPolicyScope policyScope =
                 UserDataRegistrationPolicyScope.Override(InteropRegistrationPolicy.Automatic);
 
-            DynValue dynValue = UserData.Create(new AutoPolicyHost());
-            await Assert.That(dynValue).IsNotNull().ConfigureAwait(false);
+            DynValue dynValue = UserData.Create(new AutoPolicyHost()).Value;
+            await Assert.That(dynValue.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
             await Assert
                 .That(UserData.IsTypeRegistered<AutoPolicyHost>())
                 .IsTrue()
@@ -226,7 +226,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             // Intentional direct call: this test verifies RegisterType<T>(IUserDataDescriptor)
             // returns the provided descriptor.
             IUserDataDescriptor result = UserData.RegisterType<CustomDescriptorHost>(descriptor);
-            DynValue dynValue = UserData.Create(new CustomDescriptorHost("generic-overload"));
+            DynValue dynValue = UserData.Create(new CustomDescriptorHost("generic-overload")).Value;
 
             await Assert.That(result).IsSameReferenceAs(descriptor).ConfigureAwait(false);
             await Assert
@@ -278,7 +278,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             // Intentional direct call: this assertion relies on the RegisterType return value
             // under the default policy.
             IUserDataDescriptor result = UserData.RegisterType<CustomDescriptorHost>(competing);
-            DynValue dynValue = UserData.Create(new CustomDescriptorHost("policy"));
+            DynValue dynValue = UserData.Create(new CustomDescriptorHost("policy")).Value;
 
             await Assert.That(result).IsSameReferenceAs(competing).ConfigureAwait(false);
             IUserDataDescriptor resolved = UserData.GetDescriptorForType<CustomDescriptorHost>(
@@ -343,7 +343,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             Table description = UserData.GetDescriptionOfRegisteredTypes(useHistoricalData: true);
 
             DynValue entry = description.Get(typeof(HistoricalHost).FullName);
-            await Assert.That(entry).IsNotNull().ConfigureAwait(false);
             await Assert.That(entry).IsNotEqualTo(DynValue.Nil).ConfigureAwait(false);
         }
 
@@ -383,8 +382,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 UserDataRegistrationScope.Track<EqualityHost>(ensureUnregistered: true);
             registrationScope.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
 
-            DynValue left = UserData.Create(new EqualityHost("value"));
-            DynValue right = UserData.Create(new EqualityHost("value"));
+            DynValue left = UserData.Create(new EqualityHost("value")).Value;
+            DynValue right = UserData.Create(new EqualityHost("value")).Value;
 
             await Assert.That(left.Equals(right)).IsTrue().ConfigureAwait(false);
         }
@@ -396,8 +395,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 UserDataRegistrationScope.Track<EqualityHost>(ensureUnregistered: true);
             registrationScope.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
 
-            DynValue left = UserData.Create(new EqualityHost("value"));
-            DynValue right = UserData.Create(new EqualityHost("value"));
+            DynValue left = UserData.Create(new EqualityHost("value")).Value;
+            DynValue right = UserData.Create(new EqualityHost("value")).Value;
 
             await Assert.That(left.Equals(right)).IsTrue().ConfigureAwait(false);
             await Assert
@@ -414,7 +413,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             registrationScope.RegisterType<CountingHashHost>(InteropAccessMode.Reflection);
 
             CountingHashHost host = new();
-            DynValue value = UserData.Create(host);
+            DynValue value = UserData.Create(host).Value;
 
             await Assert.That(host.GetHashCodeCalls).IsEqualTo(0).ConfigureAwait(false);
 
@@ -445,8 +444,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 UserDataRegistrationScope.Track<EqualityHost>(ensureUnregistered: true);
             registrationScope.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
 
-            DynValue left = UserData.CreateStatic<EqualityHost>();
-            DynValue right = UserData.CreateStatic<EqualityHost>();
+            DynValue left = UserData.CreateStatic<EqualityHost>().Value;
+            DynValue right = UserData.CreateStatic<EqualityHost>().Value;
 
             await Assert.That(left.Equals(right)).IsTrue().ConfigureAwait(false);
         }
@@ -458,8 +457,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 UserDataRegistrationScope.Track<EqualityHost>(ensureUnregistered: true);
             registrationScope.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
 
-            DynValue left = UserData.CreateStatic<EqualityHost>();
-            DynValue right = UserData.CreateStatic<EqualityHost>();
+            DynValue left = UserData.CreateStatic<EqualityHost>().Value;
+            DynValue right = UserData.CreateStatic<EqualityHost>().Value;
 
             await Assert.That(left.Equals(right)).IsTrue().ConfigureAwait(false);
             await Assert
@@ -475,7 +474,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             CustomDescriptorHost host = new("descriptor");
 
             DynValue left = UserData.Create(host, descriptor);
-            DynValue right = UserData.CreateStatic(descriptor);
+            DynValue right = UserData.CreateStatic(descriptor).Value;
 
             await Assert.That(left.Equals(right)).IsFalse().ConfigureAwait(false);
         }
@@ -487,7 +486,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 UserDataRegistrationScope.Track<RegistryHost>(ensureUnregistered: true);
             registrationScope.RegisterType<RegistryHost>(InteropAccessMode.Reflection);
 
-            DynValue dynValue = UserData.Create(typeof(RegistryHost));
+            DynValue dynValue = UserData.Create(typeof(RegistryHost)).Value;
             bool created = UserData.TryCreate(typeof(RegistryHost), out DynValue explicitStatic);
 
             await Assert.That(created).IsTrue().ConfigureAwait(false);
@@ -749,9 +748,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
 
         public Type Type => typeof(CustomDescriptorHost);
 
-        public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+        public bool TryIndex(
+            Script script,
+            object obj,
+            DynValue index,
+            bool isDirectIndexing,
+            out DynValue value
+        )
         {
-            return DynValue.NewString("indexed");
+            value = DynValue.NewString("indexed");
+            return true;
         }
 
         public bool SetIndex(
@@ -770,9 +776,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             return $"custom:{obj}";
         }
 
-        public DynValue MetaIndex(Script script, object obj, string metaname)
+        public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
         {
-            return DynValue.Nil;
+            value = DynValue.Nil;
+            return true;
         }
 
         public bool IsTypeCompatible(Type type, object obj)
@@ -793,9 +800,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
 
         public Type Type => typeof(IMarker);
 
-        public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+        public bool TryIndex(
+            Script script,
+            object obj,
+            DynValue index,
+            bool isDirectIndexing,
+            out DynValue value
+        )
         {
-            return DynValue.Nil;
+            value = DynValue.Nil;
+            return true;
         }
 
         public bool SetIndex(
@@ -814,9 +828,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             return obj?.ToString();
         }
 
-        public DynValue MetaIndex(Script script, object obj, string metaname)
+        public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
         {
-            return DynValue.Nil;
+            value = DynValue.Nil;
+            return true;
         }
 
         public bool IsTypeCompatible(Type type, object obj)

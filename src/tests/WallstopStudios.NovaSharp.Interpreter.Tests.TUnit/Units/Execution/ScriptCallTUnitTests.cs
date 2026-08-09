@@ -63,11 +63,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version, CoreModulePresets.Complete);
 
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                script.Call((DynValue)null)
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                script.Call(DynValue.Nil)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("function").ConfigureAwait(false);
+            await Assert.That(exception.Message).Contains("not a function").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1078,28 +1078,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             DynValue result = arity switch
             {
-                1 => script.Call(inspect, (DynValue)null),
+                1 => script.Call(inspect, DynValue.Nil),
                 2 => script.Call(inspect, DynValue.NewNumber(1), DynValue.Void),
                 3 => script.Call(
                     inspect,
                     DynValue.NewNumber(1),
                     DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
-                    DynValue.NewTuple(DynValue.NewNumber(3), null)
+                    DynValue.NewTuple(DynValue.NewNumber(3), DynValue.Nil)
                 ),
                 4 => script.Call(
                     inspect,
-                    null,
+                    DynValue.Nil,
                     DynValue.NewNumber(2),
                     DynValue.NewNumber(3),
-                    DynValue.NewTuple(DynValue.NewNumber(4), null)
+                    DynValue.NewTuple(DynValue.NewNumber(4), DynValue.Nil)
                 ),
                 5 => script.Call(
                     inspect,
                     DynValue.NewNumber(1),
-                    null,
+                    DynValue.Nil,
                     DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                     DynValue.NewNumber(3),
-                    DynValue.NewTuple(DynValue.NewNumber(4), null)
+                    DynValue.NewTuple(DynValue.NewNumber(4), DynValue.Nil)
                 ),
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
@@ -1167,7 +1167,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 DynValue.NewNumber(2)
             );
             DynValue nonFinalVoid = script.Call(inspect, DynValue.Void, DynValue.NewNumber(2));
-            DynValue nonFinalNull = script.Call(inspect, null, DynValue.NewNumber(2));
 
             await Assert.That(nonFinalTuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert.That(nonFinalTuple.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
@@ -1178,13 +1177,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(nonFinalVoid.Tuple[2].Number).IsEqualTo(2d).ConfigureAwait(false);
             await Assert
                 .That(nonFinalVoid.Tuple[3].Type)
-                .IsEqualTo(DataType.Nil)
-                .ConfigureAwait(false);
-            await Assert.That(nonFinalNull.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
-            await Assert.That(nonFinalNull.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
-            await Assert.That(nonFinalNull.Tuple[2].Number).IsEqualTo(2d).ConfigureAwait(false);
-            await Assert
-                .That(nonFinalNull.Tuple[3].Type)
                 .IsEqualTo(DataType.Nil)
                 .ConfigureAwait(false);
         }
@@ -1198,12 +1190,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             DynValue oneVoid = script.Call(inspect, DynValue.Void);
             DynValue oneTuple = script.Call(
                 inspect,
-                DynValue.NewTuple(DynValue.NewNumber(2), null)
+                DynValue.NewTuple(DynValue.NewNumber(2), DynValue.Nil)
             );
             DynValue twoTuple = script.Call(
                 inspect,
                 DynValue.NewNumber(1),
-                DynValue.NewTuple(DynValue.NewNumber(2), null)
+                DynValue.NewTuple(DynValue.NewNumber(2), DynValue.Nil)
             );
             DynValue threeVoid = script.Call(
                 inspect,
@@ -2291,15 +2283,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             callable.MetaTable = meta;
             DynValue[] spanArgs =
             {
-                null,
+                DynValue.Nil,
                 DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                 DynValue.NewNumber(3),
-                DynValue.NewTuple(DynValue.NewNumber(4), null),
+                DynValue.NewTuple(DynValue.NewNumber(4), DynValue.Nil),
             };
             DynValue[] arrayArgs =
             {
                 DynValue.NewNumber(1),
-                null,
+                DynValue.Nil,
                 DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                 DynValue.NewNumber(3),
                 DynValue.Void,
@@ -2324,10 +2316,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             DynValue[] values =
             {
                 DynValue.NewNumber(1),
-                null,
+                DynValue.Nil,
                 DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                 DynValue.NewNumber(3),
-                DynValue.NewTuple(DynValue.NewNumber(4), null),
+                DynValue.NewTuple(DynValue.NewNumber(4), DynValue.Nil),
             };
 
             meta.Set(
@@ -2488,10 +2480,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             DynValue[] args =
             {
                 DynValue.NewNumber(1),
-                null,
+                DynValue.Nil,
                 DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                 DynValue.NewNumber(3),
-                DynValue.NewTuple(DynValue.NewNumber(4), null),
+                DynValue.NewTuple(DynValue.NewNumber(4), DynValue.Nil),
             };
 
             DynValue result = script.Call(inspect, args.AsSpan());
@@ -2618,11 +2610,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             );
             DynValue[] values =
             {
-                null,
+                DynValue.Nil,
                 DynValue.NewNumber(2),
                 DynValue.NewTuple(DynValue.NewNumber(3), DynValue.NewNumber(30)),
                 DynValue.NewNumber(4),
-                DynValue.NewTuple(DynValue.NewNumber(5), null),
+                DynValue.NewTuple(DynValue.NewNumber(5), DynValue.Nil),
             };
 
             DynValue result = script.Call(callback, values.AsSpan());
@@ -2646,10 +2638,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             DynValue[] values =
             {
                 DynValue.NewNumber(1),
-                null,
+                DynValue.Nil,
                 DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                 DynValue.NewNumber(3),
-                DynValue.NewTuple(DynValue.NewNumber(4), null),
+                DynValue.NewTuple(DynValue.NewNumber(4), DynValue.Nil),
             };
 
             DynValue result = script.Call(inspect, values.AsSpan());
@@ -2911,7 +2903,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 "return function(...) return select('#', ...), ... end"
             );
 
-            DynValue fixedResult = script.Call(capture, (DynValue)null, DynValue.NewString("tail"));
+            DynValue fixedResult = script.Call(capture, DynValue.Nil, DynValue.NewString("tail"));
             await Assert.That(fixedResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(fixedResult.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(fixedResult.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
@@ -2923,7 +2915,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             DynValue arrayResult = script.Call(
                 capture,
-                new DynValue[] { null, DynValue.NewString("middle"), null }
+                new DynValue[] { DynValue.Nil, DynValue.NewString("middle"), DynValue.Nil }
             );
             await Assert.That(arrayResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(arrayResult.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
@@ -2944,7 +2936,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             DynValue tupleResult = script.Call(
                 capture,
                 DynValue.NewString("head"),
-                DynValue.NewTuple(null, DynValue.NewString("tail"))
+                DynValue.NewTuple(DynValue.Nil, DynValue.NewString("tail"))
             );
             await Assert.That(tupleResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(tupleResult.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
@@ -3008,17 +3000,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task FixedObjectCallOverloadsValidateFunctionBeforeArguments(
+        public async Task FixedObjectCallOverloadsConvertArgumentsBeforeRejectingNilFunction(
             LuaCompatibilityVersion version
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
 
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                script.Call((DynValue)null, new UnregisteredHostObject())
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.Call(DynValue.Nil, new UnregisteredHostObject())
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("function").ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("cannot convert clr type")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -3250,11 +3245,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version, CoreModulePresets.Complete);
 
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                script.CreateCoroutine((DynValue)null)
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                script.CreateCoroutine(DynValue.Nil)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("function").ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("DataType.Function")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -3951,7 +3949,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             for (int i = 0; i < iterations; i++)
             {
                 DynValue result = script.Call(callback, first, second, third);
-                if (!ReferenceEquals(result, third))
+                if (result != third)
                 {
                     throw new InvalidOperationException(
                         "Callback-view context allocation probe returned an unexpected value."

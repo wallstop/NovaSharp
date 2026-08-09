@@ -123,11 +123,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
         /// <returns>Lua string representing the supplied value.</returns>
         public static string SerializeValue(this DynValue dynValue, int tabs = 0)
         {
-            if (dynValue == null)
-            {
-                throw new ArgumentNullException(nameof(dynValue));
-            }
-
             if (dynValue.Type == DataType.Nil || dynValue.Type == DataType.Void)
             {
                 return LuaKeywords.Nil;

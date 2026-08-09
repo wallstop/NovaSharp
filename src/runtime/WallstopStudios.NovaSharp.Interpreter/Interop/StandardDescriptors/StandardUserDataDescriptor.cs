@@ -209,7 +209,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
 
                         if (descr != null)
                         {
-                            AddDynValue(nestedType.Name, UserData.CreateStatic(nestedType));
+                            if (UserData.TryCreateStatic(nestedType, out DynValue staticUserData))
+                            {
+                                AddDynValue(nestedType.Name, staticUserData);
+                            }
                         }
                     }
                 }

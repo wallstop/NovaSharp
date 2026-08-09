@@ -374,9 +374,8 @@ namespace NovaSharp
         internal LuaValue Wrap(DynValue value)
         {
             ThrowIfDisposed();
-            DynValue wrapped = value ?? DynValue.Nil;
-            LuaEngine owner = LuaValue.RequiresOwner(wrapped) ? this : null;
-            return new LuaValue(owner, wrapped);
+            LuaEngine owner = LuaValue.RequiresOwner(value) ? this : null;
+            return new LuaValue(owner, value);
         }
 
         /// <summary>
@@ -384,7 +383,7 @@ namespace NovaSharp
         /// </summary>
         internal LuaValue WrapResult(DynValue value)
         {
-            DynValue scalar = (value ?? DynValue.Nil).ToScalar();
+            DynValue scalar = value.ToScalar();
             return Wrap(scalar.Type == DataType.Void ? DynValue.Nil : scalar);
         }
 

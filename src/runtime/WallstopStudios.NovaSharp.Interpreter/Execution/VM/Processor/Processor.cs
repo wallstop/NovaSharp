@@ -49,13 +49,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 _array = args;
                 _span = default;
-                _arg0 = null;
-                _arg1 = null;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg0 = default;
+                _arg1 = default;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = args != null ? args.Length : 0;
                 _hasSpan = false;
             }
@@ -64,13 +64,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 _array = null;
                 _span = args;
-                _arg0 = null;
-                _arg1 = null;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg0 = default;
+                _arg1 = default;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = args.Length;
                 _hasSpan = true;
             }
@@ -80,12 +80,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _array = null;
                 _span = default;
                 _arg0 = arg;
-                _arg1 = null;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg1 = default;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 1;
                 _hasSpan = false;
             }
@@ -96,11 +96,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _span = default;
                 _arg0 = arg1;
                 _arg1 = arg2;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 2;
                 _hasSpan = false;
             }
@@ -112,10 +112,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg0 = arg1;
                 _arg1 = arg2;
                 _arg2 = arg3;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 3;
                 _hasSpan = false;
             }
@@ -128,9 +128,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg1 = arg2;
                 _arg2 = arg3;
                 _arg3 = arg4;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 4;
                 _hasSpan = false;
             }
@@ -150,8 +150,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg2 = arg3;
                 _arg3 = arg4;
                 _arg4 = arg5;
-                _arg5 = null;
-                _arg6 = null;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 5;
                 _hasSpan = false;
             }
@@ -173,7 +173,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg3 = arg4;
                 _arg4 = arg5;
                 _arg5 = arg6;
-                _arg6 = null;
+                _arg6 = default;
                 _count = 6;
                 _hasSpan = false;
             }
@@ -234,7 +234,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         };
                     }
 
-                    return value ?? DynValue.Nil;
+                    return value;
                 }
             }
 
@@ -245,18 +245,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 if (_array != null)
                 {
-                    if (!ContainsNull(_array))
-                    {
-                        return DynValue.NewTuple(_array);
-                    }
-
-                    DynValue[] values = new DynValue[_count];
-                    for (int i = 0; i < _count; i++)
-                    {
-                        values[i] = _array[i] ?? DynValue.Nil;
-                    }
-
-                    return DynValue.NewTuple(values);
+                    return DynValue.NewTuple(_array);
                 }
 
                 if (_hasSpan)
@@ -337,25 +326,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
 
                 DynValue[] copiedValues = new DynValue[values.Length];
-                for (int i = 0; i < values.Length; i++)
-                {
-                    copiedValues[i] = values[i] ?? DynValue.Nil;
-                }
+                values.CopyTo(copiedValues);
 
                 return DynValue.NewTuple(copiedValues);
-            }
-
-            private static bool ContainsNull(DynValue[] values)
-            {
-                for (int i = 0; i < values.Length; i++)
-                {
-                    if (values[i] == null)
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
             }
         }
 
@@ -454,7 +427,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <returns>The return tuple.</returns>
         internal DynValue CallChunk(int entryPointAddress, ClosureContext closureScope)
         {
-            return CallChunk(entryPointAddress, closureScope, function: null);
+            return CallChunkCore(entryPointAddress, closureScope, hasFunction: false, DynValue.Nil);
         }
 
         /// <summary>
@@ -464,18 +437,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <returns>The return tuple.</returns>
         internal DynValue CallFunctionWithoutArguments(DynValue function)
         {
-            if (function == null)
+            if (function.Type != DataType.Function)
             {
-                throw new ArgumentNullException(nameof(function));
+                throw new ArgumentException("Value must be a Lua function.", nameof(function));
             }
 
             Closure closure = function.Function;
-            return CallChunk(closure.EntryPointByteCodeLocation, closure.ClosureContext, function);
+            return CallChunkCore(
+                closure.EntryPointByteCodeLocation,
+                closure.ClosureContext,
+                hasFunction: true,
+                function
+            );
         }
 
-        private DynValue CallChunk(
+        private DynValue CallChunkCore(
             int entryPointAddress,
             ClosureContext closureScope,
+            bool hasFunction,
             DynValue function
         )
         {
@@ -489,7 +468,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (coroutinesStack.Count > 0 && coroutinesStack[^1] != this)
             {
-                return coroutinesStack[^1].CallChunk(entryPointAddress, closureScope, function);
+                return coroutinesStack[^1]
+                    .CallChunkCore(entryPointAddress, closureScope, hasFunction, function);
             }
 
             EnterProcessor();
@@ -504,7 +484,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 try
                 {
-                    PushChunkEntryPointStackFrame(entryPointAddress, closureScope, function);
+                    PushChunkEntryPointStackFrame(
+                        entryPointAddress,
+                        closureScope,
+                        hasFunction,
+                        function
+                    );
                     return ProcessingLoop(entryPointAddress);
                 }
                 finally
@@ -665,17 +650,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        // pushes all what's required to perform a clr-to-script function call. function can be null if it's already
-        // at vstack top.
         /// <summary>
         /// Pushes the stack frame metadata needed to transition from CLR into Lua code.
         /// </summary>
         /// <param name="Flags">Flags describing the call entry point.</param>
-        /// <param name="function">Function being invoked (optional when already on stack).</param>
+        /// <param name="function">Function being invoked.</param>
         /// <param name="args">Arguments to copy.</param>
         /// <returns>The instruction pointer to start executing.</returns>
         private int PushClrToScriptStackFrame(
             CallStackItemFlags Flags,
+            DynValue function,
+            ClrCallArguments args
+        )
+        {
+            return PushClrToScriptStackFrameCore(Flags, hasFunction: true, function, args);
+        }
+
+        /// <summary>
+        /// Pushes a CLR-to-script frame when the function is already at the top of the value stack.
+        /// </summary>
+        private int PushClrToScriptStackFrame(CallStackItemFlags Flags, ClrCallArguments args)
+        {
+            return PushClrToScriptStackFrameCore(Flags, hasFunction: false, DynValue.Nil, args);
+        }
+
+        private int PushClrToScriptStackFrameCore(
+            CallStackItemFlags Flags,
+            bool hasFunction,
             DynValue function,
             ClrCallArguments args
         )
@@ -688,7 +689,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             int valueStackBaseline = _valueStack.Count;
             try
             {
-                if (function == null)
+                if (!hasFunction)
                 {
                     function = _valueStack.Peek();
                 }
@@ -722,6 +723,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private void PushChunkEntryPointStackFrame(
             int entryPointAddress,
             ClosureContext closureScope,
+            bool hasFunction,
             DynValue function
         )
         {
@@ -740,7 +742,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 frame.DebugEntryPoint = entryPointAddress;
                 frame.ReturnAddress = -1;
                 frame.ClosureScope = closureScope;
-                frame.Function = function;
+                frame.Function = hasFunction ? function : DynValue.Nil;
                 frame.CallingSourceRef = SourceRef.GetClrLocation();
                 frame.Flags = CallStackItemFlagsPresets.CallEntryPoint;
                 _executionStack.Push(frame);
@@ -794,11 +796,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             for (int i = 0; i < tupleLength - 1; i++)
             {
-                _valueStack.Push((tuple[i] ?? DynValue.Nil).ToScalar());
+                _valueStack.Push(tuple[i].ToScalar());
                 pushedCount++;
             }
 
-            return PushAdjustedTrailingValue(tuple[tupleLength - 1] ?? DynValue.Nil, pushedCount);
+            return PushAdjustedTrailingValue(tuple[tupleLength - 1], pushedCount);
         }
 
         private int _owningThreadId = -1;

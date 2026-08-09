@@ -235,11 +235,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         [global::TUnit.Core.Test]
         public async Task SerializeValueThrowsWhenValueIsNull()
         {
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                SerializationExtensions.SerializeValue(null)
-            )!;
+            string serialized = SerializationExtensions.SerializeValue(default);
 
-            await Assert.That(exception.ParamName).IsEqualTo("dynValue").ConfigureAwait(false);
+            await Assert.That(serialized).IsEqualTo("nil").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

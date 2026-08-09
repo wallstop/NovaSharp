@@ -71,7 +71,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task CheckScriptOwnershipIgnoresNullDynValues(LuaCompatibilityVersion version)
         {
             TestResource container = new(new Script(version));
-            container.CheckScriptOwnership((DynValue)null);
+            container.CheckScriptOwnership(DynValue.Nil);
             await Task.CompletedTask.ConfigureAwait(false);
         }
 

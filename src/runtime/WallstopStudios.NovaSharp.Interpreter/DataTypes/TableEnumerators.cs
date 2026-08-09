@@ -98,7 +98,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _table = table;
             _arrayIndex = 0;
             _nodeIndex = 0;
-            _current = null;
+            _current = DynValue.Nil;
         }
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return true;
             }
 
-            _current = null;
+            _current = DynValue.Nil;
             return false;
         }
 
@@ -137,7 +137,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             _arrayIndex = 0;
             _nodeIndex = 0;
-            _current = null;
+            _current = DynValue.Nil;
         }
 
         /// <summary>
@@ -170,7 +170,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _table = table;
             _arrayIndex = 0;
             _nodeIndex = 0;
-            _current = null;
+            _current = DynValue.Nil;
         }
 
         /// <summary>
@@ -198,7 +198,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return true;
             }
 
-            _current = null;
+            _current = DynValue.Nil;
             return false;
         }
 
@@ -209,7 +209,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             _arrayIndex = 0;
             _nodeIndex = 0;
-            _current = null;
+            _current = DynValue.Nil;
         }
 
         /// <summary>

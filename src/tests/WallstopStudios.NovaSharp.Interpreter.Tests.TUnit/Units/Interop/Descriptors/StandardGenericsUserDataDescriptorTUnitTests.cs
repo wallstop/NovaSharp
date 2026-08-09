@@ -75,7 +75,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             );
 
             Script script = new();
-            DynValue indexResult = descriptor.Index(
+            DynValue? indexResult = descriptor.Index(
                 script,
                 null,
                 DynValue.NewString("anything"),

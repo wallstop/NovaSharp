@@ -121,7 +121,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             await Assert.That(script.Call(result1).Number).IsEqualTo(42d).ConfigureAwait(false);
             await Assert.That(script.Call(result2).Number).IsEqualTo(42d).ConfigureAwait(false);
-            await Assert.That(result1).IsNotSameReferenceAs(result2).ConfigureAwait(false);
+            await Assert
+                .That(ReferenceEquals(result1.Function, result2.Function))
+                .IsFalse()
+                .ConfigureAwait(false);
             await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
             await Assert
                 .That(script.SourceCodeCount)
@@ -191,7 +194,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             await Assert.That(script.Call(first).Number).IsEqualTo(10d).ConfigureAwait(false);
             await Assert.That(script.Call(second).Number).IsEqualTo(20d).ConfigureAwait(false);
-            await Assert.That(first).IsNotSameReferenceAs(second).ConfigureAwait(false);
+            await Assert
+                .That(ReferenceEquals(first.Function, second.Function))
+                .IsFalse()
+                .ConfigureAwait(false);
             await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
         }
 

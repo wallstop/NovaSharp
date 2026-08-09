@@ -843,14 +843,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
 
                 DynValue package = gtable.RawGet("package");
 
-                if (package == null || package.Type != DataType.Table)
+                if (package.Type != DataType.Table)
                 {
                     gtable.Set("package", package = DynValue.NewTable(gtable.OwnerScript));
                 }
 
                 DynValue loaded = package.Table.RawGet("loaded");
 
-                if (loaded == null || loaded.Type != DataType.Table)
+                if (loaded.Type != DataType.Table)
                 {
                     package.Table.Set("loaded", loaded = DynValue.NewTable(gtable.OwnerScript));
                 }
@@ -964,7 +964,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
 
             DynValue tableNamespace = globals.RawGet("table");
 
-            if (tableNamespace != null && tableNamespace.Type == DataType.Table)
+            if (tableNamespace.Type == DataType.Table)
             {
                 tableNamespace.Table.Set(memberName, DynValue.Nil);
             }

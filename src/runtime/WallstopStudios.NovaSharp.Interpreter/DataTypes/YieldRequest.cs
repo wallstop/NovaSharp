@@ -28,10 +28,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 _returnValues = ExtractBackingArray(value);
                 _count = _returnValues.Length;
-                _arg0 = null;
-                _arg1 = null;
-                _arg2 = null;
-                _arg3 = null;
+                _arg0 = default;
+                _arg1 = default;
+                _arg2 = default;
+                _arg3 = default;
             }
         }
 
@@ -47,7 +47,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns>A new <see cref="YieldRequest"/>.</returns>
         internal static YieldRequest New(DynValue arg)
         {
-            return new YieldRequest { _count = 1, _arg0 = NormalizeReturnValue(arg) };
+            return new YieldRequest { _count = 1, _arg0 = arg };
         }
 
         /// <summary>
@@ -61,8 +61,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return new YieldRequest
             {
                 _count = 2,
-                _arg0 = NormalizeReturnValue(arg0),
-                _arg1 = NormalizeReturnValue(arg1),
+                _arg0 = arg0,
+                _arg1 = arg1,
             };
         }
 
@@ -78,9 +78,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return new YieldRequest
             {
                 _count = 3,
-                _arg0 = NormalizeReturnValue(arg0),
-                _arg1 = NormalizeReturnValue(arg1),
-                _arg2 = NormalizeReturnValue(arg2),
+                _arg0 = arg0,
+                _arg1 = arg1,
+                _arg2 = arg2,
             };
         }
 
@@ -97,10 +97,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return new YieldRequest
             {
                 _count = 4,
-                _arg0 = NormalizeReturnValue(arg0),
-                _arg1 = NormalizeReturnValue(arg1),
-                _arg2 = NormalizeReturnValue(arg2),
-                _arg3 = NormalizeReturnValue(arg3),
+                _arg0 = arg0,
+                _arg1 = arg1,
+                _arg2 = arg2,
+                _arg3 = arg3,
             };
         }
 
@@ -133,7 +133,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case 0:
                     return DynValue.EmptyTuple;
                 case 1:
-                    return NormalizeReturnValue(_arg0);
+                    return _arg0;
                 case 2:
                 case 3:
                 case 4:
@@ -156,31 +156,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     _returnValues = Array.Empty<DynValue>();
                     break;
                 case 1:
-                    _returnValues = new[] { NormalizeReturnValue(_arg0) };
+                    _returnValues = new[] { _arg0 };
                     break;
                 case 2:
-                    _returnValues = new[]
-                    {
-                        NormalizeReturnValue(_arg0),
-                        NormalizeReturnValue(_arg1),
-                    };
+                    _returnValues = new[] { _arg0, _arg1 };
                     break;
                 case 3:
-                    _returnValues = new[]
-                    {
-                        NormalizeReturnValue(_arg0),
-                        NormalizeReturnValue(_arg1),
-                        NormalizeReturnValue(_arg2),
-                    };
+                    _returnValues = new[] { _arg0, _arg1, _arg2 };
                     break;
                 case 4:
-                    _returnValues = new[]
-                    {
-                        NormalizeReturnValue(_arg0),
-                        NormalizeReturnValue(_arg1),
-                        NormalizeReturnValue(_arg2),
-                        NormalizeReturnValue(_arg3),
-                    };
+                    _returnValues = new[] { _arg0, _arg1, _arg2, _arg3 };
                     break;
                 default:
                     throw new InvalidOperationException("Invalid yield return value count.");
@@ -203,52 +188,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 && segment.Count == segment.Array.Length
             )
             {
-                return NormalizeReturnValues(segment.Array);
+                return segment.Array;
             }
 
-            DynValue[] values = value.ToArray();
-            NormalizeReturnValuesInPlace(values);
-            return values;
-        }
-
-        private static DynValue[] NormalizeReturnValues(DynValue[] values)
-        {
-            for (int i = 0; i < values.Length; i++)
-            {
-                if (values[i] == null)
-                {
-                    DynValue[] normalized = new DynValue[values.Length];
-                    Array.Copy(values, normalized, i);
-                    normalized[i] = DynValue.Nil;
-
-                    for (int j = i + 1; j < values.Length; j++)
-                    {
-                        normalized[j] = NormalizeReturnValue(values[j]);
-                    }
-
-                    return normalized;
-                }
-            }
-
-            return values;
-        }
-
-        private static void NormalizeReturnValuesInPlace(DynValue[] values)
-        {
-            for (int i = 0; i < values.Length; i++)
-            {
-                values[i] = NormalizeReturnValue(values[i]);
-            }
-        }
-
-        private static DynValue NormalizeReturnValue(DynValue value)
-        {
-            if (value == null)
-            {
-                return DynValue.Nil;
-            }
-
-            return value;
+            return value.ToArray();
         }
 
         /// <summary>

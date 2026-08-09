@@ -77,9 +77,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
                         .Any(snapshot =>
                             snapshot.Any(item =>
                                 item.Name == "sharedValue"
-                                && item.Value != null
-                                && item.Value.Type == DataType.Number
-                                && item.Value.Number == 99
+                                && item.Value.HasValue
+                                && item.Value.Value.Type == DataType.Number
+                                && item.Value.Value.Number == 99
                             )
                         )
                 )

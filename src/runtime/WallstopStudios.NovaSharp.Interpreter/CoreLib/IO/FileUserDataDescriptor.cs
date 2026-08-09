@@ -21,7 +21,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
 
         public Type Type => _inner.Type;
 
-        public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+        public DynValue? Index(Script script, object obj, DynValue index, bool isDirectIndexing)
         {
             return TryIndex(script, obj, index, isDirectIndexing, out DynValue value)
                 ? value
@@ -36,8 +36,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
             out DynValue value
         )
         {
-            DynValue scalar = index?.ToScalar();
-            if (scalar != null && scalar.Type != DataType.String)
+            DynValue scalar = index.ToScalar();
+            if (scalar.Type != DataType.String)
             {
                 value = DynValue.Nil;
                 return true;
@@ -54,8 +54,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
             bool isDirectIndexing
         )
         {
-            DynValue scalar = index?.ToScalar();
-            if (scalar != null && scalar.Type != DataType.String)
+            DynValue scalar = index.ToScalar();
+            if (scalar.Type != DataType.String)
             {
                 throw ScriptRuntimeException.IndexType(scalar);
             }
@@ -68,7 +68,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
             return _inner.AsString(obj);
         }
 
-        public DynValue MetaIndex(Script script, object obj, string metaname)
+        public DynValue? MetaIndex(Script script, object obj, string metaname)
         {
             return TryMetaIndex(script, obj, metaname, out DynValue value) ? value : null;
         }

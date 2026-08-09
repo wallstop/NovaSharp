@@ -596,11 +596,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 throw new ArgumentException("Global name cannot be null or empty.", nameof(name));
             }
 
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             Script script = GetLoadedScriptOrThrow();
             script.Globals.Set(name, value);
         }

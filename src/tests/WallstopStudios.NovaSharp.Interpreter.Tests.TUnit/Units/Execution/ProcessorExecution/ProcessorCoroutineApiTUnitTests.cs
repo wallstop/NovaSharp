@@ -349,7 +349,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             DynValue[] args =
             {
                 DynValue.NewNumber(-1),
-                null,
+                DynValue.Nil,
                 DynValue.NewNumber(40),
                 DynValue.NewNumber(2),
                 DynValue.NewNumber(-1),
@@ -387,7 +387,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             DynValue[] args =
             {
                 DynValue.NewNumber(-1),
-                null,
+                DynValue.Nil,
                 DynValue.NewNumber(40),
                 DynValue.NewNumber(2),
                 DynValue.NewNumber(-1),
@@ -663,7 +663,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                coroutine.Coroutine.Resume(context, null)
+                coroutine.Coroutine.Resume(context, (DynValue[])null)
             );
             await Assert.That(exception.ParamName).IsEqualTo("args");
         }

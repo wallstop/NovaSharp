@@ -72,19 +72,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets or sets the error handler to be called before stack unwinding
         /// </summary>
-        public DynValue ErrorHandlerBeforeUnwind
+        public DynValue? ErrorHandlerBeforeUnwind
         {
-            get { return HasErrorHandlerBeforeUnwind ? _errorHandlerBeforeUnwind : null; }
+            get
+            {
+                return HasErrorHandlerBeforeUnwind ? _errorHandlerBeforeUnwind : (DynValue?)null;
+            }
             set
             {
-                if (value == null)
+                if (!value.HasValue)
                 {
                     _errorHandlerBeforeUnwind = DynValue.Nil;
                     HasErrorHandlerBeforeUnwind = false;
                     return;
                 }
 
-                _errorHandlerBeforeUnwind = value;
+                _errorHandlerBeforeUnwind = value.Value;
                 HasErrorHandlerBeforeUnwind = true;
             }
         }

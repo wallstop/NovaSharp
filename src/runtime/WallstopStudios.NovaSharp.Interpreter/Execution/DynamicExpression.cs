@@ -11,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
     {
         private readonly DynamicExprExpression _exp;
         private readonly DynValue _constant;
+        private readonly bool _hasConstant;
 
         /// <summary>
         /// The code which generated this expression
@@ -29,6 +30,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             ExpressionCode = strExpr;
             OwnerScript = s;
             _constant = constant;
+            _hasConstant = true;
         }
 
         /// <summary>
@@ -42,7 +44,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             this.CheckScriptOwnership(context.Script);
 
-            if (_constant != null)
+            if (_hasConstant)
             {
                 return _constant;
             }
@@ -88,7 +90,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <returns></returns>
         public bool IsConstant()
         {
-            return _constant != null;
+            return _hasConstant;
         }
 
         /// <summary>

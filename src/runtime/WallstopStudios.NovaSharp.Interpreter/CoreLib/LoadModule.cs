@@ -53,7 +53,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             DynValue loaded = package.Table.RawGet("loaded");
 
-            if (loaded == null || loaded.Type != DataType.Table)
+            if (loaded.Type != DataType.Table)
             {
                 loaded = DynValue.NewTable(globalTable.OwnerScript);
                 package.Table.Set("loaded", loaded);

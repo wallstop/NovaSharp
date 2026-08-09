@@ -37,7 +37,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             DynValue result = valueStack.Peek();
 
             await Assert.That(result.Number).IsEqualTo(3d);
-            await Assert.That(result).IsNotSameReferenceAs(previousCounter);
+            await Assert.That(result).IsNotEqualTo(previousCounter);
 
             // The prior counter may already have been stored into the loop variable's slot,
             // so incrementing must never write through it.
@@ -61,7 +61,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             );
 
             await Assert.That(exception.Message).Contains("Can't assign number to type String");
-            await Assert.That(valueStack.Peek()).IsSameReferenceAs(readOnlyValue);
+            await Assert.That(valueStack.Peek()).IsEqualTo(readOnlyValue);
             await Assert.That(readOnlyValue.String).IsEqualTo("not-number");
         }
 
@@ -167,7 +167,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Processor.SetGlobalSymbolForTests(env, "answer", DynValue.NewNumber(42));
             await Assert.That(env.Table.Get("answer").Number).IsEqualTo(42d);
 
-            Processor.SetGlobalSymbolForTests(env, "cleared", null);
+            Processor.SetGlobalSymbolForTests(env, "cleared", DynValue.Nil);
             await Assert.That(env.Table.Get("cleared").IsNil()).IsTrue();
         }
 

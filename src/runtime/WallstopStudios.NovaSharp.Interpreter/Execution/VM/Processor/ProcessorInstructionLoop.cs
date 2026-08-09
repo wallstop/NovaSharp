@@ -780,14 +780,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool ShouldIgnoreToBeClosedValue(DynValue value)
         {
-            return value == null
-                || value.IsNil()
-                || (value.Type == DataType.Boolean && value.Boolean == false);
+            return value.IsNil() || (value.Type == DataType.Boolean && value.Boolean == false);
         }
 
         private void EnsureToBeClosedValue(SymbolRef symbol, DynValue value)
         {
-            DynValue candidate = value?.ToScalar() ?? DynValue.Nil;
+            DynValue candidate = value.ToScalar();
 
             if (ShouldIgnoreToBeClosedValue(candidate))
             {
@@ -796,7 +794,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             DynValue metamethod = GetMetamethodRaw(candidate, Metamethods.Close);
 
-            if (metamethod == null || metamethod.IsNil())
+            if (metamethod.IsNil())
             {
                 throw ScriptRuntimeException.CloseMetamethodExpected(candidate);
             }
@@ -809,7 +807,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             int instructionPtr
         )
         {
-            DynValue scalar = value?.ToScalar() ?? DynValue.Nil;
+            DynValue scalar = value.ToScalar();
 
             if (ShouldIgnoreToBeClosedValue(scalar))
             {
@@ -818,12 +816,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             DynValue metamethod = GetMetamethodRaw(scalar, Metamethods.Close);
 
-            if (metamethod == null || metamethod.IsNil())
+            if (metamethod.IsNil())
             {
                 throw ScriptRuntimeException.CloseMetamethodExpected(scalar);
             }
 
-            DynValue err = error ?? DynValue.Nil;
+            DynValue err = error;
 
             if (metamethod.Type == DataType.Function)
             {
@@ -877,7 +875,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
             }
 
-            DynValue activeError = error ?? DynValue.Nil;
+            DynValue activeError = error;
             ScriptRuntimeException closeException = null;
             for (int idx = closers.Count - 1; idx >= 0; idx--)
             {
@@ -925,7 +923,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return;
             }
 
-            DynValue activeError = error ?? DynValue.Nil;
+            DynValue activeError = error;
             ScriptRuntimeException closeException = null;
             while (stackframe.BlocksToClose.Count > 0)
             {
@@ -983,8 +981,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             bool decorateCloseErrorsBeforeUnwind
         )
         {
-            DynValue previous = slot?.Value;
-            if (previous == null || previous.IsNil())
+            if (slot == null)
+            {
+                return activeException;
+            }
+
+            DynValue previous = slot.Value;
+            if (previous.IsNil())
             {
                 return activeException;
             }
@@ -1181,7 +1184,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 DynValue meta = GetMetamethod(f, Metamethods.Iterator);
 
-                if (meta != null && !meta.IsNil())
+                if (!meta.IsNil())
                 {
                     if (meta.Type != DataType.Tuple)
                     {
@@ -1203,7 +1206,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     DynValue callmeta = GetMetamethod(f, Metamethods.Call);
 
-                    if (callmeta == null || callmeta.IsNil())
+                    if (callmeta.IsNil())
                     {
                         _valueStack.Push(EnumerableWrapper.ConvertTable(f.Table));
                         return;
@@ -1726,7 +1729,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             // fallback to __call metamethod
             DynValue m = GetMetamethod(fn, Metamethods.Call);
 
-            if (m != null && m.IsNotNil() && CanCallMetamethod(m))
+            if (m.IsNotNil() && CanCallMetamethod(m))
             {
                 // Use pooled array for __call metamethod invocation
                 using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
@@ -2524,21 +2527,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return result;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsNaN(DynValue value)
-        {
-            return value.Type == DataType.Number && double.IsNaN(value.Number);
-        }
-
         private int ExecEq(Instruction i, int instructionPtr)
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            // First a brute force equals over the references. Values are immutable and shared, so
-            // identity implies equality for every Lua type except NaN, which is never equal to
-            // itself - not even to the very same wrapper instance (`local x = 0/0; x == x`).
-            if (ReferenceEquals(r, l) && !IsNaN(r))
+            // Raw identity is conclusive before __eq. Compare the referenced Lua payload, never
+            // the DynValue wrapper: DynValue is an inline value and has no wrapper identity.
+            if (r.HasSameReferenceIdentity(l))
             {
                 _valueStack.Push(DynValue.True);
                 return instructionPtr;
@@ -2791,7 +2787,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue idx = originalIdx.ToScalar();
             DynValue obj = _valueStack.Pop().ToScalar();
             DynValue value = GetStoreValue(i);
-            DynValue h = null;
+            DynValue h = default;
 
             while (nestedMetaOps > 0)
             {
@@ -2810,7 +2806,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                     h = GetMetamethodRaw(obj, Metamethods.NewIndex);
 
-                    if (h == null || h.IsNil())
+                    if (h.IsNil())
                     {
                         if (isMultiIndex)
                         {
@@ -2849,7 +2845,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     h = GetMetamethodRaw(obj, Metamethods.NewIndex);
 
-                    if (h == null || h.IsNil())
+                    if (h.IsNil())
                     {
                         string varDesc = _script.Options.LuaCompatibleErrors ? i.Name : null;
                         throw ScriptRuntimeException.IndexType(obj, varDesc);
@@ -2876,7 +2872,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 else
                 {
                     obj = h;
-                    h = null;
+                    h = DynValue.Nil;
                 }
             }
             throw ScriptRuntimeException.LoopInNewIndex();
@@ -2895,7 +2891,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue idx = originalIdx.ToScalar();
             DynValue obj = _valueStack.Pop().ToScalar();
 
-            DynValue h = null;
+            DynValue h = default;
 
             while (nestedMetaOps > 0)
             {
@@ -2916,7 +2912,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                     h = GetMetamethodRaw(obj, Metamethods.Index);
 
-                    if (h == null || h.IsNil())
+                    if (h.IsNil())
                     {
                         if (isMultiIndex)
                         {
@@ -2957,7 +2953,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     h = GetMetamethodRaw(obj, Metamethods.Index);
 
-                    if (h == null || h.IsNil())
+                    if (h.IsNil())
                     {
                         string varDesc = _script.Options.LuaCompatibleErrors ? i.Name : null;
                         throw ScriptRuntimeException.IndexType(obj, varDesc);
@@ -2981,7 +2977,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 else
                 {
                     obj = h;
-                    h = null;
+                    h = DynValue.Nil;
                 }
             }
 

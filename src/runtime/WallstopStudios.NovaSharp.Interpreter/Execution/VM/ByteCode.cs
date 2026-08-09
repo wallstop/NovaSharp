@@ -239,11 +239,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         public Instruction EmitLiteral(DynValue value)
         {
-            if (value is null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.Literal, Value = value }
             );
@@ -536,11 +531,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="value">Payload carried by the instruction.</param>
         public Instruction EmitMeta(string funcName, OpCodeMetadataType metaType, DynValue value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
                 {
@@ -718,11 +708,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             string baseName = null
         )
         {
-            if (index == null)
-            {
-                throw new ArgumentNullException(nameof(index));
-            }
-
             return EmitIndexCore(index, hasIndex: true, isNameIndex, isExpList, baseName);
         }
 
@@ -800,11 +785,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             string baseName = null
         )
         {
-            if (index == null)
-            {
-                throw new ArgumentNullException(nameof(index));
-            }
-
             return EmitIndexSetCore(
                 stackofs,
                 tupleidx,

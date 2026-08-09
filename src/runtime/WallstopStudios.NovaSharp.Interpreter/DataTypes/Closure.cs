@@ -50,12 +50,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public Script OwnerScript { get; private set; }
 
         /// <summary>
-        /// Gets or sets a cached <see cref="DynValue"/> wrapping this closure.
-        /// Used by <see cref="DynValue.FromClosure"/> to avoid repeated allocations.
-        /// </summary>
-        internal DynValue CachedDynValue { get; set; }
-
-        /// <summary>
         /// Shortcut for an empty closure
         /// </summary>
         private static readonly ClosureContext EmptyClosure = new();
@@ -287,7 +281,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue arg)
         {
-            return OwnerScript.Call(DynValue.FromClosure(this), arg ?? DynValue.Nil);
+            return OwnerScript.Call(DynValue.FromClosure(this), arg);
         }
 
         /// <summary>
@@ -299,11 +293,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue arg1, DynValue arg2)
         {
-            return OwnerScript.Call(
-                DynValue.FromClosure(this),
-                arg1 ?? DynValue.Nil,
-                arg2 ?? DynValue.Nil
-            );
+            return OwnerScript.Call(DynValue.FromClosure(this), arg1, arg2);
         }
 
         /// <summary>
@@ -316,12 +306,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue arg1, DynValue arg2, DynValue arg3)
         {
-            return OwnerScript.Call(
-                DynValue.FromClosure(this),
-                arg1 ?? DynValue.Nil,
-                arg2 ?? DynValue.Nil,
-                arg3 ?? DynValue.Nil
-            );
+            return OwnerScript.Call(DynValue.FromClosure(this), arg1, arg2, arg3);
         }
 
         /// <summary>
@@ -335,13 +320,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
         {
-            return OwnerScript.Call(
-                DynValue.FromClosure(this),
-                arg1 ?? DynValue.Nil,
-                arg2 ?? DynValue.Nil,
-                arg3 ?? DynValue.Nil,
-                arg4 ?? DynValue.Nil
-            );
+            return OwnerScript.Call(DynValue.FromClosure(this), arg1, arg2, arg3, arg4);
         }
 
         /// <summary>
@@ -362,14 +341,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue arg5
         )
         {
-            return OwnerScript.Call(
-                DynValue.FromClosure(this),
-                arg1 ?? DynValue.Nil,
-                arg2 ?? DynValue.Nil,
-                arg3 ?? DynValue.Nil,
-                arg4 ?? DynValue.Nil,
-                arg5 ?? DynValue.Nil
-            );
+            return OwnerScript.Call(DynValue.FromClosure(this), arg1, arg2, arg3, arg4, arg5);
         }
 
         /// <summary>
@@ -392,15 +364,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue arg6
         )
         {
-            return OwnerScript.Call(
-                DynValue.FromClosure(this),
-                arg1 ?? DynValue.Nil,
-                arg2 ?? DynValue.Nil,
-                arg3 ?? DynValue.Nil,
-                arg4 ?? DynValue.Nil,
-                arg5 ?? DynValue.Nil,
-                arg6 ?? DynValue.Nil
-            );
+            return OwnerScript.Call(DynValue.FromClosure(this), arg1, arg2, arg3, arg4, arg5, arg6);
         }
 
         /// <summary>
@@ -427,13 +391,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             return OwnerScript.Call(
                 DynValue.FromClosure(this),
-                arg1 ?? DynValue.Nil,
-                arg2 ?? DynValue.Nil,
-                arg3 ?? DynValue.Nil,
-                arg4 ?? DynValue.Nil,
-                arg5 ?? DynValue.Nil,
-                arg6 ?? DynValue.Nil,
-                arg7 ?? DynValue.Nil
+                arg1,
+                arg2,
+                arg3,
+                arg4,
+                arg5,
+                arg6,
+                arg7
             );
         }
 
@@ -494,34 +458,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(params DynValue[] args)
         {
-            return OwnerScript.Call(DynValue.FromClosure(this), NormalizeNullArguments(args));
-        }
-
-        private static DynValue[] NormalizeNullArguments(DynValue[] args)
-        {
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
             }
 
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (args[i] == null)
-                {
-                    DynValue[] normalizedArgs = new DynValue[args.Length];
-                    Array.Copy(args, normalizedArgs, i);
-                    normalizedArgs[i] = DynValue.Nil;
-
-                    for (int j = i + 1; j < args.Length; j++)
-                    {
-                        normalizedArgs[j] = args[j] ?? DynValue.Nil;
-                    }
-
-                    return normalizedArgs;
-                }
-            }
-
-            return args;
+            return OwnerScript.Call(DynValue.FromClosure(this), args);
         }
 
         /// <summary>

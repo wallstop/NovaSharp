@@ -220,7 +220,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue lt
         )
         {
-            if (lt == null || lt.IsNil())
+            if (lt.IsNil())
             {
                 if (
                     !executionContext.TryGetBinaryMetamethod(a, b, Metamethods.Lt, out lt)
@@ -520,7 +520,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         int srcIndex = from + i;
                         int destIndex = srcIndex + offset;
                         DynValue value = source.Get(srcIndex);
-                        destination.Set(destIndex, value ?? DynValue.Nil);
+                        destination.Set(destIndex, value);
                     }
                 }
                 else
@@ -530,7 +530,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         int srcIndex = from + i;
                         int destIndex = srcIndex + offset;
                         DynValue value = source.Get(srcIndex);
-                        destination.Set(destIndex, value ?? DynValue.Nil);
+                        destination.Set(destIndex, value);
                     }
                 }
             }

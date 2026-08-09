@@ -45,7 +45,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return;
             }
 
-            DynValue activeError = error ?? DynValue.Nil;
+            DynValue activeError = error;
             ScriptRuntimeException closeException = null;
             foreach (SymbolRef sym in symbols)
             {
@@ -148,7 +148,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 );
             }
 
-            dynValue.Table.Set(name, value ?? DynValue.Nil);
+            dynValue.Table.Set(name, value);
         }
 
         /// <summary>

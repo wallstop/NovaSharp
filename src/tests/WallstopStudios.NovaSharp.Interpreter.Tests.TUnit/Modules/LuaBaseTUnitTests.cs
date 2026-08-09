@@ -31,15 +31,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue coroutineValue = script.CreateCoroutine(
                 script.LoadString("return function(...) return ... end").Function
             );
+            bool createdStaticUserData = UserData.TryCreateStatic<SampleUserData>(
+                out DynValue staticUserData
+            );
 
             (DynValue Value, int Expected)[] cases =
             {
                 (DynValue.Void, LuaBaseProxy.TNone),
                 (DynValue.Nil, LuaBaseProxy.TNil),
                 (DynValue.NewNumber(42), LuaBaseProxy.TNumber),
-                (UserData.CreateStatic<SampleUserData>(), LuaBaseProxy.TUserData),
+                (staticUserData, LuaBaseProxy.TUserData),
                 (coroutineValue, LuaBaseProxy.TThread),
             };
+
+            await Assert.That(createdStaticUserData).IsTrue().ConfigureAwait(false);
 
             foreach ((DynValue value, int expected) in cases)
             {

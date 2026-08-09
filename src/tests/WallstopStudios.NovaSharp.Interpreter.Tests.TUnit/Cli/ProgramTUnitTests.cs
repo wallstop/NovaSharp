@@ -509,7 +509,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
                 get { return ">"; }
             }
 
-            public override DynValue Evaluate(string input)
+            public override DynValue? Evaluate(string input)
             {
                 EvaluateCalled = true;
                 LastInput = input;

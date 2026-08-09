@@ -100,7 +100,7 @@ namespace WallstopStudios.NovaSharp.Hardwire.Utils
             for (int i = 1; i <= t.Length; i++)
             {
                 DynValue entry = t.Get(i);
-                if (entry?.Type != DataType.Table)
+                if (entry.Type != DataType.Table)
                 {
                     throw new ArgumentException($"Entry at index {i} is not a table.", nameof(t));
                 }

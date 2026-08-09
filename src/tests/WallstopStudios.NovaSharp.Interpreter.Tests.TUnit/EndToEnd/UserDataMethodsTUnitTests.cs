@@ -449,9 +449,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 get { return typeof(SomeOtherClassCustomDescriptor); }
             }
 
-            public DynValue Index(Script script, object obj, DynValue index, bool dummy)
+            public bool TryIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                bool dummy,
+                out DynValue value
+            )
             {
-                return DynValue.NewNumber(index.Number * 4);
+                value = DynValue.NewNumber(index.Number * 4);
+                return true;
             }
 
             public bool SetIndex(
@@ -470,9 +477,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return null;
             }
 
-            public DynValue MetaIndex(Script script, object obj, string metaname)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
             {
-                return null;
+                value = DynValue.Nil;
+                return false;
             }
 
             public bool IsTypeCompatible(Type type, object obj)
@@ -483,9 +491,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         internal sealed class SelfDescribingClass : IUserDataType
         {
-            public DynValue Index(Script script, DynValue index, bool isNameIndex)
+            public bool TryIndex(
+                Script script,
+                DynValue index,
+                bool isNameIndex,
+                out DynValue value
+            )
             {
-                return DynValue.NewNumber(index.Number * 3);
+                value = DynValue.NewNumber(index.Number * 3);
+                return true;
             }
 
             public bool SetIndex(Script script, DynValue index, DynValue value, bool isNameIndex)
@@ -493,8 +507,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 throw new NotImplementedException();
             }
 
-            public DynValue MetaIndex(Script script, string metaname)
+            public bool TryMetaIndex(Script script, string metaname, out DynValue value)
             {
+                value = DynValue.Nil;
                 throw new NotImplementedException();
             }
         }
@@ -527,7 +542,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
             DynValue res = s.DoString(script);
 
@@ -578,8 +593,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>().Value);
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
             DynValue res = s.DoString(script);
 
@@ -610,8 +625,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>().Value);
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
             DynValue res = s.DoString(script);
 
@@ -640,8 +655,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>().Value);
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
             DynValue res = s.DoString(script);
 
@@ -665,8 +680,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>().Value);
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
             DynValue res = s.DoString(script);
 
@@ -694,8 +709,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("static", UserData.CreateStatic<SomeClass>());
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("static", UserData.CreateStatic<SomeClass>().Value);
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
             DynValue res = s.DoString(script);
 
@@ -722,7 +737,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
             DynValue res = s.DoString(script);
 
@@ -749,7 +764,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
             DynValue res = s.DoString(script);
 
@@ -1109,7 +1124,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeOtherClass obj = new();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
             DynValue res = s.DoString(script);
 
@@ -1135,7 +1150,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeOtherClassWithDualInterfaces obj = new();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
             DynValue res = s.DoString(script);
 
@@ -1163,7 +1178,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             SomeClass obj = new();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
             DynValue res = s.DoString(script);
 
@@ -1192,7 +1207,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 UserDataRegistrationScope.Track<SelfDescribingClass>(ensureUnregistered: true);
             registrationScope.RegisterType<SelfDescribingClass>();
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
             DynValue res = s.DoString(script);
 
@@ -1223,7 +1238,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 );
             registrationScope.RegisterType<SomeOtherClassCustomDescriptor>(new CustomDescriptor());
 
-            s.Globals.Set("myobj", UserData.Create(obj));
+            s.Globals.Set("myobj", UserData.Create(obj).Value);
 
             DynValue res = s.DoString(script);
 
@@ -1248,8 +1263,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
                 SomeClass obj = new();
 
-                s.Globals.Set("mystatic", UserData.CreateStatic<SomeClass>());
-                s.Globals.Set("myobj", UserData.Create(obj));
+                s.Globals.Set("mystatic", UserData.CreateStatic<SomeClass>().Value);
+                s.Globals.Set("myobj", UserData.Create(obj).Value);
 
                 DynValue res = s.DoString(script);
 

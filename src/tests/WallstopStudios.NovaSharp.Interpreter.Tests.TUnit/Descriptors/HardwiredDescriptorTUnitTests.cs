@@ -197,10 +197,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = new();
             TrackingMemberDescriptor descriptor = new(typeof(int), MemberDescriptorAccess.CanWrite);
 
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                descriptor.SetValue(script, new object(), value: null)
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.SetValue(script, new object(), value: default)
             );
-            await Assert.That(exception.ParamName).IsEqualTo("value").ConfigureAwait(false);
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -302,7 +302,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             registrationScope.RegisterType<DummyStaticUserData>();
             DynValueMemberDescriptor descriptor = new(
                 "userdata",
-                UserData.CreateStatic<DummyStaticUserData>()
+                UserData.CreateStatic<DummyStaticUserData>().Value
             );
             Table wiring = new(null);
 
@@ -328,7 +328,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<DummyInstanceUserData>(ensureUnregistered: true);
             registrationScope.RegisterType<DummyInstanceUserData>();
-            DynValue instance = UserData.Create(new DummyInstanceUserData());
+            DynValue instance = UserData.Create(new DummyInstanceUserData()).Value;
             DynValueMemberDescriptor descriptor = new("userdata", instance);
             Table wiring = new(null);
 
@@ -383,7 +383,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 .That(descriptor.MemberAccess)
                 .IsEqualTo(MemberDescriptorAccess.CanRead)
                 .ConfigureAwait(false);
-            await Assert.That(descriptor.Value).IsNull().ConfigureAwait(false);
+            await Assert.That(descriptor.Value.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

@@ -47,7 +47,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <param name="index">The index.</param>
         /// <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
         /// <returns></returns>
-        public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+        public DynValue? Index(Script script, object obj, DynValue index, bool isDirectIndexing)
         {
             return TryIndex(script, obj, index, isDirectIndexing, out DynValue value)
                 ? value
@@ -134,7 +134,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <param name="obj">The object (null if a static request is done)</param>
         /// <param name="metaname">The name of the metamember.</param>
         /// <returns></returns>
-        public DynValue MetaIndex(Script script, object obj, string metaname)
+        public DynValue? MetaIndex(Script script, object obj, string metaname)
         {
             return TryMetaIndex(script, obj, metaname, out DynValue value) ? value : null;
         }

@@ -57,11 +57,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         internal void SetErrorHandlerBeforeUnwind(DynValue handler, bool hasHandler)
         {
-            if (handler == null)
-            {
-                throw new System.ArgumentNullException(nameof(handler));
-            }
-
             ErrorHandlerBeforeUnwind = hasHandler ? handler : DynValue.Nil;
             HasErrorHandlerBeforeUnwind = hasHandler;
         }
@@ -111,7 +106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DebugSymbols = null;
             CallingSourceRef = default;
             ClrFunction = null;
-            Function = null;
+            Function = DynValue.Nil;
             Continuation = null;
             ErrorHandler = null;
             SetErrorHandlerBeforeUnwind(DynValue.Nil, hasHandler: false);

@@ -9,8 +9,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     {
         public static async Task ExpectAsync(DynValue actual, params object[] expected)
         {
-            ArgumentNullException.ThrowIfNull(actual);
-
             if (expected == null)
             {
                 expected = new object[] { null };

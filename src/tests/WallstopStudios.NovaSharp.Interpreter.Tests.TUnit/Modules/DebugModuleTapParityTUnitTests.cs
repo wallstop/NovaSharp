@@ -124,7 +124,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             await Assert.That(registry.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
-            DynValue loaded = registry.Table.RawGet("_LOADED") ?? DynValue.Nil;
+            DynValue loaded = registry.Table.RawGet("_LOADED");
             await Assert.That(loaded.IsNil()).IsFalse().ConfigureAwait(false);
             await Assert.That(loaded.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
         }

@@ -163,8 +163,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 UserDataRegistrationScope.Track<OverloadsTestClass>(ensureUnregistered: true);
             registrationScope.RegisterType<OverloadsTestClass>();
 
-            script.Globals.Set("s", UserData.CreateStatic<OverloadsTestClass>());
-            script.Globals.Set("o", UserData.Create(obj));
+            script.Globals.Set("s", UserData.CreateStatic<OverloadsTestClass>().Value);
+            script.Globals.Set("o", UserData.Create(obj).Value);
 
             DynValue result = script.DoString("return " + code);
 

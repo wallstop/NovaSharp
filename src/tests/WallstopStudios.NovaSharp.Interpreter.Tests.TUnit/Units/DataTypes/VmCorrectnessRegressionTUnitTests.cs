@@ -199,7 +199,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Script script = new();
             Table table = new(script);
             MutableHashUserDataKey hostKey = new(11);
-            DynValue key = UserData.Create(hostKey);
+            bool created = UserData.TryCreate(hostKey, out DynValue key);
+            await Assert.That(created).IsTrue().ConfigureAwait(false);
 
             table.Set(key, DynValue.NewString("userdata"));
             hostKey.Hash = 23;
@@ -224,8 +225,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             TestUserDataObject1 obj1 = new();
             TestUserDataObject2 obj2 = new();
 
-            DynValue ud1 = UserData.Create(obj1);
-            DynValue ud2 = UserData.Create(obj2);
+            bool createdFirst = UserData.TryCreate(obj1, out DynValue ud1);
+            bool createdSecond = UserData.TryCreate(obj2, out DynValue ud2);
+            await Assert.That(createdFirst).IsTrue().ConfigureAwait(false);
+            await Assert.That(createdSecond).IsTrue().ConfigureAwait(false);
 
             // Verify they are UserData type
             await Assert.That(ud1.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);

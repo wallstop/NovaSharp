@@ -211,11 +211,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             ByteCode byteCode = new(new Script());
 
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                byteCode.EmitLiteral(null!)
-            );
+            Instruction instruction = byteCode.EmitLiteral(DynValue.Nil);
 
-            await Assert.That(exception.ParamName).IsEqualTo("value").ConfigureAwait(false);
+            await Assert.That(instruction.Value.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -236,12 +234,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(instruction.HasValue).IsTrue().ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
             await Assert.That(absent.HasValue).IsFalse().ConfigureAwait(false);
-            await Assert.That(absent.Value).IsSameReferenceAs(DynValue.Nil).ConfigureAwait(false);
+            await Assert.That(absent.Value.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(explicitNil.HasValue).IsTrue().ConfigureAwait(false);
-            await Assert
-                .That(explicitNil.Value)
-                .IsSameReferenceAs(DynValue.Nil)
-                .ConfigureAwait(false);
+            await Assert.That(explicitNil.Value.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -266,7 +261,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(instruction.HasValue).IsTrue().ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
             await Assert.That(absent.HasValue).IsFalse().ConfigureAwait(false);
-            await Assert.That(absent.Value).IsSameReferenceAs(DynValue.Nil).ConfigureAwait(false);
+            await Assert.That(absent.Value.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(explicitNil.HasValue).IsTrue().ConfigureAwait(false);
         }
 

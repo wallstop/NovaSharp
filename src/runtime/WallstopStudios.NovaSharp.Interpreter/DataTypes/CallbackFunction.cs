@@ -22,11 +22,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public string Name { get; private set; }
 
         /// <summary>
-        /// Gets or sets a cached <see cref="DynValue"/> wrapping this callback.
-        /// </summary>
-        internal DynValue CachedDynValue { get; set; }
-
-        /// <summary>
         /// Gets the call back.
         /// </summary>
         /// <value>
@@ -146,7 +141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 executionContext,
                 args.Count,
-                args.Count > 0 ? args[0] : null,
+                args.Count > 0 ? args[0] : DynValue.Nil,
                 isMethodCall
             );
 
@@ -180,7 +175,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 script,
                 args.Count,
-                args.Count > 0 ? args[0] : null,
+                args.Count > 0 ? args[0] : DynValue.Nil,
                 isMethodCall
             );
 
@@ -195,7 +190,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             bool isMethodCall = false
         )
         {
-            isMethodCall = NormalizeMethodCall(executionContext, 0, null, isMethodCall);
+            isMethodCall = NormalizeMethodCall(executionContext, 0, DynValue.Nil, isMethodCall);
             return InvokeArgumentViewCallback(
                 executionContext,
                 new CallbackArgumentsView(isMethodCall)
@@ -215,7 +210,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 );
             }
 
-            isMethodCall = NormalizeMethodCall(script, 0, null, isMethodCall);
+            isMethodCall = NormalizeMethodCall(script, 0, DynValue.Nil, isMethodCall);
             return _argumentViewNoContextCallback(new CallbackArgumentsView(isMethodCall));
         }
 
@@ -594,7 +589,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 executionContext,
                 count,
-                count > 0 ? args[offset] : null,
+                count > 0 ? args[offset] : DynValue.Nil,
                 isMethodCall
             );
             return InvokeArgumentViewCallback(
@@ -630,7 +625,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 script,
                 count,
-                count > 0 ? args[offset] : null,
+                count > 0 ? args[offset] : DynValue.Nil,
                 isMethodCall
             );
             return _argumentViewNoContextCallback(
@@ -655,7 +650,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 executionContext,
                 args.Length,
-                args.Length > 0 ? args[0] : null,
+                args.Length > 0 ? args[0] : DynValue.Nil,
                 isMethodCall
             );
             return InvokeArgumentViewCallback(
@@ -685,7 +680,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 script,
                 args.Length,
-                args.Length > 0 ? args[0] : null,
+                args.Length > 0 ? args[0] : DynValue.Nil,
                 isMethodCall
             );
             return _argumentViewNoContextCallback(new CallbackArgumentsView(args, isMethodCall));
@@ -713,7 +708,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 executionContext,
                 args.Count,
-                args.Count > 0 ? args[0] : null,
+                args.Count > 0 ? args[0] : DynValue.Nil,
                 isMethodCall
             );
             return ClrCallback(executionContext, new CallbackArguments(args, isMethodCall));
@@ -727,7 +722,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             bool isMethodCall = false
         )
         {
-            isMethodCall = NormalizeMethodCall(executionContext, 0, null, isMethodCall);
+            isMethodCall = NormalizeMethodCall(executionContext, 0, DynValue.Nil, isMethodCall);
             return ClrCallback(executionContext, new CallbackArguments(isMethodCall));
         }
 
@@ -1019,7 +1014,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (colon == ColonOperatorBehaviour.TreatAsDotOnUserData)
             {
-                return count > 0 && firstArgument?.Type == DataType.UserData;
+                return count > 0 && firstArgument.Type == DataType.UserData;
             }
 
             return isMethodCall;

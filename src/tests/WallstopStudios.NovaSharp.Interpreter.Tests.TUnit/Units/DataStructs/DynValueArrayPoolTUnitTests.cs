@@ -91,7 +91,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
 
             // Should be the same array (from pool) and cleared
             await Assert.That(second).IsSameReferenceAs(first).ConfigureAwait(false);
-            await Assert.That(second[0]).IsNull().ConfigureAwait(false);
+            await Assert.That(second[0].IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
@@ -192,7 +192,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             );
             // Large arrays are not pooled, so should be different instances
             await Assert.That(second).IsNotSameReferenceAs(first).ConfigureAwait(false);
-            await Assert.That(first[0]).IsNull().ConfigureAwait(false);
+            await Assert.That(first[0].IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
@@ -219,7 +219,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             );
             await Assert.That(second).IsSameReferenceAs(first).ConfigureAwait(false);
             // Should be cleared
-            await Assert.That(second[0]).IsNull().ConfigureAwait(false);
+            await Assert.That(second[0].IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [Test]

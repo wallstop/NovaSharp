@@ -333,7 +333,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             coroutineValue.Coroutine.Resume(); // Execute to Dead state
 
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
-                script.RecycleCoroutine(coroutineValue.Coroutine, null)
+                script.RecycleCoroutine(coroutineValue.Coroutine, DynValue.Nil)
             );
 
             await Assert

@@ -571,8 +571,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             second.TailCallData.ErrorHandler.AdditionalData = "dirty";
             DynValue third = ErrorHandlingModule.Xpcall(context, args);
 
-            DynValue nilRequest = null;
-            DynValue voidRequest = null;
+            DynValue? nilRequest = null;
+            DynValue? voidRequest = null;
             if (
                 version == LuaCompatibilityVersion.Lua51
                 || version == LuaCompatibilityVersion.Lua52
@@ -598,25 +598,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
                 .IsTrue()
                 .ConfigureAwait(false);
             await Assert
-                .That(first.TailCallData.ErrorHandlerBeforeUnwind)
-                .IsSameReferenceAs(handler)
+                .That(first.TailCallData.ErrorHandlerBeforeUnwind.HasValue)
+                .IsTrue()
                 .ConfigureAwait(false);
-            if (nilRequest != null)
+            await Assert
+                .That(first.TailCallData.ErrorHandlerBeforeUnwind.Value.Function)
+                .IsSameReferenceAs(handler.Function)
+                .ConfigureAwait(false);
+            if (nilRequest.HasValue)
             {
+                DynValue presentNilRequest = nilRequest.Value;
+                await Assert.That(voidRequest.HasValue).IsTrue().ConfigureAwait(false);
+                DynValue presentVoidRequest = voidRequest.Value;
                 await Assert
-                    .That(nilRequest.TailCallData.HasErrorHandlerBeforeUnwind)
+                    .That(presentNilRequest.TailCallData.HasErrorHandlerBeforeUnwind)
                     .IsTrue()
                     .ConfigureAwait(false);
                 await Assert
-                    .That(nilRequest.TailCallData.ErrorHandlerBeforeUnwind.Type)
+                    .That(presentNilRequest.TailCallData.ErrorHandlerBeforeUnwind.HasValue)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(presentNilRequest.TailCallData.ErrorHandlerBeforeUnwind.Value.Type)
                     .IsEqualTo(DataType.Nil)
                     .ConfigureAwait(false);
                 await Assert
-                    .That(voidRequest.TailCallData.HasErrorHandlerBeforeUnwind)
+                    .That(presentVoidRequest.TailCallData.HasErrorHandlerBeforeUnwind)
                     .IsTrue()
                     .ConfigureAwait(false);
                 await Assert
-                    .That(voidRequest.TailCallData.ErrorHandlerBeforeUnwind.Type)
+                    .That(presentVoidRequest.TailCallData.ErrorHandlerBeforeUnwind.HasValue)
+                    .IsTrue()
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(presentVoidRequest.TailCallData.ErrorHandlerBeforeUnwind.Value.Type)
                     .IsEqualTo(DataType.Void)
                     .ConfigureAwait(false);
             }

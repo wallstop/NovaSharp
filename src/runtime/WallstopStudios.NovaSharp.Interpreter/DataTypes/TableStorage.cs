@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
 
     /// <summary>
     /// PUC-Lua-style backing store for <see cref="Table"/>: a contiguous array part holding the dense
@@ -66,14 +67,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         private uint[] _arrayOccupancy;
 
-        /// <summary>
-        /// Memoized key values for the array part, where <c>_arrayKeys[i]</c> is the boxed integer
-        /// <c>i + 1</c>. Allocated lazily on the first traversal that reaches the array part, so a
-        /// table that is only indexed never pays for it, and a table that is traversed repeatedly
-        /// pays once instead of once per step.
-        /// </summary>
-        private DynValue[] _arrayKeys;
-
         private Node[] _nodes;
 
         /// <summary>Bucket table holding one-based node indices; zero means the bucket is empty.</summary>
@@ -103,7 +96,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 long bytes = 0;
                 if (_array is { Length: > 0 })
                 {
-                    bytes += ArrayObjectOverhead + ((long)_array.Length * IntPtr.Size);
+                    bytes +=
+                        ArrayObjectOverhead
+                        + ((long)_array.Length * PoolElementSize<DynValue>.EstimatedBytes);
                 }
 
                 if (_arrayOccupancy is { Length: > 0 })
@@ -111,17 +106,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     bytes += ArrayObjectOverhead + ((long)_arrayOccupancy.Length * sizeof(uint));
                 }
 
-                if (_arrayKeys is { Length: > 0 })
-                {
-                    bytes += ArrayObjectOverhead + ((long)_arrayKeys.Length * IntPtr.Size);
-                }
-
                 if (_nodes is { Length: > 0 })
                 {
-                    // Two references plus two 32-bit fields per node.
+                    // Each node stores two inline DynValues plus its hash and bucket-chain link.
                     bytes +=
                         ArrayObjectOverhead
-                        + ((long)_nodes.Length * ((2 * IntPtr.Size) + sizeof(int) + sizeof(int)));
+                        + (
+                            (long)_nodes.Length
+                            * (
+                                (2 * PoolElementSize<DynValue>.EstimatedBytes)
+                                + sizeof(int)
+                                + sizeof(int)
+                            )
+                        );
                 }
 
                 if (_buckets is { Length: > 0 })
@@ -140,7 +137,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             _array = null;
             _arrayOccupancy = null;
-            _arrayKeys = null;
             _nodes = null;
             _buckets = null;
             _arrayCount = 0;
@@ -419,7 +415,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     continue;
                 }
 
-                pair = new TablePair(ArrayKeyAt(slot, arrayLength), value);
+                pair = new TablePair(ArrayKeyAt(slot), value);
                 return true;
             }
 
@@ -790,13 +786,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _array = arrayCapacity > 0 ? new DynValue[arrayCapacity] : null;
             _arrayOccupancy = arrayCapacity > 0 ? new uint[(arrayCapacity + 31) >> 5] : null;
 
-            // Slot-to-key mapping is stable, so a memo that still fits is reused across a grow; a
-            // shrink drops it rather than paying to copy keys the table no longer addresses.
-            if (_arrayKeys != null && _arrayKeys.Length > arrayCapacity)
-            {
-                _arrayKeys = null;
-            }
-
             _nodes = bucketCapacity > 0 ? new Node[bucketCapacity] : null;
             _buckets = bucketCapacity > 0 ? new int[bucketCapacity] : null;
             _arrayCount = 0;
@@ -947,32 +936,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return false;
         }
 
-        /// <summary>
-        /// Returns the key value for array slot <paramref name="slot"/>, materializing and memoizing
-        /// it on first use so repeated traversals of the same table do not re-allocate keys.
-        /// </summary>
-        private DynValue ArrayKeyAt(int slot, int arrayLength)
+        /// <summary>Returns the positive integer key represented by an array slot.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static DynValue ArrayKeyAt(int slot)
         {
-            DynValue[] keys = _arrayKeys;
-            if (keys == null || keys.Length < arrayLength)
-            {
-                DynValue[] grown = new DynValue[arrayLength];
-                if (keys != null)
-                {
-                    Array.Copy(keys, grown, keys.Length);
-                }
-
-                _arrayKeys = keys = grown;
-            }
-
-            DynValue key = keys[slot];
-            if (key == null)
-            {
-                key = DynValue.FromNumber(slot + 1);
-                keys[slot] = key;
-            }
-
-            return key;
+            return DynValue.FromInteger(slot + 1L);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

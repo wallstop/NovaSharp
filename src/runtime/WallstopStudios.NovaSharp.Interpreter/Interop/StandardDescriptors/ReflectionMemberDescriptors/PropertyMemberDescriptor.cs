@@ -345,11 +345,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         /// <param name="value">The value to set.</param>
         public void SetValue(Script script, object obj, DynValue value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
 
             if (_setter == null)

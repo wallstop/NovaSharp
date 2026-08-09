@@ -134,7 +134,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Loaders
             {
                 DynValue s = globalContext.RawGet("LUA_PATH");
 
-                if (s != null && s.Type == DataType.String)
+                if (s.Type == DataType.String)
                 {
                     return ResolveModuleNameWithSearchedPaths(modname, UnpackStringPaths(s.String));
                 }
@@ -168,7 +168,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Loaders
             {
                 DynValue s = globalContext.RawGet("LUA_PATH");
 
-                if (s != null && s.Type == DataType.String)
+                if (s.Type == DataType.String)
                 {
                     return ResolveModuleName(modname, UnpackStringPaths(s.String));
                 }

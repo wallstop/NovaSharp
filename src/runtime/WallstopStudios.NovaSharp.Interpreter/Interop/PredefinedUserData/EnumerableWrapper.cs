@@ -76,7 +76,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         internal static DynValue ConvertIterator(Script script, IEnumerator enumerator)
         {
             EnumerableWrapper ei = new(script, enumerator);
-            return DynValue.NewTuple(UserData.Create(ei), DynValue.Nil, DynValue.Nil);
+            UserData.TryCreate(ei, out DynValue iterator);
+            return DynValue.NewTuple(iterator, DynValue.Nil, DynValue.Nil);
         }
 
         /// <summary>
@@ -90,7 +91,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         /// <summary>
         /// Implements member access on the iterator wrapper (e.g., Current/MoveNext/Reset).
         /// </summary>
-        public DynValue Index(Script script, DynValue index, bool isDirectIndexing)
+        public DynValue? Index(Script script, DynValue index, bool isDirectIndexing)
         {
             return TryIndex(script, index, isDirectIndexing, out DynValue value) ? value : null;
         }
@@ -147,7 +148,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         /// <summary>
         /// Provides metamethods required to drive the iterator from Lua (<c>__call</c>).
         /// </summary>
-        public DynValue MetaIndex(Script script, string metaname)
+        public DynValue? MetaIndex(Script script, string metaname)
         {
             return TryMetaIndex(script, metaname, out DynValue value) ? value : null;
         }

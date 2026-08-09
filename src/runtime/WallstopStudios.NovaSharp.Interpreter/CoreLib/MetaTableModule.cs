@@ -92,7 +92,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 return DynValue.Nil;
             }
-            else if (meta.RawGet(Metamethods.Metatable) != null)
+            else if (meta.TryRawGet(Metamethods.Metatable, out DynValue _))
             {
                 return meta.Get(Metamethods.Metatable);
             }

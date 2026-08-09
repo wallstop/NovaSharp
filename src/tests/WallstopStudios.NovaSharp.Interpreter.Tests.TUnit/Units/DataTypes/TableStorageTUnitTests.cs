@@ -52,7 +52,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .IsEqualTo("zero")
                 .ConfigureAwait(false);
             await Assert.That(table.Remove(0)).IsTrue().ConfigureAwait(false);
-            await Assert.That(table.RawGet(0)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet(0).Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -69,9 +69,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             table.Set("third", DynValue.NewNumber(5));
 
             List<string> order = new();
+            bool arrayKeysAreIntegers = true;
             foreach (TablePair pair in table.GetPairsEnumerator())
             {
+                if (pair.Key.Type == DataType.Number)
+                {
+                    arrayKeysAreIntegers &= pair.Key.IsInteger;
+                }
+
                 order.Add(
+                    pair.Key.Type == DataType.String
+                        ? pair.Key.String
+                        : pair.Key.Number.ToString(CultureInfo.InvariantCulture)
+                );
+            }
+
+            List<string> repeatedOrder = new();
+            foreach (TablePair pair in table.GetPairsEnumerator())
+            {
+                repeatedOrder.Add(
                     pair.Key.Type == DataType.String
                         ? pair.Key.String
                         : pair.Key.Number.ToString(CultureInfo.InvariantCulture)
@@ -82,6 +98,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .That(string.Join(",", order))
                 .IsEqualTo("1,2,first,second,third")
                 .ConfigureAwait(false);
+            await Assert
+                .That(string.Join(",", repeatedOrder))
+                .IsEqualTo("1,2,first,second,third")
+                .ConfigureAwait(false);
+            await Assert.That(arrayKeysAreIntegers).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -197,7 +218,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(new Script(version));
             table.Set("present", DynValue.NewNumber(1));
 
-            await Assert.That(table.RawGet((string)null)).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet((string)null).Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
             await Assert.That(table.Remove((string)null)).IsFalse().ConfigureAwait(false);
         }
 
@@ -256,9 +280,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             long perEntry = (script.AllocationTracker.CurrentBytes - empty) / Entries;
 
-            // The array part stores one reference per slot; the previous linked-list storage charged
-            // 64 bytes for every entry. Guard the order of magnitude, not an exact figure.
-            await Assert.That(perEntry).IsLessThanOrEqualTo(24).ConfigureAwait(false);
+            // The array part conservatively accounts one 32-byte inline DynValue per slot plus one
+            // occupancy bit. A hash node needs two DynValues plus its hash and chain link (72 bytes).
+            await Assert.That(perEntry).IsGreaterThanOrEqualTo(32).ConfigureAwait(false);
+            await Assert.That(perEntry).IsLessThanOrEqualTo(40).ConfigureAwait(false);
             await Assert.That(table.Length).IsEqualTo(Entries).ConfigureAwait(false);
         }
 
@@ -451,7 +476,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                             ? table.RawGet(int.Parse(parts[1], CultureInfo.InvariantCulture))
                             : table.RawGet("field" + parts[1]);
 
-                    await Assert.That(read).IsNotNull().ConfigureAwait(false);
                     await Assert.That(read.Equals(entry.Value)).IsTrue().ConfigureAwait(false);
                 }
             }
@@ -493,7 +517,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             // Every hash entry is gone but the array part still holds live keys, so the table is not
             // emptied wholesale -- the hash tables have to be released by the rebuild itself.
             await Assert.That(table.Count).IsEqualTo(8).ConfigureAwait(false);
-            await Assert.That(table.RawGet("alpha")).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(table.RawGet("alpha").Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
             await Assert
                 .That(script.AllocationTracker.CurrentBytes)
                 .IsEqualTo(arrayOnly)
@@ -576,7 +603,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 await Assert.That(table.RawGet(i).Number).IsEqualTo(i).ConfigureAwait(false);
             }
 
-            await Assert.That(table.RawGet(41)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet(41).Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
 
             // The shrunken store must still grow again cleanly.
             for (int i = 41; i <= 120; i++)
@@ -609,7 +636,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             for (int i = 0; i < Count; i++)
             {
                 DynValue value = table.RawGet("entity_" + i.ToString(CultureInfo.InvariantCulture));
-                await Assert.That(value).IsNotNull().ConfigureAwait(false);
                 await Assert.That(value.Number).IsEqualTo(i).ConfigureAwait(false);
             }
 

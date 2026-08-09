@@ -27,23 +27,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Table table = new(script);
             table.Set(1, DynValue.NewNumber(2));
 
-            DynValue nilValue = ClrToScriptConversions.TryObjectToTrivialDynValue(script, null);
+            DynValue nilValue = ClrToScriptConversions
+                .TryObjectToTrivialDynValue(script, null)
+                .Value;
             await Assert.That(nilValue.IsNil()).IsTrue();
 
             DynValue dyn = DynValue.NewNumber(5);
-            DynValue passthrough = ClrToScriptConversions.TryObjectToTrivialDynValue(script, dyn);
-            await Assert.That(ReferenceEquals(passthrough, dyn)).IsTrue();
+            DynValue passthrough = ClrToScriptConversions
+                .TryObjectToTrivialDynValue(script, dyn)
+                .Value;
+            await Assert.That(passthrough).IsEqualTo(dyn);
 
-            DynValue booleanValue = ClrToScriptConversions.TryObjectToTrivialDynValue(script, true);
+            DynValue booleanValue = ClrToScriptConversions
+                .TryObjectToTrivialDynValue(script, true)
+                .Value;
             await Assert.That(booleanValue.Boolean).IsTrue();
 
-            DynValue stringValue = ClrToScriptConversions.TryObjectToTrivialDynValue(script, "abc");
+            DynValue stringValue = ClrToScriptConversions
+                .TryObjectToTrivialDynValue(script, "abc")
+                .Value;
             await Assert.That(stringValue.String).IsEqualTo("abc");
 
-            DynValue numberValue = ClrToScriptConversions.TryObjectToTrivialDynValue(script, 42);
+            DynValue numberValue = ClrToScriptConversions
+                .TryObjectToTrivialDynValue(script, 42)
+                .Value;
             await Assert.That(numberValue.Number).IsEqualTo(42d);
 
-            DynValue tableValue = ClrToScriptConversions.TryObjectToTrivialDynValue(script, table);
+            DynValue tableValue = ClrToScriptConversions
+                .TryObjectToTrivialDynValue(script, table)
+                .Value;
             await Assert.That(ReferenceEquals(tableValue.Table, table)).IsTrue();
         }
 
@@ -58,10 +70,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             );
 
             Script script = new();
-            DynValue result = ClrToScriptConversions.TryObjectToSimpleDynValue(
-                script,
-                new CustomValue("converted")
-            );
+            DynValue result = ClrToScriptConversions
+                .TryObjectToSimpleDynValue(script, new CustomValue("converted"))
+                .Value;
             await Assert.That(result.String).IsEqualTo("converted");
         }
 
@@ -74,17 +85,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script script = new(version);
             DynValue closureValue = script.DoString("return function(a) return a end");
 
-            DynValue closureResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
-                script,
-                closureValue.Function
-            );
+            DynValue closureResult = ClrToScriptConversions
+                .TryObjectToSimpleDynValue(script, closureValue.Function)
+                .Value;
             await Assert.That(closureResult.Type).IsEqualTo(DataType.Function);
 
             CallbackFunction callback = new((_, _) => DynValue.NewNumber(7));
-            DynValue callbackResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
-                script,
-                callback
-            );
+            DynValue callbackResult = ClrToScriptConversions
+                .TryObjectToSimpleDynValue(script, callback)
+                .Value;
             await Assert.That(callbackResult.Type).IsEqualTo(DataType.ClrFunction);
         }
 

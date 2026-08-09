@@ -762,11 +762,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script script = new(version);
             using MemoryStream stream = new();
 
-            ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                script.Dump(null, stream)
+            ArgumentException exception = ExpectException<ArgumentException>(() =>
+                script.Dump(DynValue.Nil, stream)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("function");
+            await Assert.That(exception.Message).Contains("function arg is not a function");
         }
 
         [global::TUnit.Core.Test]

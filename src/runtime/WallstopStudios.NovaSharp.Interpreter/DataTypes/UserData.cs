@@ -319,7 +319,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="o">The object</param>
         /// <returns></returns>
-        public static DynValue Create(object o)
+        public static DynValue? Create(object o)
         {
             return TryCreate(o, out DynValue value) ? value : null;
         }
@@ -353,7 +353,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="descr">The IUserDataDescriptor</param>
         /// <returns></returns>
-        public static DynValue CreateStatic(IUserDataDescriptor descr)
+        public static DynValue? CreateStatic(IUserDataDescriptor descr)
         {
             return TryCreateStatic(descr, out DynValue value) ? value : null;
         }
@@ -402,7 +402,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="t">The type</param>
         /// <returns></returns>
-        public static DynValue CreateStatic(Type t)
+        public static DynValue? CreateStatic(Type t)
         {
             if (t == null)
             {
@@ -433,7 +433,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <typeparam name="T">The Type</typeparam>
         /// <returns></returns>
-        public static DynValue CreateStatic<T>()
+        public static DynValue? CreateStatic<T>()
         {
             return TryCreateStatic<T>(out DynValue value) ? value : null;
         }

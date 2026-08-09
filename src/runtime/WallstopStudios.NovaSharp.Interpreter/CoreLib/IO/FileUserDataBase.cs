@@ -188,7 +188,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                     Write(str);
                 }
 
-                return UserData.Create(this);
+                return UserData.TryCreate(this, out DynValue value) ? value : DynValue.Nil;
             }
             catch (ScriptRuntimeException)
             {

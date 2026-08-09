@@ -125,14 +125,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
-        /// Resolves the metamethod for the given value, or returns <see langword="null"/> when none is
-        /// available.
+        /// Resolves the metamethod for the given value, or returns <see cref="DynValue.Nil"/> when
+        /// none is available.
         /// </summary>
         internal DynValue GetMetamethod(DynValue value, string metamethod)
         {
             return TryGetMetamethod(value, metamethod, out DynValue resolvedMetamethod)
                 ? resolvedMetamethod
-                : null;
+                : DynValue.Nil;
         }
 
         /// <summary>
@@ -166,15 +166,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
-        /// Resolves the metamethod from the metatable only, or returns <see langword="null"/> when none
-        /// is available.
+        /// Resolves the metamethod from the metatable only, or returns <see cref="DynValue.Nil"/>
+        /// when none is available.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal DynValue GetMetamethodRaw(DynValue value, string metamethod)
         {
             return TryGetMetamethodRaw(value, metamethod, out DynValue resolvedMetamethod)
                 ? resolvedMetamethod
-                : null;
+                : DynValue.Nil;
         }
 
         /// <summary>

@@ -43,10 +43,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         [global::TUnit.Core.Test]
         public async Task IsJsonNullThrowsOnNullDynValue()
         {
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                JsonNull.IsJsonNull(null)
-            );
-            await Assert.That(exception.ParamName).IsEqualTo("v").ConfigureAwait(false);
+            await Assert.That(JsonNull.IsJsonNull(default)).IsFalse().ConfigureAwait(false);
         }
     }
 }

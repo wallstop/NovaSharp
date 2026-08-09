@@ -32,12 +32,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             internal FixedCallArguments(DynValue arg)
             {
                 _arg0 = arg;
-                _arg1 = null;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg1 = default;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 1;
             }
 
@@ -45,11 +45,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             {
                 _arg0 = arg1;
                 _arg1 = arg2;
-                _arg2 = null;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg2 = default;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 2;
             }
 
@@ -58,10 +58,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg0 = arg1;
                 _arg1 = arg2;
                 _arg2 = arg3;
-                _arg3 = null;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg3 = default;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 3;
             }
 
@@ -71,9 +71,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg1 = arg2;
                 _arg2 = arg3;
                 _arg3 = arg4;
-                _arg4 = null;
-                _arg5 = null;
-                _arg6 = null;
+                _arg4 = default;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 4;
             }
 
@@ -90,8 +90,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg2 = arg3;
                 _arg3 = arg4;
                 _arg4 = arg5;
-                _arg5 = null;
-                _arg6 = null;
+                _arg5 = default;
+                _arg6 = default;
                 _count = 5;
             }
 
@@ -110,7 +110,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg3 = arg4;
                 _arg4 = arg5;
                 _arg5 = arg6;
-                _arg6 = null;
+                _arg6 = default;
                 _count = 6;
             }
 
@@ -342,11 +342,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <returns></returns>
         public Table GetMetatable(DynValue value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             return _processor.GetMetatable(value);
         }
 
@@ -355,12 +350,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// </summary>
         /// <param name="value">The value.</param>
         /// <param name="metamethod">The metamethod name.</param>
-        /// <returns></returns>
+        /// <returns>The metamethod, or <see cref="DynValue.Nil"/> when none is available.</returns>
         public DynValue GetMetamethod(DynValue value, string metamethod)
         {
             return TryGetMetamethod(value, metamethod, out DynValue resolvedMetamethod)
                 ? resolvedMetamethod
-                : null;
+                : DynValue.Nil;
         }
 
         /// <summary>
@@ -378,11 +373,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             out DynValue resolvedMetamethod
         )
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             if (metamethod == null)
             {
                 throw new ArgumentNullException(nameof(metamethod));
@@ -392,7 +382,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         }
 
         /// <summary>
-        /// prepares a tail call request for the specified metamethod, or null if no metamethod is found.
+        /// Prepares a tail call request for the specified metamethod, or nil if no metamethod is found.
         /// </summary>
         public DynValue GetMetamethodTailCall(
             DynValue value,
@@ -400,22 +390,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             params DynValue[] args
         )
         {
+            return TryGetMetamethodTailCall(value, metamethod, out DynValue tailCall, args)
+                ? tailCall
+                : DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Attempts to prepare a tail call request for the specified metamethod.
+        /// </summary>
+        public bool TryGetMetamethodTailCall(
+            DynValue value,
+            string metamethod,
+            out DynValue tailCall,
+            params DynValue[] args
+        )
+        {
             if (!TryGetMetamethod(value, metamethod, out DynValue meta))
             {
-                return null;
+                tailCall = DynValue.Nil;
+                return false;
             }
 
-            return DynValue.NewTailCallReq(meta, args);
+            tailCall = DynValue.NewTailCallReq(meta, args);
+            return true;
         }
 
         /// <summary>
         /// Gets the metamethod to be used for a binary operation using op1 and op2.
         /// </summary>
+        /// <returns>The metamethod, or <see cref="DynValue.Nil"/> when none is available.</returns>
         public DynValue GetBinaryMetamethod(DynValue op1, DynValue op2, string eventName)
         {
             return TryGetBinaryMetamethod(op1, op2, eventName, out DynValue resolvedMetamethod)
                 ? resolvedMetamethod
-                : null;
+                : DynValue.Nil;
         }
 
         /// <summary>
@@ -436,16 +444,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             out DynValue resolvedMetamethod
         )
         {
-            if (op1 == null)
-            {
-                throw new ArgumentNullException(nameof(op1));
-            }
-
-            if (op2 == null)
-            {
-                throw new ArgumentNullException(nameof(op2));
-            }
-
             if (eventName == null)
             {
                 throw new ArgumentNullException(nameof(eventName));
@@ -534,11 +532,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
         public DynValue Call(DynValue func)
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func);
@@ -566,11 +559,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
         public DynValue Call(DynValue func, DynValue arg)
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg);
@@ -595,11 +583,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
         public DynValue Call(DynValue func, DynValue arg1, DynValue arg2)
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg1, arg2);
@@ -625,11 +608,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
         public DynValue Call(DynValue func, DynValue arg1, DynValue arg2, DynValue arg3)
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg1, arg2, arg3);
@@ -662,11 +640,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             DynValue arg4
         )
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg1, arg2, arg3, arg4);
@@ -701,11 +674,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             DynValue arg5
         )
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg1, arg2, arg3, arg4, arg5);
@@ -742,11 +710,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             DynValue arg6
         )
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -785,11 +748,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             DynValue arg7
         )
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -813,11 +771,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
         public DynValue Call(DynValue func, ReadOnlySpan<DynValue> args)
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (func.Type == DataType.ClrFunction)
             {
                 DynValue ret = func.Callback.HasArgumentViewCallback
@@ -907,11 +860,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
         public DynValue Call(DynValue func, params DynValue[] args)
         {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
@@ -1021,7 +969,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         {
             if (!IsDirectCallTarget(metafunction))
             {
-                result = null;
+                result = default;
                 return false;
             }
 
@@ -1066,7 +1014,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                     );
                     return true;
                 default:
-                    result = null;
+                    result = default;
                     return false;
             }
         }
@@ -1422,7 +1370,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             {
                 DynValue env = EvaluateSymbolByName(WellKnownSymbols.ENV);
 
-                if (env == null || env.Type != DataType.Table)
+                if (env.Type != DataType.Table)
                 {
                     return null;
                 }
@@ -1448,18 +1396,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(exception));
             }
 
-            if (messageHandler != null)
+            exception.DecoratedMessage = _processor.PerformMessageDecorationBeforeUnwind(
+                messageHandler,
+                exception.Message,
+                CallingLocation
+            );
+        }
+
+        /// <summary>
+        /// Preserves the original error message when no pre-unwind handler was supplied.
+        /// </summary>
+        public static void PerformMessageDecorationBeforeUnwind(ScriptRuntimeException exception)
+        {
+            if (exception == null)
             {
-                exception.DecoratedMessage = _processor.PerformMessageDecorationBeforeUnwind(
-                    messageHandler,
-                    exception.Message,
-                    CallingLocation
-                );
+                throw new ArgumentNullException(nameof(exception));
             }
-            else
-            {
-                exception.DecoratedMessage = exception.Message;
-            }
+
+            exception.DecoratedMessage = exception.Message;
         }
 
         /// <summary>

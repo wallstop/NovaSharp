@@ -19,7 +19,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         /// Skips on custom conversions, etc.
         /// Does NOT throw on failure.
         /// </summary>
-        internal static DynValue TryObjectToTrivialDynValue(Script script, object obj)
+        internal static DynValue? TryObjectToTrivialDynValue(Script script, object obj)
         {
             return TryObjectToTrivialDynValue(script, obj, out DynValue result) ? result : null;
         }
@@ -64,7 +64,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         /// Tries to convert a CLR object to a NovaSharp value, using "simple" logic.
         /// Does NOT throw on failure.
         /// </summary>
-        internal static DynValue TryObjectToSimpleDynValue(Script script, object obj)
+        internal static DynValue? TryObjectToSimpleDynValue(Script script, object obj)
         {
             return TryObjectToSimpleDynValue(script, obj, out DynValue result) ? result : null;
         }
@@ -341,7 +341,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
         /// <returns></returns>
-        public static DynValue EnumerationToDynValue(Script script, object obj)
+        public static DynValue? EnumerationToDynValue(Script script, object obj)
         {
             return TryEnumerationToDynValue(script, obj, out DynValue result) ? result : null;
         }

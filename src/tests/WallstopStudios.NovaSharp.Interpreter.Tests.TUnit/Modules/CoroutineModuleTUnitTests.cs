@@ -1827,8 +1827,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue directTuple = directResult.YieldRequest.ToTuple();
 
             await Assert
-                .That(directTuple)
-                .IsSameReferenceAs(DynValue.EmptyTuple)
+                .That(directTuple.Tuple)
+                .IsSameReferenceAs(DynValue.EmptyTuple.Tuple)
                 .ConfigureAwait(false);
 
             DynValue materializedResult = CoroutineModule.Yield(context, arguments);
@@ -1837,8 +1837,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(values.Length).IsEqualTo(0).ConfigureAwait(false);
             await Assert
-                .That(materializedTuple)
-                .IsSameReferenceAs(DynValue.EmptyTuple)
+                .That(materializedTuple.Tuple)
+                .IsSameReferenceAs(DynValue.EmptyTuple.Tuple)
                 .ConfigureAwait(false);
         }
 
@@ -1873,7 +1873,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue[] originalValues =
             {
                 DynValue.NewString("head"),
-                null,
+                default,
                 DynValue.NewString("tail"),
             };
             DynValue result = DynValue.NewYieldReq(originalValues);
@@ -1881,7 +1881,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
             DynValue tuple = result.YieldRequest.ToTuple();
 
-            await Assert.That(originalValues[1]).IsNull().ConfigureAwait(false);
+            await Assert.That(originalValues[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(values.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(values.Span[0].String).IsEqualTo("head").ConfigureAwait(false);
             await Assert.That(values.Span[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
@@ -1893,7 +1893,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task YieldRequestNormalizesSingleFixedNullReturnValueToNil()
         {
-            DynValue result = DynValue.NewYieldReq((DynValue)null);
+            DynValue result = DynValue.NewYieldReq(default(DynValue));
 
             DynValue tuple = result.YieldRequest.ToTuple();
             ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
@@ -1908,7 +1908,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             DynValue result = DynValue.NewYieldReq(
                 DynValue.NewString("head"),
-                null,
+                default(DynValue),
                 DynValue.NewString("tail")
             );
 

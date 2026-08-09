@@ -38,7 +38,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         protected DynValueMemberDescriptor(string name)
         {
             MemberAccess = MemberDescriptorAccess.CanRead;
-            _value = null;
+            _value = default;
             Name = name;
         }
 
@@ -49,11 +49,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         /// <param name="value">The value.</param>
         public DynValueMemberDescriptor(string name, DynValue value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             _value = value;
             Name = name;
 

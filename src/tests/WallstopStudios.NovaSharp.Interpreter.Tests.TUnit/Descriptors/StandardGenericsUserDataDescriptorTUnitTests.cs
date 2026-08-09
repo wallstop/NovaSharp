@@ -83,7 +83,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
             Script script = new();
 
-            DynValue indexResult = descriptor.Index(
+            DynValue? indexResult = descriptor.Index(
                 script,
                 null,
                 DynValue.NewString("anything"),
@@ -98,7 +98,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 isDirectIndexing: true
             );
 
-            DynValue metaIndexResult = descriptor.MetaIndex(script, null, "__add");
+            DynValue? metaIndexResult = descriptor.MetaIndex(script, null, "__add");
 
             await Assert.That(indexResult).IsNull().ConfigureAwait(false);
             await Assert.That(setIndexResult).IsFalse().ConfigureAwait(false);

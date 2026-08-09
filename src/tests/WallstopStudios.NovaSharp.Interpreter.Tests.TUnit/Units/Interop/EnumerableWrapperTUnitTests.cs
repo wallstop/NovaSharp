@@ -96,7 +96,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
-            DynValue moveNext = descriptor.Index(
+            DynValue moveNext = RequireIndex(
+                descriptor,
                 script,
                 instance,
                 DynValue.NewString("MoveNext"),
@@ -108,7 +109,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
 
             await Assert.That(advanced).IsTrue().ConfigureAwait(false);
 
-            DynValue current = descriptor.Index(
+            DynValue current = RequireIndex(
+                descriptor,
                 script,
                 instance,
                 DynValue.NewString("Current"),
@@ -116,7 +118,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             );
             await Assert.That(current.String).IsEqualTo("alpha").ConfigureAwait(false);
 
-            DynValue resetCallback = descriptor.Index(
+            DynValue resetCallback = RequireIndex(
+                descriptor,
                 script,
                 instance,
                 DynValue.NewString("Reset"),
@@ -177,23 +180,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
-            DynValue moveNext =
-                descriptor.Index(script, instance, DynValue.NewString("move_next"), true)
-                ?? throw new global::System.InvalidOperationException(
-                    "move_next callback should exist"
-                );
-            DynValue reset =
-                descriptor.Index(script, instance, DynValue.NewString("reset"), true)
-                ?? throw new global::System.InvalidOperationException(
-                    "reset callback should exist"
-                );
+            DynValue moveNext = RequireIndex(
+                descriptor,
+                script,
+                instance,
+                DynValue.NewString("move_next"),
+                true
+            );
+            DynValue reset = RequireIndex(
+                descriptor,
+                script,
+                instance,
+                DynValue.NewString("reset"),
+                true
+            );
 
             DynValue GetCurrentAccessor()
             {
-                return descriptor.Index(script, instance, DynValue.NewString("current"), true)
-                    ?? throw new global::System.InvalidOperationException(
-                        "current accessor should exist"
-                    );
+                return RequireIndex(
+                    descriptor,
+                    script,
+                    instance,
+                    DynValue.NewString("current"),
+                    true
+                );
             }
 
             await Assert
@@ -207,20 +217,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 .ConfigureAwait(false);
             await Assert.That(GetCurrentAccessor().String).IsEqualTo("two").ConfigureAwait(false);
 
-            DynValue unknown = descriptor.Index(
-                script,
-                instance,
-                DynValue.NewString("does_not_exist"),
-                true
-            );
-            bool foundUnknown = ((IUserDataDescriptorTryAccess)descriptor).TryIndex(
+            bool foundUnknown = descriptor.TryIndex(
                 script,
                 instance,
                 DynValue.NewString("does_not_exist"),
                 true,
                 out DynValue missing
             );
-            await Assert.That(unknown).IsNull().ConfigureAwait(false);
             await Assert.That(foundUnknown).IsFalse().ConfigureAwait(false);
             await Assert.That(missing.IsNil()).IsTrue().ConfigureAwait(false);
 
@@ -271,15 +274,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             ];
             (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);
 
-            DynValue value = descriptor.MetaIndex(script, instance, "__len");
+            bool found = descriptor.TryMetaIndex(script, instance, "__len", out DynValue value);
 
-            await Assert.That(value).IsNull().ConfigureAwait(false);
+            await Assert.That(found).IsFalse().ConfigureAwait(false);
+            await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         private static DynValue GetIteratorCallback(Script script, DynValue iteratorUserData)
         {
             (IUserDataDescriptor descriptor, object instance) = GetDescriptor(iteratorUserData);
-            return descriptor.MetaIndex(script, instance, "__call");
+            return descriptor.TryMetaIndex(script, instance, "__call", out DynValue callback)
+                ? callback
+                : throw new global::System.InvalidOperationException(
+                    "iterator callback should exist"
+                );
+        }
+
+        private static DynValue RequireIndex(
+            IUserDataDescriptor descriptor,
+            Script script,
+            object instance,
+            DynValue index,
+            bool isDirectIndexing
+        )
+        {
+            return descriptor.TryIndex(
+                script,
+                instance,
+                index,
+                isDirectIndexing,
+                out DynValue value
+            )
+                ? value
+                : throw new global::System.InvalidOperationException(
+                    $"{index.ToPrintString()} should exist"
+                );
         }
 
         private static (IUserDataDescriptor descriptor, object instance) GetDescriptor(

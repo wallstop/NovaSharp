@@ -89,15 +89,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             CustomConverterRegistry registry = new();
             Script script = new();
 
-            Func<Script, string, DynValue> converter = (s, value) =>
+            Func<Script, string, DynValue?> converter = (s, value) =>
                 DynValue.NewString(value + "-converted");
             registry.SetClrToScriptCustomConversion(converter);
 
-            Func<Script, object, DynValue> resolved = registry.GetClrToScriptCustomConversion(
+            Func<Script, object, DynValue?> resolved = registry.GetClrToScriptCustomConversion(
                 typeof(string)
             );
             await Assert.That(resolved).IsNotNull().ConfigureAwait(false);
-            DynValue converted = resolved(script, "value");
+            DynValue converted = resolved(script, "value").Value;
             await Assert.That(converted.String).IsEqualTo("value-converted").ConfigureAwait(false);
 
             ClrToScriptTryConverter adapted = registry.GetClrToScriptTryConversion(typeof(string));
@@ -130,7 +130,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
 
             registry.SetClrToScriptCustomConversion(
                 typeof(string),
-                (Func<Script, object, DynValue>)null
+                (Func<Script, object, DynValue?>)null
             );
             await Assert
                 .That(registry.GetClrToScriptCustomConversion(typeof(string)))
@@ -162,10 +162,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 }
             );
 
-            Func<Script, object, DynValue> resolved = registry.GetClrToScriptCustomConversion(
+            Func<Script, object, DynValue?> resolved = registry.GetClrToScriptCustomConversion(
                 typeof(int)
             );
-            DynValue result = resolved(script, 10);
+            DynValue result = resolved(script, 10).Value;
 
             await Assert.That(result.Number).IsEqualTo(15d).ConfigureAwait(false);
 
@@ -203,27 +203,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             await Assert.That(declined).IsFalse().ConfigureAwait(false);
             await Assert.That(declinedResult.IsNil()).IsTrue().ConfigureAwait(false);
 
-            Func<Script, object, DynValue> legacyView = registry.GetClrToScriptCustomConversion(
+            Func<Script, object, DynValue?> legacyView = registry.GetClrToScriptCustomConversion(
                 typeof(int)
             );
-            await Assert.That(legacyView(script, 10).IsNil()).IsTrue().ConfigureAwait(false);
-            await Assert.That(legacyView(script, 11).IsVoid()).IsTrue().ConfigureAwait(false);
+            await Assert.That(legacyView(script, 10).Value.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(legacyView(script, 11).Value.IsVoid()).IsTrue().ConfigureAwait(false);
             await Assert.That(legacyView(script, 12)).IsNull().ConfigureAwait(false);
 
             registry.SetClrToScriptTryConversion<int>(
                 (Script _, int _, out DynValue converted) =>
                 {
-                    converted = null;
+                    converted = default;
                     return true;
                 }
             );
             ClrToScriptTryConverter invalidConverter = registry.GetClrToScriptTryConversion(
                 typeof(int)
             );
-            await Assert
-                .That(() => invalidConverter(script, 10, out DynValue _))
-                .Throws<InvalidOperationException>()
-                .ConfigureAwait(false);
+            bool handledDefault = invalidConverter(script, 10, out DynValue defaultResult);
+            await Assert.That(handledDefault).IsTrue().ConfigureAwait(false);
+            await Assert.That(defaultResult.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -243,26 +242,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 value => DynValue.NewNumber(value * 2)
             );
 
-            Func<Script, object, DynValue> guidConverter = registry.GetClrToScriptCustomConversion(
+            Func<Script, object, DynValue?> guidConverter = registry.GetClrToScriptCustomConversion(
                 typeof(Guid)
             );
-            DynValue guidResult = guidConverter(script, sampleGuid);
+            DynValue guidResult = guidConverter(script, sampleGuid).Value;
             await Assert
                 .That(guidResult.String)
                 .IsEqualTo(sampleGuid.ToString("N"))
                 .ConfigureAwait(false);
 
-            Func<Script, object, DynValue> longConverter = registry.GetClrToScriptCustomConversion(
+            Func<Script, object, DynValue?> longConverter = registry.GetClrToScriptCustomConversion(
                 typeof(long)
             );
-            DynValue longResult = longConverter(script, 7L);
+            DynValue longResult = longConverter(script, 7L).Value;
             await Assert.That(longResult.Number).IsEqualTo(14d).ConfigureAwait(false);
 
             registry.SetClrToScriptCustomConversion(
                 typeof(Guid),
-                (Func<Script, object, DynValue>)null
+                (Func<Script, object, DynValue?>)null
             );
-            registry.SetClrToScriptCustomConversion<long>((Func<Script, long, DynValue>)null);
+            registry.SetClrToScriptCustomConversion<long>((Func<Script, long, DynValue?>)null);
 
             await Assert
                 .That(registry.GetClrToScriptCustomConversion(typeof(Guid)))
@@ -290,7 +289,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .IsNotNull()
                 .ConfigureAwait(false);
 
-            registry.SetClrToScriptCustomConversion<int>((Func<Script, int, DynValue>)null);
+            registry.SetClrToScriptCustomConversion<int>((Func<Script, int, DynValue?>)null);
 
             await Assert
                 .That(registry.GetClrToScriptCustomConversion(typeof(int)))
@@ -400,7 +399,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         private static void InvokeLegacyClrToScriptConversion(
             CustomConverterRegistry registry,
             Type clrType,
-            Func<object, DynValue> converter
+            Func<object, DynValue?> converter
         )
         {
             LegacyClrToScriptConversionMethod.Invoke(registry, new object[] { clrType, converter });
@@ -408,7 +407,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
 
         private static void InvokeLegacyClrToScriptConversion<T>(
             CustomConverterRegistry registry,
-            Func<T, DynValue> converter
+            Func<T, DynValue?> converter
         )
         {
             MethodInfo method = LegacyTypedClrToScriptConversionMethod.MakeGenericMethod(typeof(T));
@@ -419,13 +418,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         {
             MethodInfo method = typeof(CustomConverterRegistry).GetMethod(
                 nameof(CustomConverterRegistry.SetClrToScriptCustomConversion),
-                new[] { typeof(Type), typeof(Func<object, DynValue>) }
+                new[] { typeof(Type), typeof(Func<object, DynValue?>) }
             );
 
             if (method == null)
             {
                 throw new InvalidOperationException(
-                    "Could not locate the legacy SetClrToScriptCustomConversion(Type, Func<object, DynValue>) overload."
+                    "Could not locate the legacy SetClrToScriptCustomConversion(Type, Func<object, DynValue?>) overload."
                 );
             }
 
@@ -462,7 +461,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             }
 
             throw new InvalidOperationException(
-                "Could not locate the legacy SetClrToScriptCustomConversion<T>(Func<T, DynValue>) overload."
+                "Could not locate the legacy SetClrToScriptCustomConversion<T>(Func<T, DynValue?>) overload."
             );
         }
 

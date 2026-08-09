@@ -176,7 +176,7 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
                 return;
             }
 
-            DynValue v = _debug.Evaluate(expression) ?? DynValue.Nil;
+            DynValue v = _debug.Evaluate(expression);
             _variables.Add(v);
 
             SendResponse(

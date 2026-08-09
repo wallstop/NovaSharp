@@ -711,17 +711,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                         );
                     }
                 case Operator.Equal:
-                    // Identity implies equality for every Lua type except NaN, which is never equal
-                    // to itself - values are immutable and shared, so both sides of `x == x` can be
-                    // the very same wrapper instance.
-                    if (
-                        ReferenceEquals(r, l)
-                        && (r.Type != DataType.Number || !double.IsNaN(r.Number))
-                    )
+                    if (r.HasSameReferenceIdentity(l))
                     {
                         return true;
                     }
-                    else if (r.Type != l.Type)
+
+                    if (r.Type != l.Type)
                     {
                         if (
                             (l.Type == DataType.Nil && r.Type == DataType.Void)
@@ -735,10 +730,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                             return false;
                         }
                     }
-                    else
-                    {
-                        return r.Equals(l);
-                    }
+                    return r.Equals(l);
                 case Operator.Greater:
                     return !EvalComparison(l, r, Operator.LessOrEqual);
                 case Operator.GreaterOrEqual:

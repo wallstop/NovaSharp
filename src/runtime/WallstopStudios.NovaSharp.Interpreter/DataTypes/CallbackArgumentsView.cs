@@ -36,13 +36,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 default,
                 null,
                 null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
+                default,
+                default,
+                default,
+                default,
+                default,
+                default,
+                default,
                 SourceFixed,
                 0,
                 0,
@@ -55,12 +55,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 null,
                 null,
                 arg,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
+                default,
+                default,
+                default,
+                default,
+                default,
+                default,
                 SourceFixed,
                 0,
                 1,
@@ -74,11 +74,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 null,
                 arg1,
                 arg2,
-                null,
-                null,
-                null,
-                null,
-                null,
+                default,
+                default,
+                default,
+                default,
+                default,
                 SourceFixed,
                 0,
                 2,
@@ -98,10 +98,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 arg1,
                 arg2,
                 arg3,
-                null,
-                null,
-                null,
-                null,
+                default,
+                default,
+                default,
+                default,
                 SourceFixed,
                 0,
                 3,
@@ -123,9 +123,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 arg2,
                 arg3,
                 arg4,
-                null,
-                null,
-                null,
+                default,
+                default,
+                default,
                 SourceFixed,
                 0,
                 4,
@@ -149,8 +149,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 arg3,
                 arg4,
                 arg5,
-                null,
-                null,
+                default,
+                default,
                 SourceFixed,
                 0,
                 5,
@@ -176,7 +176,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 arg4,
                 arg5,
                 arg6,
-                null,
+                default,
                 SourceFixed,
                 0,
                 6,
@@ -218,13 +218,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 args,
                 null,
                 null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
+                default,
+                default,
+                default,
+                default,
+                default,
+                default,
+                default,
                 SourceSpan,
                 0,
                 args.Length,
@@ -276,13 +276,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _span = span;
             _list = args;
             _callbackArguments = null;
-            _arg0 = null;
-            _arg1 = null;
-            _arg2 = null;
-            _arg3 = null;
-            _arg4 = null;
-            _arg5 = null;
-            _arg6 = null;
+            _arg0 = default;
+            _arg1 = default;
+            _arg2 = default;
+            _arg3 = default;
+            _arg4 = default;
+            _arg5 = default;
+            _arg6 = default;
             _source = hasSpan ? SourceSpan : SourceList;
             _offset = hasSpan ? 0 : offset;
             _storedCount = hasSpan ? count : offset + count;
@@ -333,13 +333,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 default,
                 null,
                 args ?? throw new ArgumentNullException(nameof(args)),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
+                default,
+                default,
+                default,
+                default,
+                default,
+                default,
+                default,
                 SourceCallbackArguments,
                 0,
                 args.Count,
@@ -366,13 +366,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _span = span;
             _list = list;
             _callbackArguments = callbackArguments;
-            _arg0 = arg0 ?? DynValue.Nil;
-            _arg1 = arg1 ?? DynValue.Nil;
-            _arg2 = arg2 ?? DynValue.Nil;
-            _arg3 = arg3 ?? DynValue.Nil;
-            _arg4 = arg4 ?? DynValue.Nil;
-            _arg5 = arg5 ?? DynValue.Nil;
-            _arg6 = arg6 ?? DynValue.Nil;
+            _arg0 = arg0;
+            _arg1 = arg1;
+            _arg2 = arg2;
+            _arg3 = arg3;
+            _arg4 = arg4;
+            _arg5 = arg5;
+            _arg6 = arg6;
             _source = source;
             _offset = offset;
             _storedCount = storedCount;
@@ -433,8 +433,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             get
             {
-                TryRawGet(index, translateVoids: true, out DynValue value);
-                return value;
+                return TryRawGet(index, translateVoids: true, out DynValue value)
+                    ? value
+                    : DynValue.Void;
             }
         }
 
@@ -445,7 +446,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Retained for compatibility. Use <see cref="TryRawGet(int, bool, out DynValue)"/> when
         /// argument presence must be distinguished from an explicit nil or void value.
         /// </remarks>
-        public DynValue RawGet(int index, bool translateVoids)
+        public DynValue? RawGet(int index, bool translateVoids)
         {
             return TryRawGet(index, translateVoids, out DynValue value) ? value : null;
         }
@@ -479,14 +480,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
             else
             {
-                value =
-                    GetStoredArgument(_storedCount - 1).Tuple[index - (visibleStoredCount - 1)]
-                    ?? DynValue.Nil;
+                value = GetStoredArgument(_storedCount - 1).Tuple[index - (visibleStoredCount - 1)];
             }
 
             if (value.Type == DataType.Tuple)
             {
-                value = value.Tuple.Length > 0 ? value.Tuple[0] ?? DynValue.Nil : DynValue.Nil;
+                value = value.Tuple.Length > 0 ? value.Tuple[0] : DynValue.Nil;
             }
 
             if (translateVoids && value.Type == DataType.Void)
@@ -580,7 +579,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             for (int i = 0; i < span.Length; i++)
             {
                 DynValue value = span[i];
-                if (value == null || value.Type == DataType.Tuple || value.Type == DataType.Void)
+                if (value.Type == DataType.Tuple || value.Type == DataType.Void)
                 {
                     return true;
                 }
@@ -642,7 +641,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _ => throw new InvalidOperationException("Unsupported callback argument source."),
             };
 
-            return value ?? DynValue.Nil;
+            return value;
         }
     }
 }

@@ -492,29 +492,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             if (useArgumentView)
             {
-                CallbackArgumentsView args = new(DynValue.NewNumber(1), null, isMethodCall: false);
-                DynValue raw = args.RawGet(1, translateVoids: false);
+                CallbackArgumentsView args = new(
+                    DynValue.NewNumber(1),
+                    default,
+                    isMethodCall: false
+                );
+                DynValue? raw = args.RawGet(1, translateVoids: false);
                 DynValue value = args[1];
                 DynValue[] buffer = new DynValue[args.Count];
                 args.CopyTo(buffer);
 
                 return new NullStoredArgumentResult(
                     args.Count,
-                    raw.Type,
+                    raw.Value.Type,
                     value.Type,
                     buffer[1].Type
                 );
             }
 
-            CallbackArguments legacyArgs = new(DynValue.NewNumber(1), null, isMethodCall: false);
-            DynValue legacyRaw = legacyArgs.RawGet(1, translateVoids: false);
+            CallbackArguments legacyArgs = new(DynValue.NewNumber(1), default, isMethodCall: false);
+            DynValue? legacyRaw = legacyArgs.RawGet(1, translateVoids: false);
             DynValue legacyValue = legacyArgs[1];
             DynValue[] legacyBuffer = new DynValue[legacyArgs.Count];
             legacyArgs.CopyTo(legacyBuffer);
 
             return new NullStoredArgumentResult(
                 legacyArgs.Count,
-                legacyRaw.Type,
+                legacyRaw.Value.Type,
                 legacyValue.Type,
                 legacyBuffer[1].Type
             );
@@ -522,20 +526,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
         private static NullStoredArgumentResult ExecuteNullTupleExpansion(bool useArgumentView)
         {
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(10), null);
+            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(10), default);
             DynValue[] backing = new[] { DynValue.NewNumber(1), tuple };
 
             if (useArgumentView)
             {
                 CallbackArgumentsView args = new((IList<DynValue>)backing, false);
-                DynValue raw = args.RawGet(2, translateVoids: false);
+                DynValue? raw = args.RawGet(2, translateVoids: false);
                 DynValue value = args[2];
                 DynValue[] buffer = new DynValue[args.Count];
                 args.CopyTo(buffer);
 
                 return new NullStoredArgumentResult(
                     args.Count,
-                    raw.Type,
+                    raw.Value.Type,
                     value.Type,
                     buffer[2].Type
                 );
@@ -543,14 +547,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             else
             {
                 CallbackArguments args = new(backing, false);
-                DynValue raw = args.RawGet(2, translateVoids: false);
+                DynValue? raw = args.RawGet(2, translateVoids: false);
                 DynValue value = args[2];
                 DynValue[] buffer = new DynValue[args.Count];
                 args.CopyTo(buffer);
 
                 return new NullStoredArgumentResult(
                     args.Count,
-                    raw.Type,
+                    raw.Value.Type,
                     value.Type,
                     buffer[2].Type
                 );
@@ -581,7 +585,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             switch (valueKind)
             {
                 case "null":
-                    return null;
+                    return default;
                 case "void":
                     return DynValue.Void;
                 case "tuple":
@@ -670,6 +674,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(result.Numbers[0]).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(result.Numbers[1]).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(result.Numbers[2]).IsEqualTo(3).ConfigureAwait(false);
+
+            DynValue[] defaultNilBacking =
+            {
+                DynValue.NewNumber(1),
+                default,
+                DynValue.NewNumber(3),
+            };
+            TryGetSpanMetadata defaultNilLegacy = ExecuteTryGetSpanMetadata(
+                new CallbackArguments(defaultNilBacking, false)
+            );
+            TryGetSpanMetadata defaultNilView = ExecuteViewTryGetSpanMetadata(defaultNilBacking);
+            await Assert.That(defaultNilLegacy.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(defaultNilLegacy.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(defaultNilView.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(defaultNilView.Length).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [Test]
@@ -808,7 +827,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [Test]
-        [Arguments("null", DataType.Nil)]
         [Arguments("void", DataType.Nil)]
         [Arguments("tuple", DataType.Number)]
         public async Task TryGetSpanReturnsFalseWhenArrayValueRequiresNormalization(
@@ -1074,7 +1092,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [Test]
-        [Arguments("null")]
         [Arguments("void")]
         [Arguments("tuple")]
         public async Task TryGetSpanReturnsFalseWhenArraySliceValueRequiresNormalization(
@@ -1095,7 +1112,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [Test]
-        [Arguments("null")]
         [Arguments("void")]
         [Arguments("tuple")]
         public async Task ArgumentViewTryGetSpanReturnsFalseWhenArraySliceValueRequiresNormalization(
@@ -1153,7 +1169,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [Test]
-        [Arguments("null")]
         [Arguments("void")]
         [Arguments("tuple")]
         public async Task TryGetSpanReturnsFalseWhenFastStackSliceValueRequiresNormalization(

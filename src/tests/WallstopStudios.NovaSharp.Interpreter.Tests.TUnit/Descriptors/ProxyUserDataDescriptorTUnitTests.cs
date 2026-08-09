@@ -30,13 +30,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             DynValue expected = DynValue.NewString("result");
             inner.IndexResult = expected;
 
-            DynValue value = descriptor.Index(new Script(version), target, index, true);
+            DynValue value = descriptor.Index(new Script(version), target, index, true).Value;
 
-            await Assert.That(value).IsSameReferenceAs(expected);
+            await Assert.That(value).IsEqualTo(expected);
             await Assert.That(factory.LastInput).IsSameReferenceAs(target);
             await Assert.That(inner.LastObject).IsTypeOf<Proxy>();
             await Assert.That(((Proxy)inner.LastObject).Target).IsSameReferenceAs(target);
-            await Assert.That(inner.LastIndex).IsSameReferenceAs(index);
+            await Assert.That(inner.LastIndex).IsEqualTo(index);
             await Assert.That(inner.LastIsDirectIndexing).IsTrue();
         }
 
@@ -57,7 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             await Assert.That(handled).IsTrue();
             await Assert.That(inner.LastObject).IsTypeOf<Proxy>();
             await Assert.That(((Proxy)inner.LastObject).Target).IsSameReferenceAs(target);
-            await Assert.That(inner.LastValue).IsSameReferenceAs(value);
+            await Assert.That(inner.LastValue).IsEqualTo(value);
             await Assert.That(inner.LastIsDirectIndexing).IsFalse();
         }
 
@@ -73,7 +73,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             DynValue index = DynValue.NewString("noop");
             inner.IndexResult = DynValue.NewString("result");
 
-            DynValue value = descriptor.Index(new Script(version), null, index, true);
+            DynValue value = descriptor.Index(new Script(version), null, index, true).Value;
 
             await Assert.That(value.String).IsEqualTo("result");
             await Assert.That(factory.LastInput).IsNull();
@@ -92,10 +92,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             inner.MetaIndexResult = expectedMeta;
             inner.AsStringResult = "proxied-meta";
 
-            DynValue metaResult = descriptor.MetaIndex(new Script(version), target, "__tostring");
+            DynValue metaResult = descriptor
+                .MetaIndex(new Script(version), target, "__tostring")
+                .Value;
             string asString = descriptor.AsString(target);
 
-            await Assert.That(metaResult).IsSameReferenceAs(expectedMeta);
+            await Assert.That(metaResult).IsEqualTo(expectedMeta);
             await Assert.That(asString).IsEqualTo("proxied-meta");
             await Assert.That(inner.MetaRequests.Length).IsEqualTo(ExpectedMetaRequests.Length);
             await Assert.That(inner.MetaRequests[0]).IsEqualTo(ExpectedMetaRequests[0]);
@@ -178,12 +180,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             public string Name => "recording";
             public Type Type => typeof(Target);
 
-            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+            public bool TryIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                bool isDirectIndexing,
+                out DynValue value
+            )
             {
                 LastObject = obj;
                 LastIndex = index;
                 LastIsDirectIndexing = isDirectIndexing;
-                return IndexResult;
+                value = IndexResult;
+                return true;
             }
 
             public bool SetIndex(
@@ -207,11 +216,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 return AsStringResult;
             }
 
-            public DynValue MetaIndex(Script script, object obj, string metaname)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
             {
                 LastObject = obj;
                 MetaRequests = new[] { metaname };
-                return MetaIndexResult;
+                value = MetaIndexResult;
+                return true;
             }
 
             public bool IsTypeCompatible(Type type, object obj)

@@ -1909,8 +1909,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new(CoreModulePresets.Complete);
             script.Globals.Set("notCallable", DynValue.FromNumber(42));
 
-            ArgumentNullException nullCallableException = Assert.Throws<ArgumentNullException>(() =>
-                script.PrepareCallable(null)
+            ArgumentException nilCallableException = Assert.Throws<ArgumentException>(() =>
+                script.PrepareCallable(DynValue.Nil)
             );
             ArgumentException directCallableException = Assert.Throws<ArgumentException>(() =>
                 script.PrepareCallable(DynValue.FromNumber(42))
@@ -1932,8 +1932,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             );
 
             await Assert
-                .That(nullCallableException.ParamName)
-                .IsEqualTo("function")
+                .That(nilCallableException.Message)
+                .Contains("__call metamethod")
                 .ConfigureAwait(false);
             await Assert
                 .That(directCallableException.Message)
@@ -2467,11 +2467,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new(version, CoreModulePresets.Complete);
             using MemoryStream ms = new();
 
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                script.Dump(null, ms)
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                script.Dump(DynValue.Nil, ms)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("function").ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("function arg is not a function")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

@@ -64,9 +64,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
 
             public Type Type { get; }
 
-            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+            public bool TryIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                bool isDirectIndexing,
+                out DynValue value
+            )
             {
-                return DynValue.Nil;
+                value = DynValue.Nil;
+                return true;
             }
 
             public bool SetIndex(
@@ -85,9 +92,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 return obj?.ToString() ?? string.Empty;
             }
 
-            public DynValue MetaIndex(Script script, object obj, string metaname)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
             {
-                return DynValue.Nil;
+                value = DynValue.Nil;
+                return true;
             }
 
             public bool IsTypeCompatible(Type type, object obj)

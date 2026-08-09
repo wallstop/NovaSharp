@@ -81,7 +81,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 isMethodCall: false
             );
 
-            await Assert.That(ReferenceEquals(result, expected)).IsTrue();
+            await Assert.That(result).IsEqualTo(expected);
         }
 
         [global::TUnit.Core.Test]

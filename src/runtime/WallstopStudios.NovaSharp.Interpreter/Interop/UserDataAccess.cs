@@ -1,6 +1,5 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop
 {
-    using System;
     using System.Runtime.CompilerServices;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
@@ -19,20 +18,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
             out DynValue value
         )
         {
-            if (descriptor is IUserDataDescriptorTryAccess tryAccess)
-            {
-                if (tryAccess.TryIndex(script, obj, index, isDirectIndexing, out value))
-                {
-                    EnsureHandledValue(value);
-                    return true;
-                }
-
-                value = DynValue.Nil;
-                return false;
-            }
-
-            value = descriptor.Index(script, obj, index, isDirectIndexing);
-            if (value != null)
+            if (descriptor.TryIndex(script, obj, index, isDirectIndexing, out value))
             {
                 return true;
             }
@@ -50,20 +36,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
             out DynValue value
         )
         {
-            if (descriptor is IUserDataDescriptorTryAccess tryAccess)
-            {
-                if (tryAccess.TryMetaIndex(script, obj, metaname, out value))
-                {
-                    EnsureHandledValue(value);
-                    return true;
-                }
-
-                value = DynValue.Nil;
-                return false;
-            }
-
-            value = descriptor.MetaIndex(script, obj, metaname);
-            if (value != null)
+            if (descriptor.TryMetaIndex(script, obj, metaname, out value))
             {
                 return true;
             }
@@ -81,20 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
             out DynValue value
         )
         {
-            if (userData is IUserDataTypeTryAccess tryAccess)
-            {
-                if (tryAccess.TryIndex(script, index, isDirectIndexing, out value))
-                {
-                    EnsureHandledValue(value);
-                    return true;
-                }
-
-                value = DynValue.Nil;
-                return false;
-            }
-
-            value = userData.Index(script, index, isDirectIndexing);
-            if (value != null)
+            if (userData.TryIndex(script, index, isDirectIndexing, out value))
             {
                 return true;
             }
@@ -111,37 +71,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
             out DynValue value
         )
         {
-            if (userData is IUserDataTypeTryAccess tryAccess)
-            {
-                if (tryAccess.TryMetaIndex(script, metaname, out value))
-                {
-                    EnsureHandledValue(value);
-                    return true;
-                }
-
-                value = DynValue.Nil;
-                return false;
-            }
-
-            value = userData.MetaIndex(script, metaname);
-            if (value != null)
+            if (userData.TryMetaIndex(script, metaname, out value))
             {
                 return true;
             }
 
             value = DynValue.Nil;
             return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void EnsureHandledValue(DynValue value)
-        {
-            if (value == null)
-            {
-                throw new InvalidOperationException(
-                    "A userdata Try access provider returned true with a null value."
-                );
-            }
         }
     }
 }

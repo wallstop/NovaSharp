@@ -318,7 +318,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
         private static bool IsNilOrMissing(DynValue value)
         {
-            return value == null || value.IsNil();
+            return value.IsNil();
         }
 
         [NovaSharpModule(Namespace = "script_field_cache_probe")]

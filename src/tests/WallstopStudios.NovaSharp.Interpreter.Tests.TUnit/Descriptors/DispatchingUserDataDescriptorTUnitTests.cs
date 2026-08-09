@@ -86,13 +86,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
 
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostAdd);
-            DynValue meta = descriptor.MetaIndex(script, hostAdd, "__lt");
-            await Assert.That(meta).IsNotNull();
+            bool found = descriptor.TryMetaIndex(script, hostAdd, "__lt", out DynValue meta);
+            await Assert.That(found).IsTrue();
 
             DynValue result = script.Call(
                 meta,
-                UserData.Create(hostOther),
-                UserData.Create(hostAdd)
+                UserData.Create(hostOther).Value,
+                UserData.Create(hostAdd).Value
             );
 
             await Assert.That(result.Boolean).IsFalse();
@@ -114,15 +114,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostAdd);
 
-            DynValue meta = descriptor.MetaIndex(script, hostAdd, "__unknown");
-            bool found = ((IUserDataDescriptorTryAccess)descriptor).TryMetaIndex(
+            bool found = descriptor.TryMetaIndex(
                 script,
                 hostAdd,
                 "__unknown",
                 out DynValue missing
             );
 
-            await Assert.That(meta).IsNull();
             await Assert.That(found).IsFalse();
             await Assert.That(missing.IsNil()).IsTrue();
         }
@@ -147,7 +145,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
-            script.Globals["countOnly"] = UserData.Create(new CountOnlyHost(4));
+            script.Globals["countOnly"] = UserData.Create(new CountOnlyHost(4)).Value;
 
             DynValue len = script.DoString("return #countOnly");
 
@@ -164,8 +162,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
 
-            DynValue lt = descriptor.MetaIndex(script, new DescriptorHost(), "__lt");
-            DynValue le = descriptor.MetaIndex(script, new DescriptorHost(), "__le");
+            DynValue? lt = descriptor.MetaIndex(script, new DescriptorHost(), "__lt");
+            DynValue? le = descriptor.MetaIndex(script, new DescriptorHost(), "__le");
 
             await Assert.That(lt).IsNull();
             await Assert.That(le).IsNull();
@@ -179,7 +177,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
 
-            DynValue len = descriptor.MetaIndex(script, null, "__len");
+            DynValue? len = descriptor.MetaIndex(script, null, "__len");
 
             await Assert.That(len).IsNull();
         }
@@ -197,11 +195,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 out _
             );
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostOther);
-            DynValue meta = descriptor.MetaIndex(script, hostOther, "__tonumber");
+            bool found = descriptor.TryMetaIndex(
+                script,
+                hostOther,
+                "__tonumber",
+                out DynValue meta
+            );
 
-            await Assert.That(meta).IsNotNull();
+            await Assert.That(found).IsTrue();
 
-            DynValue number = script.Call(meta, UserData.Create(hostOther));
+            DynValue number = script.Call(meta, UserData.Create(hostOther).Value);
 
             await Assert.That(number.Type).IsEqualTo(DataType.Number);
             await Assert.That(number.Number).IsEqualTo(3d);
@@ -217,11 +220,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
             IntConversionOnlyHost host = new(9);
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(host);
-            DynValue meta = descriptor.MetaIndex(script, host, "__tonumber");
+            bool found = descriptor.TryMetaIndex(script, host, "__tonumber", out DynValue meta);
 
-            await Assert.That(meta).IsNotNull();
+            await Assert.That(found).IsTrue();
 
-            DynValue number = script.Call(meta, UserData.Create(host));
+            DynValue number = script.Call(meta, UserData.Create(host).Value);
 
             await Assert.That(number.Type).IsEqualTo(DataType.Number);
             await Assert.That(number.Number).IsEqualTo(9d);
@@ -236,9 +239,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             NoConversionHost host = new(6);
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(host);
 
-            DynValue meta = descriptor.MetaIndex(script, host, "__tonumber");
+            bool found = descriptor.TryMetaIndex(script, host, "__tonumber", out DynValue meta);
 
-            await Assert.That(meta).IsNull();
+            await Assert.That(found).IsFalse();
+            await Assert.That(meta.IsNil()).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -254,12 +258,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 out DispatchHost hostZero
             );
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostAdd);
-            DynValue meta = descriptor.MetaIndex(script, hostAdd, "__tobool");
+            bool found = descriptor.TryMetaIndex(script, hostAdd, "__tobool", out DynValue meta);
 
-            await Assert.That(meta).IsNotNull();
+            await Assert.That(found).IsTrue();
 
-            DynValue trueResult = script.Call(meta, UserData.Create(hostAdd));
-            DynValue falseResult = script.Call(meta, UserData.Create(hostZero));
+            DynValue trueResult = script.Call(meta, UserData.Create(hostAdd).Value);
+            DynValue falseResult = script.Call(meta, UserData.Create(hostZero).Value);
 
             await Assert.That(trueResult.Boolean).IsTrue();
             await Assert.That(falseResult.Boolean).IsFalse();
@@ -384,12 +388,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
 
             Script script = new(CoreModules.Basic | CoreModules.GlobalConsts);
-            DynValue result = descriptor.Index(
-                script,
-                new DescriptorHost(),
-                DynValue.NewNumber(7),
-                isDirectIndexing: false
-            );
+            DynValue result = descriptor
+                .Index(script, new DescriptorHost(), DynValue.NewNumber(7), isDirectIndexing: false)
+                .Value;
 
             await Assert.That(invoked).IsTrue();
             await Assert.That(result.String).IsEqualTo("idx:7");
@@ -460,8 +461,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
-            script.Globals["concatLeft"] = UserData.Create(new MetaFallbackHost("L"));
-            script.Globals["concatRight"] = UserData.Create(new MetaFallbackHost("R"));
+            script.Globals["concatLeft"] = UserData.Create(new MetaFallbackHost("L")).Value;
+            script.Globals["concatRight"] = UserData.Create(new MetaFallbackHost("R")).Value;
 
             DynValue concat = script.DoString("return concatLeft .. concatRight");
 
@@ -521,7 +522,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = new(CoreModules.Basic | CoreModules.GlobalConsts);
             DescriptorHost target = new();
             DynValue index = DynValue.NewNumber(3);
-            DynValue value = isSetter ? DynValue.NewString("payload") : null;
+            DynValue? value = isSetter ? DynValue.NewString("payload") : null;
             DynValue callback = DynValue.NewCallbackView(ReturnLastIndexerArgument);
             StubMemberDescriptor member = StubMemberDescriptor.CreateCallable(
                 isSetter ? IndexerSetterName : IndexerGetterName,
@@ -530,7 +531,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
 
             DynValue warmup = descriptor.InvokeExecuteIndexer(member, script, target, index, value);
-            await Assert.That(warmup).IsEqualTo(isSetter ? value : index).ConfigureAwait(false);
+            await Assert
+                .That(warmup)
+                .IsEqualTo(isSetter ? value.Value : index)
+                .ConfigureAwait(false);
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -618,7 +622,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script = new(CoreModules.Basic | CoreModules.GlobalConsts);
             DescriptorHost target = new();
             DynValue index = DynValue.NewNumber(5);
-            DynValue value = isSetter ? DynValue.NewString("payload") : null;
+            DynValue? value = isSetter ? DynValue.NewString("payload") : null;
             StubIndexerOverloadMemberDescriptor overload = new(
                 isSetter ? IndexerSetterName : IndexerGetterName
             );
@@ -629,7 +633,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             DynValue result = descriptor.InvokeExecuteIndexer(member, script, target, index, value);
 
-            await Assert.That(result).IsEqualTo(isSetter ? value : index).ConfigureAwait(false);
+            await Assert
+                .That(result)
+                .IsEqualTo(isSetter ? value.Value : index)
+                .ConfigureAwait(false);
             await Assert.That(overload.ExecuteCount).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(member.GetValueCount).IsEqualTo(0).ConfigureAwait(false);
         }
@@ -640,12 +647,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         public async Task RegisteredOverloadedIndexerAvoidsCallbackWrapperAllocation(bool isSetter)
         {
             const int iterations = 1024;
-            const long maxAllocatedBytesPerCall = 256L;
+            // Readonly DynValue widens the intentional seven-slot inline argument storage; this
+            // remains tight enough to catch an additional callback wrapper or backing array.
+            const long maxAllocatedBytesPerCall = 384L;
             DescriptorHostDescriptor descriptor = CreateDescriptorHostDescriptor();
             Script script = new(CoreModules.Basic | CoreModules.GlobalConsts);
             DescriptorHost target = new();
             DynValue index = DynValue.NewNumber(6);
-            DynValue value = isSetter ? DynValue.NewString("payload") : null;
+            DynValue? value = isSetter ? DynValue.NewString("payload") : null;
             StubIndexerOverloadMemberDescriptor overload = new(
                 isSetter ? IndexerSetterName : IndexerGetterName
             );
@@ -659,7 +668,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 value,
                 isSetter
             );
-            await Assert.That(warmup).IsEqualTo(isSetter ? value : index).ConfigureAwait(false);
+            await Assert
+                .That(warmup)
+                .IsEqualTo(isSetter ? value.Value : index)
+                .ConfigureAwait(false);
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -789,11 +801,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
-            ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                descriptor.Index(script, new DescriptorHost(), index: null, isDirectIndexing: true)
+            DynValue? result = descriptor.Index(
+                script,
+                new DescriptorHost(),
+                index: default,
+                isDirectIndexing: true
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("index");
+            await Assert.That(result).IsNull();
         }
 
         [global::TUnit.Core.Test]
@@ -804,17 +819,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
-            ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                descriptor.SetIndex(
-                    script,
-                    new DescriptorHost(),
-                    DynValue.NewString("Value"),
-                    value: null,
-                    isDirectIndexing: true
-                )
+            bool handled = descriptor.SetIndex(
+                script,
+                new DescriptorHost(),
+                DynValue.NewString("Value"),
+                value: default,
+                isDirectIndexing: true
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("value");
+            await Assert.That(handled).IsFalse();
         }
 
         [global::TUnit.Core.Test]
@@ -882,10 +895,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             hostCopy = new DispatchHost(2, HostCopySequence);
             hostZero = new DispatchHost(0, HostZeroSequence);
 
-            script.Globals["hostAdd"] = UserData.Create(hostAdd);
-            script.Globals["hostOther"] = UserData.Create(hostOther);
-            script.Globals["hostCopy"] = UserData.Create(hostCopy);
-            script.Globals["hostZero"] = UserData.Create(hostZero);
+            script.Globals["hostAdd"] = UserData.Create(hostAdd).Value;
+            script.Globals["hostOther"] = UserData.Create(hostOther).Value;
+            script.Globals["hostCopy"] = UserData.Create(hostCopy).Value;
+            script.Globals["hostZero"] = UserData.Create(hostZero).Value;
             return script;
         }
 
@@ -953,11 +966,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script,
             DescriptorHost target,
             DynValue index,
-            DynValue value,
+            DynValue? value,
             int iterations
         )
         {
-            DynValue expected = value == null ? index : value;
+            DynValue expected = value.HasValue ? value.Value : index;
             long before = GC.GetAllocatedBytesForCurrentThread();
 
             for (int i = 0; i < iterations; i++)
@@ -986,12 +999,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script,
             DescriptorHost target,
             DynValue index,
-            DynValue value,
+            DynValue? value,
             bool isSetter,
             int iterations
         )
         {
-            DynValue expected = isSetter ? value : index;
+            DynValue expected = isSetter ? value.Value : index;
             long before = GC.GetAllocatedBytesForCurrentThread();
 
             for (int i = 0; i < iterations; i++)
@@ -1021,7 +1034,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             Script script,
             DescriptorHost target,
             DynValue index,
-            DynValue value,
+            DynValue? value,
             bool isSetter
         )
         {
@@ -1031,7 +1044,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                     script,
                     target,
                     index,
-                    value,
+                    value.Value,
                     isDirectIndexing: false
                 );
                 if (!handled)
@@ -1041,10 +1054,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                     );
                 }
 
-                return value;
+                return value.Value;
             }
 
-            return descriptor.Index(script, target, index, isDirectIndexing: false);
+            return descriptor.Index(script, target, index, isDirectIndexing: false).Value;
         }
 
         private sealed class MetaFallbackHost
@@ -1309,7 +1322,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 Script script,
                 object obj,
                 DynValue index,
-                DynValue value
+                DynValue? value
             )
             {
                 return ExecuteIndexer(member, script, obj, index, value);

@@ -18,8 +18,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             EventFacade facade = new(target.AddHandler, target.RemoveHandler, target);
             Script script = new();
 
-            DynValue add = facade.Index(script, DynValue.NewString("add"), true);
-            DynValue remove = facade.Index(script, DynValue.NewString("remove"), true);
+            DynValue add = facade.Index(script, DynValue.NewString("add"), true).Value;
+            DynValue remove = facade.Index(script, DynValue.NewString("remove"), true).Value;
 
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             DynValue handler = DynValue.NewCallback((_, _) => DynValue.Nil);

@@ -290,7 +290,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 expectedType
             );
 
-            await Assert.That(literal).IsNotNull().ConfigureAwait(false);
             await Assert.That(literal.Type).IsEqualTo(expectedType).ConfigureAwait(false);
         }
 
@@ -372,7 +371,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 Instruction instruction = byteCode.Code[i];
                 if (
                     instruction.OpCode == OpCode.Literal
-                    && instruction.Value != null
+                    && instruction.HasValue
                     && instruction.Value.Type == expectedType
                 )
                 {

@@ -27,8 +27,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     {
         private static readonly ConditionalWeakTable<object, DebugHookState> HookStates = new();
         private static readonly object DefaultHookKey = new();
-        private static readonly ConditionalWeakTable<ValueSlot, DynValue> UpvalueIdentifiers =
-            new();
+        private static readonly ConditionalWeakTable<
+            ValueSlot,
+            UpvalueIdentifierValue
+        > UpvalueIdentifiers = new();
         private static readonly IUserDataDescriptor UpvalueIdentifierDescriptorInstance =
             new UpvalueIdentifierDescriptor();
 
@@ -92,11 +94,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 try
                 {
-                    DynValue result = interpreter.Evaluate(input);
+                    DynValue? result = interpreter.Evaluate(input);
 
-                    if (result != null && result.Type != DataType.Void)
+                    if (result.HasValue && result.Value.Type != DataType.Void)
                     {
-                        script.Options.DebugPrint(result.ToString());
+                        script.Options.DebugPrint(result.Value.ToString());
                     }
                 }
                 catch (InterpreterException ex)
@@ -220,7 +222,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     : DynValue.Nil;
             }
 
-            DynValue userValue = v.UserData.UserValue ?? DynValue.Nil;
+            DynValue userValue = v.UserData.UserValue;
 
             // Lua 5.4+: return value, true (indicating the userdata has this value slot)
             return isLua54OrLater ? DynValue.NewTuple(userValue, DynValue.True) : userValue;
@@ -1092,10 +1094,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return DynValue.NewString(ZString.Concat("function: ", name));
         }
 
-        private static void SetUpvalueFields(Script script, Table info, DynValue function)
+        private static void SetUpvalueFields(Script script, Table info, DynValue? function)
         {
             int upvalues =
-                function?.Type == DataType.Function ? function.Function.UpValuesCount : 0;
+                function.HasValue && function.Value.Type == DataType.Function
+                    ? function.Value.Function.UpValuesCount
+                    : 0;
             info.Set("nups", DynValue.FromNumber(upvalues));
 
             if (
@@ -1107,11 +1111,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             int parameterCount = 0;
-            bool isVarArg = function?.Type == DataType.ClrFunction;
+            bool isVarArg = function.HasValue && function.Value.Type == DataType.ClrFunction;
 
-            if (function?.Type == DataType.Function)
+            if (function.HasValue && function.Value.Type == DataType.Function)
             {
-                script.GetFunctionArgumentInfo(function.Function, out parameterCount, out isVarArg);
+                script.GetFunctionArgumentInfo(
+                    function.Value.Function,
+                    out parameterCount,
+                    out isVarArg
+                );
             }
 
             info.Set("nparams", DynValue.FromNumber(parameterCount));
@@ -1408,14 +1416,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </remarks>
         private static DynValue GetUpvalueIdentifier(ValueSlot upvalueSlot)
         {
-            return UpvalueIdentifiers.GetValue(
-                upvalueSlot,
-                static slot =>
-                    UserData.Create(
-                        new UpvalueIdentifier(slot),
-                        UpvalueIdentifierDescriptorInstance
+            return UpvalueIdentifiers
+                .GetValue(
+                    upvalueSlot,
+                    static slot => new UpvalueIdentifierValue(
+                        UserData.Create(
+                            new UpvalueIdentifier(slot),
+                            UpvalueIdentifierDescriptorInstance
+                        )
                     )
-            );
+                )
+                .Value;
+        }
+
+        private sealed class UpvalueIdentifierValue
+        {
+            internal UpvalueIdentifierValue(DynValue value)
+            {
+                Value = value;
+            }
+
+            internal DynValue Value { get; }
         }
 
         private sealed class DebugHookState
@@ -1454,11 +1475,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             public Type Type => typeof(UpvalueIdentifier);
 
-            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
-            {
-                return DynValue.Nil;
-            }
-
             public bool TryIndex(
                 Script script,
                 object obj,
@@ -1490,11 +1506,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
 
                 return "userdata: upvalue";
-            }
-
-            public DynValue MetaIndex(Script script, object obj, string metaname)
-            {
-                return null;
             }
 
             public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)

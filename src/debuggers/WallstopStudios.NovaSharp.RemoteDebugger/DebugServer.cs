@@ -238,12 +238,13 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger
                                     xw.Attribute("name", wi.Name);
                                 }
 
-                                if (wi.Value != null)
+                                if (wi.Value.HasValue)
                                 {
-                                    xw.Attribute("value", wi.Value.ToString());
+                                    DynValue value = wi.Value.Value;
+                                    xw.Attribute("value", value.ToString());
                                     xw.Attribute(
                                         "type",
-                                        wi.IsError ? "error" : wi.Value.Type.ToLuaDebuggerString()
+                                        wi.IsError ? "error" : value.Type.ToLuaDebuggerString()
                                     );
                                 }
 

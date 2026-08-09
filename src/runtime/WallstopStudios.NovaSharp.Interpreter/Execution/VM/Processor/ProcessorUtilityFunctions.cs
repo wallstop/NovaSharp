@@ -107,11 +107,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue extraPush
         )
         {
-            if (extraPush == null)
-            {
-                throw new ArgumentNullException(nameof(extraPush));
-            }
-
             return InternalInvokeBinaryMetaMethodCore(
                 l,
                 r,

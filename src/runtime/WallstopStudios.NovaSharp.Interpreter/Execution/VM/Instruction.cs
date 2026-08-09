@@ -44,11 +44,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             get { return _value; }
             set
             {
-                if (value == null)
-                {
-                    throw new ArgumentNullException(nameof(value));
-                }
-
                 _value = value;
                 HasValue = true;
             }

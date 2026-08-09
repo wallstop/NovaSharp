@@ -59,7 +59,7 @@ namespace WallstopStudios.NovaSharp.Cli
             }
             else
             {
-                return UserData.CreateStatic(tt);
+                return UserData.TryCreateStatic(tt, out DynValue value) ? value : DynValue.Nil;
             }
 
             return DynValue.Nil;
@@ -79,11 +79,11 @@ namespace WallstopStudios.NovaSharp.Cli
 
             try
             {
-                DynValue result = interpreter.Evaluate(s);
+                DynValue? result = interpreter.Evaluate(s);
 
-                if (result != null && result.Type != DataType.Void)
+                if (result.HasValue && result.Value.Type != DataType.Void)
                 {
-                    Console.WriteLine(result);
+                    Console.WriteLine(result.Value);
                 }
             }
             catch (InterpreterException ex)

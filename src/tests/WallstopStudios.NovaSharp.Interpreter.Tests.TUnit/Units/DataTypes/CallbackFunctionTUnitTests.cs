@@ -97,7 +97,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 }
             );
 
-            List<DynValue> nilSelf = new() { null };
+            List<DynValue> nilSelf = new() { default };
             function.Invoke(context, nilSelf, isMethodCall: true);
             await Assert.That(captured).IsNotNull().ConfigureAwait(false);
             await Assert.That(captured!.IsMethodCall).IsFalse().ConfigureAwait(false);
@@ -111,7 +111,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
             registrationScope.RegisterType<SampleUserData>();
 
-            DynValue userData = UserData.Create(new SampleUserData());
+            bool created = UserData.TryCreate(new SampleUserData(), out DynValue userData);
+            await Assert.That(created).IsTrue().ConfigureAwait(false);
             List<DynValue> userDataArgs = new() { userData };
 
             function.Invoke(context, userDataArgs, isMethodCall: true);
@@ -136,7 +137,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 }
             );
 
-            List<DynValue> nilSelf = new() { null };
+            List<DynValue> nilSelf = new() { default };
             function.Invoke(context, nilSelf, isMethodCall: true);
             await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
 
@@ -148,7 +149,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
             registrationScope.RegisterType<SampleUserData>();
 
-            DynValue userData = UserData.Create(new SampleUserData());
+            bool created = UserData.TryCreate(new SampleUserData(), out DynValue userData);
+            await Assert.That(created).IsTrue().ConfigureAwait(false);
             List<DynValue> userDataArgs = new() { userData };
 
             function.Invoke(context, userDataArgs, isMethodCall: true);
@@ -171,7 +173,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 }
             );
 
-            List<DynValue> nilSelf = new() { null };
+            List<DynValue> nilSelf = new() { default };
             function.Invoke(script, nilSelf, isMethodCall: true);
             await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
 
@@ -183,7 +185,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
             registrationScope.RegisterType<SampleUserData>();
 
-            DynValue userData = UserData.Create(new SampleUserData());
+            bool created = UserData.TryCreate(new SampleUserData(), out DynValue userData);
+            await Assert.That(created).IsTrue().ConfigureAwait(false);
             List<DynValue> userDataArgs = new() { userData };
 
             function.Invoke(script, userDataArgs, isMethodCall: true);
@@ -206,7 +209,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 }
             );
 
-            script.Call(DynValue.NewCallback(function), (DynValue)null);
+            script.Call(DynValue.NewCallback(function), default(DynValue));
 
             await Assert.That(capturedType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
@@ -251,7 +254,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 }
             );
 
-            script.Call(DynValue.NewCallback(function), (DynValue)null);
+            script.Call(DynValue.NewCallback(function), default(DynValue));
 
             await Assert.That(capturedType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }

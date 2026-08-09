@@ -127,9 +127,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 isTypeCompatible: false,
                 stringValue: "<unused>"
             );
-            DynValue userData = UserData.CreateStatic(descriptor);
+            DynValue? userData = UserData.CreateStatic(descriptor);
 
-            object result = ScriptToClrConversions.DynValueToObject(userData);
+            await Assert.That(userData.HasValue).IsTrue();
+            object result = ScriptToClrConversions.DynValueToObject(userData.Value);
 
             await Assert.That(result).IsEqualTo(descriptor.Type);
         }
@@ -777,12 +778,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             public Type Type => _type;
 
-            public DynValue Index(
+            public bool TryIndex(
                 Script script,
                 object obj,
                 DynValue index,
-                bool isDirectIndexing
-            ) => DynValue.Nil;
+                bool isDirectIndexing,
+                out DynValue value
+            )
+            {
+                value = DynValue.Nil;
+                return true;
+            }
 
             public bool SetIndex(
                 Script script,
@@ -800,7 +806,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 return _stringValue ?? obj?.ToString();
             }
 
-            public DynValue MetaIndex(Script script, object obj, string metaname) => null;
+            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+            {
+                value = DynValue.Nil;
+                return false;
+            }
 
             public bool IsTypeCompatible(Type type, object obj)
             {

@@ -359,11 +359,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 InteropAccessMode.Reflection
             );
 
-            ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                descriptor.SetValue(CreateScript(), new SampleProperties(), null)
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                descriptor.SetValue(CreateScript(), new SampleProperties(), default)
             );
 
-            await Assert.That(exception.ParamName).IsEqualTo("value");
+            await Assert.That(exception).IsNotNull();
         }
 
         [global::TUnit.Core.Test]

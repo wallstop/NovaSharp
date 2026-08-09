@@ -28,27 +28,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// </summary>
         internal ValueSlot()
         {
-            _value = DynValue.Nil;
+            _value = default;
         }
 
         /// <summary>
         /// Initializes a new slot holding the specified value.
         /// </summary>
-        /// <param name="value">The initial value; <c>null</c> is normalized to <see cref="DynValue.Nil"/>.</param>
+        /// <param name="value">The initial value.</param>
         internal ValueSlot(DynValue value)
         {
-            _value = value ?? DynValue.Nil;
+            _value = value;
         }
 
         /// <summary>
-        /// Gets or sets the value currently held by this slot. Never <c>null</c>.
+        /// Gets or sets the value currently held by this slot.
         /// </summary>
         internal DynValue Value
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _value; }
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set { _value = value ?? DynValue.Nil; }
+            set { _value = value; }
         }
     }
 }

@@ -484,7 +484,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(yielded.String).IsEqualTo("pause").ConfigureAwait(false);
 
             DynValue resumed = coroutine.Coroutine.Resume(
-                new DynValue[] { null, DynValue.NewString("middle"), null }
+                new DynValue[] { DynValue.Nil, DynValue.NewString("middle"), DynValue.Nil }
             );
 
             await Assert.That(resumed.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);

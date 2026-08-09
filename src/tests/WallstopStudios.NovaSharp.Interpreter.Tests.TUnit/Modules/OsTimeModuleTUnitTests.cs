@@ -442,7 +442,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 DynValue result = script.DoString($"return os.date('{formatString}', 1609459200)");
                 // If we get here, no exception was thrown
                 throw new InvalidOperationException(
-                    $"Expected ScriptRuntimeException but got result: {result?.ToString() ?? "null"}. Scenario: {scenarioDescription}"
+                    $"Expected ScriptRuntimeException but got result: {result}. Scenario: {scenarioDescription}"
                 );
             });
 

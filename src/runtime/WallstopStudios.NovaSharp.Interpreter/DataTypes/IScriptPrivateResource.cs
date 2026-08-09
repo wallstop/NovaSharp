@@ -58,14 +58,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue value
         )
         {
-            if (value != null)
-            {
-                IScriptPrivateResource otherResource = value.ScriptPrivateResource;
+            IScriptPrivateResource otherResource = value.ScriptPrivateResource;
 
-                if (otherResource != null)
-                {
-                    CheckScriptOwnership(containingResource, otherResource);
-                }
+            if (otherResource != null)
+            {
+                CheckScriptOwnership(containingResource, otherResource);
             }
         }
 

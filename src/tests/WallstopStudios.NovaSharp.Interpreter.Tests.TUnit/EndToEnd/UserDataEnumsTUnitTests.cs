@@ -106,9 +106,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             registrationScope.RegisterType<SampleRating>();
             registrationScope.RegisterType<SampleFlagSet>();
 
-            script.Globals.Set("SampleRating", UserData.CreateStatic<SampleRating>());
+            script.Globals.Set("SampleRating", UserData.CreateStatic<SampleRating>().Value);
             script.Globals["SampleFlagSet"] = typeof(SampleFlagSet);
-            script.Globals.Set("o", UserData.Create(target));
+            script.Globals.Set("o", UserData.Create(target).Value);
 
             DynValue value = script.DoString("return " + code);
 

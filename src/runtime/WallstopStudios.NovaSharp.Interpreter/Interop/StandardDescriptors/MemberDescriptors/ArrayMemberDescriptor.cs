@@ -53,6 +53,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
             _isSetter = isSetter;
         }
 
+        /// <inheritdoc />
+        public override DynValue Execute(
+            Script script,
+            object obj,
+            ScriptExecutionContext context,
+            CallbackArguments args
+        )
+        {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            // Returning DynValue through ObjectCallbackMemberDescriptor's object callback boxes the
+            // readonly value. Setter results are already DynValue.Void, so keep that hot path typed.
+            return _isSetter
+                ? ArrayIndexerSet(obj, context, args)
+                : base.Execute(script, obj, context, args);
+        }
+
         /// <summary>
         /// Prepares the descriptor for hard-wiring.
         /// The descriptor fills the passed table with all the needed data for hardwire generators to generate the appropriate code.

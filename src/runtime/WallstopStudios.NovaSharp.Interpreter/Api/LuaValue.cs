@@ -8,8 +8,7 @@ namespace NovaSharp
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     /// <summary>
-    /// Public Lua value wrapper. This is a facade over <see cref="DynValue"/> until the VM-native
-    /// value type lands.
+    /// Public Lua value wrapper over the VM-native <see cref="DynValue"/> value type.
     /// </summary>
     public readonly struct LuaValue : IEquatable<LuaValue>
     {
@@ -391,11 +390,6 @@ namespace NovaSharp
         /// </summary>
         internal static bool RequiresOwner(DynValue value)
         {
-            if (value == null)
-            {
-                return false;
-            }
-
             switch (value.Type)
             {
                 case DataType.ClrFunction:
@@ -476,7 +470,7 @@ namespace NovaSharp
 
         private DynValue GetValueOrNil()
         {
-            return _value ?? DynValue.Nil;
+            return _value;
         }
 
         private static InvalidOperationException NewKindException(

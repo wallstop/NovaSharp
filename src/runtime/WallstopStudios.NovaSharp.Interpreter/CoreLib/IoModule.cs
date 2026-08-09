@@ -125,8 +125,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 udb = StandardIoFileUserDataBase.CreateOutputStream(optionsStream);
             }
 
-            DynValue handle = UserData.Create(udb);
-            if (handle == null)
+            if (!UserData.TryCreate(udb, out DynValue handle))
             {
                 throw new InvalidOperationException("Failed to create standard IO userdata.");
             }
@@ -186,10 +185,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             script = ModuleArgumentValidation.RequireScript(script, nameof(script));
             Table r = script.Registry;
-            r.Set(
-                "853BEAAF298648839E2C99D005E1DF94_" + file.ToString(),
-                UserData.Create(fileHandle)
-            );
+            if (!UserData.TryCreate(fileHandle, out DynValue handle))
+            {
+                throw new InvalidOperationException("Failed to create standard IO userdata.");
+            }
+
+            r.Set("853BEAAF298648839E2C99D005E1DF94_" + file.ToString(), handle);
         }
 
         /// <summary>
@@ -318,7 +319,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             if (args.Count == 0 || args[0].IsNil())
             {
                 FileUserDataBase file = GetDefaultFile(executionContext, defaultFiles);
-                return UserData.Create(file);
+                return CreateFileUserData(file);
             }
 
             FileUserDataBase inp = null;
@@ -346,7 +347,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             SetDefaultFile(executionContext, defaultFiles, inp);
 
-            return UserData.Create(inp);
+            return CreateFileUserData(inp);
         }
 
         private static UTF8Encoding GetUtf8Encoding()
@@ -416,7 +417,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         iterator.Tuple[0], // iterator function
                         DynValue.Nil, // state
                         DynValue.Nil, // initial value
-                        UserData.Create(fileHandle) // file handle for to-be-closed
+                        CreateFileUserData(fileHandle) // file handle for to-be-closed
                     );
                 }
 
@@ -524,7 +525,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     e = Encoding.GetEncoding(encoding);
                 }
 
-                return UserData.Create(Open(executionContext, filename, e, mode, isBinary));
+                return CreateFileUserData(Open(executionContext, filename, e, mode, isBinary));
             }
             catch (Exception ex) when (IsRecoverableIoOpenException(ex))
             {
@@ -659,7 +660,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 "w",
                 isBinaryMode: true
             );
-            return UserData.Create(file);
+            return CreateFileUserData(file);
+        }
+
+        private static DynValue CreateFileUserData(FileUserDataBase file)
+        {
+            if (!UserData.TryCreate(file, out DynValue value))
+            {
+                throw new InvalidOperationException("Failed to create standard IO userdata.");
+            }
+
+            return value;
         }
 
         /// <summary>

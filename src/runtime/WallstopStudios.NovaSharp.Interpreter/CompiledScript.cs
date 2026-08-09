@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
     using System.Runtime.CompilerServices;
     using DataTypes;
     using Errors;
+    using Interop;
 
     /// <summary>
     /// Represents a Lua/NovaSharp chunk or callable value that has already been resolved for a
@@ -26,11 +27,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (script == null)
             {
                 throw new ArgumentNullException(nameof(script));
-            }
-
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
             }
 
             script.ValidateCompiledScriptTarget(function);
@@ -1140,7 +1136,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public bool Equals(CompiledScript other)
         {
             return ReferenceEquals(_script, other._script)
-                && ReferenceEquals(_function, other._function);
+                && _function.HasSameReferenceIdentity(other._function);
         }
 
         /// <inheritdoc />
@@ -1336,12 +1332,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
             out DynValue converted
         )
         {
-            return Script.GlobalOptions.CustomConverters.TryConvertClrToScript(
-                typeof(T),
-                script,
-                arg,
-                out converted
-            );
+            ClrToScriptTryConverter converter =
+                Script.GlobalOptions.CustomConverters.GetClrToScriptTryConversion(typeof(T));
+            if (converter == null)
+            {
+                converted = DynValue.Nil;
+                return false;
+            }
+
+            return converter(script, arg, out converted);
         }
 
         private static double ConvertNumberResult(DynValue result)

@@ -448,7 +448,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             List<WatchItem> watches = debugger.LastWatchUpdates[WatchType.Watches];
             await Assert.That(watches.Count).IsEqualTo(1);
             await Assert.That(watches[0].Name).IsEqualTo("const_watch");
-            await Assert.That(watches[0].Value.Number).IsEqualTo(42);
+            await Assert.That(watches[0].Value.HasValue).IsTrue();
+            await Assert.That(watches[0].Value.Value.Number).IsEqualTo(42);
         }
 
         [global::TUnit.Core.Test]
@@ -479,10 +480,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(debugger.LastWatchUpdates.ContainsKey(WatchType.Watches)).IsTrue();
             WatchItem watch = debugger.LastWatchUpdates[WatchType.Watches].Single();
             await Assert.That(watch.IsError).IsTrue();
-            await Assert.That(watch.Value.Type).IsEqualTo(DataType.String);
+            await Assert.That(watch.Value.HasValue).IsTrue();
+            await Assert.That(watch.Value.Value.Type).IsEqualTo(DataType.String);
             await Assert
                 .That(
-                    watch.Value.String.Contains("cannot call functions", StringComparison.Ordinal)
+                    watch.Value.Value.String.Contains(
+                        "cannot call functions",
+                        StringComparison.Ordinal
+                    )
                 )
                 .IsTrue();
         }
@@ -519,9 +524,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(debugger.LastWatchUpdates.ContainsKey(WatchType.Watches)).IsTrue();
             WatchItem watch = debugger.LastWatchUpdates[WatchType.Watches].Single();
             await Assert.That(watch.IsError).IsTrue();
-            await Assert.That(watch.Value.Type).IsEqualTo(DataType.String);
+            await Assert.That(watch.Value.HasValue).IsTrue();
+            await Assert.That(watch.Value.Value.Type).IsEqualTo(DataType.String);
             await Assert
-                .That(watch.Value.String.Contains(message, StringComparison.Ordinal))
+                .That(watch.Value.Value.String.Contains(message, StringComparison.Ordinal))
                 .IsTrue();
         }
 

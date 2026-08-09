@@ -13,17 +13,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// </summary>
     public class Table : RefIdObject, IScriptPrivateResource
     {
-        /// <summary>
-        /// Gets or sets a cached <see cref="DynValue"/> wrapping this table.
-        /// Used by <see cref="DynValue.FromTable"/> to avoid repeated allocations.
-        /// </summary>
-        /// <remarks>
-        /// Safe to share only because values are immutable: a single wrapper cannot be reassigned
-        /// out from under an unrelated holder. Equality is unaffected — <see cref="DynValue.Equals"/>
-        /// compares tables by their underlying <see cref="Table"/> reference either way.
-        /// </remarks>
-        internal DynValue CachedDynValue { get; set; }
-
         // Estimated fixed cost of an empty Table: object header, field storage, and the empty
         // TableStorage. The array/node/bucket tables are accounted separately as they are allocated.
         private const int BaseTableOverhead = 96;
@@ -276,11 +265,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="value">The value.</param>
         public void Append(DynValue value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             this.CheckScriptOwnership(value);
             int appendKey = Length + 1;
             bool hadPrevious = _storage.SetInt(appendKey, value, out DynValue previous);
@@ -406,11 +390,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw ScriptRuntimeException.TableIndexIsNil();
             }
 
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             this.CheckScriptOwnership(value);
             bool hadPrevious = _storage.SetString(key, value, out DynValue previous);
             OnEntryWritten(hadPrevious, previous, value, false, 0, -1);
@@ -423,11 +402,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="value">The value.</param>
         public void Set(int key, DynValue value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             this.CheckScriptOwnership(value);
 
             if (key <= 0)
@@ -451,16 +425,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="value">The value.</param>
         public void Set(DynValue key, DynValue value)
         {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             if (key.IsNilOrNan())
             {
                 if (key.IsNil())
@@ -509,11 +473,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw ScriptRuntimeException.TableIndexIsNil();
             }
 
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             switch (key)
             {
                 case string s:
@@ -541,11 +500,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw ScriptRuntimeException.TableIndexIsNil();
             }
 
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             ResolveMultipleKeys(keys, out object key).Set(key, value);
         }
 
@@ -562,11 +516,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw ScriptRuntimeException.TableIndexIsNil();
             }
 
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             ResolveMultipleKeys(keys, out object key).Set(key, value);
         }
 
@@ -579,11 +528,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="value">The value.</param>
         public void Set(object key1, object key2, DynValue value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             ResolveNestedKeys(key1, key2, out object key).Set(key, value);
         }
 
@@ -597,11 +541,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="value">The value.</param>
         public void Set(object key1, object key2, object key3, DynValue value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             ResolveNestedKeys(key1, key2, key3, out object key).Set(key, value);
         }
 
@@ -684,11 +623,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="value">The stored value, or nil when the key is absent.</param>
         public bool TryRawGet(DynValue key, out DynValue value)
         {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
             switch (key.Type)
             {
                 case DataType.String:
@@ -740,7 +674,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public DynValue Get(params object[] keys)
         {
             //Contract.Ensures(Contract.Result<DynValue>() != null);
-            return RawGet(keys) ?? DynValue.Nil;
+            return RawGet(keys);
         }
 
         /// <summary>
@@ -752,7 +686,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public DynValue Get(ReadOnlySpan<object> keys)
         {
             //Contract.Ensures(Contract.Result<DynValue>() != null);
-            return RawGet(keys) ?? DynValue.Nil;
+            return RawGet(keys);
         }
 
         /// <summary>
@@ -765,7 +699,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public DynValue Get(object key1, object key2)
         {
             //Contract.Ensures(Contract.Result<DynValue>() != null);
-            return RawGet(key1, key2) ?? DynValue.Nil;
+            return RawGet(key1, key2);
         }
 
         /// <summary>
@@ -779,7 +713,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public DynValue Get(object key1, object key2, object key3)
         {
             //Contract.Ensures(Contract.Result<DynValue>() != null);
-            return RawGet(key1, key2, key3) ?? DynValue.Nil;
+            return RawGet(key1, key2, key3);
         }
 
         /// <summary>
@@ -789,7 +723,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key">The key.</param>
         public DynValue RawGet(string key)
         {
-            return TryRawGet(key, out DynValue value) ? value : null;
+            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
         }
 
         /// <summary>
@@ -799,7 +733,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key">The key.</param>
         public DynValue RawGet(int key)
         {
-            return TryRawGet(key, out DynValue value) ? value : null;
+            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
         }
 
         /// <summary>
@@ -809,7 +743,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key">The key.</param>
         public DynValue RawGet(DynValue key)
         {
-            return TryRawGet(key, out DynValue value) ? value : null;
+            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
         }
 
         /// <summary>
@@ -819,7 +753,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key">The key.</param>
         public DynValue RawGet(object key)
         {
-            return TryRawGet(key, out DynValue value) ? value : null;
+            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
         }
 
         /// <summary>
@@ -833,7 +767,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             if (keys == null || keys.Length == 0)
             {
-                return null;
+                return DynValue.Nil;
             }
 
             return ResolveMultipleKeys(keys, out object key).RawGet(key);
@@ -848,7 +782,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             if (keys.Length == 0)
             {
-                return null;
+                return DynValue.Nil;
             }
 
             return ResolveMultipleKeys(keys, out object key).RawGet(key);
@@ -938,11 +872,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
         public bool Remove(DynValue key)
         {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
             switch (key.Type)
             {
                 case DataType.String:
@@ -1053,11 +982,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </returns>
         public TablePair? NextKey(DynValue v)
         {
-            if (v == null)
-            {
-                throw new ArgumentNullException(nameof(v));
-            }
-
             int arrayIndex;
             int nodeIndex;
             if (v.IsNil())
@@ -1217,16 +1141,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         internal void InitNextKey(DynValue key, DynValue value)
         {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             if (key.IsNilOrNan())
             {
                 if (key.IsNil())

@@ -119,9 +119,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             public Type Type => typeof(RejectingUserData);
 
-            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+            public bool TryIndex(
+                Script script,
+                object obj,
+                DynValue index,
+                bool isDirectIndexing,
+                out DynValue value
+            )
             {
-                return DynValue.Nil;
+                value = DynValue.Nil;
+                return true;
             }
 
             public bool SetIndex(
@@ -140,9 +147,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 return Name;
             }
 
-            public DynValue MetaIndex(Script script, object obj, string metaname)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
             {
-                return null;
+                value = DynValue.Nil;
+                return false;
             }
 
             public bool IsTypeCompatible(Type type, object obj)
@@ -156,13 +164,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             public string Name => nameof(PresenceAwareUserDataDescriptor);
 
             public Type Type => typeof(RejectingUserData);
-
-            public DynValue Index(Script script, object obj, DynValue index, bool isDirectIndexing)
-            {
-                return TryIndex(script, obj, index, isDirectIndexing, out DynValue value)
-                    ? value
-                    : null;
-            }
 
             public bool TryIndex(
                 Script script,
@@ -196,11 +197,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             public string AsString(object obj)
             {
                 return Name;
-            }
-
-            public DynValue MetaIndex(Script script, object obj, string metaname)
-            {
-                return null;
             }
 
             public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)

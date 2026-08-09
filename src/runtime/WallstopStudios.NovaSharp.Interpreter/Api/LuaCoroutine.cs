@@ -17,8 +17,7 @@ namespace NovaSharp
         internal LuaCoroutine(LuaEngine owner, DynValue coroutineValue)
         {
             _owner = owner ?? throw new ArgumentNullException(nameof(owner));
-            _coroutineValue =
-                coroutineValue ?? throw new ArgumentNullException(nameof(coroutineValue));
+            _coroutineValue = coroutineValue;
         }
 
         /// <summary>

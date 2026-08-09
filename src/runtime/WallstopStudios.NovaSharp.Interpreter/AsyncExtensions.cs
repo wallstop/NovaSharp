@@ -357,7 +357,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>
         /// This method returns the result of the computation, or null if more input is needed for a computation.
         /// </returns>
-        public static Task<DynValue> EvaluateAsync(this ReplInterpreter interpreter, string input)
+        public static Task<DynValue?> EvaluateAsync(this ReplInterpreter interpreter, string input)
         {
             return ExecAsync(() => interpreter.Evaluate(input));
         }

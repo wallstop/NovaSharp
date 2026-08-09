@@ -82,10 +82,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             SampleTarget target = new();
             SampleReadWriteDescriptor descriptor = new();
 
-            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                descriptor.SetValue(script, target, value: null)
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.SetValue(script, target, value: default)
             );
-            await Assert.That(exception.ParamName).IsEqualTo("value").ConfigureAwait(false);
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

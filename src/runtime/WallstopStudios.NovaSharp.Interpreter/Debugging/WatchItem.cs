@@ -32,9 +32,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the value of the item
+        /// Gets or sets the value of the item, or <see langword="null"/> when this watch item does
+        /// not expose a value.
         /// </summary>
-        public DynValue Value { get; set; }
+        public DynValue? Value { get; set; }
 
         /// <summary>
         /// Gets or sets the symbol reference of the item
@@ -71,7 +72,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
                 BasePtr,
                 RetAddress,
                 Name ?? "(null)",
-                Value != null ? Value.ToString() : "(null)",
+                Value.HasValue ? Value.Value.ToString() : "(null)",
                 LValue != null ? LValue.ToString() : "(null)"
             );
         }

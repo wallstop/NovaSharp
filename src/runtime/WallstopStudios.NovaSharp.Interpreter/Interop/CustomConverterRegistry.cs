@@ -40,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         private readonly struct ClrToScriptConverterEntry
         {
             internal ClrToScriptConverterEntry(
-                Func<Script, object, DynValue> converter,
+                Func<Script, object, DynValue?> converter,
                 ClrToScriptTryConverter tryConverter
             )
             {
@@ -48,7 +48,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
                 TryConverter = tryConverter;
             }
 
-            internal Func<Script, object, DynValue> Converter { get; }
+            internal Func<Script, object, DynValue?> Converter { get; }
 
             internal ClrToScriptTryConverter TryConverter { get; }
         }
@@ -172,7 +172,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <param name="converter">The converter, or null.</param>
         public void SetClrToScriptCustomConversion(
             Type clrDataType,
-            Func<Script, object, DynValue> converter = null
+            Func<Script, object, DynValue?> converter = null
         )
         {
             if (converter == null)
@@ -187,13 +187,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
                     out DynValue result
                 ) =>
                 {
-                    result = converter(script, value);
-                    if (result == null)
+                    DynValue? converted = converter(script, value);
+                    if (!converted.HasValue)
                     {
                         result = DynValue.Nil;
                         return false;
                     }
 
+                    result = converted.Value;
                     return true;
                 };
                 _clr2Script[clrDataType] = new ClrToScriptConverterEntry(converter, tryConverter);
@@ -205,11 +206,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// </summary>
         /// <typeparam name="T">The CLR data type.</typeparam>
         /// <param name="converter">The converter, or null.</param>
-        public void SetClrToScriptCustomConversion<T>(Func<Script, T, DynValue> converter = null)
+        public void SetClrToScriptCustomConversion<T>(Func<Script, T, DynValue?> converter = null)
         {
             if (converter == null)
             {
-                SetClrToScriptCustomConversion(typeof(T), (Func<Script, object, DynValue>)null);
+                SetClrToScriptCustomConversion(typeof(T), (Func<Script, object, DynValue?>)null);
                 return;
             }
 
@@ -221,7 +222,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// </summary>
         /// <param name="clrDataType">Type of the color data.</param>
         /// <returns>The converter function, or null if not found</returns>
-        public Func<Script, object, DynValue> GetClrToScriptCustomConversion(Type clrDataType)
+        public Func<Script, object, DynValue?> GetClrToScriptCustomConversion(Type clrDataType)
         {
             return _clr2Script.TryGetValue(clrDataType, out ClrToScriptConverterEntry entry)
                 ? entry.Converter
@@ -231,8 +232,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <summary>
         /// Sets a custom try-converter from a CLR data type. Set null to remove a previous custom
         /// converter. Returning false declines the conversion and normalizes the output to
-        /// <see cref="DynValue.Nil"/>. Returning true preserves explicit nil and void results; a
-        /// null result is invalid and throws when the converter is invoked.
+        /// <see cref="DynValue.Nil"/>. Returning true preserves explicit nil, void, and
+        /// default-initialized nil results.
         /// </summary>
         /// <param name="clrDataType">The CLR data type.</param>
         /// <param name="converter">The try-converter, or null.</param>
@@ -252,7 +253,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
                 object value,
                 out DynValue result
             ) => NormalizeTryConversion(converter, script, value, out result);
-            Func<Script, object, DynValue> legacyConverter = (script, value) =>
+            Func<Script, object, DynValue?> legacyConverter = (script, value) =>
                 normalizedConverter(script, value, out DynValue result) ? result : null;
             _clr2Script[clrDataType] = new ClrToScriptConverterEntry(
                 legacyConverter,
@@ -322,12 +323,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         )]
         public void SetClrToScriptCustomConversion(
             Type clrDataType,
-            Func<object, DynValue> converter = null
+            Func<object, DynValue?> converter = null
         )
         {
             if (converter == null)
             {
-                SetClrToScriptCustomConversion(clrDataType, (Func<Script, object, DynValue>)null);
+                SetClrToScriptCustomConversion(clrDataType, (Func<Script, object, DynValue?>)null);
                 return;
             }
 
@@ -342,11 +343,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         [Obsolete(
             "This method is deprecated. Use the overloads accepting functions with a Script argument."
         )]
-        public void SetClrToScriptCustomConversion<T>(Func<T, DynValue> converter = null)
+        public void SetClrToScriptCustomConversion<T>(Func<T, DynValue?> converter = null)
         {
             if (converter == null)
             {
-                SetClrToScriptCustomConversion(typeof(T), (Func<Script, object, DynValue>)null);
+                SetClrToScriptCustomConversion(typeof(T), (Func<Script, object, DynValue?>)null);
                 return;
             }
 
@@ -401,13 +402,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
             {
                 result = DynValue.Nil;
                 return false;
-            }
-
-            if (result == null)
-            {
-                throw new InvalidOperationException(
-                    "A CLR-to-script try-converter returned true with a null result."
-                );
             }
 
             return true;

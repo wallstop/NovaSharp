@@ -23,11 +23,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
         /// </summary>
         public static bool IsJsonNull(DynValue v)
         {
-            if (v == null)
-            {
-                throw new ArgumentNullException(nameof(v));
-            }
-
             return v.Type == DataType.UserData
                 && v.UserData.Descriptor != null
                 && v.UserData.Descriptor.Type == typeof(JsonNull);
@@ -39,7 +34,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
         /// </summary>
         public static DynValue Create()
         {
-            return UserData.CreateStatic<JsonNull>();
+            if (!UserData.TryCreateStatic<JsonNull>(out DynValue value))
+            {
+                throw new InvalidOperationException("Failed to create JSON null userdata.");
+            }
+
+            return value;
         }
     }
 }
