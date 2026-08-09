@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1967,
+  "total_snippets": 1970,
   "novasharp_only": 484,
-  "comparable": 1483,
+  "comparable": 1486,
   "by_version": {
-    "5.1": 1002,
-    "5.2": 685,
-    "5.3": 925,
-    "5.4": 978,
-    "5.5": 1020
+    "5.1": 1004,
+    "5.2": 686,
+    "5.3": 926,
+    "5.4": 980,
+    "5.5": 1022
   },
   "snippets": [
     {
@@ -6654,6 +6654,17 @@
       "expects_error": false
     },
     {
+      "path": "ErrorHandlingModuleTUnitTests/ReentrantCloseAndMessageHandlersSurviveExecutionStackGrowth.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/ErrorHandlingModuleTUnitTests.cs:848",
+      "test": "ErrorHandlingModuleTUnitTests.ReentrantCloseAndMessageHandlersSurviveExecutionStackGrowth",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
       "path": "ErrorHandlingModuleTUnitTests/XpcallCloseErrorReplacesOriginalErrorAndClosesRemainingValues.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/ErrorHandlingModuleTUnitTests.cs:780",
       "test": "ErrorHandlingModuleTUnitTests.XpcallCloseErrorReplacesOriginalErrorAndClosesRemainingValues",
@@ -7705,20 +7716,6 @@
       "expects_error": false
     },
     {
-      "path": "StringArithmeticCoercionTUnitTests/string_arithmetic_basic.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs:123",
-      "test": "StringArithmeticCoercionTUnitTests.AllArithmeticOperationsWorkWithStrings",
-      "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
       "path": "StringArithmeticCoercionTUnitTests/AllArithmeticOperationsWorkWithStrings.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs:127",
       "test": "StringArithmeticCoercionTUnitTests.AllArithmeticOperationsWorkWithStrings",
@@ -7810,6 +7807,16 @@
         "5.3",
         "5.4",
         "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringArithmeticCoercionTUnitTests/AllArithmeticOperationsWorkWithStrings_7.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs:183",
+      "test": "StringArithmeticCoercionTUnitTests.AllArithmeticOperationsWorkWithStrings",
+      "lua_versions": [
+        "5.1"
       ],
       "novasharp_only": false,
       "expects_error": false
@@ -8929,6 +8936,20 @@
       "test": "ProcessorCoroutineApiTUnitTests.ResumeWithObjectArgumentsConvertsValues",
       "lua_versions": [
         "5.1"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ProcessorCoroutineApiTUnitTests/ResumeWithObjectArgumentsConvertsValues_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineApiTUnitTests.cs:326",
+      "test": "ProcessorCoroutineApiTUnitTests.ResumeWithObjectArgumentsConvertsValues",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
       ],
       "novasharp_only": false,
       "expects_error": false
@@ -10577,6 +10598,20 @@
     {
       "path": "ClosureTUnitTests/CallOverloadsInvokeUnderlyingFunction.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/ClosureTUnitTests.cs:295",
+      "test": "ClosureTUnitTests.CallOverloadsInvokeUnderlyingFunction",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ClosureTUnitTests/CallOverloadsInvokeUnderlyingFunction_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/ClosureTUnitTests.cs:352",
       "test": "ClosureTUnitTests.CallOverloadsInvokeUnderlyingFunction",
       "lua_versions": [
         "5.1",

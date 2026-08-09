@@ -839,6 +839,64 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
         [global::TUnit.Core.Test]
         [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task ReentrantCloseAndMessageHandlersSurviveExecutionStackGrowth(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            LuaValue tuple = script.DoString(
+                @"
+                local close_count = 0
+                local function recurse(n)
+                    if n == 0 then
+                        return 0
+                    end
+                    return 1 + recurse(n - 1)
+                end
+
+                local mt = {
+                    __close = function()
+                        close_count = close_count + 1
+                        assert(recurse(96) == 96)
+                    end
+                }
+
+                local function finish()
+                    local handle <close> = setmetatable({}, mt)
+                    return 'done'
+                end
+
+                local value = finish()
+                local handler_count = 0
+                local ok, message = xpcall(function()
+                    error('boom', 0)
+                end, function(err)
+                    handler_count = handler_count + 1
+                    return 'handled:' .. err .. ':' .. recurse(96)
+                end)
+
+                assert(value == 'done')
+                assert(close_count == 1)
+                assert(ok == false)
+                assert(message == 'handled:boom:96')
+                assert(handler_count == 1)
+                return value, close_count, ok, message, handler_count
+                "
+            );
+
+            await Assert.That(tuple.Tuple[0].String).IsEqualTo("done").ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[2].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[3].String)
+                .IsEqualTo("handled:boom:96")
+                .ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[4].Number).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
         public async Task XpcallCloseErrorReplacesOriginalErrorAndClosesRemainingValues(
             LuaCompatibilityVersion version
         )
