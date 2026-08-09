@@ -2,7 +2,7 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 165 undocumented public/internal type declarations.
+Found 171 undocumented public/internal type declarations.
 
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs
   - line 9: missing XML docs for `class ComVisibleAttribute`
@@ -32,8 +32,14 @@ Found 165 undocumented public/internal type declarations.
   - line 71: missing XML docs for `MetaIndex()`
   - line 76: missing XML docs for `TryMetaIndex()`
   - line 81: missing XML docs for `IsTypeCompatible()`
+- src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableIteratorsModule.cs
+  - line 28: missing XML docs for `NextArray`
+  - line 30: missing XML docs for `Next`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableModule.cs
   - line 35: missing XML docs for `Compare()`
+- src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/Utf8Module.cs
+  - line 33: missing XML docs for `Strict`
+  - line 35: missing XML docs for `Lax`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/CollectionPools.cs
   - line 148: missing XML docs for `GetStatistics()`
   - line 153: missing XML docs for `Trim()`
@@ -96,8 +102,11 @@ Found 165 undocumented public/internal type declarations.
   - line 97: missing XML docs for `class SystemArrayPool`
   - line 281: missing XML docs for `GetStatistics()`
   - line 286: missing XML docs for `Trim()`
+- src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/CallbackFunction.cs
+  - line 23: missing XML docs for `class SharedState`
+  - line 25: missing XML docs for `AdditionalData`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/UserData.cs
-  - line 635: missing XML docs for `Dispose()`
+  - line 681: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Errors/InterpreterException.cs
   - line 101: missing XML docs for `ErrorHandlerBeforeUnwindDecorated`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/CallStackItem.cs
@@ -138,11 +147,11 @@ Found 165 undocumented public/internal type declarations.
   - line 96: missing XML docs for `Clone()`
   - line 313: missing XML docs for `EnterIsolationScope()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs
-  - line 623: missing XML docs for `BeginDefaultOptionsScope()`
-  - line 731: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
-  - line 4748: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
-  - line 4756: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
-  - line 4883: missing XML docs for `Dispose()`
+  - line 624: missing XML docs for `BeginDefaultOptionsScope()`
+  - line 732: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
+  - line 4771: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
+  - line 4779: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
+  - line 4906: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf2.cs
   - line 198: missing XML docs for `FromT0()`
   - line 211: missing XML docs for `FromT1()`
