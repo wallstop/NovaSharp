@@ -1522,12 +1522,65 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        private readonly ref struct VmCallArguments
+        {
+            private readonly ReadOnlySpan<DynValue> _storedArguments;
+            private readonly DynValue[] _expandedTail;
+            private readonly int _prefixCount;
+
+            internal VmCallArguments(ReadOnlySpan<DynValue> storedArguments)
+            {
+                _storedArguments = storedArguments;
+
+                if (storedArguments.Length > 0 && storedArguments[^1].Type == DataType.Tuple)
+                {
+                    _expandedTail = storedArguments[^1].Tuple;
+                    _prefixCount = storedArguments.Length - 1;
+                    Count = _prefixCount + _expandedTail.Length;
+                }
+                else
+                {
+                    _expandedTail = null;
+                    _prefixCount = storedArguments.Length;
+                    Count = storedArguments.Length;
+                }
+            }
+
+            internal int Count { get; }
+
+            internal DynValue this[int index]
+            {
+                get
+                {
+                    if ((uint)index >= (uint)Count)
+                    {
+                        throw new ArgumentOutOfRangeException(nameof(index));
+                    }
+
+                    return index < _prefixCount
+                        ? _storedArguments[index]
+                        : _expandedTail[index - _prefixCount];
+                }
+            }
+        }
+
+        private VmCallArguments CreateArgsViewForFunctionCall(int numargs, int offsFromTop)
+        {
+            int start = _valueStack.Count - numargs - offsFromTop;
+            if (!_valueStack.TryGetSpan(start, numargs, out ReadOnlySpan<DynValue> arguments))
+            {
+                throw new InternalErrorException("Invalid function argument stack range");
+            }
+
+            return new VmCallArguments(arguments);
+        }
+
         private void ExecArgs(Instruction instruction)
         {
             int numargs = (int)_valueStack.Peek(0).Number;
 
             // unpacks last tuple arguments to simplify a lot of code down under
-            IList<DynValue> argsList = CreateArgsListForFunctionCall(numargs, 1);
+            VmCallArguments argsList = CreateArgsViewForFunctionCall(numargs, 1);
 
             for (int i = 0; i < instruction.SymbolList.Length; i++)
             {

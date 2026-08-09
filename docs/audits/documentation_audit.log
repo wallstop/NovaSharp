@@ -2,7 +2,7 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 171 undocumented public/internal type declarations.
+Found 172 undocumented public/internal type declarations.
 
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs
   - line 9: missing XML docs for `class ComVisibleAttribute`
@@ -126,6 +126,7 @@ Found 171 undocumented public/internal type declarations.
   - line 46: missing XML docs for `Continuation`
   - line 48: missing XML docs for `ErrorHandlerBeforeUnwind`
   - line 50: missing XML docs for `HasErrorHandlerBeforeUnwind`
+  - line 1549: missing XML docs for `Count`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/BasicDescriptors/DispatchingUserDataDescriptor.cs
   - line 313: missing XML docs for `TryIndex()`
   - line 815: missing XML docs for `TryMetaIndex()`

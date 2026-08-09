@@ -10,7 +10,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
     public sealed class PrecompiledRecursiveCallAllocationTUnitTests
     {
-        private const long Fibonacci20CurrentRedBudgetBytesPerCall = 24L * 1024L * 1024L;
+        private const long Fibonacci20CallPrologueBudgetBytesPerCall = 1_050_817L;
         private const long NonTailCurrentRedBudgetBytesPerCall = 2L * 1024L * 1024L;
         private const int AllocationSmokeIterations = 2;
 
@@ -41,9 +41,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             await Assert
                 .That(allocatedPerCall)
-                .IsLessThan(Fibonacci20CurrentRedBudgetBytesPerCall)
+                .IsLessThan(Fibonacci20CallPrologueBudgetBytesPerCall)
                 .Because(
-                    $"Precompiled fib(20) allocated {allocated} bytes across {AllocationSmokeIterations} iterations ({allocatedPerCall} bytes/call). Ratchet this toward the A1 target after LuaValue removes scalar wrapper allocation."
+                    $"Precompiled fib(20) allocated {allocated} bytes across {AllocationSmokeIterations} iterations ({allocatedPerCall} bytes/call). Keep the A5 stack-window call-prologue allocation reduction."
                 )
                 .ConfigureAwait(false);
         }
