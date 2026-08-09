@@ -76,7 +76,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         internal static DynValue ConvertIterator(Script script, IEnumerator enumerator)
         {
             EnumerableWrapper ei = new(script, enumerator);
-            UserData.TryCreate(ei, out DynValue iterator);
+            UserData.TryCreate(script, ei, out DynValue iterator);
             return DynValue.NewTuple(iterator, DynValue.Nil, DynValue.Nil);
         }
 
@@ -116,6 +116,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
                 else if (idx == "MoveNext" || idx == "moveNext" || idx == "move_next")
                 {
                     value = DynValue.NewCallback(
+                        script,
                         (ctx, args) => DynValue.NewBoolean(_enumerator.MoveNext())
                     );
                     return true;
@@ -123,6 +124,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
                 else if (idx == "Reset" || idx == "reset")
                 {
                     value = DynValue.NewCallback(
+                        script,
                         (ctx, args) =>
                         {
                             Reset();
@@ -158,7 +160,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         {
             if (metaname == Metamethods.Call)
             {
-                value = DynValue.NewCallback(LuaIteratorCallback);
+                value = DynValue.NewCallback(script, LuaIteratorCallback);
                 return true;
             }
 

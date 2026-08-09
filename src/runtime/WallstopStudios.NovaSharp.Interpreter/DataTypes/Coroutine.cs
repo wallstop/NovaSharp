@@ -63,7 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             Type = CoroutineType.ClrCallback;
             _clrCallback = function;
-            OwnerScript = null;
+            OwnerScript = function.OwnerScript;
         }
 
         internal Coroutine(Processor proc)

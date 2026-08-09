@@ -896,7 +896,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
 
         public static int str_gmatch(LuaState l)
         {
-            CallbackFunction c = new(gmatch_aux_2, "gmatch");
+            CallbackFunction c = new(l.ExecutionContext.Script, gmatch_aux_2, "gmatch");
             string s = ArgAsType(l, 1, DataType.String, false).String;
             string p = PatchPattern(ArgAsType(l, 2, DataType.String, false).String);
 

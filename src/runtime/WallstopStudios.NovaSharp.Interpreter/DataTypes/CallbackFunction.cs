@@ -2,6 +2,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
@@ -10,16 +12,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// <summary>
     /// This class wraps a CLR function
     /// </summary>
-    public sealed class CallbackFunction : RefIdObject
+    public sealed class CallbackFunction : RefIdObject, IScriptPrivateResource
     {
         private static InteropAccessMode DefaultAccessModeValue = InteropAccessMode.LazyOptimized;
         private readonly ScriptFunctionCallbackView _argumentViewCallback;
         private readonly ScriptFunctionCallbackViewNoContext _argumentViewNoContextCallback;
+        private readonly SharedState _sharedState;
+        private ConditionalWeakTable<Script, CallbackFunction> _scriptBindings;
+
+        internal sealed class SharedState
+        {
+            public object AdditionalData { get; set; }
+        }
 
         /// <summary>
         /// Gets the name of the function
         /// </summary>
         public string Name { get; private set; }
+
+        /// <summary>
+        /// Gets the script owning this callback, or <c>null</c> when the callback is intentionally
+        /// shared between scripts.
+        /// </summary>
+        public Script OwnerScript { get; }
 
         /// <summary>
         /// Gets the call back.
@@ -42,6 +57,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             Func<ScriptExecutionContext, CallbackArguments, DynValue> callBack,
             string name = null
         )
+            : this(null, callBack, name) { }
+
+        internal CallbackFunction(
+            Script ownerScript,
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callBack,
+            string name = null,
+            SharedState sharedState = null
+        )
         {
             if (callBack == null)
             {
@@ -50,9 +73,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             ClrCallback = callBack;
             Name = name;
+            OwnerScript = ownerScript;
+            _sharedState = sharedState ?? new SharedState();
         }
 
-        private CallbackFunction(ScriptFunctionCallbackView callBack, string name)
+        private CallbackFunction(
+            Script ownerScript,
+            ScriptFunctionCallbackView callBack,
+            string name,
+            SharedState sharedState = null
+        )
         {
             if (callBack == null)
             {
@@ -62,9 +92,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _argumentViewCallback = callBack;
             ClrCallback = InvokeArgumentViewCallback;
             Name = name;
+            OwnerScript = ownerScript;
+            _sharedState = sharedState ?? new SharedState();
         }
 
-        private CallbackFunction(ScriptFunctionCallbackViewNoContext callBack, string name)
+        private CallbackFunction(
+            Script ownerScript,
+            ScriptFunctionCallbackViewNoContext callBack,
+            string name,
+            SharedState sharedState = null
+        )
         {
             if (callBack == null)
             {
@@ -74,6 +111,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _argumentViewNoContextCallback = callBack;
             ClrCallback = InvokeArgumentViewCallback;
             Name = name;
+            OwnerScript = ownerScript;
+            _sharedState = sharedState ?? new SharedState();
         }
 
         /// <summary>
@@ -87,7 +126,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             string name = null
         )
         {
-            return new CallbackFunction(callBack, name);
+            return new CallbackFunction(null, callBack, name);
         }
 
         /// <summary>
@@ -102,7 +141,87 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             string name = null
         )
         {
-            return new CallbackFunction(callBack, name);
+            return new CallbackFunction(null, callBack, name);
+        }
+
+        /// <summary>
+        /// Creates a script-owned callback function that receives a stack-only argument view.
+        /// </summary>
+        internal static CallbackFunction FromArgumentView(
+            Script ownerScript,
+            ScriptFunctionCallbackView callBack,
+            string name = null
+        )
+        {
+            return new CallbackFunction(ownerScript, callBack, name);
+        }
+
+        /// <summary>
+        /// Creates a script-owned callback function that receives a stack-only argument view
+        /// without requiring a script execution context.
+        /// </summary>
+        internal static CallbackFunction FromArgumentView(
+            Script ownerScript,
+            ScriptFunctionCallbackViewNoContext callBack,
+            string name = null
+        )
+        {
+            return new CallbackFunction(ownerScript, callBack, name);
+        }
+
+        /// <summary>
+        /// Returns this callback bound to the specified script without mutating a shared callback.
+        /// </summary>
+        internal CallbackFunction BindToScript(Script ownerScript)
+        {
+            if (ownerScript == null)
+            {
+                throw new ArgumentNullException(nameof(ownerScript));
+            }
+
+            if (ReferenceEquals(OwnerScript, ownerScript))
+            {
+                return this;
+            }
+
+            if (OwnerScript != null)
+            {
+                throw new InvalidOperationException(
+                    "Callback function belongs to a different Script instance."
+                );
+            }
+
+            ConditionalWeakTable<Script, CallbackFunction> bindings = Volatile.Read(
+                ref _scriptBindings
+            );
+            if (bindings == null)
+            {
+                ConditionalWeakTable<Script, CallbackFunction> created = new();
+                bindings = Interlocked.CompareExchange(ref _scriptBindings, created, null);
+                bindings ??= created;
+            }
+
+            return bindings.GetValue(ownerScript, CreateScriptBinding);
+        }
+
+        private CallbackFunction CreateScriptBinding(Script ownerScript)
+        {
+            if (_argumentViewCallback != null)
+            {
+                return new CallbackFunction(ownerScript, _argumentViewCallback, Name, _sharedState);
+            }
+
+            if (_argumentViewNoContextCallback != null)
+            {
+                return new CallbackFunction(
+                    ownerScript,
+                    _argumentViewNoContextCallback,
+                    Name,
+                    _sharedState
+                );
+            }
+
+            return new CallbackFunction(ownerScript, ClrCallback, Name, _sharedState);
         }
 
         internal bool HasArgumentViewCallback
@@ -953,7 +1072,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return _argumentViewNoContextCallback(args);
         }
 
-        private static bool NormalizeMethodCall(
+        private bool NormalizeMethodCall(
             ScriptExecutionContext executionContext,
             int count,
             DynValue firstArgument,
@@ -964,6 +1083,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 throw new ArgumentNullException(nameof(executionContext));
             }
+
+            this.CheckScriptOwnership(executionContext.Script);
 
             if (!isMethodCall)
             {
@@ -978,7 +1099,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return NormalizeMethodCall(colon, count, firstArgument, isMethodCall);
         }
 
-        private static bool NormalizeMethodCall(
+        private bool NormalizeMethodCall(
             Script script,
             int count,
             DynValue firstArgument,
@@ -989,6 +1110,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 throw new ArgumentNullException(nameof(script));
             }
+
+            this.CheckScriptOwnership(script);
 
             ColonOperatorBehaviour colon = script.Options.ColonOperatorClrCallbackBehaviour;
 
@@ -1099,7 +1222,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 #else
             MethodMemberDescriptor descr = new(del.Method, accessMode);
 #endif
-            return descr.GetCallbackFunction(script, del.Target);
+            return descr.GetCallbackFunction(script, del.Target).BindToScript(script);
         }
 
         /// <summary>
@@ -1134,13 +1257,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             MethodMemberDescriptor descr = new(mi, accessMode);
-            return descr.GetCallbackFunction(script, obj);
+            return descr.GetCallbackFunction(script, obj).BindToScript(script);
         }
 
         /// <summary>
         /// Gets or sets an object used as additional data to the callback function (available in the execution context).
         /// </summary>
-        public object AdditionalData { get; set; }
+        public object AdditionalData
+        {
+            get { return _sharedState.AdditionalData; }
+            set { _sharedState.AdditionalData = value; }
+        }
 
         /// <summary>
         /// Checks the callback signature of a method is compatible for callbacks

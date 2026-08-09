@@ -19,15 +19,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     {
         private const string InvalidUtf8CodeMessage = "invalid UTF-8 code";
 
-        // Cached callback to avoid allocation on every utf8.codes call (non-lax mode)
-        private static readonly DynValue CachedCodesIteratorCallback = DynValue.NewCallback(
-            CodesIterator
-        );
+        private static readonly ConditionalWeakTable<Script, IteratorCallbacks> CallbackCache =
+            new();
 
-        // Cached callback for lax mode utf8.codes
-        private static readonly DynValue CachedCodesIteratorLaxCallback = DynValue.NewCallback(
-            CodesIteratorLax
-        );
+        private sealed class IteratorCallbacks
+        {
+            internal IteratorCallbacks(Script script)
+            {
+                Strict = DynValue.NewCallback(script, CodesIterator);
+                Lax = DynValue.NewCallback(script, CodesIteratorLax);
+            }
+
+            internal DynValue Strict { get; }
+
+            internal DynValue Lax { get; }
+        }
 
         [NovaSharpModuleConstant(Name = "charpattern")]
         public const string CharPattern = "[\0-\x7F\xC2-\xF4][\x80-\xBF]*";
@@ -356,7 +362,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     && laxArg.Boolean;
             }
 
-            DynValue iterator = lax ? CachedCodesIteratorLaxCallback : CachedCodesIteratorCallback;
+            IteratorCallbacks callbacks = CallbackCache.GetValue(
+                executionContext.Script,
+                static script => new IteratorCallbacks(script)
+            );
+            DynValue iterator = lax ? callbacks.Lax : callbacks.Strict;
 
             return DynValue.NewTuple(iterator, value, DynValue.FromNumber(0));
         }

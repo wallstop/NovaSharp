@@ -59,6 +59,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         private readonly DateTime _startTimeUtc;
         private readonly Sandboxing.AllocationTracker _allocationTracker;
         private readonly Execution.ScriptCompilationCache _compilationCache;
+        private int _facadeLifetimeInvalidated;
         private bool _bit32CompatibilityWarningEmitted;
         private static ScriptGlobalOptions GlobalOptionsSnapshot;
         private static readonly AsyncLocal<GlobalOptionsScope> ScopedGlobalOptions = new();
@@ -746,6 +747,28 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 }
 
                 _coroutinesForMemoryStatistics.Add(new WeakReference<Coroutine>(coroutine));
+            }
+        }
+
+        /// <summary>
+        /// Invalidates public facade handles backed by this script.
+        /// </summary>
+        internal void InvalidateFacadeLifetime()
+        {
+            if (Interlocked.Exchange(ref _facadeLifetimeInvalidated, 1) == 0)
+            {
+                _compilationCache?.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Throws when the public facade lifetime associated with this script has ended.
+        /// </summary>
+        internal void ThrowIfDisposed()
+        {
+            if (Volatile.Read(ref _facadeLifetimeInvalidated) != 0)
+            {
+                throw new ObjectDisposedException("LuaEngine");
             }
         }
 

@@ -500,7 +500,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         {
             if (metaname == Metamethods.Concat && IsFlags)
             {
-                return DynValue.NewCallback(CallbackOr);
+                return DynValue.NewCallback(script, CallbackOr);
             }
 
             return null;

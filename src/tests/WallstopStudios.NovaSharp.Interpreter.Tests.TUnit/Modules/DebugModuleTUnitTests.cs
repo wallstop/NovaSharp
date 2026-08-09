@@ -2003,12 +2003,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 local function f()
                     return x
                 end
-                local id = debug.upvalueid(f, 1)
-                return type(id)
+                return debug.upvalueid(f, 1)
                 "
             );
 
-            await Assert.That(result.String).IsEqualTo("userdata").ConfigureAwait(false);
+            await Assert.That(result.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+            await Assert
+                .That(result.UserData.OwnerScript)
+                .IsSameReferenceAs(script)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

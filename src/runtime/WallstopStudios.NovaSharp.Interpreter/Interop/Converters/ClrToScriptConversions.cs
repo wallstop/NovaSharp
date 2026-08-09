@@ -122,19 +122,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
 
             if (obj is CallbackFunction function)
             {
-                result = DynValue.FromCallback(function);
+                result = DynValue.FromCallback(
+                    script == null ? function : function.BindToScript(script)
+                );
                 return true;
             }
 
             if (obj is ScriptFunctionCallbackView argumentViewCallback)
             {
-                result = DynValue.NewCallbackView(argumentViewCallback);
+                result = DynValue.NewCallbackView(script, argumentViewCallback);
                 return true;
             }
 
             if (obj is ScriptFunctionCallbackViewNoContext argumentViewNoContextCallback)
             {
-                result = DynValue.NewCallbackView(argumentViewNoContextCallback);
+                result = DynValue.NewCallbackView(script, argumentViewNoContextCallback);
                 return true;
             }
 
@@ -149,6 +151,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 if (CallbackFunction.CheckArgumentViewNoContextCallbackSignature(mi, false))
                 {
                     result = DynValue.NewCallbackView(
+                        script,
                         CreateDelegate<ScriptFunctionCallbackViewNoContext>(@delegate, mi)
                     );
                     return true;
@@ -157,6 +160,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 if (CallbackFunction.CheckArgumentViewCallbackSignature(mi, false))
                 {
                     result = DynValue.NewCallbackView(
+                        script,
                         CreateDelegate<ScriptFunctionCallbackView>(@delegate, mi)
                     );
                     return true;
@@ -165,6 +169,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 if (CallbackFunction.CheckLegacyCallbackSignature(mi, false))
                 {
                     result = DynValue.NewCallback(
+                        script,
                         CreateDelegate<Func<ScriptExecutionContext, CallbackArguments, DynValue>>(
                             @delegate,
                             mi
@@ -188,7 +193,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 return value;
             }
 
-            if (UserData.TryCreate(obj, out value))
+            if (UserData.TryCreate(script, obj, out value))
             {
                 return value;
             }

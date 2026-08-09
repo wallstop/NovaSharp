@@ -129,7 +129,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 throw new ArgumentNullException(nameof(desc));
             }
 
-            return DynValue.NewCallback((p1, p2) => desc.GetValue(script, obj));
+            return DynValue.NewCallback(script, (p1, p2) => desc.GetValue(script, obj));
         }
 
         /// <summary>

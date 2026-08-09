@@ -70,12 +70,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
             {
                 if (index.String == "add")
                 {
-                    value = DynValue.NewCallback((c, a) => _addCallback(_object, c, a));
+                    value = DynValue.NewCallback(script, (c, a) => _addCallback(_object, c, a));
                     return true;
                 }
                 else if (index.String == "remove")
                 {
-                    value = DynValue.NewCallback((c, a) => _removeCallback(_object, c, a));
+                    value = DynValue.NewCallback(script, (c, a) => _removeCallback(_object, c, a));
                     return true;
                 }
             }

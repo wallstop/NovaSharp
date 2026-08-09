@@ -19,7 +19,6 @@ namespace NovaSharp
     {
         private readonly Script _script;
         private readonly LuaTable _globals;
-        private bool _disposed;
 
         private LuaEngine(LuaEngineOptions options)
         {
@@ -308,6 +307,7 @@ namespace NovaSharp
             }
 
             CallbackFunction function = CallbackFunction.FromArgumentView(
+                _script,
                 args => InvokeCallback(callback, args),
                 name
             );
@@ -365,7 +365,7 @@ namespace NovaSharp
         /// </summary>
         public void Dispose()
         {
-            _disposed = true;
+            _script.InvalidateFacadeLifetime();
         }
 
         /// <summary>
@@ -560,10 +560,7 @@ namespace NovaSharp
         /// </summary>
         internal void ThrowIfDisposed()
         {
-            if (_disposed)
-            {
-                throw new ObjectDisposedException(nameof(LuaEngine));
-            }
+            _script.ThrowIfDisposed();
         }
 
         /// <summary>

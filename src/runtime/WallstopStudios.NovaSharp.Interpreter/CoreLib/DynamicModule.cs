@@ -117,7 +117,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     vs.String
                 );
                 DynamicExpressionWrapper wrapper = new() { Expression = expression };
-                return UserData.TryCreate(wrapper, out DynValue value) ? value : DynValue.Nil;
+                return UserData.TryCreate(executionContext.Script, wrapper, out DynValue value)
+                    ? value
+                    : DynValue.Nil;
             }
             catch (SyntaxErrorException ex)
             {

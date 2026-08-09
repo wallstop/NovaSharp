@@ -259,7 +259,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 obj = this;
             }
 
-            return UserData.TryCreate(new EventFacade(this, obj), out DynValue facade)
+            return UserData.TryCreate(script, new EventFacade(this, obj), out DynValue facade)
                 ? facade
                 : DynValue.Nil;
         }

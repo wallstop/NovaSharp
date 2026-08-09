@@ -44,7 +44,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             Table meta = new(ioTable.OwnerScript);
             DynValue index = DynValue.NewCallback(
-                new CallbackFunction(__index_callback, "__index_callback")
+                new CallbackFunction(ioTable.OwnerScript, __index_callback, "__index_callback")
             );
             meta.Set(Metamethods.Index, index);
             ioTable.MetaTable = meta;
@@ -125,7 +125,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 udb = StandardIoFileUserDataBase.CreateOutputStream(optionsStream);
             }
 
-            if (!UserData.TryCreate(udb, out DynValue handle))
+            if (!UserData.TryCreate(s, udb, out DynValue handle))
             {
                 throw new InvalidOperationException("Failed to create standard IO userdata.");
             }
@@ -185,7 +185,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             script = ModuleArgumentValidation.RequireScript(script, nameof(script));
             Table r = script.Registry;
-            if (!UserData.TryCreate(fileHandle, out DynValue handle))
+            if (!UserData.TryCreate(script, fileHandle, out DynValue handle))
             {
                 throw new InvalidOperationException("Failed to create standard IO userdata.");
             }
@@ -319,7 +319,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             if (args.Count == 0 || args[0].IsNil())
             {
                 FileUserDataBase file = GetDefaultFile(executionContext, defaultFiles);
-                return CreateFileUserData(file);
+                return CreateFileUserData(executionContext.Script, file);
             }
 
             FileUserDataBase inp = null;
@@ -347,7 +347,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             SetDefaultFile(executionContext, defaultFiles, inp);
 
-            return CreateFileUserData(inp);
+            return CreateFileUserData(executionContext.Script, inp);
         }
 
         private static UTF8Encoding GetUtf8Encoding()
@@ -417,7 +417,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         iterator.Tuple[0], // iterator function
                         DynValue.Nil, // state
                         DynValue.Nil, // initial value
-                        CreateFileUserData(fileHandle) // file handle for to-be-closed
+                        CreateFileUserData(executionContext.Script, fileHandle) // file handle for to-be-closed
                     );
                 }
 
@@ -525,7 +525,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     e = Encoding.GetEncoding(encoding);
                 }
 
-                return CreateFileUserData(Open(executionContext, filename, e, mode, isBinary));
+                return CreateFileUserData(
+                    executionContext.Script,
+                    Open(executionContext, filename, e, mode, isBinary)
+                );
             }
             catch (Exception ex) when (IsRecoverableIoOpenException(ex))
             {
@@ -660,12 +663,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 "w",
                 isBinaryMode: true
             );
-            return CreateFileUserData(file);
+            return CreateFileUserData(executionContext.Script, file);
         }
 
-        private static DynValue CreateFileUserData(FileUserDataBase file)
+        private static DynValue CreateFileUserData(Script script, FileUserDataBase file)
         {
-            if (!UserData.TryCreate(file, out DynValue value))
+            if (!UserData.TryCreate(script, file, out DynValue value))
             {
                 throw new InvalidOperationException("Failed to create standard IO userdata.");
             }

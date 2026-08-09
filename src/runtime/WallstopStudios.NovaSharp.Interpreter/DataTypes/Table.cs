@@ -1255,7 +1255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             get { return _metaTable; }
             set
             {
-                this.CheckScriptOwnership(_metaTable);
+                this.CheckScriptOwnership(value);
                 _metaTable = value;
             }
         }

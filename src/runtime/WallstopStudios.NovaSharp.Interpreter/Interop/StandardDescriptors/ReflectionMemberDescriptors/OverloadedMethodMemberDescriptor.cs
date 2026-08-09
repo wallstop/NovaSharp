@@ -799,7 +799,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         /// <returns></returns>
         public CallbackFunction GetCallbackFunction(Script script, object obj = null)
         {
-            return new CallbackFunction(GetCallback(script, obj), Name);
+            return new CallbackFunction(script, GetCallback(script, obj), Name);
         }
 
         /// <summary>
@@ -829,7 +829,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         /// </returns>
         public DynValue GetValue(Script script, object obj)
         {
-            return DynValue.NewCallback(GetCallbackFunction(script, obj));
+            return DynValue.NewCallback(GetCallbackFunction(script, obj).BindToScript(script));
         }
 
         /// <summary>

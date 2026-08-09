@@ -63,6 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             DynValue handle = Create(executionContext, args);
             return DynValue.NewCallback(
+                executionContext.Script,
                 (ctx, callArgs) => ResumeCoroutineWithArguments(handle.Coroutine, callArgs, 0)
             );
         }

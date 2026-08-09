@@ -488,6 +488,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Binds a shared callback payload to a script while preserving non-callback values.
+        /// </summary>
+        internal DynValue BindCallbackToScript(Script script)
+        {
+            return Type == DataType.ClrFunction ? NewCallback(Callback.BindToScript(script)) : this;
+        }
+
+        /// <summary>
         /// Creates a value initialized to the specified CLR callback.
         /// </summary>
         public static DynValue NewCallback(
@@ -496,6 +504,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             return new DynValue(DataType.ClrFunction, new CallbackFunction(callBack, name));
+        }
+
+        /// <summary>
+        /// Creates a callback owned by the specified script.
+        /// </summary>
+        internal static DynValue NewCallback(
+            Script ownerScript,
+            Func<ScriptExecutionContext, CallbackArguments, DynValue> callBack,
+            string name = null
+        )
+        {
+            return new DynValue(
+                DataType.ClrFunction,
+                new CallbackFunction(ownerScript, callBack, name)
+            );
         }
 
         /// <summary>
@@ -513,6 +536,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Creates a script-owned callback that receives a stack-only argument view.
+        /// </summary>
+        internal static DynValue NewCallbackView(
+            Script ownerScript,
+            ScriptFunctionCallbackView callBack,
+            string name = null
+        )
+        {
+            return new DynValue(
+                DataType.ClrFunction,
+                CallbackFunction.FromArgumentView(ownerScript, callBack, name)
+            );
+        }
+
+        /// <summary>
         /// Creates a value initialized to a CLR callback that receives a stack-only
         /// argument view and does not require a script execution context.
         /// </summary>
@@ -524,6 +562,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return new DynValue(
                 DataType.ClrFunction,
                 CallbackFunction.FromArgumentView(callBack, name)
+            );
+        }
+
+        /// <summary>
+        /// Creates a script-owned callback that receives a stack-only argument view and does not
+        /// require an execution context.
+        /// </summary>
+        internal static DynValue NewCallbackView(
+            Script ownerScript,
+            ScriptFunctionCallbackViewNoContext callBack,
+            string name = null
+        )
+        {
+            return new DynValue(
+                DataType.ClrFunction,
+                CallbackFunction.FromArgumentView(ownerScript, callBack, name)
             );
         }
 

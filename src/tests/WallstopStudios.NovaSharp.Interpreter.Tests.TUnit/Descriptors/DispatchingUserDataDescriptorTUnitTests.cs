@@ -381,7 +381,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                             (_, args) =>
                             {
                                 invoked = true;
-                                return DynValue.NewString($"idx:{args[0].Number}");
+                                return DynValue.NewString($"idx:{args[0].Number}:{args[1].Number}");
                             }
                         )
                 )
@@ -389,11 +389,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             Script script = new(CoreModules.Basic | CoreModules.GlobalConsts);
             DynValue result = descriptor
-                .Index(script, new DescriptorHost(), DynValue.NewNumber(7), isDirectIndexing: false)
+                .Index(
+                    script,
+                    new DescriptorHost(),
+                    DynValue.NewTuple(DynValue.NewNumber(7), DynValue.NewNumber(8)),
+                    isDirectIndexing: false
+                )
                 .Value;
 
             await Assert.That(invoked).IsTrue();
-            await Assert.That(result.String).IsEqualTo("idx:7");
+            await Assert.That(result.String).IsEqualTo("idx:7:8");
+
+            Script foreignScript = new(CoreModules.Basic | CoreModules.GlobalConsts);
+            DispatchingUserDataDescriptor foreignDescriptor = CreateDescriptorHostDescriptor();
+            foreignDescriptor.AddMember(
+                IndexerGetterName,
+                StubMemberDescriptor.CreateCallable(
+                    IndexerGetterName,
+                    MemberDescriptorAccess.CanExecute | MemberDescriptorAccess.CanRead,
+                    (_, _) => DynValue.NewCallback(foreignScript, (_, _) => DynValue.Nil)
+                )
+            );
+
+            ExpectException<ScriptRuntimeException>(() =>
+                foreignDescriptor.Index(
+                    script,
+                    new DescriptorHost(),
+                    DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2)),
+                    isDirectIndexing: false
+                )
+            );
         }
 
         [global::TUnit.Core.Test]

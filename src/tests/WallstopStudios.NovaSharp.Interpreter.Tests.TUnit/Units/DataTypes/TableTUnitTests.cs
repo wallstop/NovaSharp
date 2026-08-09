@@ -252,6 +252,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        public async Task MetaTableRejectsTableOwnedByDifferentScript()
+        {
+            Script owner = new();
+            Table table = new(owner);
+            Table foreignMetatable = new(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.MetaTable = foreignMetatable
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("resources owned by different scripts")
+                .ConfigureAwait(false);
+            await Assert.That(table.MetaTable).IsNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]

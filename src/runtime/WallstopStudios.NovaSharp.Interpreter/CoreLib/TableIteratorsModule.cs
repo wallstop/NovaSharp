@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
+    using System.Runtime.CompilerServices;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -13,9 +14,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public static class TableIteratorsModule
     {
-        // Cached callback DynValues to avoid allocation on every ipairs/pairs call
-        private static readonly DynValue CachedNextArrayCallback = DynValue.NewCallback(NextArray);
-        private static readonly DynValue CachedNextCallback = DynValue.NewCallback(Next);
+        private static readonly ConditionalWeakTable<Script, IteratorCallbacks> CallbackCache =
+            new();
+
+        private sealed class IteratorCallbacks
+        {
+            internal IteratorCallbacks(Script script)
+            {
+                NextArray = DynValue.NewCallback(script, TableIteratorsModule.NextArray);
+                Next = DynValue.NewCallback(script, TableIteratorsModule.Next);
+            }
+
+            internal DynValue NextArray { get; }
+
+            internal DynValue Next { get; }
+        }
 
         // ipairs (t)
         // -------------------------------------------------------------------------------------------------------------------
@@ -63,7 +76,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
             }
 
-            return DynValue.NewTuple(CachedNextArrayCallback, table, DynValue.FromNumber(0));
+            IteratorCallbacks callbacks = CallbackCache.GetValue(
+                executionContext.Script,
+                static script => new IteratorCallbacks(script)
+            );
+            return DynValue.NewTuple(callbacks.NextArray, table, DynValue.FromNumber(0));
         }
 
         // pairs (t)
@@ -113,7 +130,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
             }
 
-            return DynValue.NewTuple(CachedNextCallback, table);
+            IteratorCallbacks callbacks = CallbackCache.GetValue(
+                executionContext.Script,
+                static script => new IteratorCallbacks(script)
+            );
+            return DynValue.NewTuple(callbacks.Next, table);
         }
 
         // next (table [, index])

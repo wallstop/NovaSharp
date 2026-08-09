@@ -471,7 +471,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                         string name = names[nameIndex];
                         table.Set(
                             name,
-                            DynValue.NewCallbackView(action.ArgumentViewNoContextCallback, name)
+                            DynValue.NewCallbackView(
+                                ownerScript,
+                                action.ArgumentViewNoContextCallback,
+                                name
+                            )
                         );
                     }
                     continue;
@@ -484,7 +488,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                         string name = names[nameIndex];
                         table.Set(
                             name,
-                            DynValue.NewCallbackView(action.ArgumentViewCallback, name)
+                            DynValue.NewCallbackView(ownerScript, action.ArgumentViewCallback, name)
                         );
                     }
                     continue;
@@ -493,7 +497,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 for (int nameIndex = 0; nameIndex < names.Length; nameIndex++)
                 {
                     string name = names[nameIndex];
-                    table.Set(name, DynValue.NewCallback(action.LegacyCallback, name));
+                    table.Set(name, DynValue.NewCallback(ownerScript, action.LegacyCallback, name));
                 }
             }
 

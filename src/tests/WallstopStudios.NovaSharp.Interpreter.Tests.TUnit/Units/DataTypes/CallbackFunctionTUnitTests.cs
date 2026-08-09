@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Options;
@@ -347,6 +348,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("mi").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task BindToScriptCachesPerScriptOwnedCallbackWithoutMutatingSharedCallback()
+        {
+            CallbackFunction shared = new((_, _) => DynValue.Nil);
+            Script firstScript = new();
+            Script secondScript = new();
+            object initialAdditionalData = new();
+            object updatedAdditionalData = new();
+            shared.AdditionalData = initialAdditionalData;
+
+            CallbackFunction first = shared.BindToScript(firstScript);
+            CallbackFunction firstAgain = shared.BindToScript(firstScript);
+            CallbackFunction second = shared.BindToScript(secondScript);
+
+            await Assert.That(shared.OwnerScript).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(first.OwnerScript)
+                .IsSameReferenceAs(firstScript)
+                .ConfigureAwait(false);
+            await Assert.That(firstAgain).IsSameReferenceAs(first).ConfigureAwait(false);
+            await Assert
+                .That(second.OwnerScript)
+                .IsSameReferenceAs(secondScript)
+                .ConfigureAwait(false);
+            await Assert.That(second).IsNotSameReferenceAs(first).ConfigureAwait(false);
+            await Assert
+                .That(first.AdditionalData)
+                .IsSameReferenceAs(initialAdditionalData)
+                .ConfigureAwait(false);
+
+            first.AdditionalData = updatedAdditionalData;
+
+            await Assert
+                .That(shared.AdditionalData)
+                .IsSameReferenceAs(updatedAdditionalData)
+                .ConfigureAwait(false);
+            Assert.Throws<ScriptRuntimeException>(() =>
+                first.Invoke(secondScript.CreateDynamicExecutionContext(), Array.Empty<DynValue>())
+            );
         }
 
         [global::TUnit.Core.Test]

@@ -67,6 +67,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
+        public async Task CheckScriptOwnershipRejectsForeignResourcesNestedInTuples()
+        {
+            Script scriptA = new();
+            Script scriptB = new();
+            TestResource container = new(scriptA);
+            DynValue nested = DynValue.NewTuple(
+                DynValue.NewNumber(1),
+                DynValue.NewTuple(DynValue.NewString("value"), DynValue.NewTable(scriptB))
+            );
+            for (int i = 0; i < 4_096; i++)
+            {
+                nested = DynValue.NewTuple(nested);
+            }
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                container.CheckScriptOwnership(nested)
+            );
+
+            await Assert.That(exception.Message).Contains("different scripts");
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task CheckScriptOwnershipIgnoresNullDynValues(LuaCompatibilityVersion version)
         {

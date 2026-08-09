@@ -63,10 +63,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         private static void RegisterStringArithmeticMetamethods(Table stringMetatable)
         {
+            Script ownerScript = stringMetatable.OwnerScript;
+
             // __add: a + b
             stringMetatable.Set(
                 Metamethods.Add,
                 DynValue.NewCallback(
+                    ownerScript,
                     (ctx, args) => StringBinaryArithmetic(ctx, args, Metamethods.Add, LuaNumber.Add)
                 )
             );
@@ -75,6 +78,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             stringMetatable.Set(
                 Metamethods.Sub,
                 DynValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.Sub, LuaNumber.Subtract)
                 )
@@ -84,6 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             stringMetatable.Set(
                 Metamethods.Mul,
                 DynValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.Mul, LuaNumber.Multiply)
                 )
@@ -93,6 +98,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             stringMetatable.Set(
                 Metamethods.Div,
                 DynValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.Div, LuaNumber.Divide)
                 )
@@ -102,6 +108,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             stringMetatable.Set(
                 Metamethods.Mod,
                 DynValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                         StringBinaryArithmetic(
                             ctx,
@@ -116,6 +123,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             stringMetatable.Set(
                 Metamethods.Pow,
                 DynValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.Pow, LuaNumber.Power)
                 )
@@ -125,6 +133,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             stringMetatable.Set(
                 Metamethods.IDiv,
                 DynValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.IDiv, LuaNumber.FloorDivide)
                 )
@@ -134,6 +143,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             stringMetatable.Set(
                 Metamethods.Unm,
                 DynValue.NewCallback(
+                    ownerScript,
                     (ctx, args) =>
                     {
                         LuaNumber? a = CoerceToLuaNumber(args[0]);

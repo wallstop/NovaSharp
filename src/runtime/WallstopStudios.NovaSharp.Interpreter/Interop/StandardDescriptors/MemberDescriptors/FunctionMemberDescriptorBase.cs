@@ -132,7 +132,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         /// <returns></returns>
         public CallbackFunction GetCallbackFunction(Script script, object obj = null)
         {
-            return new CallbackFunction(GetCallback(script, obj), Name);
+            return new CallbackFunction(script, GetCallback(script, obj), Name);
         }
 
         /// <summary>

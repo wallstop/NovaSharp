@@ -360,7 +360,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                     methods
                 );
                 _members.Add(indexName, ext);
-                return DynValue.NewCallback(ext.GetCallback(script, obj));
+                return DynValue.NewCallback(script, ext.GetCallback(script, obj));
             }
 
             return null;
@@ -404,7 +404,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
 
             if (_members.TryGetValue(indexName, out IMemberDescriptor desc))
             {
-                return desc.GetValue(script, obj);
+                return desc.GetValue(script, obj).BindCallbackToScript(script);
             }
 
             return null;
@@ -698,9 +698,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 values.Add(value.Value);
             }
 
-            CallbackArguments args = new(values, false);
             ScriptExecutionContext tupleExecCtx = script.CreateDynamicExecutionContext();
-            return callback.ClrCallback(tupleExecCtx, args);
+            return callback.InvokeLegacy(tupleExecCtx, values);
         }
 
         private static DynValue ExecuteOverloadedIndexer(
@@ -777,7 +776,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
 
             if (desc != null)
             {
-                return desc.GetValue(script, obj);
+                return desc.GetValue(script, obj).BindCallbackToScript(script);
             }
 
             switch (metaname)
@@ -855,6 +854,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             if (obj is IComparable comp)
             {
                 return DynValue.NewCallback(
+                    script,
                     (context, args) =>
                         DynValue.NewBoolean(
                             PerformComparison(obj, args[0].ToObject(), args[1].ToObject()) <= 0
@@ -870,6 +870,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             if (obj is IComparable comp)
             {
                 return DynValue.NewCallback(
+                    script,
                     (context, args) =>
                         DynValue.NewBoolean(
                             PerformComparison(obj, args[0].ToObject(), args[1].ToObject()) < 0
@@ -905,6 +906,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         private static DynValue MultiDispatchEqual(Script script, object obj)
         {
             return DynValue.NewCallback(
+                script,
                 (context, args) =>
                     DynValue.NewBoolean(CheckEquality(obj, args[0].ToObject(), args[1].ToObject()))
             );
@@ -933,7 +935,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
 
             if (desc != null)
             {
-                return desc.GetValue(script, obj);
+                return desc.GetValue(script, obj).BindCallbackToScript(script);
             }
             else
             {

@@ -19,10 +19,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// Class exposing C# objects as Lua userdata.
     /// For efficiency, a global registry of types is maintained, instead of a per-script one.
     /// </summary>
-    public class UserData : RefIdObject
+    public class UserData : RefIdObject, IScriptPrivateResource
     {
         private int _stableHashCode;
         private bool _stableHashCodeInitialized;
+        private Script _ownerScript;
+        private DynValue _userValue;
 
         private UserData()
         {
@@ -33,7 +35,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Gets or sets the "uservalue". See debug.getuservalue and debug.setuservalue.
         /// http://www.lua.org/manual/5.2/manual.html#pdf-debug.setuservalue
         /// </summary>
-        public DynValue UserValue { get; set; }
+        public DynValue UserValue
+        {
+            get { return _userValue; }
+            set
+            {
+                Script valueOwner = value.GetOwnerScript();
+                if (_ownerScript == null && valueOwner != null)
+                {
+                    _ownerScript = valueOwner;
+                }
+
+                this.CheckScriptOwnership(value);
+                _userValue = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets the script owning this userdata, or <c>null</c> when it is intentionally shared.
+        /// </summary>
+        public Script OwnerScript => _ownerScript;
 
         /// <summary>
         /// Gets the object associated to this userdata (null for static members)
@@ -311,7 +332,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static DynValue Create(object o, IUserDataDescriptor descr)
         {
-            return DynValue.NewUserData(CreateCore(o, descr));
+            return DynValue.NewUserData(CreateCore(null, o, descr));
+        }
+
+        /// <summary>
+        /// Creates script-owned userdata from the specified object and descriptor.
+        /// </summary>
+        internal static DynValue Create(Script script, object o, IUserDataDescriptor descr)
+        {
+            return DynValue.NewUserData(CreateCore(script, o, descr));
         }
 
         /// <summary>
@@ -332,6 +361,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns><see langword="true"/> when the object has a descriptor.</returns>
         public static bool TryCreate(object o, out DynValue value)
         {
+            return TryCreate(null, o, out value);
+        }
+
+        /// <summary>
+        /// Attempts to create userdata owned by the specified script.
+        /// </summary>
+        internal static bool TryCreate(Script script, object o, out DynValue value)
+        {
             IUserDataDescriptor descr = GetDescriptorForObject(o);
             if (descr == null)
             {
@@ -344,7 +381,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return false;
             }
 
-            value = Create(o, descr);
+            value = Create(script, o, descr);
             return true;
         }
 
@@ -372,13 +409,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return false;
             }
 
-            value = DynValue.NewUserData(CreateCore(null, descr));
+            value = DynValue.NewUserData(CreateCore(null, null, descr));
             return true;
         }
 
-        private static UserData CreateCore(object obj, IUserDataDescriptor descriptor)
+        private static UserData CreateCore(
+            Script ownerScript,
+            object obj,
+            IUserDataDescriptor descriptor
+        )
         {
-            return new UserData() { Descriptor = descriptor, Object = obj };
+            return new UserData()
+            {
+                _ownerScript = ownerScript,
+                Descriptor = descriptor,
+                Object = obj,
+            };
         }
 
         private static int CalculateStableHashCode(object obj, IUserDataDescriptor descriptor)

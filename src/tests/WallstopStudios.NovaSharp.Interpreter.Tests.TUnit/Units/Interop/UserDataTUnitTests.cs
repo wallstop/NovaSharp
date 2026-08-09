@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
@@ -634,6 +635,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("extendedType").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ScriptAwareCreateOwnsUserDataAndValidatesUserValueOwnership()
+        {
+            Script owner = new();
+            DynValue value = UserData.Create(
+                owner,
+                new CustomDescriptorHost("owned"),
+                new CustomWireableDescriptor()
+            );
+
+            value.UserData.UserValue = DynValue.NewTable(owner);
+
+            await Assert
+                .That(value.UserData.OwnerScript)
+                .IsSameReferenceAs(owner)
+                .ConfigureAwait(false);
+            await Assert
+                .That(() => value.UserData.UserValue = DynValue.NewTable(new Script()))
+                .Throws<ScriptRuntimeException>()
+                .ConfigureAwait(false);
         }
     }
 

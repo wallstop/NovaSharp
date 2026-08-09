@@ -550,7 +550,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
             }
 
-            return GetUpvalueIdentifier(slot);
+            return GetUpvalueIdentifier(executionContext.Script, slot);
         }
 
         /// <summary>
@@ -1406,6 +1406,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Mints (or reuses) the stable identity handle for an upvalue.
         /// </summary>
+        /// <param name="script">The script owning the upvalue.</param>
         /// <param name="upvalueSlot">The mutable cell backing the upvalue.</param>
         /// <remarks>
         /// Keyed by the <see cref="ValueSlot"/> cell rather than the value it currently holds.
@@ -1414,13 +1415,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// unrelated upvalues that happen to hold the same shared instance (nil, true, a cached
         /// small integer) and change the identity of one upvalue whenever it is assigned.
         /// </remarks>
-        private static DynValue GetUpvalueIdentifier(ValueSlot upvalueSlot)
+        private static DynValue GetUpvalueIdentifier(Script script, ValueSlot upvalueSlot)
         {
             return UpvalueIdentifiers
                 .GetValue(
                     upvalueSlot,
-                    static slot => new UpvalueIdentifierValue(
+                    slot => new UpvalueIdentifierValue(
                         UserData.Create(
+                            script,
                             new UpvalueIdentifier(slot),
                             UpvalueIdentifierDescriptorInstance
                         )
