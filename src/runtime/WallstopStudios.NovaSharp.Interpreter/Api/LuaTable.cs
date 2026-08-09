@@ -1,6 +1,7 @@
 namespace NovaSharp
 {
     using System;
+    using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
@@ -9,14 +10,14 @@ namespace NovaSharp
     /// </summary>
     public sealed class LuaTable
     {
-        private readonly LuaEngine _owner;
+        private readonly Script _script;
         private readonly Table _table;
 
-        internal LuaTable(LuaEngine owner, Table table)
+        internal LuaTable(Script script, Table table)
         {
-            if (owner == null)
+            if (script == null)
             {
-                throw new ArgumentNullException(nameof(owner));
+                throw new ArgumentNullException(nameof(script));
             }
 
             if (table == null)
@@ -24,7 +25,7 @@ namespace NovaSharp
                 throw new ArgumentNullException(nameof(table));
             }
 
-            _owner = owner;
+            _script = script;
             _table = table;
         }
 
@@ -53,7 +54,7 @@ namespace NovaSharp
         {
             get
             {
-                _owner.ThrowIfDisposed();
+                _script.ThrowIfDisposed();
                 return _table.Length;
             }
         }
@@ -63,10 +64,10 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Get(string key)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
-                return _owner.Wrap(_table.Get(key));
+                return LuaValue.Wrap(_script, _table.Get(key));
             }
             catch (InterpreterException exception)
             {
@@ -79,10 +80,10 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Get(int key)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
-                return _owner.Wrap(_table.Get(key));
+                return LuaValue.Wrap(_script, _table.Get(key));
             }
             catch (InterpreterException exception)
             {
@@ -95,10 +96,10 @@ namespace NovaSharp
         /// </summary>
         public void Set(string key, LuaValue value)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
-                _table.Set(key, value.ToDynValue(_owner));
+                _table.Set(key, value.ToDynValue(_script));
             }
             catch (InterpreterException exception)
             {
@@ -111,10 +112,10 @@ namespace NovaSharp
         /// </summary>
         public void Set(int key, LuaValue value)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
-                _table.Set(key, value.ToDynValue(_owner));
+                _table.Set(key, value.ToDynValue(_script));
             }
             catch (InterpreterException exception)
             {
@@ -131,10 +132,10 @@ namespace NovaSharp
         /// </remarks>
         public void SetMetatable(LuaTable metatable)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             if (metatable != null)
             {
-                LuaEngine.EnsureSameOwner(metatable.Owner, _owner);
+                LuaEngine.EnsureSameOwner(metatable.OwnerScript, _script);
             }
 
             try
@@ -152,7 +153,7 @@ namespace NovaSharp
         /// </summary>
         public bool Remove(string key)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
                 return _table.Remove(key);
@@ -168,7 +169,7 @@ namespace NovaSharp
         /// </summary>
         public bool Remove(int key)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
                 return _table.Remove(key);
@@ -184,10 +185,10 @@ namespace NovaSharp
         /// </summary>
         public LuaValue ToValue()
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
-                return _owner.Wrap(DynValue.NewTable(_table));
+                return LuaValue.Wrap(_script, DynValue.NewTable(_table));
             }
             catch (InterpreterException exception)
             {
@@ -198,13 +199,13 @@ namespace NovaSharp
         /// <summary>
         /// Gets the engine that owns this table.
         /// </summary>
-        internal LuaEngine Owner => _owner;
+        internal Script OwnerScript => _script;
 
         internal Table Table
         {
             get
             {
-                _owner.ThrowIfDisposed();
+                _script.ThrowIfDisposed();
                 return _table;
             }
         }

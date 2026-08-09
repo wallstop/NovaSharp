@@ -197,16 +197,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
                 .That(closeValues[1].AsString())
                 .Contains("close failure")
                 .ConfigureAwait(false);
-            await Assert.That(closeResult.Owner).IsSameReferenceAs(lua).ConfigureAwait(false);
-            await Assert.That(closeValues[0].Owner).IsNull().ConfigureAwait(false);
-            await Assert.That(closeValues[1].Owner).IsNull().ConfigureAwait(false);
+            await Assert.That(closeResult.OwnerScript).IsNull().ConfigureAwait(false);
+            await Assert.That(closeValues[0].OwnerScript).IsNull().ConfigureAwait(false);
+            await Assert.That(closeValues[1].OwnerScript).IsNull().ConfigureAwait(false);
 
             lua.Dispose();
 
-            await Assert
-                .That(() => closeResult.AsTuple())
-                .Throws<ObjectDisposedException>()
-                .ConfigureAwait(false);
+            await Assert.That(closeResult.AsTuple().Length).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [Test]
@@ -238,12 +235,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
             LuaValue function = lua.Run("return function() return 42 end");
             LuaValue tableValue = table.ToValue();
 
-            await Assert.That(integer.Owner).IsNull().ConfigureAwait(false);
-            await Assert.That(boolean.Owner).IsNull().ConfigureAwait(false);
-            await Assert.That(text.Owner).IsNull().ConfigureAwait(false);
-            await Assert.That(tableScalar.Owner).IsNull().ConfigureAwait(false);
-            await Assert.That(function.Owner).IsSameReferenceAs(lua).ConfigureAwait(false);
-            await Assert.That(tableValue.Owner).IsSameReferenceAs(lua).ConfigureAwait(false);
+            await Assert.That(integer.OwnerScript).IsNull().ConfigureAwait(false);
+            await Assert.That(boolean.OwnerScript).IsNull().ConfigureAwait(false);
+            await Assert.That(text.OwnerScript).IsNull().ConfigureAwait(false);
+            await Assert.That(tableScalar.OwnerScript).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(function.OwnerScript)
+                .IsSameReferenceAs(lua.Script)
+                .ConfigureAwait(false);
+            await Assert
+                .That(tableValue.OwnerScript)
+                .IsSameReferenceAs(lua.Script)
+                .ConfigureAwait(false);
         }
 
         [Test]

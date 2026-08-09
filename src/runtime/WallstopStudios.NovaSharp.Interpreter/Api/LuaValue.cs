@@ -13,11 +13,21 @@ namespace NovaSharp
     public readonly struct LuaValue : IEquatable<LuaValue>
     {
         private readonly DynValue _value;
-        private readonly LuaEngine _owner;
 
-        internal LuaValue(LuaEngine owner, DynValue value)
+        internal LuaValue(Script ownerScript, DynValue value)
         {
-            _owner = owner;
+            Script intrinsicOwner = value.GetOwnerScript();
+            if (
+                intrinsicOwner != null
+                && ownerScript != null
+                && !ReferenceEquals(intrinsicOwner, ownerScript)
+            )
+            {
+                throw new InvalidOperationException(
+                    "Lua value belongs to a different LuaEngine instance."
+                );
+            }
+
             _value = value;
         }
 
@@ -188,13 +198,14 @@ namespace NovaSharp
         public LuaValue[] AsTuple()
         {
             DynValue value = RequireType(DataType.Tuple, nameof(AsTuple));
-            LuaEngine tupleOwner = GetOwnerOrThrow();
+            Script tupleOwner = value.GetOwnerScript();
+            tupleOwner?.ThrowIfDisposed();
             DynValue[] tuple = value.Tuple;
             LuaValue[] values = new LuaValue[tuple.Length];
             for (int i = 0; i < tuple.Length; i++)
             {
-                LuaEngine owner = RequiresOwner(tuple[i]) ? tupleOwner : null;
-                values[i] = new LuaValue(owner, tuple[i]);
+                Script itemOwner = tuple[i].GetOwnerScript();
+                values[i] = new LuaValue(itemOwner, tuple[i]);
             }
 
             return values;
@@ -208,10 +219,7 @@ namespace NovaSharp
             try
             {
                 DynValue value = GetValueOrNil();
-                if (RequiresOwner(value))
-                {
-                    GetOwnerOrThrow();
-                }
+                value.GetOwnerScript()?.ThrowIfDisposed();
 
                 return value.ToObject<T>();
             }
@@ -383,41 +391,41 @@ namespace NovaSharp
         /// <summary>
         /// Gets the engine that owns this value, or null for scalar literals not yet bound to an engine.
         /// </summary>
-        internal LuaEngine Owner => _owner;
+        internal Script OwnerScript => GetValueOrNil().GetOwnerScript();
 
         /// <summary>
-        /// Gets whether a VM value must stay bound to the engine that produced it.
+        /// Wraps a native value after validating its intrinsic ownership against the producing
+        /// script. Scalar and otherwise shared values remain ownerless.
         /// </summary>
-        internal static bool RequiresOwner(DynValue value)
+        internal static LuaValue Wrap(Script script, DynValue value)
         {
-            switch (value.Type)
-            {
-                case DataType.ClrFunction:
-                case DataType.Function:
-                case DataType.Table:
-                case DataType.Thread:
-                case DataType.Tuple:
-                case DataType.UserData:
-                    return true;
-                default:
-                    return false;
-            }
+            return new LuaValue(script, value);
+        }
+
+        /// <summary>
+        /// Scalarizes and wraps a native result, normalizing no-value returns to nil.
+        /// </summary>
+        internal static LuaValue WrapResult(Script script, DynValue value)
+        {
+            DynValue scalar = value.ToScalar();
+            return Wrap(script, scalar.Type == DataType.Void ? DynValue.Nil : scalar);
         }
 
         /// <summary>
         /// Returns the underlying VM value after validating engine ownership.
         /// </summary>
-        internal DynValue ToDynValue(LuaEngine owner)
+        internal DynValue ToDynValue(Script ownerScript)
         {
             DynValue value = GetValueOrNil();
-            if (_owner != null && !ReferenceEquals(_owner, owner))
+            Script intrinsicOwner = value.GetOwnerScript();
+            if (intrinsicOwner != null && !ReferenceEquals(intrinsicOwner, ownerScript))
             {
                 throw new InvalidOperationException(
                     "Lua value belongs to a different LuaEngine instance."
                 );
             }
 
-            owner?.ThrowIfDisposed();
+            ownerScript?.ThrowIfDisposed();
             return value;
         }
 
@@ -425,22 +433,23 @@ namespace NovaSharp
         /// Returns the VM value after validating resource ownership. The caller already checked the
         /// target engine, so scalar literals avoid an extra disposed-engine branch on hot paths.
         /// </summary>
-        internal DynValue ToDynValueAfterOwnerChecked(LuaEngine owner)
+        internal DynValue ToDynValueAfterOwnerChecked(Script ownerScript)
         {
             DynValue value = GetValueOrNil();
-            if (_owner == null)
+            Script intrinsicOwner = value.GetOwnerScript();
+            if (intrinsicOwner == null)
             {
                 return value;
             }
 
-            if (!ReferenceEquals(_owner, owner))
+            if (!ReferenceEquals(intrinsicOwner, ownerScript))
             {
                 throw new InvalidOperationException(
                     "Lua value belongs to a different LuaEngine instance."
                 );
             }
 
-            _owner.ThrowIfDisposed();
+            intrinsicOwner.ThrowIfDisposed();
             return value;
         }
 
@@ -455,17 +464,18 @@ namespace NovaSharp
             return value;
         }
 
-        private LuaEngine GetOwnerOrThrow()
+        private Script GetOwnerOrThrow()
         {
-            if (_owner == null)
+            Script ownerScript = GetValueOrNil().GetOwnerScript();
+            if (ownerScript == null)
             {
                 throw new InvalidOperationException(
                     "Lua value is not owned by a LuaEngine instance."
                 );
             }
 
-            _owner.ThrowIfDisposed();
-            return _owner;
+            ownerScript.ThrowIfDisposed();
+            return ownerScript;
         }
 
         private DynValue GetValueOrNil()

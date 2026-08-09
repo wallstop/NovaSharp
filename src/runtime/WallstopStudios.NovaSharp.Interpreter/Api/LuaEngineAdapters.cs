@@ -25,7 +25,7 @@ namespace NovaSharp
         /// <inheritdoc />
         public object LoadFile(string file, Table globalContext)
         {
-            return _loader.LoadFile(file, new LuaTable(_owner, globalContext));
+            return _loader.LoadFile(file, new LuaTable(_owner.Script, globalContext));
         }
 
         /// <inheritdoc />
@@ -34,13 +34,13 @@ namespace NovaSharp
         )]
         public string ResolveFileName(string filename, Table globalContext)
         {
-            return _loader.ResolveFileName(filename, new LuaTable(_owner, globalContext));
+            return _loader.ResolveFileName(filename, new LuaTable(_owner.Script, globalContext));
         }
 
         /// <inheritdoc />
         public string ResolveModuleName(string modname, Table globalContext)
         {
-            return _loader.ResolveModuleName(modname, new LuaTable(_owner, globalContext));
+            return _loader.ResolveModuleName(modname, new LuaTable(_owner.Script, globalContext));
         }
     }
 

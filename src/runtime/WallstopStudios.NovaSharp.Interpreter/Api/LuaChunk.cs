@@ -11,12 +11,12 @@ namespace NovaSharp
     /// </summary>
     public sealed class LuaChunk
     {
-        private readonly LuaEngine _owner;
+        private readonly Script _script;
         private readonly CompiledScript _compiled;
 
-        internal LuaChunk(LuaEngine owner, CompiledScript compiled)
+        internal LuaChunk(Script script, CompiledScript compiled)
         {
-            _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+            _script = script ?? throw new ArgumentNullException(nameof(script));
             _compiled = compiled;
         }
 
@@ -25,10 +25,10 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Run()
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
-                return _owner.WrapResult(_compiled.Execute());
+                return LuaValue.WrapResult(_script, _compiled.Execute());
             }
             catch (InterpreterException exception)
             {
@@ -41,10 +41,10 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Run(LuaValue arg0)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
-                return _owner.WrapResult(_compiled.Execute(arg0.ToDynValue(_owner)));
+                return LuaValue.WrapResult(_script, _compiled.Execute(arg0.ToDynValue(_script)));
             }
             catch (InterpreterException exception)
             {
@@ -57,11 +57,12 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Run(LuaValue arg0, LuaValue arg1)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
-                return _owner.WrapResult(
-                    _compiled.Execute(arg0.ToDynValue(_owner), arg1.ToDynValue(_owner))
+                return LuaValue.WrapResult(
+                    _script,
+                    _compiled.Execute(arg0.ToDynValue(_script), arg1.ToDynValue(_script))
                 );
             }
             catch (InterpreterException exception)
@@ -75,14 +76,15 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Run(LuaValue arg0, LuaValue arg1, LuaValue arg2)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
-                return _owner.WrapResult(
+                return LuaValue.WrapResult(
+                    _script,
                     _compiled.Execute(
-                        arg0.ToDynValue(_owner),
-                        arg1.ToDynValue(_owner),
-                        arg2.ToDynValue(_owner)
+                        arg0.ToDynValue(_script),
+                        arg1.ToDynValue(_script),
+                        arg2.ToDynValue(_script)
                     )
                 );
             }
@@ -97,12 +99,12 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Run(ReadOnlySpan<LuaValue> args)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
                 if (args.Length == 0)
                 {
-                    return _owner.WrapResult(_compiled.Execute());
+                    return LuaValue.WrapResult(_script, _compiled.Execute());
                 }
 
                 using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
@@ -111,10 +113,13 @@ namespace NovaSharp
                 );
                 for (int i = 0; i < args.Length; i++)
                 {
-                    converted[i] = args[i].ToDynValue(_owner);
+                    converted[i] = args[i].ToDynValue(_script);
                 }
 
-                return _owner.WrapResult(_compiled.Execute(converted.AsSpan(0, args.Length)));
+                return LuaValue.WrapResult(
+                    _script,
+                    _compiled.Execute(converted.AsSpan(0, args.Length))
+                );
             }
             catch (InterpreterException exception)
             {

@@ -1,6 +1,7 @@
 namespace NovaSharp
 {
     using System;
+    using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -11,12 +12,12 @@ namespace NovaSharp
     /// </summary>
     public sealed class LuaCoroutine
     {
-        private readonly LuaEngine _owner;
+        private readonly Script _script;
         private readonly DynValue _coroutineValue;
 
-        internal LuaCoroutine(LuaEngine owner, DynValue coroutineValue)
+        internal LuaCoroutine(Script script, DynValue coroutineValue)
         {
-            _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+            _script = script ?? throw new ArgumentNullException(nameof(script));
             _coroutineValue = coroutineValue;
         }
 
@@ -27,7 +28,7 @@ namespace NovaSharp
         {
             get
             {
-                _owner.ThrowIfDisposed();
+                _script.ThrowIfDisposed();
                 return ToFacadeState(_coroutineValue.Coroutine.State);
             }
         }
@@ -37,10 +38,10 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Resume()
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
-                return _owner.WrapResult(_coroutineValue.Coroutine.Resume());
+                return LuaValue.WrapResult(_script, _coroutineValue.Coroutine.Resume());
             }
             catch (InterpreterException exception)
             {
@@ -53,10 +54,13 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Resume(LuaValue arg0)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
-                return _owner.WrapResult(_coroutineValue.Coroutine.Resume(arg0.ToDynValue(_owner)));
+                return LuaValue.WrapResult(
+                    _script,
+                    _coroutineValue.Coroutine.Resume(arg0.ToDynValue(_script))
+                );
             }
             catch (InterpreterException exception)
             {
@@ -69,13 +73,14 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Resume(LuaValue arg0, LuaValue arg1)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
-                return _owner.WrapResult(
+                return LuaValue.WrapResult(
+                    _script,
                     _coroutineValue.Coroutine.Resume(
-                        arg0.ToDynValue(_owner),
-                        arg1.ToDynValue(_owner)
+                        arg0.ToDynValue(_script),
+                        arg1.ToDynValue(_script)
                     )
                 );
             }
@@ -90,12 +95,12 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Resume(ReadOnlySpan<LuaValue> args)
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
                 if (args.Length == 0)
                 {
-                    return _owner.WrapResult(_coroutineValue.Coroutine.Resume());
+                    return LuaValue.WrapResult(_script, _coroutineValue.Coroutine.Resume());
                 }
 
                 using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
@@ -104,10 +109,11 @@ namespace NovaSharp
                 );
                 for (int i = 0; i < args.Length; i++)
                 {
-                    converted[i] = args[i].ToDynValue(_owner);
+                    converted[i] = args[i].ToDynValue(_script);
                 }
 
-                return _owner.WrapResult(
+                return LuaValue.WrapResult(
+                    _script,
                     _coroutineValue.Coroutine.Resume(converted.AsSpan(0, args.Length))
                 );
             }
@@ -122,10 +128,10 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Close()
         {
-            _owner.ThrowIfDisposed();
+            _script.ThrowIfDisposed();
             try
             {
-                return _owner.Wrap(_coroutineValue.Coroutine.Close());
+                return LuaValue.Wrap(_script, _coroutineValue.Coroutine.Close());
             }
             catch (InterpreterException exception)
             {
@@ -138,8 +144,8 @@ namespace NovaSharp
         /// </summary>
         public LuaValue ToValue()
         {
-            _owner.ThrowIfDisposed();
-            return _owner.Wrap(_coroutineValue);
+            _script.ThrowIfDisposed();
+            return LuaValue.Wrap(_script, _coroutineValue);
         }
 
         private static LuaCoroutineState ToFacadeState(CoroutineState state)
