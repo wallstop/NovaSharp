@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
 
     // This part is practically written procedural style - it looks more like C than C#.
     // This is intentional so to avoid this-calls and virtual-calls as much as possible.
@@ -517,12 +518,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 for (int i = 0; i < len; i++)
                 {
+                    ValueSlot slot = top.LocalScope[i];
                     locals.Add(
                         new WatchItem()
                         {
                             IsError = false,
                             LValue = top.DebugSymbols[i],
-                            Value = top.LocalScope[i]?.Value,
+                            Value = slot.IsActive ? slot.Value : null,
                             Name = top.DebugSymbols[i].NameValue,
                         }
                     );

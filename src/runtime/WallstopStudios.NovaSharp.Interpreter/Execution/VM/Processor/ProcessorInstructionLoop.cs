@@ -701,11 +701,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             CallStackItem stackframe = _executionStack.Peek();
 
-            ValueSlot slot = stackframe.LocalScope[symref.IndexValue];
-            if (slot == null)
-            {
-                stackframe.LocalScope[symref.IndexValue] = slot = new ValueSlot();
-            }
+            ref ValueSlot slot = ref stackframe.LocalScope[symref.IndexValue];
 
             bool isToBeClosed = IsSymbolToBeClosed(stackframe, symref.IndexValue);
 
@@ -714,13 +710,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 EnsureToBeClosedValue(symref, value);
 
                 LuaValue previous = slot.Value;
-                if (!previous.IsNil)
+                if (slot.IsActive && !previous.IsNil)
                 {
                     CloseValue(symref, previous, LuaValue.Nil, instructionPtr: -1);
                 }
             }
 
-            slot.Value = value;
+            slot.Assign(value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -881,11 +877,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             for (int idx = closers.Count - 1; idx >= 0; idx--)
             {
                 SymbolRef sym = closers[idx];
-                ValueSlot slot = stackframe.LocalScope[sym.IndexValue];
+                ref ValueSlot slot = ref stackframe.LocalScope[sym.IndexValue];
 
                 closeException = CloseValueAndTrackError(
                     sym,
-                    slot,
+                    ref slot,
                     ref activeError,
                     closeException,
                     stackframe,
@@ -948,11 +944,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 for (int idx = closers.Count - 1; idx >= 0; idx--)
                 {
                     SymbolRef sym = closers[idx];
-                    ValueSlot slot = stackframe.LocalScope[sym.IndexValue];
+                    ref ValueSlot slot = ref stackframe.LocalScope[sym.IndexValue];
 
                     closeException = CloseValueAndTrackError(
                         sym,
-                        slot,
+                        ref slot,
                         ref activeError,
                         closeException,
                         stackframe,
@@ -974,7 +970,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private ScriptRuntimeException CloseValueAndTrackError(
             SymbolRef symbol,
-            ValueSlot slot,
+            ref ValueSlot slot,
             ref LuaValue activeError,
             ScriptRuntimeException activeException,
             CallStackItem stackframe,
@@ -982,17 +978,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             bool decorateCloseErrorsBeforeUnwind
         )
         {
-            if (slot == null)
+            if (!slot.IsActive)
             {
                 return activeException;
             }
 
             LuaValue previous = slot.Value;
-            if (previous.IsNil)
-            {
-                return activeException;
-            }
-
             int previousBoundaryDepth = _errorHandlerBeforeUnwindScanBoundaryDepth;
             _errorHandlerBeforeUnwindScanBoundaryDepth = _executionStack.Count;
             try
@@ -1021,7 +1012,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             finally
             {
                 _errorHandlerBeforeUnwindScanBoundaryDepth = previousBoundaryDepth;
-                slot.Value = LuaValue.Nil;
+                slot.Deactivate();
             }
 
             return activeException;
@@ -1076,7 +1067,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private void ExecClosure(Instruction i)
         {
             using (
-                ListPool<ValueSlot>.Get(i.SymbolList.Length, out List<ValueSlot> resolvedSymbols)
+                ListPool<UpvalueCell>.Get(
+                    i.SymbolList.Length,
+                    out List<UpvalueCell> resolvedSymbols
+                )
             )
             {
                 foreach (SymbolRef symbol in i.SymbolList)
@@ -1091,20 +1085,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ValueSlot GetUpValueSymbol(SymbolRef s)
+        private UpvalueCell GetUpValueSymbol(SymbolRef s)
         {
             if (s.Type == SymbolRefType.Local)
             {
                 CallStackItem frame = _executionStack.Peek();
-                ValueSlot slot = frame.LocalScope[s.IndexValue];
-                if (slot == null)
-                {
-                    // Capturing a local that has not been assigned yet still has to share the cell
-                    // the eventual assignment will write to, so materialize it now.
-                    frame.LocalScope[s.IndexValue] = slot = new ValueSlot();
-                }
-
-                return slot;
+                ref ValueSlot slot = ref frame.LocalScope[s.IndexValue];
+                return slot.Capture();
             }
             else if (s.Type == SymbolRefType.UpValue)
             {

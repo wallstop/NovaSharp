@@ -223,7 +223,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             ClosureContext closure = new(
                 new[] { SymbolRef.UpValue("uv", 0) },
-                new[] { new ValueSlot() }
+                new[] { new UpvalueCell(LuaValue.Nil) }
             );
             CallStackItem frame = new()
             {

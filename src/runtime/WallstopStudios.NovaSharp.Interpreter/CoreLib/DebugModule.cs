@@ -29,7 +29,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         private static readonly ConditionalWeakTable<object, DebugHookState> HookStates = new();
         private static readonly object DefaultHookKey = new();
         private static readonly ConditionalWeakTable<
-            ValueSlot,
+            UpvalueCell,
             UpvalueIdentifierValue
         > UpvalueIdentifiers = new();
         private static readonly IUserDataDescriptor UpvalueIdentifierDescriptorInstance =
@@ -563,7 +563,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
             }
 
-            ValueSlot slot = closure.GetSlot(index);
+            UpvalueCell slot = closure.GetSlot(index);
 
             if (slot == null)
             {
@@ -1267,7 +1267,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             SymbolRef symbol = frame.DebugSymbols[zeroBased];
-            LuaValue value = frame.LocalScope[zeroBased]?.Value ?? LuaValue.Nil;
+            LuaValue value = frame.LocalScope[zeroBased].Value;
             string name = symbol?.Name ?? string.Empty;
 
             return LuaValue.NewTuple(LuaValue.NewString(name), value);
@@ -1294,15 +1294,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             SymbolRef symbol = frame.DebugSymbols[zeroBased];
-            ValueSlot slot = frame.LocalScope[zeroBased];
-
-            if (slot == null)
-            {
-                slot = new ValueSlot();
-                frame.LocalScope[zeroBased] = slot;
-            }
-
-            slot.Value = newValue;
+            ref ValueSlot slot = ref frame.LocalScope[zeroBased];
+            slot.Assign(newValue);
 
             string name = symbol?.Name ?? string.Empty;
             return LuaValue.NewString(name);
@@ -1436,13 +1429,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="script">The script owning the upvalue.</param>
         /// <param name="upvalueSlot">The mutable cell backing the upvalue.</param>
         /// <remarks>
-        /// Keyed by the <see cref="ValueSlot"/> cell rather than the value it currently holds.
+        /// Keyed by the <see cref="UpvalueCell"/> rather than the value it currently holds.
         /// <c>debug.upvalueid</c> exists so a program can tell whether two closures share the same
         /// variable, so the identity must track the variable: keying by value would both collide
         /// unrelated upvalues that happen to hold the same shared instance (nil, true, a cached
         /// small integer) and change the identity of one upvalue whenever it is assigned.
         /// </remarks>
-        private static LuaValue GetUpvalueIdentifier(Script script, ValueSlot upvalueSlot)
+        private static LuaValue GetUpvalueIdentifier(Script script, UpvalueCell upvalueSlot)
         {
             return UpvalueIdentifiers
                 .GetValue(
@@ -1479,13 +1472,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             private static int ReferenceIdCounter;
 
-            public UpvalueIdentifier(ValueSlot slot)
+            public UpvalueIdentifier(UpvalueCell slot)
             {
                 Upvalue = slot ?? throw new ArgumentNullException(nameof(slot));
                 ReferenceId = Interlocked.Increment(ref ReferenceIdCounter);
             }
 
-            public ValueSlot Upvalue { get; }
+            public UpvalueCell Upvalue { get; }
 
             public int ReferenceId { get; }
 

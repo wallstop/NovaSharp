@@ -73,8 +73,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         public int ReturnAddress { get; set; }
 
         /// <summary>
-        /// Mutable cells holding this frame's locals. Entries are <c>null</c> until the local is
-        /// first assigned; closures capture the cell itself so later assignments stay visible.
+        /// Inline slots holding this frame's locals. Default entries are inactive until assigned or
+        /// captured; captured slots forward through a shared <see cref="UpvalueCell"/>.
         /// </summary>
         public ValueSlot[] LocalScope { get; set; }
 

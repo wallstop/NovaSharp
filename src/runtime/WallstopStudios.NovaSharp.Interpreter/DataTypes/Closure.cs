@@ -80,7 +80,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             Script script,
             int idx,
             SymbolRef[] symbols,
-            List<ValueSlot> resolvedLocals
+            List<UpvalueCell> resolvedLocals
         )
         {
             OwnerScript = script;
@@ -106,7 +106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="idx">The bytecode entry point index.</param>
         /// <param name="symbols">The symbol references for upvalues.</param>
         /// <param name="resolvedLocals">The captured local/upvalue cells.</param>
-        internal Closure(Script script, int idx, SymbolRef[] symbols, ValueSlot[] resolvedLocals)
+        internal Closure(Script script, int idx, SymbolRef[] symbols, UpvalueCell[] resolvedLocals)
         {
             OwnerScript = script;
             EntryPointByteCodeLocation = idx;
@@ -584,8 +584,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// itself (and every closure sharing it) rather than a copy of its value.
         /// </summary>
         /// <param name="idx">The index of the upvalue.</param>
-        /// <returns>The captured <see cref="ValueSlot"/>.</returns>
-        internal ValueSlot GetUpValueSlot(int idx)
+        /// <returns>The captured <see cref="UpvalueCell"/>.</returns>
+        internal UpvalueCell GetUpValueSlot(int idx)
         {
             return ClosureContext.GetSlot(idx);
         }

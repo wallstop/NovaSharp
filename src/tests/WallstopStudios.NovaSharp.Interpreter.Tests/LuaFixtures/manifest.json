@@ -9730,7 +9730,7 @@
     },
     {
       "path": "ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ScriptExecution/ScriptExecutionContextTUnitTests.cs:31",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ScriptExecution/ScriptExecutionContextTUnitTests.cs:33",
       "test": "ScriptExecutionContextTUnitTests.EvaluateSymbolByNameResolvesLocals",
       "lua_versions": [
         "5.1",

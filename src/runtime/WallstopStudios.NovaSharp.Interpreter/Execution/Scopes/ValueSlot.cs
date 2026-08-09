@@ -5,51 +5,104 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
-    /// A mutable storage cell holding the current value of a Lua local variable or upvalue.
+    /// Inline storage for a Lua local variable, promoted to a heap cell only when captured.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This is the "slot" half of the slot/value split: a slot is the mutable identity that a
-    /// closure captures, while the <see cref="LuaValue"/> it holds is an immutable value that can
-    /// be shared freely. Before the split, a local was itself a mutable <see cref="LuaValue"/>, so
-    /// every read had to clone defensively (<c>AsReadOnly()</c>) to prevent later assignments from
-    /// retroactively changing values already pushed onto the value stack or stored in tables.
+    /// A default slot is inactive and reads as <see cref="LuaValue.Nil"/>. Assignment activates the
+    /// slot without allocating. Capturing promotes it to an <see cref="UpvalueCell"/> shared by the
+    /// frame and every closure over that local.
     /// </para>
     /// <para>
-    /// With the split, reading a local or upvalue is a plain field load with no allocation, and
-    /// capturing a local in a closure simply shares this cell.
+    /// The explicit active state preserves the distinction between an out-of-scope local and an
+    /// in-scope local whose value is nil. Clearing a pooled local-scope array restores the inactive
+    /// default and drops the frame's reference to any escaped cell without mutating that cell.
     /// </para>
     /// </remarks>
-    internal sealed class ValueSlot
+    internal struct ValueSlot
     {
-        private LuaValue _value;
+        private LuaValue _inlineValue;
+        private UpvalueCell _capturedCell;
+        private bool _isActive;
 
         /// <summary>
-        /// Initializes a new slot holding <see cref="LuaValue.Nil"/>.
-        /// </summary>
-        internal ValueSlot()
-        {
-            _value = default;
-        }
-
-        /// <summary>
-        /// Initializes a new slot holding the specified value.
+        /// Initializes an active slot holding the specified value.
         /// </summary>
         /// <param name="value">The initial value.</param>
         internal ValueSlot(LuaValue value)
         {
-            _value = value;
+            _inlineValue = value;
+            _capturedCell = null;
+            _isActive = true;
         }
 
         /// <summary>
-        /// Gets or sets the value currently held by this slot.
+        /// Gets whether this local is currently in scope.
+        /// </summary>
+        internal bool IsActive
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _isActive; }
+        }
+
+        /// <summary>
+        /// Gets the value currently held by this slot. Inactive slots read as nil.
         /// </summary>
         internal LuaValue Value
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return _value; }
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set { _value = value; }
+            get { return _capturedCell?.Value ?? _inlineValue; }
         }
+
+        /// <summary>
+        /// Activates the local and assigns its value.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void Assign(LuaValue value)
+        {
+            _isActive = true;
+            if (_capturedCell == null)
+            {
+                _inlineValue = value;
+            }
+            else
+            {
+                _capturedCell.Value = value;
+            }
+        }
+
+        /// <summary>
+        /// Activates this local and returns its stable captured cell.
+        /// </summary>
+        internal UpvalueCell Capture()
+        {
+            _isActive = true;
+            return _capturedCell ??= new UpvalueCell(_inlineValue);
+        }
+
+        /// <summary>
+        /// Marks the frame-local slot out of scope without mutating an escaped captured cell.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void Deactivate()
+        {
+            this = default;
+        }
+    }
+
+    /// <summary>
+    /// Heap identity shared by closures which capture the same Lua local.
+    /// </summary>
+    internal sealed class UpvalueCell
+    {
+        internal UpvalueCell(LuaValue value)
+        {
+            Value = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the value shared by every closure over this cell.
+        /// </summary>
+        internal LuaValue Value { get; set; }
     }
 }

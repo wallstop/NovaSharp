@@ -553,7 +553,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 script,
                 idx: 0,
                 symbols: System.Array.Empty<SymbolRef>(),
-                resolvedLocals: System.Array.Empty<WallstopStudios.NovaSharp.Interpreter.Execution.Scopes.ValueSlot>()
+                resolvedLocals: System.Array.Empty<WallstopStudios.NovaSharp.Interpreter.Execution.Scopes.UpvalueCell>()
             );
 
             await Assert.That(closure.UpValuesCount).IsEqualTo(0).ConfigureAwait(false);

@@ -13,7 +13,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     [global::TUnit.Core.NotInParallel]
     public sealed class PrecompiledRecursiveCallAllocationTUnitTests
     {
-        private const long Fibonacci20CallPrologueBudgetBytesPerCall = 1_050_817L;
+        private const long Fibonacci20CallPrologueBudgetBytesPerCall = 1L;
         private const long NonTailCurrentRedBudgetBytesPerCall = 2L * 1024L * 1024L;
         private const int AllocationSmokeIterations = 2;
 
@@ -46,7 +46,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 .That(allocatedPerCall)
                 .IsLessThan(Fibonacci20CallPrologueBudgetBytesPerCall)
                 .Because(
-                    $"Precompiled fib(20) allocated {allocated} bytes across {AllocationSmokeIterations} iterations ({allocatedPerCall} bytes/call). Keep the A5 stack-window call-prologue allocation reduction."
+                    $"Precompiled fib(20) allocated {allocated} bytes across {AllocationSmokeIterations} iterations ({allocatedPerCall} bytes/call). Keep uncaptured VM locals inline after warmup."
                 )
                 .ConfigureAwait(false);
         }

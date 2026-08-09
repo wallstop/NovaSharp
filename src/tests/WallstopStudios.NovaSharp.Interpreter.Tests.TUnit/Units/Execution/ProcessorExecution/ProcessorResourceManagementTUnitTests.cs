@@ -22,26 +22,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Processor processor = script.GetMainProcessorForTests();
             processor.ClearCallStackForTests();
 
-            SymbolRef symbol = SymbolRef.Local("resource", 0, SymbolRefAttributes.ToBeClosed);
-            bool closed = false;
-            LuaValue closable = CreateClosableValue(script, _ => closed = true);
+            SymbolRef resource = SymbolRef.Local("resource", 0, SymbolRefAttributes.ToBeClosed);
+            SymbolRef nilResource = SymbolRef.Local(
+                "nilResource",
+                1,
+                SymbolRefAttributes.ToBeClosed
+            );
+            SymbolRef falseResource = SymbolRef.Local(
+                "falseResource",
+                2,
+                SymbolRefAttributes.ToBeClosed
+            );
+            int closeCount = 0;
+            LuaValue closable = CreateClosableValue(script, _ => closeCount++);
 
             CallStackItem frame = new()
             {
-                LocalScope = new[] { new ValueSlot(closable) },
-                BlocksToClose = new List<List<SymbolRef>> { new List<SymbolRef> { symbol } },
-                ToBeClosedIndices = new HashSet<int> { 0 },
+                LocalScope = new[]
+                {
+                    new ValueSlot(closable),
+                    new ValueSlot(LuaValue.Nil),
+                    new ValueSlot(LuaValue.False),
+                },
+                BlocksToClose = new List<List<SymbolRef>>
+                {
+                    new List<SymbolRef> { resource, nilResource, falseResource },
+                },
+                ToBeClosedIndices = new HashSet<int> { 0, 1, 2 },
             };
+            UpvalueCell captured = frame.LocalScope[0].Capture();
             processor.PushCallStackFrameForTests(frame);
 
             processor.CloseSymbolsSubsetForTests(
                 frame,
-                new[] { symbol },
+                new[] { resource, nilResource, falseResource },
                 LuaValue.NewString("err")
             );
 
-            await Assert.That(closed).IsTrue();
-            await Assert.That(frame.LocalScope[0].Value.IsNil).IsTrue();
+            await Assert.That(closeCount).IsEqualTo(1);
+            await Assert.That(frame.LocalScope[0].IsActive).IsFalse();
+            await Assert.That(frame.LocalScope[1].IsActive).IsFalse();
+            await Assert.That(frame.LocalScope[2].IsActive).IsFalse();
+            await Assert.That(captured.Value.Table).IsSameReferenceAs(closable.Table);
             bool containsIndex =
                 frame.ToBeClosedIndices != null && frame.ToBeClosedIndices.Contains(0);
             await Assert.That(containsIndex).IsFalse();
@@ -49,27 +71,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 frame.BlocksToClose == null
                 || frame.BlocksToClose.All(list => list == null || list.Count == 0);
             await Assert.That(blocksCleared).IsTrue();
+
+            processor.CloseSymbolsSubsetForTests(
+                frame,
+                new[] { resource, nilResource, falseResource },
+                LuaValue.NewString("err")
+            );
+            await Assert.That(closeCount).IsEqualTo(1);
         }
 
         [global::TUnit.Core.Test]
-        public void CloseSymbolsSubsetThrowsWhenMetamethodMissing()
+        public async Task CloseSymbolsSubsetThrowsWhenMetamethodMissing()
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
             processor.ClearCallStackForTests();
 
             SymbolRef symbol = SymbolRef.Local("resource", 0, SymbolRefAttributes.ToBeClosed);
+            LuaValue valueWithoutCloseMetamethod = LuaValue.NewTable(new Table(script));
             CallStackItem frame = new()
             {
-                LocalScope = new[] { new ValueSlot(LuaValue.NewTable(new Table(script))) },
+                LocalScope = new[] { new ValueSlot(valueWithoutCloseMetamethod) },
                 BlocksToClose = new List<List<SymbolRef>> { new List<SymbolRef> { symbol } },
                 ToBeClosedIndices = new HashSet<int> { 0 },
             };
+            UpvalueCell captured = frame.LocalScope[0].Capture();
             processor.PushCallStackFrameForTests(frame);
 
             ExpectException<ScriptRuntimeException>(() =>
                 processor.CloseSymbolsSubsetForTests(frame, new[] { symbol }, LuaValue.Nil)
             );
+            await Assert.That(frame.LocalScope[0].IsActive).IsFalse();
+            await Assert
+                .That(captured.Value.Table)
+                .IsSameReferenceAs(valueWithoutCloseMetamethod.Table);
+
+            processor.CloseSymbolsSubsetForTests(frame, new[] { symbol }, LuaValue.Nil);
         }
 
         [global::TUnit.Core.Test]
@@ -79,8 +116,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Processor processor = script.GetMainProcessorForTests();
             processor.ClearCallStackForTests();
 
-            bool closed = false;
-            LuaValue closable = CreateClosableValue(script, _ => closed = true);
+            int closeCount = 0;
+            LuaValue closable = CreateClosableValue(script, _ => closeCount++);
 
             CallStackItem frame = new()
             {
@@ -98,6 +135,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 },
                 ToBeClosedIndices = new HashSet<int> { 0 },
             };
+            UpvalueCell captured = frame.LocalScope[0].Capture();
             processor.PushCallStackFrameForTests(frame);
 
             Instruction instruction = new Instruction(SourceRef.GetClrLocation())
@@ -113,13 +151,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             processor.ClearBlockDataForTests(instruction);
 
-            await Assert.That(closed).IsTrue();
-            await Assert.That(frame.LocalScope[0]).IsNull();
-            await Assert.That(frame.LocalScope[1]).IsNull();
+            await Assert.That(closeCount).IsEqualTo(1);
+            await Assert.That(frame.LocalScope[0].IsActive).IsFalse();
+            await Assert.That(frame.LocalScope[1].IsActive).IsFalse();
+            await Assert.That(captured.Value.Table).IsSameReferenceAs(closable.Table);
             bool hasIndices = frame.ToBeClosedIndices != null && frame.ToBeClosedIndices.Count > 0;
             await Assert.That(hasIndices).IsFalse();
             bool blocksCleared = frame.BlocksToClose.All(list => list == null || list.Count == 0);
             await Assert.That(blocksCleared).IsTrue();
+
+            processor.ClearBlockDataForTests(instruction);
+            await Assert.That(closeCount).IsEqualTo(1);
         }
 
         [global::TUnit.Core.Test]
@@ -149,7 +191,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             processor.ClearBlockDataForTests(instruction);
 
             double[] remaining = frame
-                .LocalScope.Where(slot => slot != null)
+                .LocalScope.Where(slot => slot.IsActive)
                 .Select(slot => slot.Value.Number)
                 .ToArray();
 

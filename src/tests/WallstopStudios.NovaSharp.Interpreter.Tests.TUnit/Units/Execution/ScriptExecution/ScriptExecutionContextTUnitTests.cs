@@ -34,14 +34,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 @"
                 function wrapper()
                     local localValue = 123
-                    return assertLocal()
+                    local activeNilShadowsOuter
+                    do
+                        local localValue = nil
+                        activeNilShadowsOuter = assertLocal() == nil
+                    end
+                    return activeNilShadowsOuter, assertLocal()
                 end
                 return wrapper()
             "
             );
 
-            await Assert.That(result.Type).IsEqualTo(DataType.Number);
-            await Assert.That(result.Number).IsEqualTo(123);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(123);
         }
 
         [global::TUnit.Core.Test]

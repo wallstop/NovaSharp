@@ -79,11 +79,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     }
                 }
 
-                ValueSlot slot = stackframe.LocalScope[sym.IndexValue];
+                ref ValueSlot slot = ref stackframe.LocalScope[sym.IndexValue];
 
                 closeException = CloseValueAndTrackError(
                     sym,
-                    slot,
+                    ref slot,
                     ref activeError,
                     closeException,
                     stackframe,
@@ -113,8 +113,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         symref.NameValue
                     );
                 case SymbolRefType.Local:
-                    return GetTopNonClrFunction().LocalScope[symref.IndexValue]?.Value
-                        ?? LuaValue.Nil;
+                    return GetTopNonClrFunction().LocalScope[symref.IndexValue].Value;
                 case SymbolRefType.UpValue:
                     return GetTopNonClrFunction().ClosureScope[symref.IndexValue];
                 default:
@@ -237,7 +236,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         {
                             SymbolRef l = stackframe.DebugSymbols[i];
 
-                            if (l.NameValue == name && stackframe.LocalScope[i] != null)
+                            if (l.NameValue == name && stackframe.LocalScope[i].IsActive)
                             {
                                 return l;
                             }

@@ -10,7 +10,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
     /// The scope of a closure (container of upvalues)
     /// </summary>
     /// <remarks>
-    /// Upvalues are stored as <see cref="ValueSlot"/> cells so that captured locals keep sharing a
+    /// Upvalues are stored as <see cref="UpvalueCell"/> cells so that captured locals keep sharing a
     /// single mutable identity while the values they hold stay immutable and allocation-free to read.
     /// </remarks>
     internal sealed class ClosureContext : IReadOnlyList<LuaValue>
@@ -19,8 +19,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
             new[] { WellKnownSymbols.ENV }
         );
 
-        private ValueSlot _singleSlot;
-        private ValueSlot[] _slots;
+        private UpvalueCell _singleSlot;
+        private UpvalueCell[] _slots;
         private int _count;
 
         /// <summary>
@@ -48,8 +48,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// Gets the mutable cell backing an upvalue.
         /// </summary>
         /// <param name="index">The upvalue index.</param>
-        /// <returns>The captured <see cref="ValueSlot"/>.</returns>
-        internal ValueSlot GetSlot(int index)
+        /// <returns>The captured <see cref="UpvalueCell"/>.</returns>
+        internal UpvalueCell GetSlot(int index)
         {
             ValidateIndex(index);
             return _count == 1 ? _singleSlot : _slots[index];
@@ -60,10 +60,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// </summary>
         /// <param name="index">The upvalue index.</param>
         /// <param name="slot">The cell to bind; <c>null</c> installs a fresh nil cell.</param>
-        internal void SetSlot(int index, ValueSlot slot)
+        internal void SetSlot(int index, UpvalueCell slot)
         {
             ValidateIndex(index);
-            slot ??= new ValueSlot();
+            slot ??= new UpvalueCell(LuaValue.Nil);
             if (_count == 1)
             {
                 _singleSlot = slot;
@@ -79,7 +79,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// </summary>
         /// <param name="symbols">The symbol references for each upvalue.</param>
         /// <param name="slots">The captured upvalue cells.</param>
-        internal ClosureContext(SymbolRef[] symbols, List<ValueSlot> slots)
+        internal ClosureContext(SymbolRef[] symbols, List<UpvalueCell> slots)
         {
             if (symbols == null)
             {
@@ -102,7 +102,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// </summary>
         /// <param name="symbols">The symbol references for each upvalue.</param>
         /// <param name="slots">The captured upvalue cells.</param>
-        internal ClosureContext(SymbolRef[] symbols, ValueSlot[] slots)
+        internal ClosureContext(SymbolRef[] symbols, UpvalueCell[] slots)
         {
             if (symbols == null)
             {
@@ -126,14 +126,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         internal ClosureContext(LuaValue environmentValue)
         {
             Symbols = EnvironmentSymbols;
-            _singleSlot = new ValueSlot(environmentValue);
+            _singleSlot = new UpvalueCell(environmentValue);
             _count = 1;
         }
 
         internal ClosureContext()
         {
             Symbols = Array.Empty<string>();
-            _slots = Array.Empty<ValueSlot>();
+            _slots = Array.Empty<UpvalueCell>();
         }
 
         private static string[] ExtractSymbolNames(SymbolRef[] symbols)
@@ -151,45 +151,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
             return names;
         }
 
-        private void InitializeFromList(List<ValueSlot> slots)
+        private void InitializeFromList(List<UpvalueCell> slots)
         {
             if (_count == 0)
             {
-                _slots = Array.Empty<ValueSlot>();
+                _slots = Array.Empty<UpvalueCell>();
                 return;
             }
 
             if (_count == 1)
             {
-                _singleSlot = slots[0] ?? new ValueSlot();
+                _singleSlot = slots[0] ?? new UpvalueCell(LuaValue.Nil);
                 return;
             }
 
-            _slots = new ValueSlot[_count];
+            _slots = new UpvalueCell[_count];
             for (int i = 0; i < _count; i++)
             {
-                _slots[i] = slots[i] ?? new ValueSlot();
+                _slots[i] = slots[i] ?? new UpvalueCell(LuaValue.Nil);
             }
         }
 
-        private void InitializeFromArray(ValueSlot[] slots)
+        private void InitializeFromArray(UpvalueCell[] slots)
         {
             if (_count == 0)
             {
-                _slots = Array.Empty<ValueSlot>();
+                _slots = Array.Empty<UpvalueCell>();
                 return;
             }
 
             if (_count == 1)
             {
-                _singleSlot = slots[0] ?? new ValueSlot();
+                _singleSlot = slots[0] ?? new UpvalueCell(LuaValue.Nil);
                 return;
             }
 
-            _slots = new ValueSlot[_count];
+            _slots = new UpvalueCell[_count];
             for (int i = 0; i < _count; i++)
             {
-                _slots[i] = slots[i] ?? new ValueSlot();
+                _slots[i] = slots[i] ?? new UpvalueCell(LuaValue.Nil);
             }
         }
 

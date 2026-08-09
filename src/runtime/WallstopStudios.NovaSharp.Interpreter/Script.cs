@@ -2459,7 +2459,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                         this,
                         address,
                         Array.Empty<SymbolRef>(),
-                        Array.Empty<Execution.Scopes.ValueSlot>()
+                        Array.Empty<Execution.Scopes.UpvalueCell>()
                     );
                 }
             }
