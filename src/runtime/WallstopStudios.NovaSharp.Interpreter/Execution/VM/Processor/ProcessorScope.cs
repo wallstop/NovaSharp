@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using Cysharp.Text;
     using Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -19,7 +20,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (i.SymbolList != null && i.SymbolList.Length > 0)
             {
-                CloseSymbolsSubset(stackframe, i.SymbolList, DynValue.Nil, instructionPtr);
+                CloseSymbolsSubset(stackframe, i.SymbolList, LuaValue.Nil, instructionPtr);
             }
 
             int from = i.NumVal;
@@ -36,7 +37,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private void CloseSymbolsSubset(
             CallStackItem stackframe,
             SymbolRef[] symbols,
-            DynValue error,
+            LuaValue error,
             int instructionPtr
         )
         {
@@ -45,7 +46,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return;
             }
 
-            DynValue activeError = error;
+            LuaValue activeError = error;
             ScriptRuntimeException closeException = null;
             foreach (SymbolRef sym in symbols)
             {
@@ -100,12 +101,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Evaluates the value represented by the specified symbol reference (locals, upvalues, globals, _ENV).
         /// </summary>
-        public DynValue GetGenericSymbol(SymbolRef symref)
+        public LuaValue GetGenericSymbol(SymbolRef symref)
         {
             switch (symref.SymbolType)
             {
                 case SymbolRefType.DefaultEnv:
-                    return DynValue.NewTable(GetScript().Globals);
+                    return LuaValue.NewTable(GetScript().Globals);
                 case SymbolRefType.Global:
                     return GetGlobalSymbol(
                         GetGenericSymbol(symref.EnvironmentRef),
@@ -113,7 +114,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     );
                 case SymbolRefType.Local:
                     return GetTopNonClrFunction().LocalScope[symref.IndexValue]?.Value
-                        ?? DynValue.Nil;
+                        ?? LuaValue.Nil;
                 case SymbolRefType.UpValue:
                     return GetTopNonClrFunction().ClosureScope[symref.IndexValue];
                 default:
@@ -126,7 +127,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static DynValue GetGlobalSymbol(DynValue dynValue, string name)
+        private static LuaValue GetGlobalSymbol(LuaValue dynValue, string name)
         {
             if (dynValue.Type != DataType.Table)
             {
@@ -139,7 +140,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void SetGlobalSymbol(DynValue dynValue, string name, DynValue value)
+        private static void SetGlobalSymbol(LuaValue dynValue, string name, LuaValue value)
         {
             if (dynValue.Type != DataType.Table)
             {
@@ -154,7 +155,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Assigns the specified value to a symbol, honoring locals, upvalues, and globals.
         /// </summary>
-        public void AssignGenericSymbol(SymbolRef symref, DynValue value)
+        public void AssignGenericSymbol(SymbolRef symref, LuaValue value)
         {
             switch (symref.SymbolType)
             {

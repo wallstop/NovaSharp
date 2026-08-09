@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -39,30 +40,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 "return function(...) return select('#', ...), ... end"
             );
             Closure closure = function.Function;
 
-            DynValue sixDynValueResult = closure.Call(
-                DynValue.FromNumber(1),
-                DynValue.FromNumber(2),
-                DynValue.FromNumber(3),
-                DynValue.FromNumber(4),
-                DynValue.FromNumber(5),
-                DynValue.FromNumber(6)
+            LuaValue sixDynValueResult = closure.CallValues(
+                LuaValue.FromNumber(1),
+                LuaValue.FromNumber(2),
+                LuaValue.FromNumber(3),
+                LuaValue.FromNumber(4),
+                LuaValue.FromNumber(5),
+                LuaValue.FromNumber(6)
             );
-            DynValue sevenDynValueResult = closure.Call(
-                DynValue.FromNumber(1),
-                DynValue.FromNumber(2),
-                DynValue.FromNumber(3),
-                DynValue.FromNumber(4),
-                DynValue.FromNumber(5),
-                DynValue.FromNumber(6),
-                DynValue.FromNumber(7)
+            LuaValue sevenDynValueResult = closure.CallValues(
+                LuaValue.FromNumber(1),
+                LuaValue.FromNumber(2),
+                LuaValue.FromNumber(3),
+                LuaValue.FromNumber(4),
+                LuaValue.FromNumber(5),
+                LuaValue.FromNumber(6),
+                LuaValue.FromNumber(7)
             );
-            DynValue sixObjectResult = closure.Call((object)null, 2d, 3d, 4d, 5d, 6d);
-            DynValue sevenObjectResult = closure.Call((object)null, 2d, 3d, 4d, 5d, 6d, 7d);
+            LuaValue sixObjectResult = closure.Call((object)null, 2d, 3d, 4d, 5d, 6d);
+            LuaValue sevenObjectResult = closure.Call((object)null, 2d, 3d, 4d, 5d, 6d, 7d);
 
             await AssertClosureCaptureResult(sixDynValueResult, 6, expectedNilAtFirst: false)
                 .ConfigureAwait(false);
@@ -81,15 +82,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 "return function(...) return select('#', ...), ... end"
             );
             Closure closure = function.Function;
             object[] args = { "padding", null, "value", 42, true, 5d, "tail", "padding" };
 
-            DynValue result = closure.CallObjectArguments(args.AsSpan(1, 6));
-            DynValue scriptResult = script.CallObjectArguments((object)closure, args.AsSpan(1, 6));
-            DynValue emptyResult = closure.CallObjectArguments(ReadOnlySpan<object>.Empty);
+            LuaValue result = closure.CallObjectArguments(args.AsSpan(1, 6));
+            LuaValue scriptResult = script.CallObjectArguments((object)closure, args.AsSpan(1, 6));
+            LuaValue emptyResult = closure.CallObjectArguments(ReadOnlySpan<object>.Empty);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple.Length).IsEqualTo(7).ConfigureAwait(false);
@@ -120,14 +121,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 "return function(...) return select('#', ...), type((...)), ... end"
             );
             Closure closure = function.Function;
             object[] args = { "left", "right" };
 
-            DynValue argumentList = closure.CallObjectArguments(args);
-            DynValue singleObject = closure.Call((object)args);
+            LuaValue argumentList = closure.CallObjectArguments(args);
+            LuaValue singleObject = closure.Call((object)args);
 
             await Assert.That(argumentList.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(argumentList.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
@@ -167,7 +168,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task ClosureCallObjectArgumentsRejectsNullArray()
         {
             Script script = new Script(CoreModulePresets.Complete);
-            DynValue function = script.DoString("return function(...) return select('#', ...) end");
+            LuaValue function = script.DoString("return function(...) return select('#', ...) end");
             Closure closure = function.Function;
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
@@ -187,7 +188,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             object foreignTable = foreignScript.DoString("return {}");
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue function = script.DoString("return function(value) return value end");
+            LuaValue function = script.DoString("return function(value) return value end");
             Closure closure = function.Function;
             object[] args = { "padding", foreignTable, "padding" };
 
@@ -420,7 +421,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         private static async Task AssertClosureCaptureResult(
-            DynValue result,
+            LuaValue result,
             int arity,
             bool expectedNilAtFirst
         )

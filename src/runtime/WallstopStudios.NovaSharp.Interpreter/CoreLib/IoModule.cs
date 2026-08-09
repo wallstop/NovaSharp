@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System.IO;
     using System.Security;
     using System.Text;
+    using global::NovaSharp;
     using Cysharp.Text;
     using IO;
     using Platforms;
@@ -43,7 +44,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             UserData.RegisterType<FileUserDataBase>(new FileUserDataDescriptor(baseDescriptor));
 
             Table meta = new(ioTable.OwnerScript);
-            DynValue index = DynValue.NewCallback(
+            LuaValue index = LuaValue.NewCallback(
                 new CallbackFunction(ioTable.OwnerScript, __index_callback, "__index_callback")
             );
             meta.Set(Metamethods.Index, index);
@@ -66,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
         }
 
-        private static DynValue __index_callback(
+        private static LuaValue __index_callback(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -93,16 +94,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
             else
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
         }
 
-        private static DynValue GetStandardFile(Script s, StandardFileType file)
+        private static LuaValue GetStandardFile(Script s, StandardFileType file)
         {
             s = ModuleArgumentValidation.RequireScript(s, nameof(s));
             Table r = s.Registry;
 
-            DynValue ff = r.Get("853BEAAF298648839E2C99D005E1DF94_STD_" + file.ToString());
+            LuaValue ff = r.Get("853BEAAF298648839E2C99D005E1DF94_STD_" + file.ToString());
             return ff;
         }
 
@@ -125,7 +126,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 udb = StandardIoFileUserDataBase.CreateOutputStream(optionsStream);
             }
 
-            if (!UserData.TryCreate(s, udb, out DynValue handle))
+            if (!UserData.TryCreate(s, udb, out LuaValue handle))
             {
                 throw new InvalidOperationException("Failed to create standard IO userdata.");
             }
@@ -144,9 +145,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             Table r = executionContext.Script.Registry;
 
-            DynValue ff = r.Get("853BEAAF298648839E2C99D005E1DF94_" + file.ToString());
+            LuaValue ff = r.Get("853BEAAF298648839E2C99D005E1DF94_" + file.ToString());
 
-            if (ff.IsNil())
+            if (ff.IsNil)
             {
                 ff = GetStandardFile(executionContext.Script, file);
             }
@@ -185,7 +186,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             script = ModuleArgumentValidation.RequireScript(script, nameof(script));
             Table r = script.Registry;
-            if (!UserData.TryCreate(script, fileHandle, out DynValue handle))
+            if (!UserData.TryCreate(script, fileHandle, out LuaValue handle))
             {
                 throw new InvalidOperationException("Failed to create standard IO userdata.");
             }
@@ -220,7 +221,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Optional userdata argument naming the file to close.</param>
         /// <returns><c>true</c> on success or <c>(nil, message, code)</c> for recoverable IO errors.</returns>
         [NovaSharpModuleMethod(Name = "close")]
-        public static DynValue Close(
+        public static LuaValue Close(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -244,7 +245,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Optional userdata identifying which file to flush.</param>
         /// <returns>Lua boolean true when the flush succeeds.</returns>
         [NovaSharpModuleMethod(Name = "flush")]
-        public static DynValue Flush(
+        public static LuaValue Flush(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -259,7 +260,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 args.AsUserData<FileUserDataBase>(0, "close", true)
                 ?? GetDefaultFile(executionContext, StandardFileType.StdOut);
             outp.Flush();
-            return DynValue.True;
+            return LuaValue.True;
         }
 
         /// <summary>
@@ -269,7 +270,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Optional filename or userdata specifying the new default input handle.</param>
         /// <returns>The active stdin handle.</returns>
         [NovaSharpModuleMethod(Name = "input")]
-        public static DynValue Input(
+        public static LuaValue Input(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -290,7 +291,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Optional filename or userdata specifying the new default output handle.</param>
         /// <returns>The active stdout handle.</returns>
         [NovaSharpModuleMethod(Name = "output")]
-        public static DynValue Output(
+        public static LuaValue Output(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -304,7 +305,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return HandleDefaultStreamSetter(executionContext, args, StandardFileType.StdOut);
         }
 
-        private static DynValue HandleDefaultStreamSetter(
+        private static LuaValue HandleDefaultStreamSetter(
             ScriptExecutionContext executionContext,
             CallbackArguments args,
             StandardFileType defaultFiles
@@ -316,7 +317,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            if (args.Count == 0 || args[0].IsNil())
+            if (args.Count == 0 || args[0].IsNil)
             {
                 FileUserDataBase file = GetDefaultFile(executionContext, defaultFiles);
                 return CreateFileUserData(executionContext.Script, file);
@@ -366,7 +367,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// can be used with to-be-closed variables or manual cleanup.
         /// </returns>
         [NovaSharpModuleMethod(Name = "lines")]
-        public static DynValue Lines(
+        public static LuaValue Lines(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -404,7 +405,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
 
                 // Create an iterator that reads lines lazily from the file
-                DynValue iterator = EnumerableWrapper.ConvertIterator(
+                LuaValue iterator = EnumerableWrapper.ConvertIterator(
                     executionContext.Script,
                     CreateLazyLineIterator(fileHandle)
                 );
@@ -413,10 +414,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 // This allows use with to-be-closed variables
                 if (version >= LuaCompatibilityVersion.Lua54)
                 {
-                    return DynValue.NewTuple(
+                    return LuaValue.NewTuple(
                         iterator.Tuple[0], // iterator function
-                        DynValue.Nil, // state
-                        DynValue.Nil, // initial value
+                        LuaValue.Nil, // state
+                        LuaValue.Nil, // initial value
                         CreateFileUserData(executionContext.Script, fileHandle) // file handle for to-be-closed
                     );
                 }
@@ -433,18 +434,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Creates a lazy line iterator for a file that yields lines one at a time.
         /// </summary>
-        private static IEnumerator<DynValue> CreateLazyLineIterator(FileUserData fileHandle)
+        private static IEnumerator<LuaValue> CreateLazyLineIterator(FileUserData fileHandle)
         {
             while (true)
             {
                 string line = fileHandle.ReadLineInternal();
                 if (line == null)
                 {
-                    yield return DynValue.Nil;
+                    yield return LuaValue.Nil;
                     yield break;
                 }
 
-                yield return DynValue.NewString(line);
+                yield return LuaValue.NewString(line);
             }
         }
 
@@ -455,7 +456,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Filename, mode, and encoding arguments from Lua.</param>
         /// <returns>The opened file userdata or <c>(nil, message)</c> on recoverable failure.</returns>
         [NovaSharpModuleMethod(Name = "open")]
-        public static DynValue Open(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Open(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -464,10 +465,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             string filename = args.AsType(0, "open", DataType.String, false).String;
-            DynValue vmode = args.AsType(1, "open", DataType.String, true);
-            DynValue vencoding = args.AsType(2, "open", DataType.String, true);
+            LuaValue vmode = args.AsType(1, "open", DataType.String, true);
+            LuaValue vencoding = args.AsType(2, "open", DataType.String, true);
 
-            string mode = vmode.IsNil() ? "r" : vmode.String;
+            string mode = vmode.IsNil ? "r" : vmode.String;
 
             // Version-specific handling for invalid mode:
             // Lua 5.1: Returns (nil, error_message) for invalid mode
@@ -479,9 +480,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
                 if (version == LuaCompatibilityVersion.Lua51)
                 {
-                    return DynValue.NewTuple(
-                        DynValue.Nil,
-                        DynValue.NewString(filename + ": invalid mode")
+                    return LuaValue.NewTuple(
+                        LuaValue.Nil,
+                        LuaValue.NewString(filename + ": invalid mode")
                     );
                 }
 
@@ -490,7 +491,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             try
             {
-                string encoding = vencoding.IsNil() ? null : vencoding.String;
+                string encoding = vencoding.IsNil ? null : vencoding.String;
 
                 // list of codes: http://msdn.microsoft.com/en-us/library/vstudio/system.text.encoding%28v=vs.90%29.aspx.
                 // In addition, "binary" is available.
@@ -569,7 +570,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments supplied from Lua (the value to classify).</param>
         /// <returns>A string dynvalue or <c>nil</c> when the value is not a file userdata.</returns>
         [NovaSharpModuleMethod(Name = "type")]
-        public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -579,20 +580,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (args[0].Type != DataType.UserData)
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
 
             if (args[0].UserData.Object is not FileUserDataBase file)
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
             else if (file.IsOpen())
             {
-                return DynValue.NewString("file");
+                return LuaValue.NewString("file");
             }
             else
             {
-                return DynValue.NewString("closed file");
+                return LuaValue.NewString("closed file");
             }
         }
 
@@ -603,7 +604,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Format specifiers or byte counts passed from Lua.</param>
         /// <returns>The values produced by <see cref="FileUserDataBase.Read(ScriptExecutionContext, CallbackArguments)"/>.</returns>
         [NovaSharpModuleMethod(Name = "read")]
-        public static DynValue Read(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Read(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -622,7 +623,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Values to write.</param>
         /// <returns>The stdout userdata for chaining.</returns>
         [NovaSharpModuleMethod(Name = "write")]
-        public static DynValue Write(
+        public static LuaValue Write(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -644,7 +645,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Unused arguments; present for signature compatibility.</param>
         /// <returns>The userdata representing the temporary file.</returns>
         [NovaSharpModuleMethod(Name = "tmpfile")]
-        public static DynValue TmpFile(
+        public static LuaValue TmpFile(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -666,9 +667,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return CreateFileUserData(executionContext.Script, file);
         }
 
-        private static DynValue CreateFileUserData(Script script, FileUserDataBase file)
+        private static LuaValue CreateFileUserData(Script script, FileUserDataBase file)
         {
-            if (!UserData.TryCreate(script, file, out DynValue value))
+            if (!UserData.TryCreate(script, file, out LuaValue value))
             {
                 throw new InvalidOperationException("Failed to create standard IO userdata.");
             }
@@ -685,7 +686,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Command/mode arguments (validated for signature compatibility).</param>
         /// <returns>Never returns—always throws.</returns>
         [NovaSharpModuleMethod(Name = "popen")]
-        public static DynValue Popen(
+        public static LuaValue Popen(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -748,11 +749,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             };
         }
 
-        private static DynValue CreateIoOpenFailure(Exception exception, string filename)
+        private static LuaValue CreateIoOpenFailure(Exception exception, string filename)
         {
-            return DynValue.NewTuple(
-                DynValue.Nil,
-                DynValue.NewString(IoExceptionToLuaMessage(exception, filename))
+            return LuaValue.NewTuple(
+                LuaValue.Nil,
+                LuaValue.NewString(IoExceptionToLuaMessage(exception, filename))
             );
         }
 

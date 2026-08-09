@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -136,8 +137,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Table globals = scriptHost.Globals;
 
             globals.Set(
-                DynValue.NewString("xassert"),
-                DynValue.NewCallback(
+                LuaValue.NewString("xassert"),
+                LuaValue.NewCallback(
                     new CallbackFunction(
                         (context, args) =>
                         {
@@ -146,15 +147,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                                 failedTests.Add(args[0].String);
                             }
 
-                            return DynValue.Nil;
+                            return LuaValue.Nil;
                         }
                     )
                 )
             );
 
             globals.Set(
-                DynValue.NewString("assert"),
-                DynValue.NewCallback(
+                LuaValue.NewString("assert"),
+                LuaValue.NewCallback(
                     new CallbackFunction(
                         (context, args) =>
                         {
@@ -165,19 +166,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                                 failedTests.Add($"assert #{assertIndex}");
                             }
 
-                            return DynValue.Nil;
+                            return LuaValue.Nil;
                         }
                     )
                 )
             );
 
             globals.Set(
-                DynValue.NewString("print"),
-                DynValue.NewCallback(
+                LuaValue.NewString("print"),
+                LuaValue.NewCallback(
                     new CallbackFunction(
                         (context, args) =>
                         {
-                            return DynValue.Nil;
+                            return LuaValue.Nil;
                         }
                     )
                 )

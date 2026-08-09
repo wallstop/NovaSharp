@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -33,8 +34,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         public async Task AssignObjectSetsAttributedProperties()
         {
             Table data = new(_script);
-            data.Set("name", DynValue.NewString("Nova"));
-            data.Set("count", DynValue.NewNumber(5));
+            data.Set("name", LuaValue.NewString("Nova"));
+            data.Set("count", LuaValue.NewNumber(5));
 
             BasicSample target = new();
             PropertyTableAssigner<BasicSample> assigner = new();
@@ -49,10 +50,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         public async Task AssignObjectUsesSubassignerForNestedTables()
         {
             Table addressTable = new(_script);
-            addressTable.Set("street", DynValue.NewString("Main"));
+            addressTable.Set("street", LuaValue.NewString("Main"));
 
             Table data = new(_script);
-            data.Set("address", DynValue.NewTable(addressTable));
+            data.Set("address", LuaValue.NewTable(addressTable));
 
             ParentWithAddress target = new();
             PropertyTableAssigner<ParentWithAddress> assigner = new();
@@ -71,7 +72,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         public void AssignObjectThrowsForUnexpectedProperty()
         {
             Table data = new(_script);
-            data.Set("unknown", DynValue.NewNumber(1));
+            data.Set("unknown", LuaValue.NewNumber(1));
 
             PropertyTableAssigner<BasicSample> assigner = new();
 
@@ -84,7 +85,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         public void AddExpectedMissingPropertySuppressesError()
         {
             Table data = new(_script);
-            data.Set("unknown", DynValue.NewNumber(1));
+            data.Set("unknown", LuaValue.NewNumber(1));
 
             PropertyTableAssigner<BasicSample> assigner = new();
             assigner.AddExpectedMissingProperty("unknown");
@@ -111,7 +112,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         public void AssignObjectRequiresStringKey()
         {
             Table data = new(_script);
-            data.Set(1, DynValue.NewNumber(5));
+            data.Set(1, LuaValue.NewNumber(5));
 
             PropertyTableAssigner<BasicSample> assigner = new();
 
@@ -140,7 +141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             );
 
             Table data = new(_script);
-            data.Set("first_name", DynValue.NewString("Nova"));
+            data.Set("first_name", LuaValue.NewString("Nova"));
 
             FuzzySample target = new();
             PropertyTableAssigner<FuzzySample> assigner = new();
@@ -153,7 +154,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         public async Task GenericAssignerReturnsUnderlyingAssigner()
         {
             Table data = new(_script);
-            data.Set("name", DynValue.NewString("Nova"));
+            data.Set("name", LuaValue.NewString("Nova"));
 
             BasicSample target = new();
             PropertyTableAssigner<BasicSample> generic = new();
@@ -168,7 +169,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         public async Task AssignObjectUncheckedInvokesGenericAssigner()
         {
             Table data = new(_script);
-            data.Set("name", DynValue.NewString("Nova"));
+            data.Set("name", LuaValue.NewString("Nova"));
 
             BasicSample target = new();
             IPropertyTableAssigner assigner = new PropertyTableAssigner<BasicSample>();
@@ -182,7 +183,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         public void ConstructorAllowsExpectedMissingPropertiesParameter()
         {
             Table data = new(_script);
-            data.Set("ignored", DynValue.NewNumber(5));
+            data.Set("ignored", LuaValue.NewNumber(5));
 
             PropertyTableAssigner<BasicSample> assigner = new("ignored");
 
@@ -208,10 +209,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         public void RemovingSubassignerFallsBackToClrConversion()
         {
             Table address = new(_script);
-            address.Set("street", DynValue.NewString("Second"));
+            address.Set("street", LuaValue.NewString("Second"));
 
             Table data = new(_script);
-            data.Set("address", DynValue.NewTable(address));
+            data.Set("address", LuaValue.NewTable(address));
 
             PropertyTableAssigner<ParentWithAddress> assigner = new();
             assigner.SetSubassigner(new PropertyTableAssigner<AddressInfo>());

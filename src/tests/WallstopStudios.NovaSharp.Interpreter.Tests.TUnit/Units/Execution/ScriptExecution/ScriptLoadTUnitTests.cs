@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -109,11 +110,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task LoadStringDecodesBase64Dump(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue chunk = script.LoadString("return 77");
+            LuaValue chunk = script.LoadString("return 77");
 
             string encodedDump = EncodeFunctionAsBase64(script, chunk);
-            DynValue loaded = script.LoadString(encodedDump);
-            DynValue result = script.Call(loaded);
+            LuaValue loaded = script.LoadString(encodedDump);
+            LuaValue result = script.Call(loaded);
 
             await Assert.That(result.Number).IsEqualTo(77);
         }
@@ -129,8 +130,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script script = new(version);
             using MemoryStream stream = new(Encoding.UTF8.GetBytes("return 13"));
 
-            DynValue function = script.LoadStream(stream);
-            DynValue result = script.Call(function);
+            LuaValue function = script.LoadStream(stream);
+            LuaValue result = script.Call(function);
 
             await Assert.That(result.Number).IsEqualTo(13);
         }
@@ -146,7 +147,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script script = new(version);
             using MemoryStream stream = new(Encoding.UTF8.GetBytes("x=41"));
 
-            DynValue chunk = script.LoadStream(stream);
+            LuaValue chunk = script.LoadStream(stream);
             script.Call(chunk);
 
             await Assert.That(script.Globals.Get("x").Number).IsEqualTo(41);
@@ -164,8 +165,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             byte[] dump = DumpToBytes(script, script.LoadString("return 19"));
             using MemoryStream stream = new(dump, writable: false);
 
-            DynValue function = script.LoadStream(stream);
-            DynValue result = script.Call(function);
+            LuaValue function = script.LoadStream(stream);
+            LuaValue result = script.Call(function);
 
             await Assert.That(result.Number).IsEqualTo(19);
         }
@@ -180,13 +181,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new(version);
             Table env = new(script);
-            env.Set("value", DynValue.NewNumber(7));
+            env.Set("value", LuaValue.NewNumber(7));
 
-            DynValue closure = script.LoadFunction("function() return value end", env, "bound");
-            DynValue result = script.Call(closure);
+            LuaValue closure = script.LoadFunction("function() return value end", env, "bound");
+            LuaValue result = script.Call(closure);
 
             await Assert.That(result.Number).IsEqualTo(7);
-            await Assert.That(script.Globals.Get("value").IsNil()).IsTrue();
+            await Assert.That(script.Globals.Get("value").IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -200,8 +201,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         )
         {
             Script producer = new();
-            producer.Globals.Set("shared", DynValue.NewNumber(5));
-            DynValue chunk = producer.LoadString(
+            producer.Globals.Set("shared", LuaValue.NewNumber(5));
+            LuaValue chunk = producer.LoadString(
                 @"
                 return function()
                     return shared
@@ -211,12 +212,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             byte[] dump = DumpToBytes(producer, chunk);
 
             Script consumer = new();
-            consumer.Globals.Set("shared", DynValue.NewNumber(10));
+            consumer.Globals.Set("shared", LuaValue.NewNumber(10));
 
             using MemoryStream stream = new(dump, writable: false);
-            DynValue chunkResult = consumer.LoadStream(stream);
-            DynValue restoredFunction = consumer.Call(chunkResult);
-            DynValue result = consumer.Call(restoredFunction);
+            LuaValue chunkResult = consumer.LoadStream(stream);
+            LuaValue restoredFunction = consumer.Call(chunkResult);
+            LuaValue result = consumer.Call(restoredFunction);
 
             await Assert.That(result.Number).IsEqualTo(10);
         }
@@ -234,8 +235,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             LegacyScriptLoader loader = new();
             Script script = new(new ScriptOptions { ScriptLoader = loader });
 
-            DynValue chunk = script.LoadFile("   legacy.lua  ");
-            DynValue result = script.Call(chunk);
+            LuaValue chunk = script.LoadFile("   legacy.lua  ");
+            LuaValue result = script.Call(chunk);
 
             await Assert.That(loader.WasResolveFileNameCalled).IsTrue();
             await Assert.That(loader.LastResolvedFilename).IsEqualTo("   legacy.lua  ");
@@ -257,17 +258,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             StubScriptLoader loader = new() { Mode = LoaderMode.String, Source = "return 21" };
             script.Options.ScriptLoader = loader;
 
-            DynValue fromString = script.LoadFile("string.lua");
+            LuaValue fromString = script.LoadFile("string.lua");
             await Assert.That(script.Call(fromString).Number).IsEqualTo(21);
 
             loader.Mode = LoaderMode.Bytes;
             loader.Source = "return 22";
-            DynValue fromBytes = script.LoadFile("bytes.lua");
+            LuaValue fromBytes = script.LoadFile("bytes.lua");
             await Assert.That(script.Call(fromBytes).Number).IsEqualTo(22);
 
             loader.Mode = LoaderMode.Stream;
             loader.Source = "return 23";
-            DynValue fromStream = script.LoadFile("stream.lua");
+            LuaValue fromStream = script.LoadFile("stream.lua");
             await Assert.That(script.Call(fromStream).Number).IsEqualTo(23);
             await Assert.That(loader.StreamDisposed).IsTrue();
         }
@@ -283,8 +284,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             ModuleScriptLoader loader = new() { ModuleCode = "return 42" };
             Script script = new(new ScriptOptions { ScriptLoader = loader });
 
-            DynValue module = script.RequireModule("answer");
-            DynValue result = script.Call(module);
+            LuaValue module = script.RequireModule("answer");
+            LuaValue result = script.Call(module);
 
             await Assert.That(loader.ResolvedModuleNames).IsEquivalentTo(AnswerModuleName);
             await Assert.That(loader.LoadedFiles).IsEquivalentTo(AnswerModuleFile);
@@ -309,7 +310,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             await Assert.That(script.SourceCodeCount).IsEqualTo(initialCount + 1);
             await Assert.That(script.GetSourceCode(initialCount).Name).Contains("__dynamic_");
 
-            script.Globals.Set("value", DynValue.NewNumber(8));
+            script.Globals.Set("value", LuaValue.NewNumber(8));
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             await Assert.That(expression.Evaluate(context).Number).IsEqualTo(16);
         }
@@ -420,7 +421,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task CallInvokesMetamethodWhenValueIsCallable(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue callableTable = script.DoString(
+            LuaValue callableTable = script.DoString(
                 @"
                 local t = {}
                 setmetatable(t, { __call = function(_, value) return value * 2 end })
@@ -428,7 +429,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 "
             );
 
-            DynValue result = script.Call(callableTable, DynValue.NewNumber(6));
+            LuaValue result = script.Call(callableTable, LuaValue.NewNumber(6));
             await Assert.That(result.Number).IsEqualTo(12);
         }
 
@@ -441,11 +442,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task CallExecutesClrFunctionCallbacks(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue callback = DynValue.NewCallback(
-                (_, args) => DynValue.NewNumber(args[0].Number + 5)
+            LuaValue callback = LuaValue.NewCallback(
+                (_, args) => LuaValue.NewNumber(args[0].Number + 5)
             );
 
-            DynValue result = script.Call(callback, DynValue.NewNumber(7));
+            LuaValue result = script.Call(callback, LuaValue.NewNumber(7));
             await Assert.That(result.Number).IsEqualTo(12);
         }
 
@@ -458,10 +459,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task CallConvertsObjectArgumentsToDynValues(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue chunk = script.LoadString("return function(value) return value * 3 end");
-            DynValue multiplier = script.Call(chunk);
+            LuaValue chunk = script.LoadString("return function(value) return value * 3 end");
+            LuaValue multiplier = script.Call(chunk);
 
-            DynValue result = script.Call(multiplier, 4);
+            LuaValue result = script.Call(multiplier, 4);
             await Assert.That(result.Number).IsEqualTo(12);
         }
 
@@ -476,7 +477,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script script = new(version);
 
             ArgumentException exception = ExpectException<ArgumentException>(() =>
-                script.Call(DynValue.NewString("nope"))
+                script.CallValues(LuaValue.NewString("nope"))
             );
 
             await Assert.That(exception.Message).Contains("has no __call metamethod");
@@ -493,13 +494,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         )
         {
             Script script = new(version);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.NewString("done"));
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.NewString("done"));
 
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
             await Assert.That(coroutine.Type).IsEqualTo(DataType.Thread);
 
             ArgumentException exception = ExpectException<ArgumentException>(() =>
-                script.CreateCoroutine(DynValue.NewNumber(1))
+                script.CreateCoroutineValue(LuaValue.NewNumber(1))
             );
             await Assert.That(exception.Message).Contains("function");
         }
@@ -520,7 +521,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 .Because($"Expected FileSystemScriptLoader but got {loaderType}")
                 .ConfigureAwait(false);
 
-            DynValue stringResult = Script.RunString("return 321");
+            LuaValue stringResult = Script.RunString("return 321");
             await Assert
                 .That(stringResult.Type)
                 .IsEqualTo(DataType.Number)
@@ -544,7 +545,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 .Because($"File content mismatch. Path: {path}, FileExists: {File.Exists(path)}")
                 .ConfigureAwait(false);
 
-            DynValue fileResult = Script.RunFile(path);
+            LuaValue fileResult = Script.RunFile(path);
 
             // Provide diagnostic information on failure
             string diagnosticContext =
@@ -594,18 +595,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task RecycleCoroutineProducesFreshThread(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue source = CompileFunction(
+            LuaValue source = CompileFunction(
                 script,
                 "function(value) coroutine.yield(value + 1); return value + 2 end"
             );
-            Coroutine coroutine = script.CreateCoroutine(source).Coroutine;
+            Coroutine coroutine = script.CreateCoroutineValue(source).Coroutine;
 
-            await Assert.That(coroutine.Resume(DynValue.NewNumber(3)).Number).IsEqualTo(4);
+            await Assert.That(coroutine.ResumeValues(LuaValue.NewNumber(3)).Number).IsEqualTo(4);
             await Assert.That(coroutine.Resume().Number).IsEqualTo(5);
             await Assert.That(coroutine.State).IsEqualTo(CoroutineState.Dead);
 
-            DynValue replacement = CompileFunction(script, "function() return 99 end");
-            DynValue recycled = script.RecycleCoroutine(coroutine, replacement);
+            LuaValue replacement = CompileFunction(script, "function() return 99 end");
+            LuaValue recycled = script.RecycleCoroutine(coroutine, replacement);
 
             await Assert.That(recycled.Type).IsEqualTo(DataType.Thread);
             await Assert.That(recycled.Coroutine.State).IsEqualTo(CoroutineState.NotStarted);
@@ -623,11 +624,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         )
         {
             Script script = new(version);
-            DynValue worker = CompileFunction(
+            LuaValue worker = CompileFunction(
                 script,
                 "function() coroutine.yield(1); return 2 end"
             );
-            Coroutine live = script.CreateCoroutine(worker).Coroutine;
+            Coroutine live = script.CreateCoroutineValue(worker).Coroutine;
 
             ExpectException<InvalidOperationException>(() => script.RecycleCoroutine(live, worker));
 
@@ -636,7 +637,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             await Assert.That(live.State).IsEqualTo(CoroutineState.Dead);
 
             ExpectException<InvalidOperationException>(() =>
-                script.RecycleCoroutine(live, DynValue.NewNumber(1))
+                script.RecycleCoroutine(live, LuaValue.NewNumber(1))
             );
         }
 
@@ -649,7 +650,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public void RecycleCoroutineRequiresCoroutineInstance(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue worker = CompileFunction(script, "function() return 0 end");
+            LuaValue worker = CompileFunction(script, "function() return 0 end");
 
             ExpectException<InvalidOperationException>(() => script.RecycleCoroutine(null, worker));
         }
@@ -665,7 +666,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script script = new(version);
             using MemoryStream stream = new(Encoding.UTF8.GetBytes("return 123"));
 
-            DynValue result = script.DoStream(stream);
+            LuaValue result = script.DoStream(stream);
             await Assert.That(result.Number).IsEqualTo(123);
         }
 
@@ -701,7 +702,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             using MemoryStream stream = new();
 
             ArgumentException exception = ExpectException<ArgumentException>(() =>
-                script.Dump(DynValue.NewNumber(1), stream)
+                script.Dump(LuaValue.NewNumber(1), stream)
             );
 
             await Assert.That(exception.Message).Contains("function arg is not a function");
@@ -716,7 +717,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DumpRejectsReadOnlyStreams(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue chunk = script.LoadString("return 1");
+            LuaValue chunk = script.LoadString("return 1");
             using MemoryStream stream = new(Array.Empty<byte>(), writable: false);
 
             ArgumentException exception = ExpectException<ArgumentException>(() =>
@@ -735,13 +736,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DumpRejectsFunctionsWithExternalUpValues(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue chunk = script.LoadString(
+            LuaValue chunk = script.LoadString(
                 @"
                 local capture = 5
                 return function() return capture end
                 "
             );
-            DynValue closure = script.Call(chunk);
+            LuaValue closure = script.Call(chunk);
 
             using MemoryStream stream = new();
             ArgumentException exception = ExpectException<ArgumentException>(() =>
@@ -763,7 +764,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             using MemoryStream stream = new();
 
             ArgumentException exception = ExpectException<ArgumentException>(() =>
-                script.Dump(DynValue.Nil, stream)
+                script.Dump(LuaValue.Nil, stream)
             );
 
             await Assert.That(exception.Message).Contains("function arg is not a function");
@@ -778,7 +779,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task DumpThrowsWhenStreamIsNull(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue chunk = script.LoadString("return 1");
+            LuaValue chunk = script.LoadString("return 1");
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
                 script.Dump(chunk, null)
@@ -790,20 +791,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         private static readonly string[] AnswerModuleName = { "answer" };
         private static readonly string[] AnswerModuleFile = { "answer.lua" };
 
-        private static DynValue CompileFunction(Script script, string luaFunctionSource)
+        private static LuaValue CompileFunction(Script script, string luaFunctionSource)
         {
-            DynValue chunk = script.LoadString($"return {luaFunctionSource}");
+            LuaValue chunk = script.LoadString($"return {luaFunctionSource}");
             return script.Call(chunk);
         }
 
-        private static string EncodeFunctionAsBase64(Script script, DynValue chunk)
+        private static string EncodeFunctionAsBase64(Script script, LuaValue chunk)
         {
             using MemoryStream stream = new();
             script.Dump(chunk, stream);
             return StringModule.Base64DumpHeader + Convert.ToBase64String(stream.ToArray());
         }
 
-        private static byte[] DumpToBytes(Script script, DynValue chunk)
+        private static byte[] DumpToBytes(Script script, LuaValue chunk)
         {
             using MemoryStream stream = new();
             script.Dump(chunk, stream);

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -54,7 +55,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // %Z - handled in switch below for timezone name
         };
 
-        private static DynValue GetUnixTime(
+        private static LuaValue GetUnixTime(
             DateTime dateTime,
             LuaCompatibilityVersion version,
             DateTime? epoch = null
@@ -67,21 +68,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaCompatibilityVersion resolvedVersion = LuaVersionDefaults.Resolve(version);
             if (resolvedVersion >= LuaCompatibilityVersion.Lua53)
             {
-                return DynValue.NewInteger((long)time);
+                return LuaValue.NewInteger((long)time);
             }
 
-            return DynValue.NewNumber(time);
+            return LuaValue.NewNumber(time);
         }
 
         /// <summary>
         /// Computes elapsed time since a start point, clamping to 0 for backward time movement.
         /// Used by os.clock() which should never return negative values.
         /// </summary>
-        private static DynValue GetElapsedTime(DateTime dateTime, DateTime startTime)
+        private static LuaValue GetElapsedTime(DateTime dateTime, DateTime startTime)
         {
             double time = (dateTime - startTime).TotalSeconds;
             // Elapsed time should never be negative
-            return time < 0.0 ? DynValue.NewNumber(0.0) : DynValue.NewNumber(time);
+            return time < 0.0 ? LuaValue.NewNumber(0.0) : LuaValue.NewNumber(time);
         }
 
         private static DateTime FromUnixTime(double unixtime)
@@ -97,7 +98,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Unused arguments.</param>
         /// <returns>Elapsed CPU time represented as seconds.</returns>
         [NovaSharpModuleMethod(Name = "clock")]
-        public static DynValue Clock(
+        public static LuaValue Clock(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -121,7 +122,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments providing the timestamps.</param>
         /// <returns>Difference in seconds.</returns>
         [NovaSharpModuleMethod(Name = "difftime")]
-        public static DynValue DiffTime(
+        public static LuaValue DiffTime(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -135,31 +136,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
             LuaCompatibilityVersion resolvedVersion = LuaVersionDefaults.Resolve(version);
 
-            DynValue t2 = args.AsType(0, "difftime", DataType.Number, false);
+            LuaValue t2 = args.AsType(0, "difftime", DataType.Number, false);
 
             // Lua 5.3+: second argument is required
             // Lua 5.1/5.2: second argument is optional (defaults to implicit 0 behavior)
             bool t1Optional = resolvedVersion < LuaCompatibilityVersion.Lua53;
-            DynValue t1 = args.AsType(1, "difftime", DataType.Number, t1Optional);
+            LuaValue t1 = args.AsType(1, "difftime", DataType.Number, t1Optional);
 
             // Lua 5.3+: time arguments must have integer representation
             LuaNumberHelpers.ValidateIntegerArgument(version, t2, "difftime", 1);
             LuaNumberHelpers.ValidateIntegerArgument(version, t1, "difftime", 2);
 
             // Use LuaNumber for proper value extraction
-            if (t1.IsNil())
+            if (t1.IsNil)
             {
                 // Only reachable in Lua 5.1/5.2 mode where t1 is optional
                 LuaNumber t2Num = t2.LuaNumber;
                 double t2Value = t2Num.IsInteger ? t2Num.AsInteger : t2Num.AsFloat;
-                return DynValue.NewNumber(t2Value);
+                return LuaValue.NewNumber(t2Value);
             }
 
             LuaNumber t2NumVal = t2.LuaNumber;
             LuaNumber t1NumVal = t1.LuaNumber;
             double t2Val = t2NumVal.IsInteger ? t2NumVal.AsInteger : t2NumVal.AsFloat;
             double t1Val = t1NumVal.IsInteger ? t1NumVal.AsInteger : t1NumVal.AsFloat;
-            return DynValue.NewNumber(t2Val - t1Val);
+            return LuaValue.NewNumber(t2Val - t1Val);
         }
 
         /// <summary>
@@ -170,7 +171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Optional date table argument.</param>
         /// <returns>Unix timestamp as a number.</returns>
         [NovaSharpModuleMethod(Name = "time")]
-        public static DynValue Time(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Time(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -183,7 +184,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (args.Count > 0)
             {
-                DynValue vt = args.AsType(0, "time", DataType.Table, true);
+                LuaValue vt = args.AsType(0, "time", DataType.Table, true);
                 if (vt.Type == DataType.Table)
                 {
                     date = ParseTimeTable(vt.Table, version);
@@ -222,13 +223,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         private static int? GetTimeTableField(Table t, string key, LuaCompatibilityVersion version)
         {
-            DynValue v = t.Get(key);
+            LuaValue v = t.Get(key);
 
             // In Lua 5.3+, fields must be integers (not strings or other types)
             LuaCompatibilityVersion resolvedVersion = LuaVersionDefaults.Resolve(version);
             if (resolvedVersion >= LuaCompatibilityVersion.Lua53)
             {
-                if (v.IsNil())
+                if (v.IsNil)
                 {
                     return null;
                 }
@@ -288,7 +289,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </param>
         /// <returns>Formatted string or table describing the broken-down date.</returns>
         [NovaSharpModuleMethod(Name = "date")]
-        public static DynValue Date(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Date(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -300,13 +301,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             DateTime reference = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
 
-            DynValue vformat = args.AsType(0, "date", DataType.String, true);
-            DynValue vtime = args.AsType(1, "date", DataType.Number, true);
+            LuaValue vformat = args.AsType(0, "date", DataType.String, true);
+            LuaValue vtime = args.AsType(1, "date", DataType.Number, true);
 
             // Lua 5.3+: time argument must have integer representation
             LuaNumberHelpers.ValidateIntegerArgument(version, vtime, "date", 2);
 
-            string format = (vformat.IsNil()) ? "%c" : vformat.String;
+            string format = (vformat.IsNil) ? "%c" : vformat.String;
             bool forceUtc = executionContext.Script?.Options?.ForceUtcDateTime == true;
 
             if (vtime.IsNotNil())
@@ -344,22 +345,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 Table t = new(executionContext.Script);
 
-                t.Set("year", DynValue.FromNumber(reference.Year));
-                t.Set("month", DynValue.FromNumber(reference.Month));
-                t.Set("day", DynValue.FromNumber(reference.Day));
-                t.Set("hour", DynValue.FromNumber(reference.Hour));
-                t.Set("min", DynValue.FromNumber(reference.Minute));
-                t.Set("sec", DynValue.FromNumber(reference.Second));
-                t.Set("wday", DynValue.FromNumber(((int)reference.DayOfWeek) + 1));
-                t.Set("yday", DynValue.FromNumber(reference.DayOfYear));
-                t.Set("isdst", DynValue.NewBoolean(isDst));
+                t.Set("year", LuaValue.FromNumber(reference.Year));
+                t.Set("month", LuaValue.FromNumber(reference.Month));
+                t.Set("day", LuaValue.FromNumber(reference.Day));
+                t.Set("hour", LuaValue.FromNumber(reference.Hour));
+                t.Set("min", LuaValue.FromNumber(reference.Minute));
+                t.Set("sec", LuaValue.FromNumber(reference.Second));
+                t.Set("wday", LuaValue.FromNumber(((int)reference.DayOfWeek) + 1));
+                t.Set("yday", LuaValue.FromNumber(reference.DayOfYear));
+                t.Set("isdst", LuaValue.NewBoolean(isDst));
 
-                return DynValue.NewTable(t);
+                return LuaValue.NewTable(t);
             }
             else
             {
                 LuaCompatibilityVersion resolvedVersion = LuaVersionDefaults.Resolve(version);
-                return DynValue.NewString(StrFTime(format, reference, resolvedVersion));
+                return LuaValue.NewString(StrFTime(format, reference, resolvedVersion));
             }
         }
 

@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -529,9 +530,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         }
 
         /// <inheritdoc />
-        public override DynValue Eval(ScriptExecutionContext context)
+        public override LuaValue Eval(ScriptExecutionContext context)
         {
-            DynValue v1 = _exp1.Eval(context).ToScalar();
+            LuaValue v1 = _exp1.Eval(context).ToScalar();
 
             if (_operator == Operator.Or)
             {
@@ -557,11 +558,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 }
             }
 
-            DynValue v2 = _exp2.Eval(context).ToScalar();
+            LuaValue v2 = _exp2.Eval(context).ToScalar();
 
             if ((_operator & ComparisonOperators) != 0)
             {
-                return DynValue.FromBoolean(EvalComparison(v1, v2, _operator));
+                return LuaValue.FromBoolean(EvalComparison(v1, v2, _operator));
             }
             else if (_operator == Operator.StrConcat)
             {
@@ -582,23 +583,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                     );
                 }
 
-                return DynValue.NewConcatenatedString(s1, s2);
+                return LuaValue.NewConcatenatedString(s1, s2);
             }
             else if ((_operator & BitwiseOperatorMask) != 0)
             {
-                return DynValue.NewNumber(EvalBitwise(v1, v2));
+                return LuaValue.NewNumber(EvalBitwise(v1, v2));
             }
             else if (_operator == Operator.FloorDiv)
             {
-                return DynValue.NewNumber(EvalFloorDivision(v1, v2));
+                return LuaValue.NewNumber(EvalFloorDivision(v1, v2));
             }
             else
             {
-                return DynValue.NewNumber(EvalArithmetic(v1, v2));
+                return LuaValue.NewNumber(EvalArithmetic(v1, v2));
             }
         }
 
-        private double EvalBitwise(DynValue v1, DynValue v2)
+        private double EvalBitwise(LuaValue v1, LuaValue v2)
         {
             if (
                 !LuaIntegerHelper.TryGetInteger(v1, out long left)
@@ -623,7 +624,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             return result;
         }
 
-        private static LuaNumber EvalFloorDivision(DynValue v1, DynValue v2)
+        private static LuaNumber EvalFloorDivision(LuaValue v1, LuaValue v2)
         {
             LuaNumber? nd1 = v1.CastToLuaNumber();
             LuaNumber? nd2 = v2.CastToLuaNumber();
@@ -640,7 +641,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             return LuaNumber.FloorDivide(nd1.Value, nd2.Value);
         }
 
-        private LuaNumber EvalArithmetic(DynValue v1, DynValue v2)
+        private LuaNumber EvalArithmetic(LuaValue v1, LuaValue v2)
         {
             LuaNumber? nd1 = v1.CastToLuaNumber();
             LuaNumber? nd2 = v2.CastToLuaNumber();
@@ -674,7 +675,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
-        private static bool EvalComparison(DynValue l, DynValue r, Operator op)
+        private static bool EvalComparison(LuaValue l, LuaValue r, Operator op)
         {
             switch (op)
             {

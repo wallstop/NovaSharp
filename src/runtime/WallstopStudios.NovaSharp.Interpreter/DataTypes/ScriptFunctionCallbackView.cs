@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
 
     /// <summary>
@@ -8,7 +9,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// <param name="executionContext">The current script execution context.</param>
     /// <param name="args">The callback arguments.</param>
     /// <returns>The Lua value returned by the callback.</returns>
-    public delegate DynValue ScriptFunctionCallbackView(
+    public delegate LuaValue ScriptFunctionCallbackView(
         ScriptExecutionContext executionContext,
         CallbackArgumentsView args
     );
@@ -19,5 +20,5 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// </summary>
     /// <param name="args">The callback arguments.</param>
     /// <returns>The Lua value returned by the callback.</returns>
-    public delegate DynValue ScriptFunctionCallbackViewNoContext(CallbackArgumentsView args);
+    public delegate LuaValue ScriptFunctionCallbackViewNoContext(CallbackArgumentsView args);
 }

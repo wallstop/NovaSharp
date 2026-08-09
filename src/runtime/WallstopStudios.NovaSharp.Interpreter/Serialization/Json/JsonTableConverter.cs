@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
     using System.Collections;
     using System.Globalization;
     using System.Reflection;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -84,7 +85,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
                 sb.Append('[');
                 for (int i = 1; i <= table.Length; i++)
                 {
-                    DynValue value = table.Get(i);
+                    LuaValue value = table.Get(i);
                     if (IsValueJsonCompatible(value))
                     {
                         if (!first)
@@ -196,8 +197,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
                 return;
             }
 
-            // Handle DynValue
-            if (obj is DynValue dv)
+            // Handle LuaValue
+            if (obj is LuaValue dv)
             {
                 ValueToJson(ref sb, dv);
                 return;
@@ -274,7 +275,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
             sb.Append('}');
         }
 
-        private static void ValueToJson(ref Utf16ValueStringBuilder sb, DynValue value)
+        private static void ValueToJson(ref Utf16ValueStringBuilder sb, LuaValue value)
         {
             switch (value.Type)
             {
@@ -322,10 +323,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
             return "\"" + s + "\"";
         }
 
-        private static bool IsValueJsonCompatible(DynValue value)
+        private static bool IsValueJsonCompatible(LuaValue value)
         {
             return value.Type == DataType.Boolean
-                || value.IsNil()
+                || value.IsNil
                 || value.Type == DataType.Number
                 || value.Type == DataType.String
                 || value.Type == DataType.Table
@@ -380,7 +381,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
 
             while (l.Current.type != TokenType.BrkCloseSquare)
             {
-                DynValue v = ParseJsonValue(l, script);
+                LuaValue v = ParseJsonValue(l, script);
                 t.Append(v);
                 l.Next();
 
@@ -406,7 +407,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
                 l.Next();
                 AssertToken(l, TokenType.Colon);
                 l.Next();
-                DynValue v = ParseJsonValue(l, script);
+                LuaValue v = ParseJsonValue(l, script);
                 t.Set(key, v);
                 l.Next();
 
@@ -419,21 +420,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
             return t;
         }
 
-        private static DynValue ParseJsonValue(Lexer l, Script script)
+        private static LuaValue ParseJsonValue(Lexer l, Script script)
         {
             if (l.Current.type == TokenType.BrkOpenCurly)
             {
                 Table t = ParseJsonObject(l, script);
-                return DynValue.NewTable(t);
+                return LuaValue.NewTable(t);
             }
             else if (l.Current.type == TokenType.BrkOpenSquare)
             {
                 Table t = ParseJsonArray(l, script);
-                return DynValue.NewTable(t);
+                return LuaValue.NewTable(t);
             }
             else if (l.Current.type == TokenType.String)
             {
-                return DynValue.NewString(l.Current.text);
+                return LuaValue.NewString(l.Current.text);
             }
             else if (l.Current.type == TokenType.Number || l.Current.type == TokenType.OpMinusOrSub)
             {
@@ -441,11 +442,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
             }
             else if (l.Current.type == TokenType.True)
             {
-                return DynValue.True;
+                return LuaValue.True;
             }
             else if (l.Current.type == TokenType.False)
             {
-                return DynValue.False;
+                return LuaValue.False;
             }
             else if (l.Current.type == TokenType.Name && l.Current.text == "null")
             {
@@ -461,7 +462,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
             }
         }
 
-        private static DynValue ParseJsonNumberValue(Lexer l, Script script)
+        private static LuaValue ParseJsonNumberValue(Lexer l, Script script)
         {
             bool negative;
             if (l.Current.type == TokenType.OpMinusOrSub)
@@ -487,7 +488,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
             {
                 numberValue = -numberValue;
             }
-            return DynValue.NewNumber(numberValue);
+            return LuaValue.NewNumber(numberValue);
         }
 
         private static string ReplaceOrdinal(string text, string oldValue, string newValue)

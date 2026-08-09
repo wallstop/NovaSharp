@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -428,7 +429,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Processor processor = script.GetMainProcessorForTests();
             PrepareCallStack(processor);
 
-            DynamicExpression watch = new(script, "const_watch", DynValue.NewNumber(42));
+            DynamicExpression watch = new(script, "const_watch", LuaValue.NewNumber(42));
 
             StubDebugger debugger = new() { PauseRequested = true };
             debugger.WatchItems.Add(watch);

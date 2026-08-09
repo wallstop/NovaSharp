@@ -49,7 +49,7 @@ ______________________________________________________________________
 
 NovaSharp is a multi-version Lua interpreter (5.1, 5.2, 5.3, 5.4, 5.5) in C# for .NET, Unity3D (IL2CPP/AOT), Mono, and Xamarin.
 
-**Key namespaces**: `Execution` (VM), `Tree` (AST), `DataTypes` (DynValue, Table), `Interop` (C# bridge), `CoreLib` (stdlib)
+**Key namespaces**: `NovaSharp`/`Api` (`LuaValue` public value), `Execution` (VM), `Tree` (AST), `DataTypes` (`Table` and runtime payloads), `Interop` (C# bridge), `CoreLib` (stdlib)
 
 **Pipeline**: Lua Source -> Lexer -> Parser -> AST -> Compiler -> Bytecode -> VM -> Execution
 
@@ -81,7 +81,7 @@ ______________________________________________________________________
 
 ### Key Files
 
-- `DataTypes/DynValue.cs` — Core Lua value type
+- `Api/LuaValue.cs` — Core Lua value type
 - `DataTypes/Table.cs` — Lua table implementation
 - `Execution/VM/Processor.cs` — Main VM execution loop
 - `CoreLib/*Module.cs` — Standard library implementations
@@ -128,7 +128,7 @@ ______________________________________________________________________
 
 - **Use pooled collections** — `ListPool<T>.Get()`, `HashSetPool<T>.Get()` with `using`
 - **Use `ZStringBuilder.Create()`** — Never `StringBuilder` or `$"..."` in hot paths
-- **VM opcode and Lua-call paths must be allocation-free** — Use inline `LuaValue`, stack windows, spans, and explicit slow-path allowlists instead of `DynValue` scalar factories, `DynValue[]`, or callback context materialization
+- **VM opcode and Lua-call paths must be allocation-free** — Use inline `LuaValue` scalars, stack windows, spans, and explicit slow-path allowlists; avoid non-allowlisted `LuaValue[]`, `List<LuaValue>`, and callback context materialization
 - **NEVER `.ToString()` on enums** — Use `TokenTypeStrings.GetName()` etc.
 - **Avoid closures/LINQ** — Use explicit loops in hot paths
 - **Use `HashCodeHelper.HashCode()`** — Never bespoke hash patterns

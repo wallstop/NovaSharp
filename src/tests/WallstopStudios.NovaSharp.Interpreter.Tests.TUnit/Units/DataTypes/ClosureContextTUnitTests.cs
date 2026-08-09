@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
@@ -22,8 +23,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             ValueSlot[] values = new[]
             {
-                new ValueSlot(DynValue.NewNumber(1)),
-                new ValueSlot(DynValue.NewString("two")),
+                new ValueSlot(LuaValue.NewNumber(1)),
+                new ValueSlot(LuaValue.NewString("two")),
             };
 
             ClosureContext context = new(symbols, values);
@@ -52,7 +53,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task ConstructorThrowsOnNullSymbols()
         {
-            ValueSlot[] values = new[] { new ValueSlot(DynValue.NewNumber(1)) };
+            ValueSlot[] values = new[] { new ValueSlot(LuaValue.NewNumber(1)) };
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 _ = new ClosureContext(null, values)

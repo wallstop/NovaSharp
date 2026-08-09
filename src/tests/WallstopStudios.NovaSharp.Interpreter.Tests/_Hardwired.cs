@@ -43,6 +43,7 @@
 // WARNING : Member 'WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataFieldsTests+SomeClass.StaticProp::Set' will be a no-op, as it's a member of a value type.
 namespace MyNamespace
 {
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
@@ -631,7 +632,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).Add(((int)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -647,7 +648,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).AddRange(((System.Collections.Generic.IEnumerable<int>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -725,7 +726,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).Clear();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -756,7 +757,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).CopyTo(((int[])(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -775,7 +776,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).CopyTo(((int)(pars[0])), ((int[])(pars[1])), ((int)(pars[2])), ((int)(pars[3])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -792,7 +793,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).CopyTo(((int[])(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -964,7 +965,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).ForEach(((System.Action<int>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1059,7 +1060,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).Insert(((int)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1076,7 +1077,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).InsertRange(((int)(pars[0])), ((System.Collections.Generic.IEnumerable<int>)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1170,7 +1171,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).RemoveAt(((int)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1187,7 +1188,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).RemoveRange(((int)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1202,7 +1203,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).Reverse();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1219,7 +1220,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).Reverse(((int)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1234,7 +1235,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).Sort();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1250,7 +1251,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).Sort(((System.Collections.Generic.IComparer<int>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1268,7 +1269,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).Sort(((int)(pars[0])), ((int)(pars[1])), ((System.Collections.Generic.IComparer<int>)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1284,7 +1285,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).Sort(((System.Comparison<int>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1313,7 +1314,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<int>)(obj)).TrimExcess();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1661,7 +1662,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1679,7 +1680,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((int)(pars[1])), ((int)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1698,7 +1699,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((int)(pars[1])), ((int)(pars[2])), ((int)(pars[3])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1715,7 +1716,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((int[])(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1732,7 +1733,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((long)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1750,7 +1751,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((long)(pars[1])), ((long)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1769,7 +1770,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((long)(pars[1])), ((long)(pars[2])), ((long)(pars[3])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1786,7 +1787,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((long[])(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1975,7 +1976,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).CopyTo(((System.Array)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -1992,7 +1993,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).CopyTo(((System.Array)(pars[0])), ((long)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -2021,7 +2022,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).Initialize();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -2443,7 +2444,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).Add(((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -2459,7 +2460,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).AddRange(((System.Collections.Generic.IEnumerable<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -2537,7 +2538,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).Clear();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -2568,7 +2569,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).CopyTo(((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem[])(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -2587,7 +2588,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).CopyTo(((int)(pars[0])), ((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem[])(pars[1])), ((int)(pars[2])), ((int)(pars[3])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -2604,7 +2605,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).CopyTo(((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem[])(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -2776,7 +2777,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).ForEach(((System.Action<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -2871,7 +2872,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).Insert(((int)(pars[0])), ((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -2888,7 +2889,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).InsertRange(((int)(pars[0])), ((System.Collections.Generic.IEnumerable<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -2982,7 +2983,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).RemoveAt(((int)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -2999,7 +3000,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).RemoveRange(((int)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3014,7 +3015,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).Reverse();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3031,7 +3032,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).Reverse(((int)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3046,7 +3047,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).Sort();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3062,7 +3063,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).Sort(((System.Collections.Generic.IComparer<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3080,7 +3081,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).Sort(((int)(pars[0])), ((int)(pars[1])), ((System.Collections.Generic.IComparer<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3096,7 +3097,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).Sort(((System.Comparison<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3125,7 +3126,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.RegCollItem>)(obj)).TrimExcess();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3752,7 +3753,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Copy(((System.Array)(pars[0])), ((System.Array)(pars[1])), ((int)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3772,7 +3773,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Copy(((System.Array)(pars[0])), ((int)(pars[1])), ((System.Array)(pars[2])), ((int)(pars[3])), ((int)(pars[4])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3790,7 +3791,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Copy(((System.Array)(pars[0])), ((System.Array)(pars[1])), ((long)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3810,7 +3811,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Copy(((System.Array)(pars[0])), ((long)(pars[1])), ((System.Array)(pars[2])), ((long)(pars[3])), ((long)(pars[4])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3830,7 +3831,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.ConstrainedCopy(((System.Array)(pars[0])), ((int)(pars[1])), ((System.Array)(pars[2])), ((int)(pars[3])), ((int)(pars[4])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3848,7 +3849,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Clear(((System.Array)(pars[0])), ((int)(pars[1])), ((int)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -3991,7 +3992,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4009,7 +4010,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((int)(pars[1])), ((int)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4028,7 +4029,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((int)(pars[1])), ((int)(pars[2])), ((int)(pars[3])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4045,7 +4046,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((int[])(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4062,7 +4063,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((long)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4080,7 +4081,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((long)(pars[1])), ((long)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4099,7 +4100,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((long)(pars[1])), ((long)(pars[2])), ((long)(pars[3])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4116,7 +4117,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((long[])(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4375,7 +4376,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).CopyTo(((System.Array)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4392,7 +4393,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).CopyTo(((System.Array)(pars[0])), ((long)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4524,7 +4525,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Reverse(((System.Array)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4542,7 +4543,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Reverse(((System.Array)(pars[0])), ((int)(pars[1])), ((int)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4558,7 +4559,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Sort(((System.Array)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4575,7 +4576,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Sort(((System.Array)(pars[0])), ((System.Array)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4593,7 +4594,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Sort(((System.Array)(pars[0])), ((int)(pars[1])), ((int)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4612,7 +4613,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Sort(((System.Array)(pars[0])), ((System.Array)(pars[1])), ((int)(pars[2])), ((int)(pars[3])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4629,7 +4630,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Sort(((System.Array)(pars[0])), ((System.Collections.IComparer)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4647,7 +4648,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Sort(((System.Array)(pars[0])), ((System.Array)(pars[1])), ((System.Collections.IComparer)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4666,7 +4667,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Sort(((System.Array)(pars[0])), ((int)(pars[1])), ((int)(pars[2])), ((System.Collections.IComparer)(pars[3])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4686,7 +4687,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					System.Array.Sort(((System.Array)(pars[0])), ((System.Array)(pars[1])), ((int)(pars[2])), ((int)(pars[3])), ((System.Collections.IComparer)(pars[4])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -4701,7 +4702,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).Initialize();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5120,7 +5121,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).Add(((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5136,7 +5137,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).AddRange(((System.Collections.Generic.IEnumerable<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5214,7 +5215,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).Clear();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5245,7 +5246,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).CopyTo(((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem[])(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5264,7 +5265,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).CopyTo(((int)(pars[0])), ((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem[])(pars[1])), ((int)(pars[2])), ((int)(pars[3])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5281,7 +5282,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).CopyTo(((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem[])(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5453,7 +5454,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).ForEach(((System.Action<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5548,7 +5549,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).Insert(((int)(pars[0])), ((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5565,7 +5566,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).InsertRange(((int)(pars[0])), ((System.Collections.Generic.IEnumerable<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5659,7 +5660,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).RemoveAt(((int)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5676,7 +5677,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).RemoveRange(((int)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5691,7 +5692,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).Reverse();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5708,7 +5709,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).Reverse(((int)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5723,7 +5724,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).Sort();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5739,7 +5740,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).Sort(((System.Collections.Generic.IComparer<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5757,7 +5758,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).Sort(((int)(pars[0])), ((int)(pars[1])), ((System.Collections.Generic.IComparer<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5773,7 +5774,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).Sort(((System.Comparison<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -5802,7 +5803,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsBaseGenRegisteredTests.RegCollItem>)(obj)).TrimExcess();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -6438,7 +6439,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).Add(((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -6454,7 +6455,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).AddRange(((System.Collections.Generic.IEnumerable<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -6532,7 +6533,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).Clear();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -6563,7 +6564,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).CopyTo(((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem[])(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -6582,7 +6583,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).CopyTo(((int)(pars[0])), ((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem[])(pars[1])), ((int)(pars[2])), ((int)(pars[3])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -6599,7 +6600,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).CopyTo(((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem[])(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -6771,7 +6772,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).ForEach(((System.Action<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -6866,7 +6867,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).Insert(((int)(pars[0])), ((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -6883,7 +6884,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).InsertRange(((int)(pars[0])), ((System.Collections.Generic.IEnumerable<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -6977,7 +6978,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).RemoveAt(((int)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -6994,7 +6995,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).RemoveRange(((int)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7009,7 +7010,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).Reverse();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7026,7 +7027,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).Reverse(((int)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7041,7 +7042,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).Sort();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7057,7 +7058,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).Sort(((System.Collections.Generic.IComparer<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7075,7 +7076,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).Sort(((int)(pars[0])), ((int)(pars[1])), ((System.Collections.Generic.IComparer<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7091,7 +7092,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).Sort(((System.Comparison<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7120,7 +7121,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.List<WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.CollectionsRegisteredTests.RegCollItem>)(obj)).TrimExcess();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7489,7 +7490,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7507,7 +7508,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((int)(pars[1])), ((int)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7526,7 +7527,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((int)(pars[1])), ((int)(pars[2])), ((int)(pars[3])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7543,7 +7544,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((int[])(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7560,7 +7561,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((long)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7578,7 +7579,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((long)(pars[1])), ((long)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7597,7 +7598,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((long)(pars[1])), ((long)(pars[2])), ((long)(pars[3])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7614,7 +7615,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).SetValue(((object)(pars[0])), ((long[])(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7803,7 +7804,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).CopyTo(((System.Array)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7820,7 +7821,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).CopyTo(((System.Array)(pars[0])), ((long)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -7849,7 +7850,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Array)(obj)).Initialize();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -9206,11 +9207,11 @@ namespace MyNamespace
 				{
 				}
 
-				public override NovaSharp.Interpreter.DynValue Value
+				public override NovaSharp.LuaValue Value
 				{
 					get
 					{
-						return NovaSharp.Interpreter.UserData.CreateStatic(typeof(WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests.SomeType.SomeNestedEnum));
+						return NovaSharp.Interpreter.UserData.CreateStatic(typeof(WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests.SomeType.SomeNestedEnum)).GetValueOrDefault();
 					}
 				}
 			}
@@ -9223,11 +9224,11 @@ namespace MyNamespace
 				{
 				}
 
-				public override NovaSharp.Interpreter.DynValue Value
+				public override NovaSharp.LuaValue Value
 				{
 					get
 					{
-						return NovaSharp.Interpreter.UserData.CreateStatic(typeof(WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests.SomeType.SomeNestedType));
+						return NovaSharp.Interpreter.UserData.CreateStatic(typeof(WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests.SomeType.SomeNestedType)).GetValueOrDefault();
 					}
 				}
 			}
@@ -9439,11 +9440,11 @@ namespace MyNamespace
 				{
 				}
 
-				public override NovaSharp.Interpreter.DynValue Value
+				public override NovaSharp.LuaValue Value
 				{
 					get
 					{
-						return NovaSharp.Interpreter.UserData.CreateStatic(typeof(WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests.VSomeType.SomeNestedType));
+						return NovaSharp.Interpreter.UserData.CreateStatic(typeof(WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.UserDataNestedTypesTests.VSomeType.SomeNestedType)).GetValueOrDefault();
 					}
 				}
 			}
@@ -10037,7 +10038,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataOverloadsTests.OverloadsTestClass.UnCalled();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -10204,9 +10205,9 @@ namespace MyNamespace
 				{
 					string refp_0 = ((string)(pars[1]));
 					object retv = ((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataOverloadsTests.OverloadsTestClass)(obj)).Method2(((string)(pars[0])), ref refp_0);
-					return NovaSharp.Interpreter.DynValue.NewTuple(new NovaSharp.Interpreter.DynValue[] {
-                                NovaSharp.Interpreter.DynValue.FromObject(script, retv),
-                                NovaSharp.Interpreter.DynValue.FromObject(script, refp_0)});
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.PackReturnValues(new NovaSharp.LuaValue[] {
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, retv),
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, refp_0)});
 				}
 			}
 
@@ -10225,9 +10226,9 @@ namespace MyNamespace
 				{
 					string refp_0 = ((string)(pars[1]));
 					object retv = ((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataOverloadsTests.OverloadsTestClass)(obj)).Method2(((string)(pars[0])), ref refp_0, ((int)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.NewTuple(new NovaSharp.Interpreter.DynValue[] {
-                                NovaSharp.Interpreter.DynValue.FromObject(script, retv),
-                                NovaSharp.Interpreter.DynValue.FromObject(script, refp_0)});
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.PackReturnValues(new NovaSharp.LuaValue[] {
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, retv),
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, refp_0)});
 				}
 			}
 
@@ -10359,10 +10360,10 @@ namespace MyNamespace
 					string refp_0 = ((string)(pars[1]));
 					string refp_1;
 					object retv = ((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.VtUserDataMethodsTests.SomeClass)(obj)).ManipulateString(((string)(pars[0])), ref refp_0, out refp_1);
-					return NovaSharp.Interpreter.DynValue.NewTuple(new NovaSharp.Interpreter.DynValue[] {
-                                NovaSharp.Interpreter.DynValue.FromObject(script, retv),
-                                NovaSharp.Interpreter.DynValue.FromObject(script, refp_0),
-                                NovaSharp.Interpreter.DynValue.FromObject(script, refp_1)});
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.PackReturnValues(new NovaSharp.LuaValue[] {
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, retv),
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, refp_0),
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, refp_1)});
 				}
 			}
 
@@ -13199,10 +13200,10 @@ namespace MyNamespace
 					string refp_0 = ((string)(pars[1]));
 					string refp_1;
 					object retv = ((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.UserDataMethodsTests.SomeClass)(obj)).ManipulateString(((string)(pars[0])), ref refp_0, out refp_1);
-					return NovaSharp.Interpreter.DynValue.NewTuple(new NovaSharp.Interpreter.DynValue[] {
-                                NovaSharp.Interpreter.DynValue.FromObject(script, retv),
-                                NovaSharp.Interpreter.DynValue.FromObject(script, refp_0),
-                                NovaSharp.Interpreter.DynValue.FromObject(script, refp_1)});
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.PackReturnValues(new NovaSharp.LuaValue[] {
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, retv),
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, refp_0),
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, refp_1)});
 				}
 			}
 
@@ -13859,7 +13860,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.Dictionary<int, int>)(obj)).Add(((int)(pars[0])), ((int)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -13874,7 +13875,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.Dictionary<int, int>)(obj)).Clear();
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -13935,7 +13936,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.Dictionary<int, int>)(obj)).GetObjectData(((System.Runtime.Serialization.SerializationInfo)(pars[0])), ((System.Runtime.Serialization.StreamingContext)(pars[1])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -13951,7 +13952,7 @@ namespace MyNamespace
 				protected override object Invoke(NovaSharp.Interpreter.Script script, object obj, object[] pars, int argscount)
 				{
 					((System.Collections.Generic.Dictionary<int, int>)(obj)).OnDeserialization(((object)(pars[0])));
-					return NovaSharp.Interpreter.DynValue.Void;
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.NoValue;
 				}
 			}
 
@@ -13984,9 +13985,9 @@ namespace MyNamespace
 				{
 					int refp_0;
 					object retv = ((System.Collections.Generic.Dictionary<int, int>)(obj)).TryGetValue(((int)(pars[0])), out refp_0);
-					return NovaSharp.Interpreter.DynValue.NewTuple(new NovaSharp.Interpreter.DynValue[] {
-                                NovaSharp.Interpreter.DynValue.FromObject(script, retv),
-                                NovaSharp.Interpreter.DynValue.FromObject(script, refp_0)});
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.PackReturnValues(new NovaSharp.LuaValue[] {
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, retv),
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, refp_0)});
 				}
 			}
 
@@ -14316,9 +14317,9 @@ namespace MyNamespace
 				{
 					string refp_0 = ((string)(pars[1]));
 					object retv = ((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.UserDataOverloadsTests.OverloadsTestClass)(obj)).Method2(((string)(pars[0])), ref refp_0);
-					return NovaSharp.Interpreter.DynValue.NewTuple(new NovaSharp.Interpreter.DynValue[] {
-                                NovaSharp.Interpreter.DynValue.FromObject(script, retv),
-                                NovaSharp.Interpreter.DynValue.FromObject(script, refp_0)});
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.PackReturnValues(new NovaSharp.LuaValue[] {
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, retv),
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, refp_0)});
 				}
 			}
 
@@ -14337,9 +14338,9 @@ namespace MyNamespace
 				{
 					string refp_0 = ((string)(pars[1]));
 					object retv = ((WallstopStudios.NovaSharp.Interpreter.Tests.EndToEnd.UserDataOverloadsTests.OverloadsTestClass)(obj)).Method2(((string)(pars[0])), ref refp_0, ((int)(pars[2])));
-					return NovaSharp.Interpreter.DynValue.NewTuple(new NovaSharp.Interpreter.DynValue[] {
-                                NovaSharp.Interpreter.DynValue.FromObject(script, retv),
-                                NovaSharp.Interpreter.DynValue.FromObject(script, refp_0)});
+					return WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.PackReturnValues(new NovaSharp.LuaValue[] {
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, retv),
+                                WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors.HardwiredMethodMemberDescriptor.ConvertFromClrObject(script, refp_0)});
 				}
 			}
 

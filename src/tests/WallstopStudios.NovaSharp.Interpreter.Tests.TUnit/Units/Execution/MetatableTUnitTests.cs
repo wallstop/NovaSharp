@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -19,15 +20,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Table table = new(script);
             Table metatable = new(script)
             {
-                ["__index"] = DynValue.NewCallback(
-                    (_, args) => DynValue.NewString($"missing:{args[1].CastToString()}")
+                ["__index"] = LuaValue.NewCallback(
+                    (_, args) => LuaValue.NewString($"missing:{args[1].CastToString()}")
                 ),
             };
 
             table.MetaTable = metatable;
             script.Globals["subject"] = table;
 
-            DynValue result = script.DoString("return subject.someKey");
+            LuaValue result = script.DoString("return subject.someKey");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("missing:someKey").ConfigureAwait(false);
@@ -55,7 +56,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Table subject = script.Globals.Get("subject").Table;
             await Assert.That(subject.Get("value").Number).IsEqualTo(10).ConfigureAwait(false);
 
-            subject.Set("value", DynValue.NewNumber(7));
+            subject.Set("value", LuaValue.NewNumber(7));
             await Assert.That(subject.Get("value").Number).IsEqualTo(7).ConfigureAwait(false);
         }
 
@@ -76,9 +77,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 "
             );
 
-            DynValue first = script.DoString("return subject(3)");
-            DynValue second = script.DoString("return subject(2)");
-            DynValue total = script.DoString("return subject.total");
+            LuaValue first = script.DoString("return subject(3)");
+            LuaValue second = script.DoString("return subject(2)");
+            LuaValue total = script.DoString("return subject.total");
 
             await Assert.That(first.Number).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(second.Number).IsEqualTo(5).ConfigureAwait(false);
@@ -118,7 +119,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = CreateScript(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local target = {}
                 local proxy = {}
@@ -146,7 +147,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local target = {}
                 local proxy = {}
@@ -198,7 +199,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 "
             );
 
-            DynValue result = script.DoString("return table.concat(collected, ',')");
+            LuaValue result = script.DoString("return table.concat(collected, ',')");
             await Assert.That(result.String).IsEqualTo("virtual=42").ConfigureAwait(false);
         }
 
@@ -217,10 +218,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 "
             );
 
-            DynValue meta = script.DoString("return getmetatable(subject)");
+            LuaValue meta = script.DoString("return getmetatable(subject)");
             await Assert.That(meta.String).IsEqualTo("locked").ConfigureAwait(false);
 
-            DynValue pcallResult = script.DoString(
+            LuaValue pcallResult = script.DoString(
                 "return pcall(function() setmetatable(subject, {}) end)"
             );
 

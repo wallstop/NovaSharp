@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Diagnostics.CodeAnalysis;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using CoreLib;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -42,7 +43,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return x;
                 ";
 
-            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            LuaValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, "321").ConfigureAwait(false);
         }
 
@@ -67,7 +68,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script scriptHost = new Script(version, CoreModulePresets.Complete);
             scriptHost.Globals.RegisterModuleType(typeof(TableIteratorsModule));
             scriptHost.Globals.RegisterModuleType(typeof(MetaTableModule));
-            DynValue result = scriptHost.DoString(script);
+            LuaValue result = scriptHost.DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, 24).ConfigureAwait(false);
         }
 
@@ -88,7 +89,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return ( t1a == t1b ), ( t1a == t2 )
                 ";
 
-            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            LuaValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(result.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
         }
@@ -109,8 +110,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             Script scriptHost = new Script(version, CoreModulePresets.Complete);
-            DynValue table = scriptHost.DoString(script);
-            DynValue result = scriptHost.Call(table, 3);
+            LuaValue table = scriptHost.DoString(script);
+            LuaValue result = scriptHost.Call(table, 3);
             await EndToEndDynValueAssert.ExpectAsync(result, 468).ConfigureAwait(false);
         }
 
@@ -131,7 +132,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return x;
                 ";
 
-            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            LuaValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, 468).ConfigureAwait(false);
         }
 
@@ -158,7 +159,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return s;
                 ";
 
-            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            LuaValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, "abc!bc").ConfigureAwait(false);
         }
 
@@ -179,7 +180,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return s;
                 ";
 
-            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            LuaValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, "abc!bc").ConfigureAwait(false);
         }
 
@@ -223,7 +224,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 UserDataRegistrationScope.Track<MyObject>(ensureUnregistered: true);
             registrationScope.RegisterType<MyObject>();
             scriptHost.Globals["o"] = new MyObject();
-            DynValue result = scriptHost.DoString(script);
+            LuaValue result = scriptHost.DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, 120).ConfigureAwait(false);
         }
 
@@ -289,7 +290,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return result
                 ";
 
-            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            LuaValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert
                 .ExpectAsync(result, "1:10 2:20 3:30 ")
                 .ConfigureAwait(false);
@@ -317,7 +318,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return result
                 ";
 
-            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            LuaValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert
                 .ExpectAsync(result, "1:100 2:200 3:300 4:400 ")
                 .ConfigureAwait(false);
@@ -347,7 +348,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return result
                 ";
 
-            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            LuaValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             // In Lua 5.1/5.2, ipairs uses raw access, so the empty proxy table yields no iteration
             await EndToEndDynValueAssert.ExpectAsync(result, "").ConfigureAwait(false);
         }
@@ -374,7 +375,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return result
                 ";
 
-            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            LuaValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             // Index 1: raw nil -> __index returns 'a'
             // Index 2: raw 'B' -> used directly
             // Index 3: raw nil -> __index returns 'c'

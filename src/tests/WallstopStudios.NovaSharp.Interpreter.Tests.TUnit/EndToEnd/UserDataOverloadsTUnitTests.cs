@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Collections.Generic;
     using System.Globalization;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -166,7 +167,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             script.Globals.Set("s", UserData.CreateStatic<OverloadsTestClass>().Value);
             script.Globals.Set("o", UserData.Create(obj).Value);
 
-            DynValue result = script.DoString("return " + code);
+            LuaValue result = script.DoString("return " + code);
 
             if (tupleExpected)
             {
@@ -392,10 +393,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 descriptor.AddOverload(new MethodMemberDescriptor(method));
             }
 
-            DynValue callback = DynValue.NewCallback(descriptor.GetCallbackFunction(script, this));
+            LuaValue callback = LuaValue.NewCallback(descriptor.GetCallbackFunction(script, this));
             script.Globals.Set("func", callback);
 
-            DynValue result = script.DoString("return func(), func(17)");
+            LuaValue result = script.DoString("return func(), func(17)");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert

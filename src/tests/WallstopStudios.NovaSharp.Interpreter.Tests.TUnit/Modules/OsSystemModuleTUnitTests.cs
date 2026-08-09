@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -32,7 +33,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('build')");
+            LuaValue result = script.DoString("return os.execute('build')");
 
             await Assert.That(result.Tuple[0].Boolean).IsTrue();
             await Assert.That(result.Tuple[1].String).IsEqualTo("exit");
@@ -49,9 +50,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('fail')");
+            LuaValue result = script.DoString("return os.execute('fail')");
 
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("Command failed");
             await Assert.That(stub.ExecutedCommands).IsEquivalentTo(FailCommand);
         }
@@ -67,9 +68,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('fail')");
+            LuaValue result = script.DoString("return os.execute('fail')");
 
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).IsEqualTo("exit");
             await Assert.That(result.Tuple[2].Number).IsEqualTo(7);
         }
@@ -85,9 +86,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('terminate')");
+            LuaValue result = script.DoString("return os.execute('terminate')");
 
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).IsEqualTo("signal");
             await Assert.That(result.Tuple[2].Number).IsEqualTo(9);
         }
@@ -101,9 +102,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.execute('build')");
+            LuaValue result = script.DoString("return os.execute('build')");
 
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("not supported");
         }
 
@@ -114,7 +115,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
-            DynValue result = script.DoString("return os.execute()");
+            LuaValue result = script.DoString("return os.execute()");
 
             await Assert.That(result.Boolean).IsTrue();
         }
@@ -144,7 +145,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue value = script.DoString("return os.getenv('HOME')");
+            LuaValue value = script.DoString("return os.getenv('HOME')");
 
             await Assert.That(value.String).IsEqualTo("/tmp/home");
         }
@@ -156,9 +157,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
-            DynValue value = script.DoString("return os.getenv('MISSING')");
+            LuaValue value = script.DoString("return os.getenv('MISSING')");
 
-            await Assert.That(value.IsNil()).IsTrue();
+            await Assert.That(value.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -170,7 +171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.remove('file.txt')");
+            LuaValue result = script.DoString("return os.remove('file.txt')");
 
             await Assert.That(result.Boolean).IsTrue();
             await Assert.That(stub.FileExists("file.txt")).IsFalse();
@@ -184,9 +185,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.remove('missing.txt')");
+            LuaValue result = script.DoString("return os.remove('missing.txt')");
 
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("missing.txt");
             await Assert.That(result.Tuple[2].Number).IsEqualTo(-1);
         }
@@ -201,9 +202,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.remove('locked.txt')");
+            LuaValue result = script.DoString("return os.remove('locked.txt')");
 
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("locked.txt");
             await Assert.That(result.Tuple[2].Number).IsEqualTo(-1);
         }
@@ -217,7 +218,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.rename('old.txt', 'new.txt')");
+            LuaValue result = script.DoString("return os.rename('old.txt', 'new.txt')");
 
             await Assert.That(result.Boolean).IsTrue();
             await Assert.That(stub.FileExists("old.txt")).IsFalse();
@@ -232,9 +233,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.rename('nope', 'dest')");
+            LuaValue result = script.DoString("return os.rename('nope', 'dest')");
 
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("nope");
             await Assert.That(result.Tuple[2].Number).IsEqualTo(-1);
         }
@@ -249,9 +250,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.rename('source', 'dest')");
+            LuaValue result = script.DoString("return os.rename('source', 'dest')");
 
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("source");
             await Assert.That(result.Tuple[2].Number).IsEqualTo(-1);
         }
@@ -263,7 +264,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local t = os.date('!*t', 0)
                 return t.year, t.month, t.day, t.hour, t.min, t.sec, t.wday, t.yday, t.isdst
@@ -288,7 +289,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
-            DynValue result = script.DoString("return os.date('!%d/%m/%y %H:%M:%S', 0)");
+            LuaValue result = script.DoString("return os.date('!%d/%m/%y %H:%M:%S', 0)");
 
             await Assert.That(result.String).IsEqualTo("01/01/70 00:00:00");
         }
@@ -316,7 +317,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
-            DynValue result = script.DoString("return os.date('%H:%M:%S')");
+            LuaValue result = script.DoString("return os.date('%H:%M:%S')");
             bool matches = Regex.IsMatch(result.String, @"^\d\d:\d\d:\d\d$");
 
             await Assert.That(matches).IsTrue();
@@ -329,7 +330,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
-            DynValue result = script.DoString("return os.difftime(1234, 1200)");
+            LuaValue result = script.DoString("return os.difftime(1234, 1200)");
 
             await Assert.That(result.Number).IsEqualTo(34d);
         }
@@ -344,7 +345,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 Compatibility.LuaCompatibilityVersion.Lua52
             );
             Script script = context.Script;
-            DynValue result = script.DoString("return os.difftime(1234)");
+            LuaValue result = script.DoString("return os.difftime(1234)");
 
             await Assert.That(result.Number).IsEqualTo(1234d);
         }
@@ -379,7 +380,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
-            DynValue result = script.DoString("return os.time()");
+            LuaValue result = script.DoString("return os.time()");
 
             await Assert.That(result.Number).IsGreaterThan(0d);
         }
@@ -391,7 +392,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local stamp = os.time({
                     year = 2000,
@@ -423,7 +424,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local ok, err = pcall(function()
                     return os.time({ year = 2000 })
@@ -446,7 +447,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             // Collect a larger sample of clock values to verify monotonicity
             const int sampleCount = 1000;
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $@"
                 local values = {{}}
                 for i = 1, {sampleCount} do
@@ -486,7 +487,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
-            DynValue result = script.DoString("return os.date('!%Oy', 0)");
+            LuaValue result = script.DoString("return os.date('!%Oy', 0)");
 
             await Assert.That(result.String).IsEqualTo("%Oy");
         }
@@ -505,7 +506,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
-            DynValue result = script.DoString("return os.date('!%Oy', 0)");
+            LuaValue result = script.DoString("return os.date('!%Oy', 0)");
 
             // %Oy uses alternate numerals representation of 2-digit year
             // In C locale, this outputs the same as %y which is "70" for epoch
@@ -519,7 +520,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
-            DynValue result = script.DoString("return os.time(nil)");
+            LuaValue result = script.DoString("return os.time(nil)");
 
             await Assert.That(result.Number).IsGreaterThan(0d);
         }
@@ -533,7 +534,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.tmpname()");
+            LuaValue result = script.DoString("return os.tmpname()");
 
             await Assert.That(result.String).IsEqualTo("stub-temp");
         }
@@ -550,7 +551,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             stub.TempFileName = "fallback-temp";
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
-            DynValue tuple = script.DoString("return os.tmpname(), os.tmpname(), os.tmpname()");
+            LuaValue tuple = script.DoString("return os.tmpname(), os.tmpname(), os.tmpname()");
 
             await Assert.That(tuple.Tuple[0].String).IsEqualTo("queued-one");
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("queued-two");
@@ -582,7 +583,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             using ScriptContext context = CreateScriptContext(stub);
             Script script = context.Script;
 
-            DynValue result = script.DoString("return os.setlocale()");
+            LuaValue result = script.DoString("return os.setlocale()");
 
             await Assert.That(result.String).IsEqualTo("n/a");
         }

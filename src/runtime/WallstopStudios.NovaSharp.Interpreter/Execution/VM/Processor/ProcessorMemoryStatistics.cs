@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
@@ -16,7 +17,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             long valueStackBytes =
                 IntPtr.Size
-                + ((long)_valueStack.Capacity * PoolElementSize<DynValue>.EstimatedBytes);
+                + ((long)_valueStack.Capacity * PoolElementSize<LuaValue>.EstimatedBytes);
             long executionStackBytes = IntPtr.Size + ((long)_executionStack.Capacity * 128L);
             return valueStackBytes + executionStackBytes;
         }

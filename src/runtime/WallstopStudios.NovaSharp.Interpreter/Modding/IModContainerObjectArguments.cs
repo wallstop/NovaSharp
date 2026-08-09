@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Modding
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -21,6 +22,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <see cref="object" /> array as a single Lua argument, use the existing
         /// <c>CallFunction(functionName, (object)array)</c> call shape.
         /// </remarks>
-        public DynValue CallFunctionObjectArguments(string functionName, ReadOnlySpan<object> args);
+        public LuaValue CallFunctionObjectArguments(string functionName, ReadOnlySpan<object> args);
     }
 }

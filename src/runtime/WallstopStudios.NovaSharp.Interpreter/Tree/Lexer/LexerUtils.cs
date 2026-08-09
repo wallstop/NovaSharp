@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
 {
     using System;
     using System.Globalization;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -40,7 +41,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         /// Parses a hexadecimal integer literal (prefixed with <c>0x</c> or <c>0X</c>).
         /// </summary>
         /// <param name="t">Token describing the literal text.</param>
-        /// <returns>The parsed integer represented as <see cref="double" /> for DynValue storage.</returns>
+        /// <returns>The parsed integer represented as <see cref="double" /> for LuaValue storage.</returns>
         /// <exception cref="SyntaxErrorException">Thrown when the literal is malformed.</exception>
         /// <exception cref="InternalErrorException">
         /// Thrown when the literal does not start with the expected prefix.

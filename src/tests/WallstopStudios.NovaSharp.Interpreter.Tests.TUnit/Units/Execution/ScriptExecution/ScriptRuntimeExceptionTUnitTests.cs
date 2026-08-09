@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -38,7 +39,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             LuaCompatibilityVersion version
         )
         {
-            DynValue left = DynValue.NewTable(new Table(new Script(version)));
+            LuaValue left = LuaValue.NewTable(new Table(new Script(version)));
             ScriptRuntimeException ex = ScriptRuntimeException.ArithmeticOnNonNumber(left);
             await Assert
                 .That(ex.Message)
@@ -48,8 +49,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task ArithmeticOnNonNumberReturnsExceptionWhenRightIsNonNumeric()
         {
-            DynValue left = DynValue.NewNumber(5);
-            DynValue right = DynValue.NewBoolean(true);
+            LuaValue left = LuaValue.NewNumber(5);
+            LuaValue right = LuaValue.NewBoolean(true);
             ScriptRuntimeException ex = ScriptRuntimeException.ArithmeticOnNonNumber(left, right);
             await Assert
                 .That(ex.Message)
@@ -59,7 +60,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task ArithmeticOnNonNumberReturnsExceptionForStringsAttemptingArithmetic()
         {
-            DynValue left = DynValue.NewString("abc");
+            LuaValue left = LuaValue.NewString("abc");
             ScriptRuntimeException ex = ScriptRuntimeException.ArithmeticOnNonNumber(left);
             await Assert
                 .That(ex.Message)
@@ -69,8 +70,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task ArithmeticOnNonNumberThrowsInternalErrorWhenBothAreNumbers()
         {
-            DynValue left = DynValue.NewNumber(5);
-            DynValue right = DynValue.NewNumber(10);
+            LuaValue left = LuaValue.NewNumber(5);
+            LuaValue right = LuaValue.NewNumber(10);
             await Assert
                 .That(() => ScriptRuntimeException.ArithmeticOnNonNumber(left, right))
                 .ThrowsExactly<InternalErrorException>()
@@ -92,7 +93,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task BitwiseOnNonIntegerReturnsDescriptorForString()
         {
-            DynValue value = DynValue.NewString("abc");
+            LuaValue value = LuaValue.NewString("abc");
             ScriptRuntimeException ex = ScriptRuntimeException.BitwiseOnNonInteger(value);
             await Assert
                 .That(ex.Message)
@@ -102,7 +103,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task BitwiseOnNonIntegerReturnsDescriptorForBoolean()
         {
-            DynValue value = DynValue.NewBoolean(true);
+            LuaValue value = LuaValue.NewBoolean(true);
             ScriptRuntimeException ex = ScriptRuntimeException.BitwiseOnNonInteger(value);
             await Assert
                 .That(ex.Message)
@@ -116,7 +117,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             ScriptRuntimeException exception = ScriptRuntimeException.ConcatOnNonString(
                 default,
-                DynValue.NewNumber(5)
+                LuaValue.NewNumber(5)
             );
             await Assert
                 .That(exception.Message)
@@ -130,8 +131,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             LuaCompatibilityVersion version
         )
         {
-            DynValue left = DynValue.NewTable(new Table(new Script(version)));
-            DynValue right = DynValue.NewString("abc");
+            LuaValue left = LuaValue.NewTable(new Table(new Script(version)));
+            LuaValue right = LuaValue.NewString("abc");
             ScriptRuntimeException ex = ScriptRuntimeException.ConcatOnNonString(left, right);
             await Assert.That(ex.Message).IsEqualTo("attempt to concatenate a table value");
         }
@@ -139,8 +140,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task ConcatOnNonStringReturnsExceptionWhenRightIsNonConcatenable()
         {
-            DynValue left = DynValue.NewString("abc");
-            DynValue right = DynValue.NewBoolean(false);
+            LuaValue left = LuaValue.NewString("abc");
+            LuaValue right = LuaValue.NewBoolean(false);
             ScriptRuntimeException ex = ScriptRuntimeException.ConcatOnNonString(left, right);
             await Assert.That(ex.Message).IsEqualTo("attempt to concatenate a boolean value");
         }
@@ -148,8 +149,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task ConcatOnNonStringThrowsInternalErrorWhenBothAreConcatenable()
         {
-            DynValue left = DynValue.NewString("abc");
-            DynValue right = DynValue.NewNumber(123);
+            LuaValue left = LuaValue.NewString("abc");
+            LuaValue right = LuaValue.NewNumber(123);
             await Assert
                 .That(() => ScriptRuntimeException.ConcatOnNonString(left, right))
                 .ThrowsExactly<InternalErrorException>()
@@ -175,7 +176,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             ScriptRuntimeException exception = ScriptRuntimeException.CompareInvalidType(
                 default,
-                DynValue.NewNumber(5)
+                LuaValue.NewNumber(5)
             );
             await Assert
                 .That(exception.Message)
@@ -187,7 +188,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task CompareInvalidTypeThrowsArgumentNullExceptionForNullRight()
         {
             ScriptRuntimeException exception = ScriptRuntimeException.CompareInvalidType(
-                DynValue.NewNumber(5),
+                LuaValue.NewNumber(5),
                 default
             );
             await Assert
@@ -211,7 +212,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task IndexTypeReturnsMessageWithoutVariableDescription()
         {
-            ScriptRuntimeException ex = ScriptRuntimeException.IndexType(DynValue.Nil);
+            ScriptRuntimeException ex = ScriptRuntimeException.IndexType(LuaValue.Nil);
             await Assert
                 .That(ex.Message)
                 .IsEqualTo("attempt to index a nil value")
@@ -222,7 +223,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task IndexTypeReturnsMessageWithVariableDescription()
         {
             ScriptRuntimeException ex = ScriptRuntimeException.IndexType(
-                DynValue.Nil,
+                LuaValue.Nil,
                 "global 'foo'"
             );
             await Assert
@@ -235,7 +236,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task IndexTypeIncludesLocalVariableDescription()
         {
             ScriptRuntimeException ex = ScriptRuntimeException.IndexType(
-                DynValue.Nil,
+                LuaValue.Nil,
                 "local 'bar'"
             );
             await Assert
@@ -248,7 +249,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task IndexTypeIncludesUpvalueVariableDescription()
         {
             ScriptRuntimeException ex = ScriptRuntimeException.IndexType(
-                DynValue.Nil,
+                LuaValue.Nil,
                 "upvalue 'baz'"
             );
             await Assert
@@ -654,7 +655,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task CloseMetamethodExpectedHandlesNullValue()
         {
             ScriptRuntimeException ex = ScriptRuntimeException.CloseMetamethodExpected(
-                DynValue.Nil
+                LuaValue.Nil
             );
             await Assert.That(ex.Message).IsEqualTo("__close metamethod expected (got nil)");
         }
@@ -662,7 +663,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task CloseMetamethodExpectedHandlesNonNullValue()
         {
-            DynValue value = DynValue.NewNumber(42);
+            LuaValue value = LuaValue.NewNumber(42);
             ScriptRuntimeException ex = ScriptRuntimeException.CloseMetamethodExpected(value);
             await Assert.That(ex.Message).IsEqualTo("__close metamethod expected (got number)");
         }
@@ -700,10 +701,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             public MemberDescriptorAccess MemberAccess => MemberDescriptorAccess.CanRead;
 
-            public DynValue GetValue(Script script, object obj) =>
+            public LuaValue GetValue(Script script, object obj) =>
                 throw new NotSupportedException();
 
-            public void SetValue(Script script, object obj, DynValue value) =>
+            public void SetValue(Script script, object obj, LuaValue value) =>
                 throw new NotSupportedException();
         }
 
@@ -721,16 +722,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             public bool TryIndex(
                 Script script,
                 object obj,
-                DynValue index,
+                LuaValue index,
                 bool isDirectIndexing,
-                out DynValue value
+                out LuaValue value
             ) => throw new NotSupportedException();
 
             public bool SetIndex(
                 Script script,
                 object obj,
-                DynValue index,
-                DynValue value,
+                LuaValue index,
+                LuaValue value,
                 bool isDirectIndexing
             ) => throw new NotSupportedException();
 
@@ -740,7 +741,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 Script script,
                 object obj,
                 string metaname,
-                out DynValue value
+                out LuaValue value
             ) => throw new NotSupportedException();
 
             public bool IsTypeCompatible(Type type, object obj) =>

@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
@@ -16,7 +17,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
                 BasePtr = 2,
                 RetAddress = 3,
                 Name = "counter",
-                Value = DynValue.NewNumber(42),
+                Value = LuaValue.NewNumber(42),
                 LValue = SymbolRef.Global("counter", SymbolRef.DefaultEnv),
             };
 

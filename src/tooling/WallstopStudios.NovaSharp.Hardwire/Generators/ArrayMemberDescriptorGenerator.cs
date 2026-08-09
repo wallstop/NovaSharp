@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Hardwire.Generators
     using System.CodeDom;
     using System.Collections.Generic;
     using System.Linq;
+    using global::NovaSharp;
     using Utils;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -66,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Hardwire.Generators
             ctor.BaseConstructorArgs.Add(new CodePrimitiveExpression(name));
             ctor.BaseConstructorArgs.Add(new CodePrimitiveExpression(setter));
 
-            DynValue vparams = table.Get("params");
+            LuaValue vparams = table.Get("params");
 
             if (vparams.Type == DataType.Table)
             {

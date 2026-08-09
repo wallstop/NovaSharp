@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
 {
     using System;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -54,12 +55,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
         /// This method uses <see cref="Math.Floor"/> to truncate, matching Lua 5.1/5.2 behavior
         /// where non-integer floats are silently truncated toward negative infinity.
         /// </remarks>
-        public static StringRange FromLuaRange(DynValue start, DynValue end, int? defaultEnd = null)
+        public static StringRange FromLuaRange(LuaValue start, LuaValue end, int? defaultEnd = null)
         {
             // Use Math.Floor for truncation (not C# cast which truncates toward zero)
             // This matches Lua 5.1/5.2 behavior: string.byte("abc", -0.5) should treat -0.5 as -1
-            int i = start.IsNil() ? 1 : (int)Math.Floor(start.Number);
-            int j = end.IsNil() ? (defaultEnd ?? i) : (int)Math.Floor(end.Number);
+            int i = start.IsNil ? 1 : (int)Math.Floor(start.Number);
+            int j = end.IsNil ? (defaultEnd ?? i) : (int)Math.Floor(end.Number);
 
             return new StringRange(i, j);
         }

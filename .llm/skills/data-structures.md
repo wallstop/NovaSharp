@@ -130,22 +130,22 @@ ______________________________________________________________________
 
 ## NovaSharp-Specific Choices
 
-### DynValue Collections
+### LuaValue Collections
 
 ```csharp
-// ✅ GOOD: Pool for temporary DynValue arrays
-using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(count, out DynValue[] args);
+// ✅ GOOD: Pool for temporary LuaValue arrays
+using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(count, out LuaValue[] args);
 // Use args...
 // Automatically returned on dispose
 
 // ✅ GOOD: Pool for temporary lists
-using PooledResource<List<DynValue>> pooled = ListPool<DynValue>.Get(out List<DynValue> list);
+using PooledResource<List<LuaValue>> pooled = ListPool<LuaValue>.Get(out List<LuaValue> list);
 // Use list...
 // Automatically returned on dispose
 
 // ❌ BAD: Allocates in hot path
-DynValue[] args = new DynValue[count];
-List<DynValue> list = new List<DynValue>();
+LuaValue[] args = new LuaValue[count];
+List<LuaValue> list = new List<LuaValue>();
 ```
 
 ### Table Implementation

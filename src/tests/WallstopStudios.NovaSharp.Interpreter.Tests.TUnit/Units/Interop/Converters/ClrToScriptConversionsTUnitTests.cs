@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
     using System.Reflection;
     using System.Text;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -28,25 +29,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
             Script script = new();
             Table table = new(script);
-            table.Set(1, DynValue.NewNumber(2));
+            table.Set(1, LuaValue.NewNumber(2));
 
             bool handledNull = ClrToScriptConversions.TryObjectToTrivialDynValue(
                 script,
                 null,
-                out DynValue explicitNil
+                out LuaValue explicitNil
             );
             await Assert
-                .That(ClrToScriptConversions.TryObjectToTrivialDynValue(script, null).Value.IsNil())
+                .That(ClrToScriptConversions.TryObjectToTrivialDynValue(script, null).Value.IsNil)
                 .IsTrue()
                 .ConfigureAwait(false);
             await Assert.That(handledNull).IsTrue().ConfigureAwait(false);
-            await Assert.That(explicitNil.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(explicitNil.IsNil).IsTrue().ConfigureAwait(false);
             await Assert
-                .That(ClrToScriptConversions.ObjectToDynValue(script, null).IsNil())
+                .That(ClrToScriptConversions.ObjectToDynValue(script, null).IsNil)
                 .IsTrue()
                 .ConfigureAwait(false);
 
-            DynValue dyn = DynValue.NewNumber(5);
+            LuaValue dyn = LuaValue.NewNumber(5);
             await Assert
                 .That(ClrToScriptConversions.TryObjectToTrivialDynValue(script, dyn).Value)
                 .IsEqualTo(dyn)
@@ -71,10 +72,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             bool handledUnsupported = ClrToScriptConversions.TryObjectToTrivialDynValue(
                 script,
                 new object(),
-                out DynValue unsupported
+                out LuaValue unsupported
             );
             await Assert.That(handledUnsupported).IsFalse().ConfigureAwait(false);
-            await Assert.That(unsupported.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(unsupported.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -83,44 +84,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
             Script script = new();
 
-            DynValue trueResult = ClrToScriptConversions
+            LuaValue trueResult = ClrToScriptConversions
                 .TryObjectToTrivialDynValue(script, true)
                 .Value;
-            await Assert.That(trueResult).IsEqualTo(DynValue.True).ConfigureAwait(false);
+            await Assert.That(trueResult).IsEqualTo(LuaValue.True).ConfigureAwait(false);
 
-            DynValue falseResult = ClrToScriptConversions
+            LuaValue falseResult = ClrToScriptConversions
                 .TryObjectToTrivialDynValue(script, false)
                 .Value;
-            await Assert.That(falseResult).IsEqualTo(DynValue.False).ConfigureAwait(false);
+            await Assert.That(falseResult).IsEqualTo(LuaValue.False).ConfigureAwait(false);
 
-            DynValue integerResult = ClrToScriptConversions
+            LuaValue integerResult = ClrToScriptConversions
                 .TryObjectToTrivialDynValue(script, 42)
                 .Value;
             await Assert
                 .That(integerResult)
-                .IsEqualTo(DynValue.FromInteger(42))
+                .IsEqualTo(LuaValue.FromInteger(42))
                 .ConfigureAwait(false);
             await Assert.That(integerResult.IsInteger).IsTrue().ConfigureAwait(false);
 
-            DynValue negativeIntegerResult = ClrToScriptConversions
+            LuaValue negativeIntegerResult = ClrToScriptConversions
                 .TryObjectToTrivialDynValue(script, -1)
                 .Value;
             await Assert
                 .That(negativeIntegerResult)
-                .IsEqualTo(DynValue.FromInteger(-1))
+                .IsEqualTo(LuaValue.FromInteger(-1))
                 .ConfigureAwait(false);
             await Assert.That(negativeIntegerResult.IsInteger).IsTrue().ConfigureAwait(false);
 
-            DynValue wholeDoubleResult = ClrToScriptConversions
+            LuaValue wholeDoubleResult = ClrToScriptConversions
                 .TryObjectToTrivialDynValue(script, 1d)
                 .Value;
             await Assert
                 .That(wholeDoubleResult)
-                .IsEqualTo(DynValue.FromNumber(1d))
+                .IsEqualTo(LuaValue.FromNumber(1d))
                 .ConfigureAwait(false);
             await Assert.That(wholeDoubleResult.IsInteger).IsTrue().ConfigureAwait(false);
 
-            DynValue fractionalDoubleResult = ClrToScriptConversions
+            LuaValue fractionalDoubleResult = ClrToScriptConversions
                 .TryObjectToTrivialDynValue(script, 3.5d)
                 .Value;
             await Assert.That(fractionalDoubleResult.IsFloat).IsTrue().ConfigureAwait(false);
@@ -133,27 +134,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
                 registry =>
                     registry.SetClrToScriptTryConversion<CustomValue>(
-                        (Script _, CustomValue value, out DynValue converted) =>
+                        (Script _, CustomValue value, out LuaValue converted) =>
                         {
                             if (value.Name == "nil")
                             {
-                                converted = DynValue.Nil;
+                                converted = LuaValue.Nil;
                                 return true;
                             }
 
                             if (value.Name == "void")
                             {
-                                converted = DynValue.Void;
+                                converted = LuaValue.Void;
                                 return true;
                             }
 
                             if (value.Name == "decline")
                             {
-                                converted = DynValue.NewString("ignored");
+                                converted = LuaValue.NewString("ignored");
                                 return false;
                             }
 
-                            converted = DynValue.NewString("converted");
+                            converted = LuaValue.NewString("converted");
                             return true;
                         }
                     )
@@ -163,34 +164,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             bool handled = ClrToScriptConversions.TryObjectToSimpleDynValue(
                 script,
                 new CustomValue("converted"),
-                out DynValue result
+                out LuaValue result
             );
             bool handledNil = ClrToScriptConversions.TryObjectToSimpleDynValue(
                 script,
                 new CustomValue("nil"),
-                out DynValue nilResult
+                out LuaValue nilResult
             );
             bool handledVoid = ClrToScriptConversions.TryObjectToSimpleDynValue(
                 script,
                 new CustomValue("void"),
-                out DynValue voidResult
+                out LuaValue voidResult
             );
             bool declined = ClrToScriptConversions.TryObjectToSimpleDynValue(
                 script,
                 new CustomValue("decline"),
-                out DynValue declinedResult
+                out LuaValue declinedResult
             );
 
             await Assert.That(handled).IsTrue().ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("converted").ConfigureAwait(false);
             await Assert.That(handledNil).IsTrue().ConfigureAwait(false);
-            await Assert.That(nilResult.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(nilResult.IsNil).IsTrue().ConfigureAwait(false);
             await Assert.That(handledVoid).IsTrue().ConfigureAwait(false);
             await Assert.That(voidResult.IsVoid()).IsTrue().ConfigureAwait(false);
             await Assert
-                .That(
-                    ClrToScriptConversions.ObjectToDynValue(script, new CustomValue("nil")).IsNil()
-                )
+                .That(ClrToScriptConversions.ObjectToDynValue(script, new CustomValue("nil")).IsNil)
                 .IsTrue()
                 .ConfigureAwait(false);
             await Assert
@@ -202,7 +201,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .IsTrue()
                 .ConfigureAwait(false);
             await Assert.That(declined).IsFalse().ConfigureAwait(false);
-            await Assert.That(declinedResult.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(declinedResult.IsNil).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(
                     ClrToScriptConversions.TryObjectToSimpleDynValue(
@@ -220,12 +219,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
                 registry =>
                     registry.SetClrToScriptCustomConversion<int>(
-                        (_, value) => DynValue.NewString("custom:" + value)
+                        (_, value) => LuaValue.NewString("custom:" + value)
                     )
             );
             Script script = new();
 
-            DynValue result = ClrToScriptConversions.TryObjectToSimpleDynValue(script, 42).Value;
+            LuaValue result = ClrToScriptConversions.TryObjectToSimpleDynValue(script, 42).Value;
 
             await Assert.That(result.String).IsEqualTo("custom:42").ConfigureAwait(false);
         }
@@ -236,30 +235,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
             Script script = new();
 
-            DynValue trueResult = ClrToScriptConversions
+            LuaValue trueResult = ClrToScriptConversions
                 .TryObjectToSimpleDynValue(script, true)
                 .Value;
-            await Assert.That(trueResult).IsEqualTo(DynValue.True).ConfigureAwait(false);
+            await Assert.That(trueResult).IsEqualTo(LuaValue.True).ConfigureAwait(false);
 
-            DynValue integerResult = ClrToScriptConversions
+            LuaValue integerResult = ClrToScriptConversions
                 .TryObjectToSimpleDynValue(script, 42)
                 .Value;
             await Assert
                 .That(integerResult)
-                .IsEqualTo(DynValue.FromInteger(42))
+                .IsEqualTo(LuaValue.FromInteger(42))
                 .ConfigureAwait(false);
             await Assert.That(integerResult.IsInteger).IsTrue().ConfigureAwait(false);
 
-            DynValue wholeDoubleResult = ClrToScriptConversions
+            LuaValue wholeDoubleResult = ClrToScriptConversions
                 .TryObjectToSimpleDynValue(script, 1d)
                 .Value;
             await Assert
                 .That(wholeDoubleResult)
-                .IsEqualTo(DynValue.FromNumber(1d))
+                .IsEqualTo(LuaValue.FromNumber(1d))
                 .ConfigureAwait(false);
             await Assert.That(wholeDoubleResult.IsInteger).IsTrue().ConfigureAwait(false);
 
-            DynValue fractionalDoubleResult = ClrToScriptConversions
+            LuaValue fractionalDoubleResult = ClrToScriptConversions
                 .TryObjectToSimpleDynValue(script, 3.5d)
                 .Value;
             await Assert.That(fractionalDoubleResult.IsFloat).IsTrue().ConfigureAwait(false);
@@ -274,9 +273,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         {
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
             Script script = new(version);
-            DynValue closureValue = script.DoString("return function(a) return a end");
+            LuaValue closureValue = script.DoString("return function(a) return a end");
 
-            DynValue closureResult = ClrToScriptConversions
+            LuaValue closureResult = ClrToScriptConversions
                 .TryObjectToSimpleDynValue(script, closureValue.Function)
                 .Value;
             await Assert
@@ -288,7 +287,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .IsSameReferenceAs(closureValue.Function)
                 .ConfigureAwait(false);
 
-            DynValue repeatedClosureResult = ClrToScriptConversions
+            LuaValue repeatedClosureResult = ClrToScriptConversions
                 .TryObjectToSimpleDynValue(script, closureValue.Function)
                 .Value;
             await Assert
@@ -296,8 +295,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .IsSameReferenceAs(closureResult.Function)
                 .ConfigureAwait(false);
 
-            CallbackFunction callback = new((_, _) => DynValue.NewNumber(7));
-            DynValue callbackResult = ClrToScriptConversions
+            CallbackFunction callback = new((_, _) => LuaValue.NewNumber(7));
+            LuaValue callbackResult = ClrToScriptConversions
                 .TryObjectToSimpleDynValue(script, callback)
                 .Value;
             await Assert
@@ -305,7 +304,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .IsEqualTo(DataType.ClrFunction)
                 .ConfigureAwait(false);
 
-            DynValue repeatedCallbackResult = ClrToScriptConversions
+            LuaValue repeatedCallbackResult = ClrToScriptConversions
                 .TryObjectToSimpleDynValue(script, callback)
                 .Value;
             await Assert
@@ -317,9 +316,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             ScriptFunctionCallbackView callbackView = (_, args) =>
             {
                 callbackViewCount = args.Count;
-                return DynValue.NewNumber(args.Count);
+                return LuaValue.NewNumber(args.Count);
             };
-            DynValue callbackViewResult = ClrToScriptConversions
+            LuaValue callbackViewResult = ClrToScriptConversions
                 .TryObjectToSimpleDynValue(script, callbackView)
                 .Value;
             await Assert
@@ -327,10 +326,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .IsEqualTo(DataType.ClrFunction)
                 .ConfigureAwait(false);
 
-            DynValue callbackViewReturn = script.Call(
+            LuaValue callbackViewReturn = script.Call(
                 callbackViewResult,
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2)
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2)
             );
             await Assert.That(callbackViewReturn.Number).IsEqualTo(2d).ConfigureAwait(false);
             await Assert.That(callbackViewCount).IsEqualTo(2).ConfigureAwait(false);
@@ -339,9 +338,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             ScriptFunctionCallbackViewNoContext noContextCallbackView = args =>
             {
                 noContextCallbackViewCount = args.Count;
-                return DynValue.NewNumber(args.Count);
+                return LuaValue.NewNumber(args.Count);
             };
-            DynValue noContextCallbackViewResult = ClrToScriptConversions
+            LuaValue noContextCallbackViewResult = ClrToScriptConversions
                 .TryObjectToSimpleDynValue(script, noContextCallbackView)
                 .Value;
             await Assert
@@ -349,11 +348,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .IsEqualTo(DataType.ClrFunction)
                 .ConfigureAwait(false);
 
-            DynValue noContextCallbackViewReturn = script.Call(
+            LuaValue noContextCallbackViewReturn = script.Call(
                 noContextCallbackViewResult,
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3)
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3)
             );
             await Assert
                 .That(noContextCallbackViewReturn.Number)
@@ -370,10 +369,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             Script script = new();
             SampleUserData instance = new();
 
-            DynValue userData = ClrToScriptConversions.ObjectToDynValue(script, instance);
+            LuaValue userData = ClrToScriptConversions.ObjectToDynValue(script, instance);
             await Assert.That(userData.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
 
-            DynValue staticUserData = ClrToScriptConversions.ObjectToDynValue(
+            LuaValue staticUserData = ClrToScriptConversions.ObjectToDynValue(
                 script,
                 typeof(SampleUserData)
             );
@@ -382,14 +381,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .IsEqualTo(DataType.UserData)
                 .ConfigureAwait(false);
 
-            DynValue enumValue = ClrToScriptConversions.ObjectToDynValue(script, DayOfWeek.Friday);
+            LuaValue enumValue = ClrToScriptConversions.ObjectToDynValue(script, DayOfWeek.Friday);
             await Assert
                 .That(enumValue.Number)
                 .IsEqualTo((double)DayOfWeek.Friday)
                 .ConfigureAwait(false);
 
             Func<int> simpleDelegate = () => 5;
-            DynValue delegateValue = ClrToScriptConversions.ObjectToDynValue(
+            LuaValue delegateValue = ClrToScriptConversions.ObjectToDynValue(
                 script,
                 simpleDelegate
             );
@@ -399,7 +398,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .ConfigureAwait(false);
 
             MethodInfo method = StaticClrCallbackMethodInfo;
-            DynValue methodValue = ClrToScriptConversions.ObjectToDynValue(script, method);
+            LuaValue methodValue = ClrToScriptConversions.ObjectToDynValue(script, method);
             await Assert
                 .That(methodValue.Type)
                 .IsEqualTo(DataType.ClrFunction)
@@ -414,32 +413,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             List<int> list = new() { 1, 2 };
             Dictionary<string, int> dictionary = new() { ["key"] = 3 };
 
-            DynValue listValue = ClrToScriptConversions.ObjectToDynValue(script, list);
+            LuaValue listValue = ClrToScriptConversions.ObjectToDynValue(script, list);
             await Assert.That(listValue.Table.Get(1).Number).IsEqualTo(1d).ConfigureAwait(false);
 
-            DynValue dictValue = ClrToScriptConversions.ObjectToDynValue(script, dictionary);
+            LuaValue dictValue = ClrToScriptConversions.ObjectToDynValue(script, dictionary);
             await Assert
                 .That(dictValue.Table.Get("key").Number)
                 .IsEqualTo(3d)
                 .ConfigureAwait(false);
 
             IEnumerable enumerable = YieldStrings();
-            DynValue enumerableValue = ClrToScriptConversions.ObjectToDynValue(script, enumerable);
+            LuaValue enumerableValue = ClrToScriptConversions.ObjectToDynValue(script, enumerable);
             await Assert.That(enumerableValue.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
 
             IEnumerator enumerator = YieldStrings().GetEnumerator();
-            DynValue iteratorTuple = ClrToScriptConversions.ObjectToDynValue(script, enumerator);
+            LuaValue iteratorTuple = ClrToScriptConversions.ObjectToDynValue(script, enumerator);
             await Assert.That(iteratorTuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
 
             bool handledEnumerator = ClrToScriptConversions.TryEnumerationToDynValue(
                 script,
                 enumerator,
-                out DynValue explicitIteratorTuple
+                out LuaValue explicitIteratorTuple
             );
             bool handledObject = ClrToScriptConversions.TryEnumerationToDynValue(
                 script,
                 new object(),
-                out DynValue missingIterator
+                out LuaValue missingIterator
             );
             await Assert.That(handledEnumerator).IsTrue().ConfigureAwait(false);
             await Assert
@@ -447,7 +446,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .IsEqualTo(DataType.Tuple)
                 .ConfigureAwait(false);
             await Assert.That(handledObject).IsFalse().ConfigureAwait(false);
-            await Assert.That(missingIterator.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(missingIterator.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -470,10 +469,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         {
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
             Script script = new();
-            CallbackFunction function = new((_, _) => DynValue.NewNumber(7));
+            CallbackFunction function = new((_, _) => LuaValue.NewNumber(7));
 
-            DynValue result = ClrToScriptConversions.ObjectToDynValue(script, function);
-            DynValue repeatedResult = ClrToScriptConversions.ObjectToDynValue(script, function);
+            LuaValue result = ClrToScriptConversions.ObjectToDynValue(script, function);
+            LuaValue repeatedResult = ClrToScriptConversions.ObjectToDynValue(script, function);
 
             await Assert.That(result.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
             await Assert
@@ -489,13 +488,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             Script script = new();
 
             // Test various integer types
-            DynValue intResult = ClrToScriptConversions
+            LuaValue intResult = ClrToScriptConversions
                 .TryObjectToTrivialDynValue(script, 42)
                 .Value;
             await Assert.That(intResult.IsInteger).IsTrue().ConfigureAwait(false);
             await Assert.That(intResult.LuaNumber.AsInteger).IsEqualTo(42L).ConfigureAwait(false);
 
-            DynValue longResult = ClrToScriptConversions
+            LuaValue longResult = ClrToScriptConversions
                 .TryObjectToTrivialDynValue(script, 9007199254740993L)
                 .Value;
             await Assert.That(longResult.IsInteger).IsTrue().ConfigureAwait(false);
@@ -504,13 +503,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .IsEqualTo(9007199254740993L)
                 .ConfigureAwait(false);
 
-            DynValue byteResult = ClrToScriptConversions
+            LuaValue byteResult = ClrToScriptConversions
                 .TryObjectToTrivialDynValue(script, (byte)255)
                 .Value;
             await Assert.That(byteResult.IsInteger).IsTrue().ConfigureAwait(false);
             await Assert.That(byteResult.LuaNumber.AsInteger).IsEqualTo(255L).ConfigureAwait(false);
 
-            DynValue shortResult = ClrToScriptConversions
+            LuaValue shortResult = ClrToScriptConversions
                 .TryObjectToTrivialDynValue(script, (short)1000)
                 .Value;
             await Assert.That(shortResult.IsInteger).IsTrue().ConfigureAwait(false);
@@ -527,17 +526,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             Script script = new();
 
             // Test float types - should NOT be integers
-            DynValue floatResult = ClrToScriptConversions
+            LuaValue floatResult = ClrToScriptConversions
                 .TryObjectToTrivialDynValue(script, 3.14f)
                 .Value;
             await Assert.That(floatResult.IsInteger).IsFalse().ConfigureAwait(false);
 
-            DynValue doubleResult = ClrToScriptConversions
+            LuaValue doubleResult = ClrToScriptConversions
                 .TryObjectToTrivialDynValue(script, 3.14159)
                 .Value;
             await Assert.That(doubleResult.IsInteger).IsFalse().ConfigureAwait(false);
 
-            DynValue decimalResult = ClrToScriptConversions
+            LuaValue decimalResult = ClrToScriptConversions
                 .TryObjectToTrivialDynValue(script, 3.14m)
                 .Value;
             await Assert.That(decimalResult.IsInteger).IsFalse().ConfigureAwait(false);
@@ -550,7 +549,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             Script script = new();
 
             // Large integer beyond double precision
-            DynValue longResult = ClrToScriptConversions
+            LuaValue longResult = ClrToScriptConversions
                 .TryObjectToSimpleDynValue(script, 9007199254740993L)
                 .Value;
             await Assert.That(longResult.IsInteger).IsTrue().ConfigureAwait(false);
@@ -567,7 +566,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             Script script = new();
 
             // Large integer beyond double precision
-            DynValue longResult = ClrToScriptConversions.ObjectToDynValue(
+            LuaValue longResult = ClrToScriptConversions.ObjectToDynValue(
                 script,
                 9007199254740993L
             );
@@ -578,18 +577,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .ConfigureAwait(false);
 
             // Small int
-            DynValue intResult = ClrToScriptConversions.ObjectToDynValue(script, 42);
+            LuaValue intResult = ClrToScriptConversions.ObjectToDynValue(script, 42);
             await Assert.That(intResult.IsInteger).IsTrue().ConfigureAwait(false);
             await Assert.That(intResult.LuaNumber.AsInteger).IsEqualTo(42L).ConfigureAwait(false);
         }
 
-        public static DynValue StaticClrCallback(ScriptExecutionContext ctx, CallbackArguments args)
+        public static LuaValue StaticClrCallback(ScriptExecutionContext ctx, CallbackArguments args)
         {
-            return DynValue.NewNumber(42);
+            return LuaValue.NewNumber(42);
         }
 
         private static readonly MethodInfo StaticClrCallbackMethodInfo = (
-            (Func<ScriptExecutionContext, CallbackArguments, DynValue>)StaticClrCallback
+            (Func<ScriptExecutionContext, CallbackArguments, LuaValue>)StaticClrCallback
         ).Method;
 
         private static UserDataRegistrationScope RegisterSampleUserData()

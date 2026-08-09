@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System;
     using System.Text;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -19,11 +20,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewTupleHandlesEmptyAndSingleInputs()
         {
-            DynValue empty = DynValue.NewTuple();
-            DynValue single = DynValue.NewNumber(42);
-            DynValue wrappedSingle = DynValue.NewTuple(single);
+            LuaValue empty = LuaValue.NewTuple();
+            LuaValue single = LuaValue.NewNumber(42);
+            LuaValue wrappedSingle = LuaValue.NewTuple(single);
 
-            await Assert.That(empty).IsEqualTo(DynValue.EmptyTuple).ConfigureAwait(false);
+            await Assert.That(empty).IsEqualTo(LuaValue.EmptyTuple).ConfigureAwait(false);
 
             await Assert.That(wrappedSingle).IsEqualTo(single).ConfigureAwait(false);
         }
@@ -31,8 +32,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewTupleTreatsSingleNullInputAsNil()
         {
-            DynValue singleOverload = DynValue.NewTuple(default(DynValue));
-            DynValue paramsOverload = DynValue.NewTuple(new DynValue[] { default });
+            LuaValue singleOverload = LuaValue.NewTuple(default(LuaValue));
+            LuaValue paramsOverload = LuaValue.NewTuple(new LuaValue[] { default });
 
             await Assert.That(singleOverload.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(paramsOverload.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
@@ -49,15 +50,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             int expectedNilCount
         )
         {
-            DynValue one = DynValue.NewNumber(1);
-            DynValue two = DynValue.NewNumber(2);
-            DynValue tuple = (arity, useParamsArray) switch
+            LuaValue one = LuaValue.NewNumber(1);
+            LuaValue two = LuaValue.NewNumber(2);
+            LuaValue tuple = (arity, useParamsArray) switch
             {
-                (2, false) => DynValue.NewTuple(default, one),
-                (3, false) => DynValue.NewTuple(one, default, two),
-                (4, false) => DynValue.NewTuple(default, one, default, two),
-                (5, true) => DynValue.NewTuple(
-                    new DynValue[] { one, default, two, default, DynValue.NewBoolean(true) }
+                (2, false) => LuaValue.NewTuple(default, one),
+                (3, false) => LuaValue.NewTuple(one, default, two),
+                (4, false) => LuaValue.NewTuple(default, one, default, two),
+                (5, true) => LuaValue.NewTuple(
+                    new LuaValue[] { one, default, two, default, LuaValue.NewBoolean(true) }
                 ),
                 _ => throw new ArgumentOutOfRangeException(nameof(arity), arity, null),
             };
@@ -66,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(tuple.Tuple.Length).IsEqualTo(arity).ConfigureAwait(false);
 
             int nilCount = 0;
-            foreach (DynValue value in tuple.Tuple)
+            foreach (LuaValue value in tuple.Tuple)
             {
                 if (value.Type == DataType.Nil)
                 {
@@ -80,13 +81,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewTupleNestedFlattensTuplesOneLevelDeep()
         {
-            DynValue tupleA = DynValue.NewTuple(DynValue.NewString("a"), DynValue.NewString("b"));
-            DynValue tupleB = DynValue.NewTuple(DynValue.NewNumber(3), DynValue.NewNumber(4));
+            LuaValue tupleA = LuaValue.NewTuple(LuaValue.NewString("a"), LuaValue.NewString("b"));
+            LuaValue tupleB = LuaValue.NewTuple(LuaValue.NewNumber(3), LuaValue.NewNumber(4));
 
-            DynValue flattened = DynValue.NewTupleNested(
+            LuaValue flattened = LuaValue.NewTupleNested(
                 tupleA,
                 tupleB,
-                DynValue.NewString("tail")
+                LuaValue.NewString("tail")
             );
 
             await Assert.That(flattened.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
@@ -107,7 +108,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task NewTupleNestedThrowsWhenValuesNull()
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                DynValue.NewTupleNested((DynValue[])null)
+                LuaValue.NewTupleNested((LuaValue[])null)
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("values").ConfigureAwait(false);
@@ -116,9 +117,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewTupleNestedReturnsSingleValueUnchanged()
         {
-            DynValue tuple = DynValue.NewTuple(DynValue.NewString("value"));
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewString("value"));
 
-            DynValue nested = DynValue.NewTupleNested(tuple);
+            LuaValue nested = LuaValue.NewTupleNested(tuple);
 
             await Assert.That(nested).IsEqualTo(tuple).ConfigureAwait(false);
         }
@@ -127,7 +128,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task NewTupleThrowsWhenValuesNull()
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                DynValue.NewTuple((DynValue[])null)
+                LuaValue.NewTuple((LuaValue[])null)
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("values").ConfigureAwait(false);
@@ -136,11 +137,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewTupleNestedWithSingleTuplePassesThrough()
         {
-            DynValue first = DynValue.NewNumber(1);
-            DynValue second = DynValue.NewNumber(2);
-            DynValue tuple = DynValue.NewTuple(first, second);
+            LuaValue first = LuaValue.NewNumber(1);
+            LuaValue second = LuaValue.NewNumber(2);
+            LuaValue tuple = LuaValue.NewTuple(first, second);
 
-            DynValue nested = DynValue.NewTupleNested(tuple);
+            LuaValue nested = LuaValue.NewTupleNested(tuple);
 
             await Assert.That(nested).IsEqualTo(tuple).ConfigureAwait(false);
         }
@@ -148,10 +149,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewTupleNestedWithoutTuplesCreatesRegularTuple()
         {
-            DynValue first = DynValue.NewNumber(1);
-            DynValue second = DynValue.NewString("two");
+            LuaValue first = LuaValue.NewNumber(1);
+            LuaValue second = LuaValue.NewString("two");
 
-            DynValue result = DynValue.NewTupleNested(first, second);
+            LuaValue result = LuaValue.NewTupleNested(first, second);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
 
@@ -160,8 +161,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             await Assert.That(result.Tuple[1]).IsEqualTo(second).ConfigureAwait(false);
 
-            DynValue[] copied = result.AsTuple();
-            copied[0] = DynValue.Nil;
+            LuaValue[] copied = result.AsTuple();
+            copied[0] = LuaValue.Nil;
 
             await Assert.That(result.Tuple[0]).IsEqualTo(first).ConfigureAwait(false);
         }
@@ -170,9 +171,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task NewTableFromArrayInitializesEntriesAndOwner()
         {
             Script script = new();
-            DynValue[] values = new[] { DynValue.NewNumber(7), DynValue.NewString("value") };
+            LuaValue[] values = new[] { LuaValue.NewNumber(7), LuaValue.NewString("value") };
 
-            DynValue tableValue = DynValue.NewTable(script, values);
+            LuaValue tableValue = LuaValue.NewTable(script, values);
 
             await Assert
                 .That(tableValue.Table.OwnerScript)
@@ -192,12 +193,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task ToScalarReturnsFirstScalarEntry()
         {
-            DynValue nested = DynValue.NewTuple(
-                DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2)),
-                DynValue.NewString("ignored")
+            LuaValue nested = LuaValue.NewTuple(
+                LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewNumber(2)),
+                LuaValue.NewString("ignored")
             );
 
-            DynValue scalar = nested.ToScalar();
+            LuaValue scalar = nested.ToScalar();
 
             await Assert.That(scalar.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
 
@@ -207,31 +208,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task CastToBoolRespectsLuaTruthinessRules()
         {
-            await Assert.That(DynValue.Nil.CastToBool()).IsFalse().ConfigureAwait(false);
+            await Assert.That(LuaValue.Nil.CastToBool()).IsFalse().ConfigureAwait(false);
 
-            await Assert.That(DynValue.Void.CastToBool()).IsFalse().ConfigureAwait(false);
+            await Assert.That(LuaValue.Void.CastToBool()).IsFalse().ConfigureAwait(false);
 
-            await Assert.That(DynValue.False.CastToBool()).IsFalse().ConfigureAwait(false);
+            await Assert.That(LuaValue.False.CastToBool()).IsFalse().ConfigureAwait(false);
 
             await Assert
-                .That(DynValue.NewString("value").CastToBool())
+                .That(LuaValue.NewString("value").CastToBool())
                 .IsTrue()
                 .ConfigureAwait(false);
 
-            await Assert.That(DynValue.NewNumber(0).CastToBool()).IsTrue().ConfigureAwait(false);
+            await Assert.That(LuaValue.NewNumber(0).CastToBool()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task GetLengthSupportsStringsAndTables()
         {
-            DynValue @string = DynValue.NewString("abcd");
+            LuaValue @string = LuaValue.NewString("abcd");
             Table table = new(null);
-            table.Set(1, DynValue.NewNumber(10));
-            table.Set(2, DynValue.NewNumber(20));
-            DynValue tableValue = DynValue.NewTable(table);
+            table.Set(1, LuaValue.NewNumber(10));
+            table.Set(2, LuaValue.NewNumber(20));
+            LuaValue tableValue = LuaValue.NewTable(table);
 
-            DynValue stringLength = @string.GetLength();
-            DynValue tableLength = tableValue.GetLength();
+            LuaValue stringLength = @string.GetLength();
+            LuaValue tableLength = tableValue.GetLength();
 
             await Assert.That(stringLength.Number).IsEqualTo(4).ConfigureAwait(false);
 
@@ -241,7 +242,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task GetLengthThrowsWhenTypeHasNoLength()
         {
-            DynValue number = DynValue.NewNumber(5);
+            LuaValue number = LuaValue.NewNumber(5);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 number.GetLength()
@@ -257,8 +258,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(255L)]
         public async Task FromIntegerReturnsCachedValueForSmallPositiveIntegers(long value)
         {
-            DynValue first = DynValue.FromInteger(value);
-            DynValue second = DynValue.FromInteger(value);
+            LuaValue first = LuaValue.FromInteger(value);
+            LuaValue second = LuaValue.FromInteger(value);
 
             await Assert.That(first).IsEqualTo(second).ConfigureAwait(false);
             await Assert.That(first.IsInteger).IsTrue().ConfigureAwait(false);
@@ -271,8 +272,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(-256L)]
         public async Task FromIntegerReturnsCachedValueForSmallNegativeIntegers(long value)
         {
-            DynValue first = DynValue.FromInteger(value);
-            DynValue second = DynValue.FromInteger(value);
+            LuaValue first = LuaValue.FromInteger(value);
+            LuaValue second = LuaValue.FromInteger(value);
 
             await Assert.That(first).IsEqualTo(second).ConfigureAwait(false);
             await Assert.That(first.IsInteger).IsTrue().ConfigureAwait(false);
@@ -286,8 +287,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(-1000L)]
         public async Task FromIntegerReturnsNewValueForOutOfCacheRange(long value)
         {
-            DynValue first = DynValue.FromInteger(value);
-            DynValue second = DynValue.FromInteger(value);
+            LuaValue first = LuaValue.FromInteger(value);
+            LuaValue second = LuaValue.FromInteger(value);
 
             await Assert.That(first).IsEqualTo(second).ConfigureAwait(false);
             await Assert.That(first.IsInteger).IsTrue().ConfigureAwait(false);
@@ -304,8 +305,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(double.NegativeInfinity)]
         public async Task FromFloatReturnsCachedValueForCommonFloats(double value)
         {
-            DynValue first = DynValue.FromFloat(value);
-            DynValue second = DynValue.FromFloat(value);
+            LuaValue first = LuaValue.FromFloat(value);
+            LuaValue second = LuaValue.FromFloat(value);
 
             await Assert.That(first).IsEqualTo(second).ConfigureAwait(false);
             await Assert.That(first.IsFloat).IsTrue().ConfigureAwait(false);
@@ -318,8 +319,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(12345.6789)]
         public async Task FromFloatReturnsNewValueForUncommonFloats(double value)
         {
-            DynValue first = DynValue.FromFloat(value);
-            DynValue second = DynValue.FromFloat(value);
+            LuaValue first = LuaValue.FromFloat(value);
+            LuaValue second = LuaValue.FromFloat(value);
 
             await Assert.That(first).IsEqualTo(second).ConfigureAwait(false);
             await Assert.That(first.IsFloat).IsTrue().ConfigureAwait(false);
@@ -329,7 +330,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task FromFloatPreservesFloatSubtypeForWholeNumbers()
         {
-            DynValue one = DynValue.FromFloat(1.0);
+            LuaValue one = LuaValue.FromFloat(1.0);
 
             await Assert.That(one.IsFloat).IsTrue().ConfigureAwait(false);
             await Assert.That(one.IsInteger).IsFalse().ConfigureAwait(false);
@@ -339,8 +340,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task FromIntegerPreservesIntegerSubtype()
         {
-            DynValue smallInteger = DynValue.FromInteger(1);
-            DynValue largeInteger = DynValue.FromInteger(1000);
+            LuaValue smallInteger = LuaValue.FromInteger(1);
+            LuaValue largeInteger = LuaValue.FromInteger(1000);
 
             await Assert.That(smallInteger.IsInteger).IsTrue().ConfigureAwait(false);
             await Assert.That(smallInteger.IsFloat).IsFalse().ConfigureAwait(false);
@@ -351,9 +352,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task CheckTypeAutoConvertsNumbersToStrings()
         {
-            DynValue number = DynValue.NewNumber(12.5);
+            LuaValue number = LuaValue.NewNumber(12.5);
 
-            DynValue converted = number.CheckType(
+            LuaValue converted = number.CheckType(
                 "func",
                 DataType.String,
                 argNum: 0,
@@ -368,7 +369,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task CheckTypeThrowsWhenConversionNotAllowed()
         {
-            DynValue number = DynValue.NewNumber(12.5);
+            LuaValue number = LuaValue.NewNumber(12.5);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 number.CheckType(
@@ -386,8 +387,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task GetLengthThrowsOnUnsupportedTypes()
         {
             Script script = new();
-            CallbackFunction callback = new CallbackFunction((_, _) => DynValue.True);
-            DynValue function = DynValue.NewCallback(callback);
+            CallbackFunction callback = new CallbackFunction((_, _) => LuaValue.True);
+            LuaValue function = LuaValue.NewCallback(callback);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 function.GetLength()
@@ -399,7 +400,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task GetAsPrivateResourceReturnsNullWhenNotPrivate()
         {
-            DynValue number = DynValue.NewNumber(5);
+            LuaValue number = LuaValue.NewNumber(5);
 
             await Assert.That(number.ScriptPrivateResource).IsNull().ConfigureAwait(false);
         }
@@ -407,7 +408,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task GetTypeConvertsValueToRequestedType()
         {
-            DynValue number = DynValue.NewNumber(7);
+            LuaValue number = LuaValue.NewNumber(7);
 
             double converted = number.ToObject<double>();
 
@@ -417,7 +418,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task TypeChecksThrowWhenTypeMissing()
         {
-            DynValue nil = DynValue.Nil;
+            LuaValue nil = LuaValue.Nil;
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 nil.CheckType("func", DataType.Number, argNum: 1)
@@ -430,7 +431,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task CheckTypeThrowsWhenVoidAndValueRequired()
         {
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                DynValue.Void.CheckType("func", DataType.Number, argNum: 2)
+                LuaValue.Void.CheckType("func", DataType.Number, argNum: 2)
             );
 
             await Assert.That(exception.Message).Contains("got no value").ConfigureAwait(false);
@@ -439,7 +440,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task CastToNumberParsesInvariantStrings()
         {
-            DynValue numericString = DynValue.NewString("12.75");
+            LuaValue numericString = LuaValue.NewString("12.75");
             double? result = numericString.CastToNumber();
 
             await Assert.That(result).IsEqualTo(12.75).ConfigureAwait(false);
@@ -449,7 +450,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task CastToNumberReturnsNullForNonNumericStrings()
         {
             await Assert
-                .That(DynValue.NewString("not-a-number").CastToNumber())
+                .That(LuaValue.NewString("not-a-number").CastToNumber())
                 .IsNull()
                 .ConfigureAwait(false);
         }
@@ -457,7 +458,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task CastToStringConvertsNumbers()
         {
-            DynValue number = DynValue.NewNumber(5.5);
+            LuaValue number = LuaValue.NewNumber(5.5);
 
             await Assert.That(number.CastToString()).IsEqualTo("5.5").ConfigureAwait(false);
         }
@@ -465,20 +466,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task CheckTypeAllowsNilWhenFlagSet()
         {
-            DynValue result = DynValue.Nil.CheckType(
+            LuaValue result = LuaValue.Nil.CheckType(
                 "func",
                 DataType.Table,
                 flags: TypeValidationOptions.AllowNil
             );
 
-            await Assert.That(result).IsEqualTo(DynValue.Nil).ConfigureAwait(false);
+            await Assert.That(result).IsEqualTo(LuaValue.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CheckUserDataTypeReturnsManagedInstance()
         {
             using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
-            bool created = UserData.TryCreate(new SampleUserData("ud"), out DynValue userData);
+            bool created = UserData.TryCreate(new SampleUserData("ud"), out LuaValue userData);
             await Assert.That(created).IsTrue().ConfigureAwait(false);
 
             SampleUserData result = userData.CheckUserDataType<SampleUserData>("func");
@@ -490,7 +491,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task CheckUserDataTypeThrowsWhenTypeMismatch()
         {
             using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
-            bool created = UserData.TryCreate(new SampleUserData("ud"), out DynValue userData);
+            bool created = UserData.TryCreate(new SampleUserData("ud"), out LuaValue userData);
             await Assert.That(created).IsTrue().ConfigureAwait(false);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -503,7 +504,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task CheckUserDataTypeAllowsNilWhenFlagged()
         {
-            SampleUserData result = DynValue.Nil.CheckUserDataType<SampleUserData>(
+            SampleUserData result = LuaValue.Nil.CheckUserDataType<SampleUserData>(
                 "func",
                 flags: TypeValidationOptions.AllowNil
             );
@@ -515,7 +516,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task NewStringFromStringBuilderCopiesSnapshot()
         {
             StringBuilder builder = new("seed");
-            DynValue value = DynValue.NewString(builder);
+            LuaValue value = LuaValue.NewString(builder);
             builder.Append("mutated");
 
             await Assert.That(value.String).IsEqualTo("seed").ConfigureAwait(false);
@@ -525,7 +526,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task NewStringFromStringBuilderThrowsWhenBuilderIsNull()
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                DynValue.NewString((StringBuilder)null)
+                LuaValue.NewString((StringBuilder)null)
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("sb").ConfigureAwait(false);
@@ -535,7 +536,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task NewStringFormatThrowsWhenFormatIsNull()
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                DynValue.NewString(null, "value")
+                LuaValue.NewString(null, "value")
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("format").ConfigureAwait(false);
@@ -544,7 +545,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewStringFormatAppliesArguments()
         {
-            DynValue value = DynValue.NewString("value {0} {1}", 5, "x");
+            LuaValue value = LuaValue.NewString("value {0} {1}", 5, "x");
 
             await Assert.That(value.String).IsEqualTo("value 5 x").ConfigureAwait(false);
         }
@@ -552,7 +553,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task NewStringFormatReturnsLiteralWhenArgsNull()
         {
-            DynValue value = DynValue.NewString("literal", (object[])null);
+            LuaValue value = LuaValue.NewString("literal", (object[])null);
 
             await Assert.That(value.String).IsEqualTo("literal").ConfigureAwait(false);
         }
@@ -562,11 +563,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task NewCoroutineWrapsCoroutineHandles(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.Call(
+            LuaValue function = script.Call(
                 script.LoadString("return function(x) coroutine.yield(x); return x end")
             );
-            DynValue coroutineValue = script.CreateCoroutine(function);
-            DynValue wrapped = DynValue.NewCoroutine(coroutineValue.Coroutine);
+            LuaValue coroutineValue = script.CreateCoroutineValue(function);
+            LuaValue wrapped = LuaValue.NewCoroutine(coroutineValue.Coroutine);
 
             await Assert.That(wrapped.Type).IsEqualTo(DataType.Thread).ConfigureAwait(false);
 
@@ -575,15 +576,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .IsSameReferenceAs(coroutineValue.Coroutine)
                 .ConfigureAwait(false);
 
-            await Assert.That(wrapped.ToString()).Contains("Coroutine").ConfigureAwait(false);
+            await Assert.That(wrapped.ToRawString()).Contains("Coroutine").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task ToStringFormatsClrFunctions()
         {
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil, "named");
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.Nil, "named");
             await Assert
-                .That(callback.ToString())
+                .That(callback.ToRawString())
                 .IsEqualTo("(Function CLR)")
                 .ConfigureAwait(false);
         }
@@ -592,40 +593,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ToStringCoversLuaTypeRepresentations()
         {
             Script script = new();
-            DynValue chunk = script.LoadString("return function() return 1 end");
-            DynValue coroutine = script.CreateCoroutine(chunk);
-            DynValue tableValue = DynValue.NewTable(new Table(script));
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewString("two"));
+            LuaValue chunk = script.LoadString("return function() return 1 end");
+            LuaValue coroutine = script.CreateCoroutineValue(chunk);
+            LuaValue tableValue = LuaValue.NewTable(new Table(script));
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewString("two"));
             using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
-            bool created = UserData.TryCreate(new SampleUserData("ignored"), out DynValue userData);
+            bool created = UserData.TryCreate(new SampleUserData("ignored"), out LuaValue userData);
             await Assert.That(created).IsTrue().ConfigureAwait(false);
-            DynValue yield = DynValue.NewYieldReq(Array.Empty<DynValue>());
+            LuaValue yield = LuaValue.NewYieldReq(Array.Empty<LuaValue>());
 
-            await Assert.That(DynValue.Void.ToString()).IsEqualTo("void").ConfigureAwait(false);
+            await Assert.That(LuaValue.Void.ToRawString()).IsEqualTo("void").ConfigureAwait(false);
 
-            await Assert.That(chunk.ToString()).StartsWith("(Function ").ConfigureAwait(false);
+            await Assert.That(chunk.ToRawString()).StartsWith("(Function ").ConfigureAwait(false);
 
-            await Assert.That(tableValue.ToString()).IsEqualTo("(Table)").ConfigureAwait(false);
+            await Assert.That(tableValue.ToRawString()).IsEqualTo("(Table)").ConfigureAwait(false);
 
-            await Assert.That(tuple.ToString()).IsEqualTo("1, \"two\"").ConfigureAwait(false);
+            await Assert.That(tuple.ToRawString()).IsEqualTo("1, \"two\"").ConfigureAwait(false);
 
-            await Assert.That(userData.ToString()).IsEqualTo("(UserData)").ConfigureAwait(false);
+            await Assert.That(userData.ToRawString()).IsEqualTo("(UserData)").ConfigureAwait(false);
 
-            await Assert.That(coroutine.ToString()).StartsWith("(Coroutine ").ConfigureAwait(false);
+            await Assert
+                .That(coroutine.ToRawString())
+                .StartsWith("(Coroutine ")
+                .ConfigureAwait(false);
 
-            await Assert.That(yield.ToString()).IsEqualTo("(???)").ConfigureAwait(false);
+            await Assert.That(yield.ToRawString()).IsEqualTo("(???)").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CheckTypeAutoConvertsAcrossCoreTypes()
         {
-            DynValue boolValue = DynValue
+            LuaValue boolValue = LuaValue
                 .NewString("truthy")
                 .CheckType("func", DataType.Boolean, flags: TypeValidationOptions.AutoConvert);
-            DynValue numberValue = DynValue
+            LuaValue numberValue = LuaValue
                 .NewString("42")
                 .CheckType("func", DataType.Number, flags: TypeValidationOptions.AutoConvert);
-            DynValue stringValue = DynValue
+            LuaValue stringValue = LuaValue
                 .NewNumber(3.5)
                 .CheckType("func", DataType.String, flags: TypeValidationOptions.AutoConvert);
 
@@ -640,7 +644,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task CheckTypeComplainsWhenVoidHasNoValue()
         {
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                DynValue.Void.CheckType("func", DataType.String)
+                LuaValue.Void.CheckType("func", DataType.String)
             );
 
             await Assert.That(exception.Message).Contains("no value").ConfigureAwait(false);
@@ -649,8 +653,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task CheckTypeAutoConvertFallbacksReturnOriginalWhenConversionFails()
         {
-            DynValue original = DynValue.NewString("not-number");
-            DynValue result = original.CheckType(
+            LuaValue original = LuaValue.NewString("not-number");
+            LuaValue result = original.CheckType(
                 "func",
                 DataType.String,
                 flags: TypeValidationOptions.AutoConvert
@@ -662,7 +666,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task CheckUserDataTypeReturnsDefaultWhenNilAllowed()
         {
-            SampleUserData result = DynValue.Nil.CheckUserDataType<SampleUserData>(
+            SampleUserData result = LuaValue.Nil.CheckUserDataType<SampleUserData>(
                 "func",
                 flags: TypeValidationOptions.AllowNil
             );
@@ -676,7 +680,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
             bool created = UserData.TryCreate(
                 new SampleUserData("Printable"),
-                out DynValue userData
+                out LuaValue userData
             );
             await Assert.That(created).IsTrue().ConfigureAwait(false);
 
@@ -689,12 +693,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task ToPrintStringFormatsCompositeValues()
         {
-            DynValue tuple = DynValue.NewTuple(DynValue.NewString("a"), DynValue.NewNumber(5));
-            DynValue tail = DynValue.NewTailCallReq(
-                DynValue.NewCallback((_, _) => DynValue.Nil),
-                DynValue.NewNumber(1)
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewString("a"), LuaValue.NewNumber(5));
+            LuaValue tail = LuaValue.NewTailCallReq(
+                LuaValue.NewCallback((_, _) => LuaValue.Nil),
+                LuaValue.NewNumber(1)
             );
-            DynValue yield = DynValue.NewYieldReq(Array.Empty<DynValue>());
+            LuaValue yield = LuaValue.NewYieldReq(Array.Empty<LuaValue>());
 
             await Assert.That(tuple.ToPrintString()).IsEqualTo("a\t5").ConfigureAwait(false);
 
@@ -713,8 +717,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ToPrintStringFallsBackToRefIdForTablesAndUserData()
         {
             Script script = new();
-            DynValue tableValue = DynValue.NewTable(new Table(script));
-            DynValue userData = UserData.Create(new object(), new NullStringDescriptor());
+            LuaValue tableValue = LuaValue.NewTable(new Table(script));
+            LuaValue userData = UserData.Create(new object(), new NullStringDescriptor());
 
             await Assert
                 .That(tableValue.ToPrintString())
@@ -730,10 +734,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task GetHashCodeIsStableForUnchangedValue()
         {
-            DynValue str = DynValue.NewString("hash-me");
-            DynValue integerZero = DynValue.NewInteger(0);
-            DynValue positiveZero = DynValue.NewFloat(0.0);
-            DynValue negativeZero = DynValue.NewFloat(-0.0);
+            LuaValue str = LuaValue.NewString("hash-me");
+            LuaValue integerZero = LuaValue.NewInteger(0);
+            LuaValue positiveZero = LuaValue.NewFloat(0.0);
+            LuaValue negativeZero = LuaValue.NewFloat(-0.0);
 
             int first = str.GetHashCode();
             int second = str.GetHashCode();
@@ -754,17 +758,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task GetHashCodeHandlesNilAndTupleCases()
         {
-            DynValue defaultValue = default;
-            int nilHash = DynValue.Nil.GetHashCode();
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
+            LuaValue defaultValue = default;
+            int nilHash = LuaValue.Nil.GetHashCode();
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewNumber(2));
             int tupleHash = tuple.GetHashCode();
 
             await Assert.That(defaultValue.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
-            await Assert.That(defaultValue).IsEqualTo(DynValue.Nil).ConfigureAwait(false);
-            await Assert.That(DynValue.Void.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
-            await Assert.That(DynValue.Void).IsEqualTo(DynValue.Nil).ConfigureAwait(false);
-            await Assert.That(nilHash).IsEqualTo(DynValue.Nil.GetHashCode()).ConfigureAwait(false);
-            await Assert.That(nilHash).IsEqualTo(DynValue.Void.GetHashCode()).ConfigureAwait(false);
+            await Assert.That(defaultValue).IsEqualTo(LuaValue.Nil).ConfigureAwait(false);
+            await Assert.That(LuaValue.Void.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
+            await Assert.That(LuaValue.Void).IsEqualTo(LuaValue.Nil).ConfigureAwait(false);
+            await Assert.That(nilHash).IsEqualTo(LuaValue.Nil.GetHashCode()).ConfigureAwait(false);
+            await Assert.That(nilHash).IsEqualTo(LuaValue.Void.GetHashCode()).ConfigureAwait(false);
 
             await Assert.That(tupleHash).IsEqualTo(tuple.GetHashCode()).ConfigureAwait(false);
         }
@@ -773,29 +777,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task EqualsHandlesNonDynValuesTuplesUserDataAndYieldRequests()
         {
             using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
-            DynValue alias = DynValue.NewTuple(tuple.Tuple);
-            DynValue tupleCopy = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
-            DynValue nullUserData = DynValue.NewUserData(null);
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewNumber(2));
+            LuaValue alias = LuaValue.NewTuple(tuple.Tuple);
+            LuaValue tupleCopy = LuaValue.NewTuple(LuaValue.NewNumber(1), LuaValue.NewNumber(2));
+            LuaValue nullUserData = LuaValue.NewUserData(null);
             bool createdUserData = UserData.TryCreate(
                 new SampleUserData("value"),
-                out DynValue userData
+                out LuaValue userData
             );
-            DynValue forcedYield = DynValue.NewForcedYieldReq();
-            DynValue separateForcedYield = DynValue.NewForcedYieldReq();
-            DynValue nan = DynValue.NewFloat(double.NaN);
+            LuaValue forcedYield = LuaValue.NewForcedYieldReq();
+            LuaValue separateForcedYield = LuaValue.NewForcedYieldReq();
+            LuaValue nan = LuaValue.NewFloat(double.NaN);
             Table table = new(null);
-            DynValue tableValue = DynValue.NewTable(table);
-            DynValue tableAlias = DynValue.NewTable(table);
-            DynValue separateTable = DynValue.NewTable(new Table(null));
+            LuaValue tableValue = LuaValue.NewTable(table);
+            LuaValue tableAlias = LuaValue.NewTable(table);
+            LuaValue separateTable = LuaValue.NewTable(new Table(null));
             SampleUserData managed = new("shared");
             bool createdFirstWrapper = UserData.TryCreate(
                 managed,
-                out DynValue firstManagedWrapper
+                out LuaValue firstManagedWrapper
             );
             bool createdSecondWrapper = UserData.TryCreate(
                 managed,
-                out DynValue secondManagedWrapper
+                out LuaValue secondManagedWrapper
             );
 
             await Assert.That(createdUserData).IsTrue().ConfigureAwait(false);
@@ -839,7 +843,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task ToDebugPrintStringFlattensTuples()
         {
-            DynValue tuple = DynValue.NewTuple(DynValue.NewString("x"), DynValue.NewNumber(4));
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewString("x"), LuaValue.NewNumber(4));
 
             await Assert.That(tuple.ToDebugPrintString()).IsEqualTo("x\t4").ConfigureAwait(false);
         }
@@ -847,11 +851,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task ToDebugPrintStringDisplaysTailYieldAndScalars()
         {
-            DynValue tail = DynValue.NewTailCallReq(
-                DynValue.NewCallback((_, _) => DynValue.Nil),
-                DynValue.NewNumber(9)
+            LuaValue tail = LuaValue.NewTailCallReq(
+                LuaValue.NewCallback((_, _) => LuaValue.Nil),
+                LuaValue.NewNumber(9)
             );
-            DynValue yield = DynValue.NewYieldReq(Array.Empty<DynValue>());
+            LuaValue yield = LuaValue.NewYieldReq(Array.Empty<LuaValue>());
 
             await Assert
                 .That(tail.ToDebugPrintString())
@@ -864,8 +868,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .ConfigureAwait(false);
 
             await Assert
-                .That(DynValue.True.ToDebugPrintString())
-                .IsEqualTo(DynValue.True.ToString())
+                .That(LuaValue.True.ToDebugPrintString())
+                .IsEqualTo(LuaValue.True.ToString())
                 .ConfigureAwait(false);
         }
 
@@ -873,7 +877,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task ToDebugPrintStringUsesFormatTypeStringWhenAsStringReturnsNull()
         {
             NullStringDescriptor descriptor = new();
-            DynValue userDataValue = UserData.Create(new object(), descriptor);
+            LuaValue userDataValue = UserData.Create(new object(), descriptor);
 
             string debugString = userDataValue.ToDebugPrintString();
 
@@ -883,10 +887,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task GetHashCodeHandlesBooleanValues()
         {
-            int trueHash = DynValue.True.GetHashCode();
-            int trueHash2 = DynValue.True.GetHashCode();
-            int falseHash = DynValue.False.GetHashCode();
-            int falseHash2 = DynValue.False.GetHashCode();
+            int trueHash = LuaValue.True.GetHashCode();
+            int trueHash2 = LuaValue.True.GetHashCode();
+            int falseHash = LuaValue.False.GetHashCode();
+            int falseHash2 = LuaValue.False.GetHashCode();
 
             // Same value should produce consistent hash code
             await Assert.That(trueHash).IsEqualTo(trueHash2).ConfigureAwait(false);
@@ -899,16 +903,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task IsNilOrNanDetectsNaN()
         {
-            DynValue value = DynValue.NewNumber(double.NaN);
+            LuaValue value = LuaValue.NewNumber(double.NaN);
             await Assert.That(value.IsNilOrNan()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task IsNotVoidDistinguishesVoidValues()
         {
-            await Assert.That(DynValue.Void.IsNotVoid()).IsFalse().ConfigureAwait(false);
+            await Assert.That(LuaValue.Void.IsNotVoid()).IsFalse().ConfigureAwait(false);
 
-            await Assert.That(DynValue.NewNumber(1).IsNotVoid()).IsTrue().ConfigureAwait(false);
+            await Assert.That(LuaValue.NewNumber(1).IsNotVoid()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -916,7 +920,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            DynValue tableValue = DynValue.NewTable(table);
+            LuaValue tableValue = LuaValue.NewTable(table);
 
             await Assert
                 .That(tableValue.ScriptPrivateResource)
@@ -957,20 +961,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             public bool TryIndex(
                 Script script,
                 object obj,
-                DynValue index,
+                LuaValue index,
                 bool isDirectIndexing,
-                out DynValue value
+                out LuaValue value
             )
             {
-                value = DynValue.Nil;
+                value = LuaValue.Nil;
                 return true;
             }
 
             public bool SetIndex(
                 Script script,
                 object obj,
-                DynValue index,
-                DynValue value,
+                LuaValue index,
+                LuaValue value,
                 bool isDirectIndexing
             )
             {
@@ -982,9 +986,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 return null;
             }
 
-            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
             {
-                value = DynValue.Nil;
+                value = LuaValue.Nil;
                 return false;
             }
 

@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -16,7 +17,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="enumerable">The enumerable.</param>
         /// <param name="type">The type.</param>
         public static IEnumerable<T> Convert<T>(
-            this IEnumerable<DynValue> enumerable,
+            this IEnumerable<LuaValue> enumerable,
             DataType type
         )
         {
@@ -25,7 +26,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 throw new ArgumentNullException(nameof(enumerable));
             }
 
-            foreach (DynValue value in enumerable)
+            foreach (LuaValue value in enumerable)
             {
                 if (value.Type == type)
                 {
@@ -39,8 +40,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="enumerable">The enumerable.</param>
         /// <param name="type">The script type.</param>
-        public static IEnumerable<DynValue> OfDataType(
-            this IEnumerable<DynValue> enumerable,
+        public static IEnumerable<LuaValue> OfDataType(
+            this IEnumerable<LuaValue> enumerable,
             DataType type
         )
         {
@@ -49,7 +50,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 throw new ArgumentNullException(nameof(enumerable));
             }
 
-            foreach (DynValue value in enumerable)
+            foreach (LuaValue value in enumerable)
             {
                 if (value.Type == type)
                 {
@@ -62,14 +63,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// Converts the elements to CLR objects
         /// </summary>
         /// <param name="enumerable">The enumerable.</param>
-        public static IEnumerable<object> AsObjects(this IEnumerable<DynValue> enumerable)
+        public static IEnumerable<object> AsObjects(this IEnumerable<LuaValue> enumerable)
         {
             if (enumerable == null)
             {
                 throw new ArgumentNullException(nameof(enumerable));
             }
 
-            foreach (DynValue value in enumerable)
+            foreach (LuaValue value in enumerable)
             {
                 yield return value.ToObject();
             }
@@ -80,14 +81,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <typeparam name="T">The desired type</typeparam>
         /// <param name="enumerable">The enumerable.</param>
-        public static IEnumerable<T> AsObjects<T>(this IEnumerable<DynValue> enumerable)
+        public static IEnumerable<T> AsObjects<T>(this IEnumerable<LuaValue> enumerable)
         {
             if (enumerable == null)
             {
                 throw new ArgumentNullException(nameof(enumerable));
             }
 
-            foreach (DynValue value in enumerable)
+            foreach (LuaValue value in enumerable)
             {
                 yield return value.ToObject<T>();
             }

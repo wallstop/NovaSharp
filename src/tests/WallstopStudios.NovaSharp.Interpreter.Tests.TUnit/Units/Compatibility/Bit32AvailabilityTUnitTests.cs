@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
     using System.IO;
     using System.Reflection;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -41,7 +42,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
                 new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Lua51 }
             );
 
-            DynValue result = script.DoString("return bit32 == nil");
+            LuaValue result = script.DoString("return bit32 == nil");
 
             await Assert
                 .That(result.Boolean)
@@ -61,7 +62,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
                 new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Lua52 }
             );
 
-            DynValue result = script.DoString("return type(bit32) == 'table'");
+            LuaValue result = script.DoString("return type(bit32) == 'table'");
 
             await Assert
                 .That(result.Boolean)
@@ -81,7 +82,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
                 new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Lua53 }
             );
 
-            DynValue result = script.DoString("return bit32 == nil");
+            LuaValue result = script.DoString("return bit32 == nil");
 
             await Assert
                 .That(result.Boolean)
@@ -101,7 +102,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
                 new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Lua54 }
             );
 
-            DynValue result = script.DoString("return bit32 == nil");
+            LuaValue result = script.DoString("return bit32 == nil");
 
             await Assert
                 .That(result.Boolean)
@@ -121,7 +122,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
                 new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Lua55 }
             );
 
-            DynValue result = script.DoString("return bit32 == nil");
+            LuaValue result = script.DoString("return bit32 == nil");
 
             await Assert
                 .That(result.Boolean)
@@ -141,7 +142,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
                 new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Lua52 }
             );
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local band = bit32.band(0xFF, 0x0F)
                 local bor = bit32.bor(0xF0, 0x0F)
@@ -168,7 +169,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
                 new ScriptOptions { CompatibilityVersion = version }
             );
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local a = 0xFF
                 local b = 0x0F
@@ -231,7 +232,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
                 }
             );
 
-            DynValue result = script.DoFile(fixturePath);
+            LuaValue result = script.DoFile(fixturePath);
 
             await Assert
                 .That(result.Boolean)
@@ -256,7 +257,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
                 }
             );
 
-            DynValue result = script.DoFile(fixturePath);
+            LuaValue result = script.DoFile(fixturePath);
 
             await Assert
                 .That(result.Boolean)
@@ -282,7 +283,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
                 }
             );
 
-            DynValue result = script.DoFile(fixturePath);
+            LuaValue result = script.DoFile(fixturePath);
 
             await Assert
                 .That(result.Boolean)

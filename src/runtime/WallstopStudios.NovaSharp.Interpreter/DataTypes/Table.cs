@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using global::NovaSharp;
     using Compatibility;
     using DataStructs;
     using Errors;
@@ -49,7 +50,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="owner">The owner.</param>
         /// <param name="arrayValues">The values for the "array-like" part of the table.</param>
-        public Table(Script owner, params DynValue[] arrayValues)
+        public Table(Script owner, params LuaValue[] arrayValues)
             : this(owner)
         {
             if (arrayValues == null)
@@ -59,7 +60,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             for (int i = 0; i < arrayValues.Length; i++)
             {
-                Set(DynValue.NewNumber(i + 1), arrayValues[i]);
+                SetValue(LuaValue.NewNumber(i + 1), arrayValues[i]);
             }
         }
 
@@ -146,7 +147,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public object this[params object[] keys]
         {
             get { return Get(keys).ToObject(); }
-            set { Set(keys, DynValue.FromObject(OwnerScript, value)); }
+            set { Set(keys, LuaValue.FromObject(OwnerScript, value)); }
         }
 
         /// <summary>
@@ -168,7 +169,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public object this[object key1, object key2]
         {
             get { return Get(key1, key2).ToObject(); }
-            set { Set(key1, key2, DynValue.FromObject(OwnerScript, value)); }
+            set { Set(key1, key2, LuaValue.FromObject(OwnerScript, value)); }
         }
 
         /// <summary>
@@ -191,7 +192,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public object this[object key1, object key2, object key3]
         {
             get { return Get(key1, key2, key3).ToObject(); }
-            set { Set(key1, key2, key3, DynValue.FromObject(OwnerScript, value)); }
+            set { Set(key1, key2, key3, LuaValue.FromObject(OwnerScript, value)); }
         }
 
         /// <summary>
@@ -206,12 +207,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public object this[object key]
         {
             get { return Get(key).ToObject(); }
-            set { Set(key, DynValue.FromObject(OwnerScript, value)); }
+            set { Set(key, LuaValue.FromObject(OwnerScript, value)); }
         }
 
         private static Table ResolveNextTable(Table table, object key)
         {
-            if (!table.TryRawGet(key, out DynValue value))
+            if (!table.TryRawGet(key, out LuaValue value))
             {
                 throw new ScriptRuntimeException("Key '{0}' did not point to anything", key);
             }
@@ -263,11 +264,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Append the value to the table using the next available integer index.
         /// </summary>
         /// <param name="value">The value.</param>
-        public void Append(DynValue value)
+        public void Append(LuaValue value)
         {
             this.CheckScriptOwnership(value);
             int appendKey = Length + 1;
-            bool hadPrevious = _storage.SetInt(appendKey, value, out DynValue previous);
+            bool hadPrevious = _storage.SetInt(appendKey, value, out LuaValue previous);
             OnEntryWritten(hadPrevious, previous, value, true, appendKey, appendKey);
         }
 
@@ -283,15 +284,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="isConstructorField">Whether the write came from a table constructor.</param>
         private void OnEntryWritten(
             bool hadPrevious,
-            DynValue previous,
-            DynValue value,
+            LuaValue previous,
+            LuaValue value,
             bool isNumber,
             int numericKey,
             int appendKey,
             bool isConstructorField = false
         )
         {
-            bool writesNilToMissingKey = value.IsNil() && (!hadPrevious || previous.IsNil());
+            bool writesNilToMissingKey = value.IsNil && (!hadPrevious || previous.IsNil);
             bool targetsConstructorArrayField =
                 !isConstructorField
                 && _constructorArrayLength > 0
@@ -308,7 +309,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 !isConstructorField
                 && _constructorArrayLength > 0
                 && isNumber
-                && value.IsNil()
+                && value.IsNil
                 && !hadPrevious
                 && ResolveCompatibilityVersion() != LuaCompatibilityVersion.Lua54;
             bool preservesConstructorArrayLength =
@@ -337,13 +338,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 && !preservesConstructorArrayLength
                 && _containsNilEntries
                 && value.IsNotNil()
-                && (!hadPrevious || previous.IsNil())
+                && (!hadPrevious || previous.IsNil)
             )
             {
                 CollectDeadKeys();
             }
             // If this value is nil (and we didn't collect), set that there are nil entries, and invalidate array len cache
-            else if (value.IsNil())
+            else if (value.IsNil)
             {
                 _containsNilEntries = true;
 
@@ -360,8 +361,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     // If this is an array append, let's check the next element before blindly invalidating
                     if (appendKey >= 0)
                     {
-                        bool hasNext = _storage.TryGetInt(appendKey + 1, out DynValue next);
-                        if (_cachedLength >= 0 && (!hasNext || next.IsNil()))
+                        bool hasNext = _storage.TryGetInt(appendKey + 1, out LuaValue next);
+                        if (_cachedLength >= 0 && (!hasNext || next.IsNil))
                         {
                             _cachedLength += 1;
                         }
@@ -383,7 +384,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="value">The value.</param>
-        public void Set(string key, DynValue value)
+        public void Set(string key, LuaValue value)
         {
             if (key == null)
             {
@@ -391,7 +392,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             this.CheckScriptOwnership(value);
-            bool hadPrevious = _storage.SetString(key, value, out DynValue previous);
+            bool hadPrevious = _storage.SetString(key, value, out LuaValue previous);
             OnEntryWritten(hadPrevious, previous, value, false, 0, -1);
         }
 
@@ -400,7 +401,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="value">The value.</param>
-        public void Set(int key, DynValue value)
+        public void Set(int key, LuaValue value)
         {
             this.CheckScriptOwnership(value);
 
@@ -408,13 +409,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 // Non-positive integers are not part of the array key space; route them exactly like
                 // the equivalent Lua key so host and script writes address the same entry.
-                DynValue nonPositiveKey = DynValue.FromNumber(key);
-                bool replaced = _storage.SetValue(nonPositiveKey, value, out DynValue previous);
+                LuaValue nonPositiveKey = LuaValue.FromNumber(key);
+                bool replaced = _storage.SetValue(nonPositiveKey, value, out LuaValue previous);
                 OnEntryWritten(replaced, previous, value, false, 0, -1);
                 return;
             }
 
-            bool hadPrevious = _storage.SetInt(key, value, out DynValue previousInt);
+            bool hadPrevious = _storage.SetInt(key, value, out LuaValue previousInt);
             OnEntryWritten(hadPrevious, previousInt, value, true, key, -1);
         }
 
@@ -423,11 +424,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="value">The value.</param>
-        public void Set(DynValue key, DynValue value)
+        internal void SetValue(LuaValue key, LuaValue value)
         {
             if (key.IsNilOrNan())
             {
-                if (key.IsNil())
+                if (key.IsNil)
                 {
                     throw ScriptRuntimeException.TableIndexIsNil();
                 }
@@ -457,7 +458,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             this.CheckScriptOwnership(key);
             this.CheckScriptOwnership(value);
 
-            bool hadPrevious = _storage.SetValue(key, value, out DynValue previous);
+            bool hadPrevious = _storage.SetValue(key, value, out LuaValue previous);
             OnEntryWritten(hadPrevious, previous, value, false, 0, -1);
         }
 
@@ -466,25 +467,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="value">The value.</param>
-        public void Set(object key, DynValue value)
+        public void Set(object key, LuaValue value)
         {
             if (key == null)
             {
                 throw ScriptRuntimeException.TableIndexIsNil();
             }
 
-            switch (key)
-            {
-                case string s:
-                    Set(s, value);
-                    break;
-                case int i:
-                    Set(i, value);
-                    break;
-                default:
-                    Set(DynValue.FromObject(OwnerScript, key), value);
-                    break;
-            }
+            SetValue(LuaValue.FromObject(OwnerScript, key), value);
         }
 
         /// <summary>
@@ -493,7 +483,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="keys">The keys.</param>
         /// <param name="value">The value.</param>
-        public void Set(object[] keys, DynValue value)
+        public void Set(object[] keys, LuaValue value)
         {
             if (keys == null || keys.Length == 0)
             {
@@ -509,7 +499,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="keys">The keys to access the table and subtables.</param>
         /// <param name="value">The value.</param>
-        public void Set(ReadOnlySpan<object> keys, DynValue value)
+        public void Set(ReadOnlySpan<object> keys, LuaValue value)
         {
             if (keys.Length == 0)
             {
@@ -526,7 +516,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key1">The key used to locate the nested table.</param>
         /// <param name="key2">The key to set in the nested table.</param>
         /// <param name="value">The value.</param>
-        public void Set(object key1, object key2, DynValue value)
+        public void Set(object key1, object key2, LuaValue value)
         {
             ResolveNestedKeys(key1, key2, out object key).Set(key, value);
         }
@@ -539,7 +529,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key2">The second key used to locate the nested table.</param>
         /// <param name="key3">The key to set in the nested table.</param>
         /// <param name="value">The value.</param>
-        public void Set(object key1, object key2, object key3, DynValue value)
+        public void Set(object key1, object key2, object key3, LuaValue value)
         {
             ResolveNestedKeys(key1, key2, key3, out object key).Set(key, value);
         }
@@ -548,30 +538,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Gets the value associated with the specified key.
         /// </summary>
         /// <param name="key">The key.</param>
-        public DynValue Get(string key)
+        public LuaValue Get(string key)
         {
-            //Contract.Ensures(Contract.Result<DynValue>() != null);
-            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
+            //Contract.Ensures(Contract.Result<LuaValue>() != null);
+            return TryRawGet(key, out LuaValue value) ? value : LuaValue.Nil;
         }
 
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
         /// <param name="key">The key.</param>
-        public DynValue Get(int key)
+        public LuaValue Get(int key)
         {
-            //Contract.Ensures(Contract.Result<DynValue>() != null);
-            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
+            //Contract.Ensures(Contract.Result<LuaValue>() != null);
+            return TryRawGet(key, out LuaValue value) ? value : LuaValue.Nil;
         }
 
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
         /// <param name="key">The key.</param>
-        public DynValue Get(DynValue key)
+        internal LuaValue GetValue(LuaValue key)
         {
-            //Contract.Ensures(Contract.Result<DynValue>() != null);
-            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
+            //Contract.Ensures(Contract.Result<LuaValue>() != null);
+            return TryRawGetValue(key, out LuaValue value) ? value : LuaValue.Nil;
         }
 
         /// <summary>
@@ -579,10 +569,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// (expressed as a <see cref="System.Object"/>).
         /// </summary>
         /// <param name="key">The key.</param>
-        public DynValue Get(object key)
+        public LuaValue Get(object key)
         {
-            //Contract.Ensures(Contract.Result<DynValue>() != null);
-            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
+            //Contract.Ensures(Contract.Result<LuaValue>() != null);
+            return TryRawGet(key, out LuaValue value) ? value : LuaValue.Nil;
         }
 
         /// <summary>
@@ -591,11 +581,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="value">The stored value, or nil when the key is absent.</param>
-        public bool TryRawGet(string key, out DynValue value)
+        public bool TryRawGet(string key, out LuaValue value)
         {
             if (key == null)
             {
-                value = DynValue.Nil;
+                value = LuaValue.Nil;
                 return false;
             }
 
@@ -608,11 +598,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="value">The stored value, or nil when the key is absent.</param>
-        public bool TryRawGet(int key, out DynValue value)
+        public bool TryRawGet(int key, out LuaValue value)
         {
             return key > 0
                 ? _storage.TryGetInt(key, out value)
-                : _storage.TryGetValue(DynValue.FromNumber(key), out value);
+                : _storage.TryGetValue(LuaValue.FromNumber(key), out value);
         }
 
         /// <summary>
@@ -621,7 +611,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="value">The stored value, or nil when the key is absent.</param>
-        public bool TryRawGet(DynValue key, out DynValue value)
+        internal bool TryRawGetValue(LuaValue key, out LuaValue value)
         {
             switch (key.Type)
             {
@@ -648,20 +638,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="value">The stored value, or nil when the key is absent.</param>
-        public bool TryRawGet(object key, out DynValue value)
+        public bool TryRawGet(object key, out LuaValue value)
         {
-            switch (key)
+            if (key == null)
             {
-                case null:
-                    value = DynValue.Nil;
-                    return false;
-                case string text:
-                    return TryRawGet(text, out value);
-                case int integer:
-                    return TryRawGet(integer, out value);
-                default:
-                    return TryRawGet(DynValue.FromObject(OwnerScript, key), out value);
+                value = LuaValue.Nil;
+                return false;
             }
+
+            return TryRawGetValue(LuaValue.FromObject(OwnerScript, key), out value);
         }
 
         /// <summary>
@@ -671,9 +656,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Multiple keys can be used to access subtables.
         /// </summary>
         /// <param name="keys">The keys to access the table and subtables</param>
-        public DynValue Get(params object[] keys)
+        public LuaValue Get(params object[] keys)
         {
-            //Contract.Ensures(Contract.Result<DynValue>() != null);
+            //Contract.Ensures(Contract.Result<LuaValue>() != null);
             return RawGet(keys);
         }
 
@@ -683,9 +668,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Multiple keys can be used to access subtables.
         /// </summary>
         /// <param name="keys">The keys to access the table and subtables.</param>
-        public DynValue Get(ReadOnlySpan<object> keys)
+        public LuaValue Get(ReadOnlySpan<object> keys)
         {
-            //Contract.Ensures(Contract.Result<DynValue>() != null);
+            //Contract.Ensures(Contract.Result<LuaValue>() != null);
             return RawGet(keys);
         }
 
@@ -696,9 +681,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="key1">The key used to locate the nested table.</param>
         /// <param name="key2">The key to access in the nested table.</param>
-        public DynValue Get(object key1, object key2)
+        public LuaValue Get(object key1, object key2)
         {
-            //Contract.Ensures(Contract.Result<DynValue>() != null);
+            //Contract.Ensures(Contract.Result<LuaValue>() != null);
             return RawGet(key1, key2);
         }
 
@@ -710,9 +695,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key1">The first key used to locate the nested table.</param>
         /// <param name="key2">The second key used to locate the nested table.</param>
         /// <param name="key3">The key to access in the nested table.</param>
-        public DynValue Get(object key1, object key2, object key3)
+        public LuaValue Get(object key1, object key2, object key3)
         {
-            //Contract.Ensures(Contract.Result<DynValue>() != null);
+            //Contract.Ensures(Contract.Result<LuaValue>() != null);
             return RawGet(key1, key2, key3);
         }
 
@@ -721,9 +706,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// without bringing to Nil the non-existent values.
         /// </summary>
         /// <param name="key">The key.</param>
-        public DynValue RawGet(string key)
+        public LuaValue RawGet(string key)
         {
-            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
+            return TryRawGet(key, out LuaValue value) ? value : LuaValue.Nil;
         }
 
         /// <summary>
@@ -731,9 +716,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// without bringing to Nil the non-existent values.
         /// </summary>
         /// <param name="key">The key.</param>
-        public DynValue RawGet(int key)
+        public LuaValue RawGet(int key)
         {
-            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
+            return TryRawGet(key, out LuaValue value) ? value : LuaValue.Nil;
         }
 
         /// <summary>
@@ -741,9 +726,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// without bringing to Nil the non-existent values.
         /// </summary>
         /// <param name="key">The key.</param>
-        public DynValue RawGet(DynValue key)
+        internal LuaValue RawGetValue(LuaValue key)
         {
-            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
+            return TryRawGetValue(key, out LuaValue value) ? value : LuaValue.Nil;
         }
 
         /// <summary>
@@ -751,9 +736,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// without bringing to Nil the non-existent values.
         /// </summary>
         /// <param name="key">The key.</param>
-        public DynValue RawGet(object key)
+        public LuaValue RawGet(object key)
         {
-            return TryRawGet(key, out DynValue value) ? value : DynValue.Nil;
+            return TryRawGet(key, out LuaValue value) ? value : LuaValue.Nil;
         }
 
         /// <summary>
@@ -763,11 +748,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Multiple keys can be used to access subtables.
         /// </summary>
         /// <param name="keys">The keys to access the table and subtables</param>
-        public DynValue RawGet(params object[] keys)
+        public LuaValue RawGet(params object[] keys)
         {
             if (keys == null || keys.Length == 0)
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
 
             return ResolveMultipleKeys(keys, out object key).RawGet(key);
@@ -778,11 +763,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// without bringing to Nil the non-existent values.
         /// </summary>
         /// <param name="keys">The keys to access the table and subtables.</param>
-        public DynValue RawGet(ReadOnlySpan<object> keys)
+        public LuaValue RawGet(ReadOnlySpan<object> keys)
         {
             if (keys.Length == 0)
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
 
             return ResolveMultipleKeys(keys, out object key).RawGet(key);
@@ -794,7 +779,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="key1">The key used to locate the nested table.</param>
         /// <param name="key2">The key to access in the nested table.</param>
-        public DynValue RawGet(object key1, object key2)
+        public LuaValue RawGet(object key1, object key2)
         {
             return ResolveNestedKeys(key1, key2, out object key).RawGet(key);
         }
@@ -806,7 +791,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key1">The first key used to locate the nested table.</param>
         /// <param name="key2">The second key used to locate the nested table.</param>
         /// <param name="key3">The key to access in the nested table.</param>
-        public DynValue RawGet(object key1, object key2, object key3)
+        public LuaValue RawGet(object key1, object key2, object key3)
         {
             return ResolveNestedKeys(key1, key2, key3, out object key).RawGet(key);
         }
@@ -857,11 +842,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public bool Remove(int key)
         {
             // Non-positive keys are not part of the array key space, so they route -- and report --
-            // exactly as Set(int) and Remove(DynValue) do for the same key.
+            // exactly as Set(int) and RemoveValue(LuaValue) do for the same key.
             bool isArrayKey = key > 0;
             bool removed = isArrayKey
                 ? _storage.RemoveInt(key)
-                : _storage.RemoveValue(DynValue.FromNumber(key));
+                : _storage.RemoveValue(LuaValue.FromNumber(key));
             return OnEntryRemoved(removed, isArrayKey);
         }
 
@@ -870,7 +855,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="key">The key.</param>
         /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
-        public bool Remove(DynValue key)
+        internal bool RemoveValue(LuaValue key)
         {
             switch (key.Type)
             {
@@ -898,12 +883,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
         public bool Remove(object key)
         {
-            return key switch
-            {
-                string s => Remove(s),
-                int i => Remove(i),
-                _ => Remove(DynValue.FromObject(OwnerScript, key)),
-            };
+            return key != null && RemoveValue(LuaValue.FromObject(OwnerScript, key));
         }
 
         /// <summary>
@@ -980,11 +960,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// The next non-nil pair, <see cref="TablePair.Nil"/> once the traversal is exhausted, or
         /// <c>null</c> when <paramref name="v"/> is not a key of this table.
         /// </returns>
-        public TablePair? NextKey(DynValue v)
+        public TablePair? NextKey(LuaValue v)
         {
             int arrayIndex;
             int nodeIndex;
-            if (v.IsNil())
+            if (v.IsNil)
             {
                 arrayIndex = 0;
                 nodeIndex = 0;
@@ -1007,7 +987,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Resolves the traversal cursor that sits immediately after <paramref name="key"/>.
         /// </summary>
-        private bool TryLocateKey(DynValue key, out int arrayIndex, out int nodeIndex)
+        private bool TryLocateKey(LuaValue key, out int arrayIndex, out int nodeIndex)
         {
             switch (key.Type)
             {
@@ -1133,17 +1113,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return false;
             }
 
-            return _storage.TryGetInt(index, out DynValue value) && value.IsNotNil();
+            return _storage.TryGetInt(index, out LuaValue value) && value.IsNotNil();
         }
 
         /// <summary>
         /// Initializes a keyed field while a table constructor is still being evaluated.
         /// </summary>
-        internal void InitNextKey(DynValue key, DynValue value)
+        internal void InitNextKey(LuaValue key, LuaValue value)
         {
             if (key.IsNilOrNan())
             {
-                if (key.IsNil())
+                if (key.IsNil)
                 {
                     throw ScriptRuntimeException.TableIndexIsNil();
                 }
@@ -1159,7 +1139,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 bool hadPrevious = _storage.SetString(
                     key.String,
                     value,
-                    out DynValue previousString
+                    out LuaValue previousString
                 );
                 OnEntryWritten(
                     hadPrevious,
@@ -1180,7 +1160,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 if (idx > 0)
                 {
                     this.CheckScriptOwnership(value);
-                    bool hadPrevious = _storage.SetInt(idx, value, out DynValue previousInt);
+                    bool hadPrevious = _storage.SetInt(idx, value, out LuaValue previousInt);
                     OnEntryWritten(
                         hadPrevious,
                         previousInt,
@@ -1198,28 +1178,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             this.CheckScriptOwnership(key);
             this.CheckScriptOwnership(value);
 
-            bool replaced = _storage.SetValue(key, value, out DynValue previous);
+            bool replaced = _storage.SetValue(key, value, out LuaValue previous);
             OnEntryWritten(replaced, previous, value, false, 0, -1, isConstructorField: true);
         }
 
         /// <summary>
         /// Initializes the hidden array iteration keys used by `next`/`ipairs` while inserting complex values (tables/functions).
         /// </summary>
-        internal void InitNextArrayKeys(DynValue val, bool lastPosition)
+        internal void InitNextArrayKeys(LuaValue val, bool lastPosition)
         {
             if (val.Type == DataType.Tuple && lastPosition)
             {
-                foreach (DynValue v in val.Tuple)
+                foreach (LuaValue v in val.Tuple)
                 {
                     InitNextArrayKeys(v, true);
                 }
             }
             else
             {
-                DynValue value = val.ToScalar();
+                LuaValue value = val.ToScalar();
                 this.CheckScriptOwnership(value);
                 _initArray++;
-                bool hadPrevious = _storage.SetInt(_initArray, value, out DynValue previous);
+                bool hadPrevious = _storage.SetInt(_initArray, value, out LuaValue previous);
                 OnEntryWritten(
                     hadPrevious,
                     previous,
@@ -1271,13 +1251,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Enumerates the keys.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<DynValue> Keys => EnumerateKeys();
+        public IEnumerable<LuaValue> Keys => EnumerateKeys();
 
         /// <summary>
         /// Enumerates the values
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<DynValue> Values => EnumerateValues();
+        public IEnumerable<LuaValue> Values => EnumerateValues();
 
         private IEnumerable<TablePair> EnumeratePairs()
         {
@@ -1289,7 +1269,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
         }
 
-        private IEnumerable<DynValue> EnumerateKeys()
+        private IEnumerable<LuaValue> EnumerateKeys()
         {
             int arrayIndex = 0;
             int nodeIndex = 0;
@@ -1299,7 +1279,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
         }
 
-        private IEnumerable<DynValue> EnumerateValues()
+        private IEnumerable<LuaValue> EnumerateValues()
         {
             int arrayIndex = 0;
             int nodeIndex = 0;
@@ -1398,7 +1378,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="destination">The span to fill.</param>
         /// <returns>The number of keys written to the span.</returns>
-        public int FillKeys(Span<DynValue> destination)
+        public int FillKeys(Span<LuaValue> destination)
         {
             int index = 0;
             int arrayIndex = 0;
@@ -1418,7 +1398,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="destination">The span to fill.</param>
         /// <returns>The number of values written to the span.</returns>
-        public int FillValues(Span<DynValue> destination)
+        public int FillValues(Span<LuaValue> destination)
         {
             int index = 0;
             int arrayIndex = 0;
@@ -1464,7 +1444,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="destination">The collection to fill.</param>
         /// <returns>The collection for fluent chaining.</returns>
         public TCollection FillKeys<TCollection>(TCollection destination)
-            where TCollection : ICollection<DynValue>
+            where TCollection : ICollection<LuaValue>
         {
             if (destination == null)
             {
@@ -1488,7 +1468,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="destination">The collection to fill.</param>
         /// <returns>The collection for fluent chaining.</returns>
         public TCollection FillValues<TCollection>(TCollection destination)
-            where TCollection : ICollection<DynValue>
+            where TCollection : ICollection<LuaValue>
         {
             if (destination == null)
             {

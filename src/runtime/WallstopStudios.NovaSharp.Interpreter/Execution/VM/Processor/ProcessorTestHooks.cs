@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
@@ -22,7 +23,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Exposes the value stack for assertions.
         /// </summary>
-        internal FastStack<DynValue> GetValueStackForTests()
+        internal FastStack<LuaValue> GetValueStackForTests()
         {
             return _valueStack;
         }
@@ -128,7 +129,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Wraps <see cref="StackTopToArray"/> so tests can inspect the stack.
         /// </summary>
-        internal DynValue[] StackTopToArrayForTests(int items, bool pop)
+        internal LuaValue[] StackTopToArrayForTests(int items, bool pop)
         {
             return StackTopToArray(items, pop);
         }
@@ -136,7 +137,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Wraps <see cref="StackTopToArrayReverse"/> so tests can inspect the stack.
         /// </summary>
-        internal DynValue[] StackTopToArrayReverseForTests(int items, bool pop)
+        internal LuaValue[] StackTopToArrayReverseForTests(int items, bool pop)
         {
             return StackTopToArrayReverse(items, pop);
         }
@@ -187,7 +188,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         internal void CloseSymbolsSubsetForTests(
             CallStackItem frame,
             SymbolRef[] symbols,
-            DynValue errorValue
+            LuaValue errorValue
         )
         {
             CloseSymbolsSubset(frame, symbols, errorValue, instructionPtr: -1);
@@ -204,7 +205,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Wraps <see cref="ProcessorScope.GetGlobalSymbol"/> for tests.
         /// </summary>
-        internal static DynValue GetGlobalSymbolForTests(DynValue env, string name)
+        internal static LuaValue GetGlobalSymbolForTests(LuaValue env, string name)
         {
             return GetGlobalSymbol(env, name);
         }
@@ -212,7 +213,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Wraps <see cref="ProcessorScope.SetGlobalSymbol"/> for tests.
         /// </summary>
-        internal static void SetGlobalSymbolForTests(DynValue env, string name, DynValue value)
+        internal static void SetGlobalSymbolForTests(LuaValue env, string name, LuaValue value)
         {
             SetGlobalSymbol(env, name, value);
         }
@@ -220,7 +221,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Wraps the tuple-adjustment helper for tests.
         /// </summary>
-        internal static DynValue[] InternalAdjustTupleForTests(IList<DynValue> values)
+        internal static LuaValue[] InternalAdjustTupleForTests(IList<LuaValue> values)
         {
             return InternalAdjustTuple(values);
         }

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Hardwire.Utils
     using System;
     using System.CodeDom;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
@@ -99,7 +100,7 @@ namespace WallstopStudios.NovaSharp.Hardwire.Utils
 
             for (int i = 1; i <= t.Length; i++)
             {
-                DynValue entry = t.Get(i);
+                LuaValue entry = t.Get(i);
                 if (entry.Type != DataType.Table)
                 {
                     throw new ArgumentException($"Entry at index {i} is not a table.", nameof(t));

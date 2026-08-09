@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Globalization;
+    using global::NovaSharp;
     using Interop.BasicDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
@@ -85,22 +86,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// <param name="l">The left operand.</param>
         /// <returns>The exception to be raised.</returns>
         /// <exception cref="InternalErrorException">If both are numbers</exception>
-        public static ScriptRuntimeException ArithmeticOnNonNumber(DynValue l)
+        public static ScriptRuntimeException ArithmeticOnNonNumber(LuaValue l)
         {
-            return ArithmeticOnNonNumber(l, DynValue.Nil, hasRightOperand: false);
+            return ArithmeticOnNonNumber(l, LuaValue.Nil, hasRightOperand: false);
         }
 
         /// <summary>
         /// Creates an arithmetic type error for a binary operation.
         /// </summary>
-        public static ScriptRuntimeException ArithmeticOnNonNumber(DynValue l, DynValue r)
+        public static ScriptRuntimeException ArithmeticOnNonNumber(LuaValue l, LuaValue r)
         {
             return ArithmeticOnNonNumber(l, r, hasRightOperand: true);
         }
 
         private static ScriptRuntimeException ArithmeticOnNonNumber(
-            DynValue l,
-            DynValue r,
+            LuaValue l,
+            LuaValue r,
             bool hasRightOperand
         )
         {
@@ -133,7 +134,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// <summary>
         /// Creates a ScriptRuntimeException specifying that a bitwise operation received a non-integer operand.
         /// </summary>
-        public static ScriptRuntimeException BitwiseOnNonInteger(DynValue value)
+        public static ScriptRuntimeException BitwiseOnNonInteger(LuaValue value)
         {
             string descriptor = value.Type switch
             {
@@ -156,7 +157,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// <param name="r">The right operand.</param>
         /// <returns>The exception to be raised.</returns>
         /// <exception cref="InternalErrorException">If both are numbers or strings</exception>
-        public static ScriptRuntimeException ConcatOnNonString(DynValue l, DynValue r)
+        public static ScriptRuntimeException ConcatOnNonString(LuaValue l, LuaValue r)
         {
             if (l.Type != DataType.Number && l.Type != DataType.String)
             {
@@ -184,7 +185,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// </summary>
         /// <param name="r">The operand.</param>
         /// <returns>The exception to be raised.</returns>
-        public static ScriptRuntimeException LenOnInvalidType(DynValue r)
+        public static ScriptRuntimeException LenOnInvalidType(LuaValue r)
         {
             return new ScriptRuntimeException(
                 "attempt to get length of a {0} value",
@@ -199,7 +200,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// <param name="l">The left operand.</param>
         /// <param name="r">The right operand.</param>
         /// <returns>The exception to be raised.</returns>
-        public static ScriptRuntimeException CompareInvalidType(DynValue l, DynValue r)
+        public static ScriptRuntimeException CompareInvalidType(LuaValue l, LuaValue r)
         {
             if (l.Type.ToLuaTypeString() == r.Type.ToLuaTypeString())
             {
@@ -430,7 +431,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// The exception to be raised.
         /// </returns>
         public static ScriptRuntimeException IndexType(
-            DynValue obj,
+            LuaValue obj,
             string variableDescription = null
         )
         {
@@ -503,7 +504,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// </summary>
         /// <param name="value">Value associated with the <c>__close</c> lookup.</param>
         /// <returns>The exception to be raised.</returns>
-        public static ScriptRuntimeException CloseMetamethodExpected(DynValue value)
+        public static ScriptRuntimeException CloseMetamethodExpected(LuaValue value)
         {
             string typeName = value.Type.ToLuaTypeString();
             return new ScriptRuntimeException("__close metamethod expected (got {0})", typeName);

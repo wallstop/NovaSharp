@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
 
@@ -62,7 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets a read-only view of the captured upvalues for this closure.
         /// </summary>
-        public IReadOnlyList<DynValue> Context
+        public IReadOnlyList<LuaValue> Context
         {
             get { return ClosureContext; }
         }
@@ -128,7 +129,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="script">The script.</param>
         /// <param name="idx">The bytecode entry point index.</param>
         /// <param name="environmentValue">The initial environment value for this closure.</param>
-        internal Closure(Script script, int idx, DynValue environmentValue)
+        internal Closure(Script script, int idx, LuaValue environmentValue)
         {
             OwnerScript = script;
             EntryPointByteCodeLocation = idx;
@@ -155,9 +156,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call()
+        public LuaValue Call()
         {
-            return OwnerScript.Call(DynValue.FromClosure(this));
+            return OwnerScript.CallValues(LuaValue.FromClosure(this));
         }
 
         /// <summary>
@@ -166,9 +167,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg">The argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(object arg)
+        public LuaValue Call(object arg)
         {
-            return OwnerScript.Call(this, arg);
+            return OwnerScript.CallObjectArgumentsCore(LuaValue.FromClosure(this), arg);
         }
 
         /// <summary>
@@ -178,9 +179,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg2">The second argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(object arg1, object arg2)
+        public LuaValue Call(object arg1, object arg2)
         {
-            return OwnerScript.Call(this, arg1, arg2);
+            return OwnerScript.CallObjectArgumentsCore(LuaValue.FromClosure(this), arg1, arg2);
         }
 
         /// <summary>
@@ -191,9 +192,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg3">The third argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(object arg1, object arg2, object arg3)
+        public LuaValue Call(object arg1, object arg2, object arg3)
         {
-            return OwnerScript.Call(this, arg1, arg2, arg3);
+            return OwnerScript.CallObjectArgumentsCore(
+                LuaValue.FromClosure(this),
+                arg1,
+                arg2,
+                arg3
+            );
         }
 
         /// <summary>
@@ -205,9 +211,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg4">The fourth argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(object arg1, object arg2, object arg3, object arg4)
+        public LuaValue Call(object arg1, object arg2, object arg3, object arg4)
         {
-            return OwnerScript.Call(this, arg1, arg2, arg3, arg4);
+            return OwnerScript.CallObjectArgumentsCore(
+                LuaValue.FromClosure(this),
+                arg1,
+                arg2,
+                arg3,
+                arg4
+            );
         }
 
         /// <summary>
@@ -220,9 +232,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg5">The fifth argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(object arg1, object arg2, object arg3, object arg4, object arg5)
+        public LuaValue Call(object arg1, object arg2, object arg3, object arg4, object arg5)
         {
-            return OwnerScript.Call(this, arg1, arg2, arg3, arg4, arg5);
+            return OwnerScript.CallObjectArgumentsCore(
+                LuaValue.FromClosure(this),
+                arg1,
+                arg2,
+                arg3,
+                arg4,
+                arg5
+            );
         }
 
         /// <summary>
@@ -236,7 +255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg6">The sixth argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
+        public LuaValue Call(
             object arg1,
             object arg2,
             object arg3,
@@ -245,7 +264,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             object arg6
         )
         {
-            return OwnerScript.Call(this, arg1, arg2, arg3, arg4, arg5, arg6);
+            return OwnerScript.CallObjectArgumentsCore(
+                LuaValue.FromClosure(this),
+                arg1,
+                arg2,
+                arg3,
+                arg4,
+                arg5,
+                arg6
+            );
         }
 
         /// <summary>
@@ -260,7 +287,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg7">The seventh argument to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
+        public LuaValue Call(
             object arg1,
             object arg2,
             object arg3,
@@ -270,127 +297,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             object arg7
         )
         {
-            return OwnerScript.Call(this, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
-        }
-
-        /// <summary>
-        /// Calls this function with one pre-created DynValue argument.
-        /// </summary>
-        /// <param name="arg">The argument to pass to the function.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue arg)
-        {
-            return OwnerScript.Call(DynValue.FromClosure(this), arg);
-        }
-
-        /// <summary>
-        /// Calls this function with two pre-created DynValue arguments.
-        /// </summary>
-        /// <param name="arg1">The first argument to pass to the function.</param>
-        /// <param name="arg2">The second argument to pass to the function.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue arg1, DynValue arg2)
-        {
-            return OwnerScript.Call(DynValue.FromClosure(this), arg1, arg2);
-        }
-
-        /// <summary>
-        /// Calls this function with three pre-created DynValue arguments.
-        /// </summary>
-        /// <param name="arg1">The first argument to pass to the function.</param>
-        /// <param name="arg2">The second argument to pass to the function.</param>
-        /// <param name="arg3">The third argument to pass to the function.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue arg1, DynValue arg2, DynValue arg3)
-        {
-            return OwnerScript.Call(DynValue.FromClosure(this), arg1, arg2, arg3);
-        }
-
-        /// <summary>
-        /// Calls this function with four pre-created DynValue arguments.
-        /// </summary>
-        /// <param name="arg1">The first argument to pass to the function.</param>
-        /// <param name="arg2">The second argument to pass to the function.</param>
-        /// <param name="arg3">The third argument to pass to the function.</param>
-        /// <param name="arg4">The fourth argument to pass to the function.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
-        {
-            return OwnerScript.Call(DynValue.FromClosure(this), arg1, arg2, arg3, arg4);
-        }
-
-        /// <summary>
-        /// Calls this function with five pre-created DynValue arguments.
-        /// </summary>
-        /// <param name="arg1">The first argument to pass to the function.</param>
-        /// <param name="arg2">The second argument to pass to the function.</param>
-        /// <param name="arg3">The third argument to pass to the function.</param>
-        /// <param name="arg4">The fourth argument to pass to the function.</param>
-        /// <param name="arg5">The fifth argument to pass to the function.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
-        )
-        {
-            return OwnerScript.Call(DynValue.FromClosure(this), arg1, arg2, arg3, arg4, arg5);
-        }
-
-        /// <summary>
-        /// Calls this function with six pre-created DynValue arguments.
-        /// </summary>
-        /// <param name="arg1">The first argument to pass to the function.</param>
-        /// <param name="arg2">The second argument to pass to the function.</param>
-        /// <param name="arg3">The third argument to pass to the function.</param>
-        /// <param name="arg4">The fourth argument to pass to the function.</param>
-        /// <param name="arg5">The fifth argument to pass to the function.</param>
-        /// <param name="arg6">The sixth argument to pass to the function.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
-        )
-        {
-            return OwnerScript.Call(DynValue.FromClosure(this), arg1, arg2, arg3, arg4, arg5, arg6);
-        }
-
-        /// <summary>
-        /// Calls this function with seven pre-created DynValue arguments.
-        /// </summary>
-        /// <param name="arg1">The first argument to pass to the function.</param>
-        /// <param name="arg2">The second argument to pass to the function.</param>
-        /// <param name="arg3">The third argument to pass to the function.</param>
-        /// <param name="arg4">The fourth argument to pass to the function.</param>
-        /// <param name="arg5">The fifth argument to pass to the function.</param>
-        /// <param name="arg6">The sixth argument to pass to the function.</param>
-        /// <param name="arg7">The seventh argument to pass to the function.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
-        )
-        {
-            return OwnerScript.Call(
-                DynValue.FromClosure(this),
+            return OwnerScript.CallObjectArgumentsCore(
+                LuaValue.FromClosure(this),
                 arg1,
                 arg2,
                 arg3,
@@ -402,14 +310,155 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Calls this function with caller-owned contiguous DynValue arguments.
+        /// Calls this function with one pre-created LuaValue argument.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        internal LuaValue CallValues(LuaValue arg)
+        {
+            return OwnerScript.CallValues(LuaValue.FromClosure(this), arg);
+        }
+
+        /// <summary>
+        /// Calls this function with two pre-created LuaValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        internal LuaValue CallValues(LuaValue arg1, LuaValue arg2)
+        {
+            return OwnerScript.CallValues(LuaValue.FromClosure(this), arg1, arg2);
+        }
+
+        /// <summary>
+        /// Calls this function with three pre-created LuaValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        internal LuaValue CallValues(LuaValue arg1, LuaValue arg2, LuaValue arg3)
+        {
+            return OwnerScript.CallValues(LuaValue.FromClosure(this), arg1, arg2, arg3);
+        }
+
+        /// <summary>
+        /// Calls this function with four pre-created LuaValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        internal LuaValue CallValues(LuaValue arg1, LuaValue arg2, LuaValue arg3, LuaValue arg4)
+        {
+            return OwnerScript.CallValues(LuaValue.FromClosure(this), arg1, arg2, arg3, arg4);
+        }
+
+        /// <summary>
+        /// Calls this function with five pre-created LuaValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        internal LuaValue CallValues(
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
+        )
+        {
+            return OwnerScript.CallValues(LuaValue.FromClosure(this), arg1, arg2, arg3, arg4, arg5);
+        }
+
+        /// <summary>
+        /// Calls this function with six pre-created LuaValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <param name="arg6">The sixth argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        internal LuaValue CallValues(
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
+        )
+        {
+            return OwnerScript.CallValues(
+                LuaValue.FromClosure(this),
+                arg1,
+                arg2,
+                arg3,
+                arg4,
+                arg5,
+                arg6
+            );
+        }
+
+        /// <summary>
+        /// Calls this function with seven pre-created LuaValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <param name="arg6">The sixth argument to pass to the function.</param>
+        /// <param name="arg7">The seventh argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        internal LuaValue CallValues(
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
+        )
+        {
+            return OwnerScript.CallValues(
+                LuaValue.FromClosure(this),
+                arg1,
+                arg2,
+                arg3,
+                arg4,
+                arg5,
+                arg6,
+                arg7
+            );
+        }
+
+        /// <summary>
+        /// Calls this function with caller-owned contiguous LuaValue arguments.
         /// </summary>
         /// <param name="args">The arguments to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(ReadOnlySpan<DynValue> args)
+        public LuaValue Call(ReadOnlySpan<LuaValue> args)
         {
-            return OwnerScript.Call(DynValue.FromClosure(this), args);
+            return CallValues(args);
+        }
+
+        internal LuaValue CallValues(ReadOnlySpan<LuaValue> args)
+        {
+            return OwnerScript.CallValues(LuaValue.FromClosure(this), args);
         }
 
         /// <summary>
@@ -418,7 +467,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="args">The arguments to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
-        public DynValue CallObjectArguments(object[] args)
+        public LuaValue CallObjectArguments(object[] args)
         {
             if (args == null)
             {
@@ -434,9 +483,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="args">The arguments to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
-        public DynValue CallObjectArguments(ReadOnlySpan<object> args)
+        public LuaValue CallObjectArguments(ReadOnlySpan<object> args)
         {
-            return OwnerScript.CallObjectArguments(DynValue.FromClosure(this), args);
+            return OwnerScript.CallObjectArgumentsCore(LuaValue.FromClosure(this), args);
         }
 
         /// <summary>
@@ -445,9 +494,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="args">The arguments to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(params object[] args)
+        public LuaValue Call(params object[] args)
         {
-            return OwnerScript.Call(this, args);
+            return OwnerScript.CallObjectArgumentsCore(LuaValue.FromClosure(this), args);
         }
 
         /// <summary>
@@ -456,14 +505,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="args">The arguments to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public DynValue Call(params DynValue[] args)
+        public LuaValue Call(LuaValue[] args)
         {
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
             }
 
-            return OwnerScript.Call(DynValue.FromClosure(this), args);
+            return CallValues(args.AsSpan());
         }
 
         /// <summary>
@@ -505,11 +554,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Gets the current value of an upvalue.
-        /// To set the value, use <see cref="SetUpValue(int, DynValue)"/>.
+        /// To set the value, use <see cref="SetUpValue(int, LuaValue)"/>.
         /// </summary>
         /// <param name="idx">The index of the upvalue.</param>
         /// <returns>The upvalue value.</returns>
-        public DynValue GetUpValue(int idx)
+        public LuaValue GetUpValue(int idx)
         {
             return ClosureContext[idx];
         }
@@ -520,7 +569,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="idx">The index of the upvalue.</param>
         /// <param name="value">The value to assign to the upvalue.</param>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if idx is out of range.</exception>
-        public void SetUpValue(int idx, DynValue value)
+        public void SetUpValue(int idx, LuaValue value)
         {
             if (idx < 0 || idx >= ClosureContext.Count)
             {

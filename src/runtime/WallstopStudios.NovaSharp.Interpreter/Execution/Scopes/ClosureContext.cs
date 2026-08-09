@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -12,7 +13,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
     /// Upvalues are stored as <see cref="ValueSlot"/> cells so that captured locals keep sharing a
     /// single mutable identity while the values they hold stay immutable and allocation-free to read.
     /// </remarks>
-    internal sealed class ClosureContext : IReadOnlyList<DynValue>
+    internal sealed class ClosureContext : IReadOnlyList<LuaValue>
     {
         private static readonly IReadOnlyList<string> EnvironmentSymbols = Array.AsReadOnly(
             new[] { WellKnownSymbols.ENV }
@@ -38,7 +39,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// <summary>
         /// Gets the current value of an upvalue.
         /// </summary>
-        public DynValue this[int index]
+        public LuaValue this[int index]
         {
             get { return GetSlot(index).Value; }
         }
@@ -122,7 +123,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// Initializes a new instance of the <see cref="ClosureContext"/> class for a single _ENV upvalue.
         /// </summary>
         /// <param name="environmentValue">The initial environment value for this closure.</param>
-        internal ClosureContext(DynValue environmentValue)
+        internal ClosureContext(LuaValue environmentValue)
         {
             Symbols = EnvironmentSymbols;
             _singleSlot = new ValueSlot(environmentValue);
@@ -213,7 +214,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// Returns an enumerator over the current upvalue values.
         /// </summary>
         /// <returns>An enumerator over the current upvalue values.</returns>
-        IEnumerator<DynValue> IEnumerable<DynValue>.GetEnumerator()
+        IEnumerator<LuaValue> IEnumerable<LuaValue>.GetEnumerator()
         {
             return GetEnumerator();
         }
@@ -230,7 +231,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// <summary>
         /// Enumerates captured upvalue values without allocating when used directly by foreach.
         /// </summary>
-        internal struct Enumerator : IEnumerator<DynValue>
+        internal struct Enumerator : IEnumerator<LuaValue>
         {
             private readonly ClosureContext _context;
             private int _index;
@@ -248,7 +249,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
             /// <summary>
             /// Gets the current upvalue value.
             /// </summary>
-            public DynValue Current
+            public LuaValue Current
             {
                 get
                 {

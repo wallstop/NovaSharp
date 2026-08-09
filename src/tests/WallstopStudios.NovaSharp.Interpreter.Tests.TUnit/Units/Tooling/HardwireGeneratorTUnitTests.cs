@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
     using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Hardwire;
     using WallstopStudios.NovaSharp.Hardwire.Generators;
@@ -37,6 +38,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
                     .That(source)
                     .Contains("UserData.RegisterType(typeof(object));")
                     .ConfigureAwait(false);
+
+                DynValueMemberDescriptorGenerator valueGenerator = new();
+                HardwireGeneratorRegistry.Register(valueGenerator);
+                Table valueDescriptor = new(owner: null);
+                valueDescriptor.Set("class", LuaValue.NewString(valueGenerator.ManagedType));
+                valueDescriptor.Set("name", LuaValue.NewString("missing"));
+                valueDescriptor.Set("type", LuaValue.NewString("userdata"));
+                valueDescriptor.Set("staticType", LuaValue.NewString(typeof(object).FullName));
+                Table valueRoot = new(owner: null);
+                valueRoot.Set("Missing", LuaValue.NewTable(valueDescriptor));
+                HardwireGenerator valueCodeGenerator = CreateGenerator();
+
+                valueCodeGenerator.BuildCodeModel(valueRoot);
+                string valueSource = valueCodeGenerator.GenerateSourceCode();
+
+                await Assert.That(valueSource).Contains("CreateStatic").ConfigureAwait(false);
+                await Assert.That(valueSource).Contains("GetValueOrDefault").ConfigureAwait(false);
             });
         }
 
@@ -87,14 +105,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
                 );
 
                 Table root = new(owner: null);
-                root.Set("RefHolder", DynValue.NewTable(descriptor));
+                root.Set("RefHolder", LuaValue.NewTable(descriptor));
 
                 generator.BuildCodeModel(root);
                 string source = generator.GenerateSourceCode();
 
                 await Assert.That(source).Contains("refp_0").ConfigureAwait(false);
                 await Assert.That(source).Contains("argscount <= 1").ConfigureAwait(false);
-                await Assert.That(source).Contains("DynValue.NewTuple").ConfigureAwait(false);
+                await Assert.That(source).Contains("PackReturnValues").ConfigureAwait(false);
+                await Assert.That(source).Contains("ConvertFromClrObject").ConfigureAwait(false);
             });
         }
 
@@ -119,7 +138,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
                 );
 
                 Table root = new(owner: null);
-                root.Set("PropertyHolder", DynValue.NewTable(descriptor));
+                root.Set("PropertyHolder", LuaValue.NewTable(descriptor));
 
                 generator.BuildCodeModel(root);
                 string source = generator.GenerateSourceCode();
@@ -160,7 +179,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
                 );
 
                 Table root = new(owner: null);
-                root.Set("StaticIndexerHolder", DynValue.NewTable(descriptor));
+                root.Set("StaticIndexerHolder", LuaValue.NewTable(descriptor));
 
                 generator.BuildCodeModel(root);
                 string source = generator.GenerateSourceCode();
@@ -323,10 +342,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         private static void BuildCodeModel(HardwireGenerator generator, string managedType)
         {
             Table descriptor = new(owner: null);
-            descriptor.Set("class", DynValue.NewString(managedType));
+            descriptor.Set("class", LuaValue.NewString(managedType));
 
             Table root = new(owner: null);
-            root.Set("SampleType", DynValue.NewTable(descriptor));
+            root.Set("SampleType", LuaValue.NewTable(descriptor));
 
             generator.BuildCodeModel(root);
         }
@@ -372,25 +391,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         )
         {
             Table methodTable = new(owner: null);
-            methodTable.Set("class", DynValue.NewString(managedType));
-            methodTable.Set("name", DynValue.NewString(methodName));
-            methodTable.Set("decltype", DynValue.NewString(declType));
-            methodTable.Set("ret", DynValue.NewString(returnType));
-            methodTable.Set("static", DynValue.NewBoolean(isStatic));
-            methodTable.Set("extension", DynValue.NewBoolean(false));
-            methodTable.Set("ctor", DynValue.NewBoolean(false));
-            methodTable.Set("special", DynValue.NewBoolean(isSpecial));
-            methodTable.Set("arraytype", DynValue.NewNil());
+            methodTable.Set("class", LuaValue.NewString(managedType));
+            methodTable.Set("name", LuaValue.NewString(methodName));
+            methodTable.Set("decltype", LuaValue.NewString(declType));
+            methodTable.Set("ret", LuaValue.NewString(returnType));
+            methodTable.Set("static", LuaValue.NewBoolean(isStatic));
+            methodTable.Set("extension", LuaValue.NewBoolean(false));
+            methodTable.Set("ctor", LuaValue.NewBoolean(false));
+            methodTable.Set("special", LuaValue.NewBoolean(isSpecial));
+            methodTable.Set("arraytype", LuaValue.NewNil());
 
             Table paramsTable = new(owner: null);
             if (parameters != null)
             {
                 for (int i = 0; i < parameters.Length; i++)
                 {
-                    paramsTable.Set(i + 1, DynValue.NewTable(parameters[i]));
+                    paramsTable.Set(i + 1, LuaValue.NewTable(parameters[i]));
                 }
             }
-            methodTable.Set("params", DynValue.NewTable(paramsTable));
+            methodTable.Set("params", LuaValue.NewTable(paramsTable));
 
             return methodTable;
         }
@@ -404,14 +423,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         )
         {
             Table table = new(owner: null);
-            table.Set("name", DynValue.NewString(name));
-            table.Set("origtype", DynValue.NewString(typeName));
-            table.Set("default", DynValue.NewBoolean(hasDefault));
-            table.Set("out", DynValue.NewBoolean(isOut));
-            table.Set("ref", DynValue.NewBoolean(isRef));
-            table.Set("varargs", DynValue.NewBoolean(false));
-            table.Set("type", DynValue.NewString(typeName));
-            table.Set("restricted", DynValue.NewBoolean(false));
+            table.Set("name", LuaValue.NewString(name));
+            table.Set("origtype", LuaValue.NewString(typeName));
+            table.Set("default", LuaValue.NewBoolean(hasDefault));
+            table.Set("out", LuaValue.NewBoolean(isOut));
+            table.Set("ref", LuaValue.NewBoolean(isRef));
+            table.Set("varargs", LuaValue.NewBoolean(false));
+            table.Set("type", LuaValue.NewString(typeName));
+            table.Set("restricted", LuaValue.NewBoolean(false));
             return table;
         }
 

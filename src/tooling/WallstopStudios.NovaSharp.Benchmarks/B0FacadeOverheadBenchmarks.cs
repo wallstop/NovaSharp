@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using global::NovaSharp;
     using BenchmarkDotNet.Attributes;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -57,7 +58,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// Executes a cached chunk through the current Script API.
         /// </summary>
         [Benchmark(Baseline = true, Description = "Script.DoString Cached")]
-        public DynValue ScriptDoStringCached()
+        public LuaValue ScriptDoStringCached()
         {
             return _script.DoString(RunSource, null, RunChunkName);
         }
@@ -84,12 +85,12 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     public class RuntimeBenchmarksB0FacadeCallOverhead
     {
         private Script _script;
-        private DynValue _scriptFunction = DynValue.Nil;
+        private LuaValue _scriptFunction = LuaValue.Nil;
         private Facade.LuaEngine _engine;
         private Facade.LuaFunction _facadeFunction;
-        private DynValue _first = DynValue.Nil;
-        private DynValue _second = DynValue.Nil;
-        private DynValue _third = DynValue.Nil;
+        private LuaValue _first = LuaValue.Nil;
+        private LuaValue _second = LuaValue.Nil;
+        private LuaValue _third = LuaValue.Nil;
         private Facade.LuaValue _facadeFirst;
         private Facade.LuaValue _facadeSecond;
         private Facade.LuaValue _facadeThird;
@@ -117,9 +118,9 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 }
             );
             _facadeFunction = _engine.Run(source).AsFunction();
-            _first = DynValue.FromNumber(1);
-            _second = DynValue.FromNumber(2);
-            _third = DynValue.FromNumber(3);
+            _first = LuaValue.FromNumber(1);
+            _second = LuaValue.FromNumber(2);
+            _third = LuaValue.FromNumber(3);
             _facadeFirst = Facade.LuaValue.FromNumber(1);
             _facadeSecond = Facade.LuaValue.FromNumber(2);
             _facadeThird = Facade.LuaValue.FromNumber(3);
@@ -138,18 +139,18 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// Calls a cached Lua function through the current Script API.
         /// </summary>
         [Benchmark(Baseline = true, Description = "Script.Call fixed arity")]
-        public DynValue ScriptCallFixedArity()
+        public LuaValue ScriptCallFixedArity()
         {
             switch (Arity)
             {
                 case 0:
-                    return _script.Call(_scriptFunction);
+                    return _script.CallValues(_scriptFunction);
                 case 1:
-                    return _script.Call(_scriptFunction, _first);
+                    return _script.CallValues(_scriptFunction, _first);
                 case 2:
-                    return _script.Call(_scriptFunction, _first, _second);
+                    return _script.CallValues(_scriptFunction, _first, _second);
                 case 3:
-                    return _script.Call(_scriptFunction, _first, _second, _third);
+                    return _script.CallValues(_scriptFunction, _first, _second, _third);
                 default:
                     throw new InvalidOperationException("Unsupported benchmark arity.");
             }

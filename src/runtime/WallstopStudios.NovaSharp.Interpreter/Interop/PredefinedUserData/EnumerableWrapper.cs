@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
 {
     using System.Collections;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -13,7 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
     {
         private readonly IEnumerator _enumerator;
         private readonly Script _script;
-        private DynValue _prev = DynValue.Nil;
+        private LuaValue _prev = LuaValue.Nil;
         private bool _hasTurnOnce;
 
         private EnumerableWrapper(Script script, IEnumerator enumerator)
@@ -38,30 +39,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         /// <summary>
         /// Advances the enumerator and returns the next script-friendly value.
         /// </summary>
-        private DynValue GetNext(DynValue prev)
+        private LuaValue GetNext(LuaValue prev)
         {
-            if (prev.IsNil())
+            if (prev.IsNil)
             {
                 Reset();
             }
 
             while (_enumerator.MoveNext())
             {
-                DynValue v = ClrToScriptConversions.ObjectToDynValue(_script, _enumerator.Current);
+                LuaValue v = ClrToScriptConversions.ObjectToDynValue(_script, _enumerator.Current);
 
-                if (!v.IsNil())
+                if (!v.IsNil)
                 {
                     return v;
                 }
             }
 
-            return DynValue.Nil;
+            return LuaValue.Nil;
         }
 
         /// <summary>
         /// Callback that exposes the enumerator as a Lua iterator triple.
         /// </summary>
-        private DynValue LuaIteratorCallback(
+        private LuaValue LuaIteratorCallback(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -73,17 +74,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         /// <summary>
         /// Wraps the provided <see cref="IEnumerator"/> so Lua code can iterate over it.
         /// </summary>
-        internal static DynValue ConvertIterator(Script script, IEnumerator enumerator)
+        internal static LuaValue ConvertIterator(Script script, IEnumerator enumerator)
         {
             EnumerableWrapper ei = new(script, enumerator);
-            UserData.TryCreate(script, ei, out DynValue iterator);
-            return DynValue.NewTuple(iterator, DynValue.Nil, DynValue.Nil);
+            UserData.TryCreate(script, ei, out LuaValue iterator);
+            return LuaValue.NewTuple(iterator, LuaValue.Nil, LuaValue.Nil);
         }
 
         /// <summary>
         /// Exposes the values of a Lua table as a CLR-style iterator triple.
         /// </summary>
-        internal static DynValue ConvertTable(Table table)
+        internal static LuaValue ConvertTable(Table table)
         {
             return ConvertIterator(table.OwnerScript, table.Values.GetEnumerator());
         }
@@ -91,17 +92,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         /// <summary>
         /// Implements member access on the iterator wrapper (e.g., Current/MoveNext/Reset).
         /// </summary>
-        public DynValue? Index(Script script, DynValue index, bool isDirectIndexing)
+        public LuaValue? Index(Script script, LuaValue index, bool isDirectIndexing)
         {
-            return TryIndex(script, index, isDirectIndexing, out DynValue value) ? value : null;
+            return TryIndex(script, index, isDirectIndexing, out LuaValue value)
+                ? value
+                : (LuaValue?)null;
         }
 
         /// <inheritdoc/>
         public bool TryIndex(
             Script script,
-            DynValue index,
+            LuaValue index,
             bool isDirectIndexing,
-            out DynValue value
+            out LuaValue value
         )
         {
             if (index.Type == DataType.String)
@@ -110,39 +113,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
 
                 if (idx == "Current" || idx == "current")
                 {
-                    value = DynValue.FromObject(script, _enumerator.Current);
+                    value = LuaValue.FromObject(script, _enumerator.Current);
                     return true;
                 }
                 else if (idx == "MoveNext" || idx == "moveNext" || idx == "move_next")
                 {
-                    value = DynValue.NewCallback(
+                    value = LuaValue.NewCallback(
                         script,
-                        (ctx, args) => DynValue.NewBoolean(_enumerator.MoveNext())
+                        (ctx, args) => LuaValue.NewBoolean(_enumerator.MoveNext())
                     );
                     return true;
                 }
                 else if (idx == "Reset" || idx == "reset")
                 {
-                    value = DynValue.NewCallback(
+                    value = LuaValue.NewCallback(
                         script,
                         (ctx, args) =>
                         {
                             Reset();
-                            return DynValue.Nil;
+                            return LuaValue.Nil;
                         }
                     );
                     return true;
                 }
             }
 
-            value = DynValue.Nil;
+            value = LuaValue.Nil;
             return false;
         }
 
         /// <summary>
         /// Iterator wrapper is read-only; assignments are ignored.
         /// </summary>
-        public bool SetIndex(Script script, DynValue index, DynValue value, bool isDirectIndexing)
+        public bool SetIndex(Script script, LuaValue index, LuaValue value, bool isDirectIndexing)
         {
             return false;
         }
@@ -150,21 +153,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         /// <summary>
         /// Provides metamethods required to drive the iterator from Lua (<c>__call</c>).
         /// </summary>
-        public DynValue? MetaIndex(Script script, string metaname)
+        public LuaValue? MetaIndex(Script script, string metaname)
         {
-            return TryMetaIndex(script, metaname, out DynValue value) ? value : null;
+            return TryMetaIndex(script, metaname, out LuaValue value) ? value : (LuaValue?)null;
         }
 
         /// <inheritdoc/>
-        public bool TryMetaIndex(Script script, string metaname, out DynValue value)
+        public bool TryMetaIndex(Script script, string metaname, out LuaValue value)
         {
             if (metaname == Metamethods.Call)
             {
-                value = DynValue.NewCallback(script, LuaIteratorCallback);
+                value = LuaValue.NewCallback(script, LuaIteratorCallback);
                 return true;
             }
 
-            value = DynValue.Nil;
+            value = LuaValue.Nil;
             return false;
         }
     }

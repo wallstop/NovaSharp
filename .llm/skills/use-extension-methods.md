@@ -19,7 +19,7 @@ Use existing extension methods when:
 
 - Working with `ReadOnlySpan<char>` for whitespace handling
 - Normalizing file paths across platforms
-- Converting `DynValue` collections to CLR types
+- Converting `LuaValue` collections to CLR types
 - Serializing Lua tables to string format
 - Checking flags on enums (`CoreModules`, `MemberDescriptorAccess`)
 - Getting CLR visibility metadata from reflection types
@@ -31,8 +31,8 @@ Use existing extension methods when:
 | ----------------------------------- | --------------------------------------------------------------------- | --------------------------------------------- |
 | `StringSpanExtensions`              | `TrimWhitespace()`, `HasContent()`                                    | Zero-alloc span whitespace handling           |
 | `PathSpanExtensions`                | `SliceAfterLastSeparator()`, `NormalizeDirectorySeparators()`         | Cross-platform path normalization             |
-| `LinqHelpers`                       | `Convert<T>()`, `OfDataType()`, `AsObjects()`                         | Filter/convert `IEnumerable<DynValue>`        |
-| `SerializationExtensions`           | `Serialize()`, `SerializeValue()`                                     | Table/DynValue → Lua source string            |
+| `LinqHelpers`                       | `Convert<T>()`, `OfDataType()`, `AsObjects()`                         | Filter/convert `IEnumerable<LuaValue>`        |
+| `SerializationExtensions`           | `Serialize()`, `SerializeValue()`                                     | Table/LuaValue → Lua source string            |
 | `JsonTableConverter`                | `TableToJson()`                                                       | Table → JSON string                           |
 | `IListSortExtensions`               | `Sort<T,TComparer>()`                                                 | Zero-alloc list sorting with struct comparers |
 | `DataTypeExtensions`                | `ToLuaTypeString()`, `ToErrorTypeString()`, `CanHaveTypeMetatables()` | DataType → Lua type names                     |
@@ -49,9 +49,9 @@ Use existing extension methods when:
 **LinqHelpers** (allocating, yields):
 
 ```csharp
-IEnumerable<DynValue> values = table.GetValues();
+IEnumerable<LuaValue> values = table.GetValues();
 IEnumerable<string> strings = values.Convert<string>(DataType.String);
-IEnumerable<DynValue> tables = values.OfDataType(DataType.Table);
+IEnumerable<LuaValue> tables = values.OfDataType(DataType.Table);
 IEnumerable<object> objects = values.AsObjects();
 ```
 

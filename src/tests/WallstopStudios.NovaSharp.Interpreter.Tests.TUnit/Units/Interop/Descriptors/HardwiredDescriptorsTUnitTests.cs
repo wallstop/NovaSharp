@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -31,7 +32,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             TestHost host = new();
             script.Globals["obj"] = UserData.Create(host);
 
-            DynValue result = script.DoString("obj.value = 123\nreturn obj.value");
+            LuaValue result = script.DoString("obj.value = 123\nreturn obj.value");
 
             await Assert.That(result.Number).IsEqualTo(123).ConfigureAwait(false);
             await Assert.That(host.Value).IsEqualTo(123).ConfigureAwait(false);
@@ -93,7 +94,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             TestHost host = new();
             script.Globals["obj"] = UserData.Create(host);
 
-            DynValue result = script.DoString("return obj:call(5)");
+            LuaValue result = script.DoString("return obj:call(5)");
 
             await Assert.That(result.String).IsEqualTo("fallback").ConfigureAwait(false);
             await Assert.That(host.Value).IsEqualTo(5).ConfigureAwait(false);
@@ -120,7 +121,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             TestHost host = new();
             script.Globals["obj"] = UserData.Create(host);
 
-            DynValue result = script.DoString("return obj:call(7, 'custom')");
+            LuaValue result = script.DoString("return obj:call(7, 'custom')");
 
             await Assert.That(result.String).IsEqualTo("custom").ConfigureAwait(false);
             await Assert.That(host.Value).IsEqualTo(7).ConfigureAwait(false);

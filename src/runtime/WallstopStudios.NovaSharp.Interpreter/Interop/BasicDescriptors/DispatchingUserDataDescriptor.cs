@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
     using System.Collections.Generic;
     using System.Globalization;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -102,11 +103,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         }
 
         /// <summary>
-        /// Adds a DynValue as a member
+        /// Adds a LuaValue as a member
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="value">The value.</param>
-        public void AddDynValue(string name, DynValue value)
+        public void AddDynValue(string name, LuaValue value)
         {
             DynValueMemberDescriptor desc = new(name, value);
             AddMemberTo(_members, name, desc);
@@ -246,10 +247,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="index">The index.</param>
         /// <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
         /// <returns></returns>
-        public virtual DynValue? Index(
+        public virtual LuaValue? Index(
             Script script,
             object obj,
-            DynValue index,
+            LuaValue index,
             bool isDirectIndexing
         )
         {
@@ -274,7 +275,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
 
             if (index.Type != DataType.String)
             {
-                return null;
+                return (LuaValue?)null;
             }
 
             List<string> candidates = BuildMemberNameCandidates(
@@ -282,25 +283,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 Script.GlobalOptions.FuzzySymbolMatching
             );
 
-            DynValue? v = null;
+            LuaValue? v = default;
 
             foreach (string candidate in candidates)
             {
                 v = TryIndex(script, obj, candidate);
-                if (v != null)
+                if (v.HasValue)
                 {
                     break;
                 }
             }
 
-            if (v == null && _extMethodsVersion < UserData.GetExtensionMethodsChangeVersion())
+            if (!v.HasValue && _extMethodsVersion < UserData.GetExtensionMethodsChangeVersion())
             {
                 _extMethodsVersion = UserData.GetExtensionMethodsChangeVersion();
 
                 foreach (string candidate in candidates)
                 {
                     v = TryIndexOnExtMethod(script, obj, candidate);
-                    if (v != null)
+                    if (v.HasValue)
                     {
                         break;
                     }
@@ -313,19 +314,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         public virtual bool TryIndex(
             Script script,
             object obj,
-            DynValue index,
+            LuaValue index,
             bool isDirectIndexing,
-            out DynValue value
+            out LuaValue value
         )
         {
-            DynValue? indexedValue = Index(script, obj, index, isDirectIndexing);
+            LuaValue? indexedValue = Index(script, obj, index, isDirectIndexing);
             if (indexedValue.HasValue)
             {
                 value = indexedValue.Value;
                 return true;
             }
 
-            value = DynValue.Nil;
+            value = LuaValue.Nil;
             return false;
         }
 
@@ -337,7 +338,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="indexName">Member name to be indexed.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        private DynValue? TryIndexOnExtMethod(Script script, object obj, string indexName)
+        private LuaValue? TryIndexOnExtMethod(Script script, object obj, string indexName)
         {
             if (script == null)
             {
@@ -360,10 +361,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                     methods
                 );
                 _members.Add(indexName, ext);
-                return DynValue.NewCallback(script, ext.GetCallback(script, obj));
+                return LuaValue.NewCallback(script, ext.GetCallback(script, obj));
             }
 
-            return null;
+            return (LuaValue?)null;
         }
 
         /// <summary>
@@ -395,7 +396,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="obj">The object.</param>
         /// <param name="indexName">Member name to be indexed.</param>
         /// <returns></returns>
-        protected virtual DynValue? TryIndex(Script script, object obj, string indexName)
+        protected virtual LuaValue? TryIndex(Script script, object obj, string indexName)
         {
             if (script == null)
             {
@@ -407,7 +408,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 return desc.GetValue(script, obj).BindCallbackToScript(script);
             }
 
-            return null;
+            return (LuaValue?)null;
         }
 
         /// <summary>
@@ -422,8 +423,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         public virtual bool SetIndex(
             Script script,
             object obj,
-            DynValue index,
-            DynValue value,
+            LuaValue index,
+            LuaValue value,
             bool isDirectIndexing
         )
         {
@@ -480,7 +481,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             Script script,
             object obj,
             string indexName,
-            DynValue value
+            LuaValue value
         )
         {
             if (script == null)
@@ -629,12 +630,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="value">The dynvalue to set on a setter, or null.</param>
         /// <returns></returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        protected virtual DynValue ExecuteIndexer(
+        protected virtual LuaValue ExecuteIndexer(
             IMemberDescriptor mdesc,
             Script script,
             object obj,
-            DynValue index,
-            DynValue? value
+            LuaValue index,
+            LuaValue? value
         )
         {
             if (mdesc == null)
@@ -652,7 +653,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 return ExecuteOverloadedIndexer(overloads, script, obj, index, value);
             }
 
-            DynValue v = mdesc.GetValue(script, obj);
+            LuaValue v = mdesc.GetValue(script, obj);
 
             if (v.Type != DataType.ClrFunction)
             {
@@ -687,14 +688,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                     : callback.InvokeLegacyFixed(execCtx, index, value.Value);
             }
 
-            IList<DynValue> values;
+            IList<LuaValue> values;
             if (!value.HasValue)
             {
                 values = index.Tuple;
             }
             else
             {
-                values = new List<DynValue>(index.Tuple);
+                values = new List<LuaValue>(index.Tuple);
                 values.Add(value.Value);
             }
 
@@ -702,12 +703,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             return callback.InvokeLegacy(tupleExecCtx, values);
         }
 
-        private static DynValue ExecuteOverloadedIndexer(
+        private static LuaValue ExecuteOverloadedIndexer(
             OverloadedMethodMemberDescriptor overloads,
             Script script,
             object obj,
-            DynValue index,
-            DynValue? value
+            LuaValue index,
+            LuaValue? value
         )
         {
             CallbackArguments args;
@@ -719,14 +720,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             }
             else
             {
-                IList<DynValue> values;
+                IList<LuaValue> values;
                 if (!value.HasValue)
                 {
                     values = index.Tuple;
                 }
                 else
                 {
-                    values = new List<DynValue>(index.Tuple);
+                    values = new List<LuaValue>(index.Tuple);
                     values.Add(value.Value);
                 }
 
@@ -760,7 +761,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         /// <param name="metaname">The name of the metamember.</param>
         /// </summary>
         /// <returns></returns>
-        public virtual DynValue? MetaIndex(Script script, object obj, string metaname)
+        public virtual LuaValue? MetaIndex(Script script, object obj, string metaname)
         {
             if (script == null)
             {
@@ -808,7 +809,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 case Metamethods.Iterator:
                     return ClrToScriptConversions.EnumerationToDynValue(script, obj);
                 default:
-                    return null;
+                    return (LuaValue?)null;
             }
         }
 
@@ -816,17 +817,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             Script script,
             object obj,
             string metaname,
-            out DynValue value
+            out LuaValue value
         )
         {
-            DynValue? metaValue = MetaIndex(script, obj, metaname);
+            LuaValue? metaValue = MetaIndex(script, obj, metaname);
             if (metaValue.HasValue)
             {
                 value = metaValue.Value;
                 return true;
             }
 
-            value = DynValue.Nil;
+            value = LuaValue.Nil;
             return false;
         }
 
@@ -849,43 +850,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             throw new InternalErrorException("unexpected case");
         }
 
-        private static DynValue? MultiDispatchLessThanOrEqual(Script script, object obj)
+        private static LuaValue? MultiDispatchLessThanOrEqual(Script script, object obj)
         {
             if (obj is IComparable comp)
             {
-                return DynValue.NewCallback(
+                return LuaValue.NewCallback(
                     script,
                     (context, args) =>
-                        DynValue.NewBoolean(
+                        LuaValue.NewBoolean(
                             PerformComparison(obj, args[0].ToObject(), args[1].ToObject()) <= 0
                         )
                 );
             }
 
-            return null;
+            return (LuaValue?)null;
         }
 
-        private static DynValue? MultiDispatchLessThan(Script script, object obj)
+        private static LuaValue? MultiDispatchLessThan(Script script, object obj)
         {
             if (obj is IComparable comp)
             {
-                return DynValue.NewCallback(
+                return LuaValue.NewCallback(
                     script,
                     (context, args) =>
-                        DynValue.NewBoolean(
+                        LuaValue.NewBoolean(
                             PerformComparison(obj, args[0].ToObject(), args[1].ToObject()) < 0
                         )
                 );
             }
 
-            return null;
+            return (LuaValue?)null;
         }
 
-        private DynValue? TryDispatchLength(Script script, object obj)
+        private LuaValue? TryDispatchLength(Script script, object obj)
         {
             if (obj == null)
             {
-                return null;
+                return (LuaValue?)null;
             }
 
             IMemberDescriptor lenprop = _members.GetOrDefault("Length");
@@ -900,15 +901,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 return countprop.GetGetterCallbackAsDynValue(script, obj);
             }
 
-            return null;
+            return (LuaValue?)null;
         }
 
-        private static DynValue MultiDispatchEqual(Script script, object obj)
+        private static LuaValue MultiDispatchEqual(Script script, object obj)
         {
-            return DynValue.NewCallback(
+            return LuaValue.NewCallback(
                 script,
                 (context, args) =>
-                    DynValue.NewBoolean(CheckEquality(obj, args[0].ToObject(), args[1].ToObject()))
+                    LuaValue.NewBoolean(CheckEquality(obj, args[0].ToObject(), args[1].ToObject()))
             );
         }
 
@@ -929,7 +930,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             return Equals(p1, p2);
         }
 
-        private DynValue? DispatchMetaOnMethod(Script script, object obj, string methodName)
+        private LuaValue? DispatchMetaOnMethod(Script script, object obj, string methodName)
         {
             IMemberDescriptor desc = _members.GetOrDefault(methodName);
 
@@ -939,28 +940,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             }
             else
             {
-                return null;
+                return (LuaValue?)null;
             }
         }
 
-        private DynValue? TryDispatchToNumber(Script script, object obj)
+        private LuaValue? TryDispatchToNumber(Script script, object obj)
         {
             foreach (Type t in NumericConversions.NumericTypesOrdered)
             {
                 string name = t.GetConversionMethodName();
-                DynValue? v = DispatchMetaOnMethod(script, obj, name);
+                LuaValue? v = DispatchMetaOnMethod(script, obj, name);
                 if (v.HasValue)
                 {
                     return v;
                 }
             }
-            return null;
+            return (LuaValue?)null;
         }
 
-        private DynValue? TryDispatchToBool(Script script, object obj)
+        private LuaValue? TryDispatchToBool(Script script, object obj)
         {
             string name = typeof(bool).GetConversionMethodName();
-            DynValue? v = DispatchMetaOnMethod(script, obj, name);
+            LuaValue? v = DispatchMetaOnMethod(script, obj, name);
             if (v.HasValue)
             {
                 return v;

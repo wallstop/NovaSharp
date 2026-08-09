@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
     using System.Collections.Generic;
     using System.Reflection;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -29,10 +30,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 BindingFlags.Public | BindingFlags.Static
             );
 
-            DynValue callback = FunctionMemberDescriptorBase.CreateCallbackDynValue(script, method);
+            LuaValue callback = FunctionMemberDescriptorBase.CreateCallbackDynValue(script, method);
 
             await Assert.That(callback.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
-            DynValue result = script.Call(callback, 10, 32);
+            LuaValue result = script.Call(callback, 10, 32);
             await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
@@ -46,14 +47,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 BindingFlags.Public | BindingFlags.Instance
             );
 
-            DynValue callback = FunctionMemberDescriptorBase.CreateCallbackDynValue(
+            LuaValue callback = FunctionMemberDescriptorBase.CreateCallbackDynValue(
                 script,
                 method,
                 instance
             );
 
             await Assert.That(callback.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
-            DynValue result = script.Call(callback, 14);
+            LuaValue result = script.Call(callback, 14);
             await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
@@ -67,7 +68,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             );
             MethodMemberDescriptor descriptor = new(method);
 
-            DynValue callback = descriptor.GetCallbackAsDynValue(script);
+            LuaValue callback = descriptor.GetCallbackAsDynValue(script);
 
             await Assert.That(callback.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
@@ -81,7 +82,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             Script script = new();
             script.Globals["obj"] = new SampleClass();
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local arr = {1, 2, 3, 4, 5}
                 return obj.SumVarArgs(1, 2, 3)
@@ -102,7 +103,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             int[] testArray = { 10, 20, 12 };
             script.Globals["arr"] = UserData.Create(testArray);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 return obj.SumVarArgs(arr)
             "
@@ -119,7 +120,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             Script script = new();
             script.Globals["obj"] = new SampleClass();
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local upper, concat, lower = obj.ManipulateString('Hello', 'World')
                 return upper .. '|' .. concat .. '|' .. lower
@@ -140,7 +141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             Script script = new();
             script.Globals["obj"] = new SampleClass();
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local nil_val, out1, out2 = obj.VoidWithOut(5, 10)
                 return tostring(nil_val) .. '|' .. out1 .. '|' .. out2
@@ -160,7 +161,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             );
             MethodMemberDescriptor descriptor = new(method);
 
-            DynValue value = descriptor.GetValue(script, null);
+            LuaValue value = descriptor.GetValue(script, null);
 
             await Assert.That(value.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
@@ -176,7 +177,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             MethodMemberDescriptor descriptor = new(method);
 
             await Assert
-                .That(() => descriptor.SetValue(script, null, DynValue.NewNumber(42)))
+                .That(() => descriptor.SetValue(script, null, LuaValue.NewNumber(42)))
                 .Throws<ScriptRuntimeException>()
                 .ConfigureAwait(false);
         }
@@ -231,7 +232,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             );
             MethodMemberDescriptor descriptor = new(method);
 
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callback =
+            Func<ScriptExecutionContext, CallbackArguments, LuaValue> callback =
                 descriptor.GetCallback(script);
 
             await Assert.That(callback).IsNotNull().ConfigureAwait(false);
@@ -337,7 +338,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 int expectedSum = i;
                 int expectedProduct = i * 2;
 
-                DynValue result = script.DoString(
+                LuaValue result = script.DoString(
                     $@"
                     local nil_val, out1, out2 = obj.VoidWithOut({i}, {i * 2})
                     return tostring(nil_val) .. '|' .. out1 .. '|' .. out2
@@ -368,7 +369,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 string expectedConcat = input + refValue;
                 string expectedLower = InvariantString.ToLowerInvariantIfNeeded(input);
 
-                DynValue result = script.DoString(
+                LuaValue result = script.DoString(
                     $@"
                     local upper, concat, lower = obj.ManipulateString('{input}', '{refValue}')
                     return upper .. '|' .. concat .. '|' .. lower
@@ -390,7 +391,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             Script script = new();
             script.Globals["obj"] = new SampleClass();
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local nil_val, out1, out2 = obj.VoidWithOut(0, 0)
                 return tostring(nil_val) .. '|' .. out1 .. '|' .. out2
@@ -408,7 +409,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             Script script = new();
             script.Globals["obj"] = new SampleClass();
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local nil_val, out1, out2 = obj.VoidWithOut(-100, -200)
                 return tostring(nil_val) .. '|' .. out1 .. '|' .. out2
@@ -426,7 +427,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             Script script = new();
             script.Globals["obj"] = new SampleClass();
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local nil_val, out1, out2 = obj.VoidWithOut(2147483647, -2147483648)
                 return tostring(nil_val) .. '|' .. out1 .. '|' .. out2
@@ -447,7 +448,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             Script script = new();
             script.Globals["obj"] = new SampleClass();
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local nil_val, out1, out2, out3 = obj.GetMultipleOutValues()
                 return tostring(nil_val) .. '|' .. out1 .. '|' .. out2 .. '|' .. tostring(out3)
@@ -465,7 +466,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             Script script = new();
             script.Globals["obj"] = new SampleClass();
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local ret, ref_out, pure_out = obj.ComplexRefOutMethod(10, 5)
                 return ret .. '|' .. ref_out .. '|' .. pure_out
@@ -484,7 +485,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             Script script = new();
             script.Globals["obj"] = new SampleClass();
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local ret, parsed = obj.TryParseInt('42')
                 return tostring(ret) .. '|' .. parsed
@@ -502,7 +503,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             Script script = new();
             script.Globals["obj"] = new SampleClass();
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local ret, parsed = obj.TryParseInt('not_a_number')
                 return tostring(ret) .. '|' .. parsed
@@ -521,7 +522,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             script.Globals["obj"] = new SampleClass();
 
             // Interleave calls to different methods to stress test pool
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local results = {}
                 

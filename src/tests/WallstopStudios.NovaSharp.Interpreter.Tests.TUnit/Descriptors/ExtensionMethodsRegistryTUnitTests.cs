@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -118,7 +119,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             UserData.RegisterExtensionType(typeof(ExtRegTestExtensions));
             script.Globals["TestClass"] = typeof(ExtRegExtensibleTarget);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 return obj.TestExtensionMethod()

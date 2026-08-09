@@ -4,10 +4,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     using System.Buffers;
     using System.Collections.Generic;
     using System.Threading;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
-    /// Provides pooled <see cref="DynValue"/> arrays to reduce allocations in the VM hot path.
+    /// Provides pooled <see cref="LuaValue"/> arrays to reduce allocations in the VM hot path.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -19,7 +20,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// Usage pattern with automatic cleanup:
     /// </para>
     /// <code>
-    /// using (PooledResource&lt;DynValue[]&gt; pooled = DynValueArrayPool.Get(8, out DynValue[] array))
+    /// using (PooledResource&lt;LuaValue[]&gt; pooled = DynValueArrayPool.Get(8, out LuaValue[] array))
     /// {
     ///     // Use array...
     /// } // Automatically returned to pool here
@@ -34,9 +35,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         [ThreadStatic]
         private static SmallArrayCache ThreadLocalSmallArrays;
 
-        private static readonly Action<DynValue[]> ReturnToPool = array =>
+        private static readonly Action<LuaValue[]> ReturnToPool = array =>
             Return(array, clearArray: true);
-        private static readonly Action<DynValue[]> NoOpReturn = _ => { };
+        private static readonly Action<LuaValue[]> NoOpReturn = _ => { };
         private static readonly object CacheRegistrySyncRoot = new();
         private static readonly List<WeakReference<SmallArrayCache>> SmallArrayCaches = new();
         private static long TrimEpoch;
@@ -52,13 +53,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 
         private readonly struct SmallArrayEntry
         {
-            internal SmallArrayEntry(DynValue[] array, long returnedAt)
+            internal SmallArrayEntry(LuaValue[] array, long returnedAt)
             {
                 Array = array;
                 ReturnedAt = returnedAt;
             }
 
-            internal DynValue[] Array { get; }
+            internal LuaValue[] Array { get; }
 
             internal long ReturnedAt { get; }
         }
@@ -105,7 +106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         }
 
         /// <summary>
-        /// Gets a pooled <see cref="DynValue"/> array and outputs it for immediate use.
+        /// Gets a pooled <see cref="LuaValue"/> array and outputs it for immediate use.
         /// </summary>
         /// <param name="minimumLength">The minimum required length of the array.</param>
         /// <param name="array">The rented array.</param>
@@ -113,18 +114,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <remarks>
         /// Use with a using statement to ensure proper cleanup:
         /// <code>
-        /// using (PooledResource&lt;DynValue[]&gt; pooled = DynValueArrayPool.Get(8, out DynValue[] array))
+        /// using (PooledResource&lt;LuaValue[]&gt; pooled = DynValueArrayPool.Get(8, out LuaValue[] array))
         /// {
         ///     // Use array...
         /// }
         /// </code>
         /// </remarks>
-        public static PooledResource<DynValue[]> Get(int minimumLength, out DynValue[] array)
+        public static PooledResource<LuaValue[]> Get(int minimumLength, out LuaValue[] array)
         {
             if (minimumLength <= 0)
             {
-                array = Array.Empty<DynValue>();
-                return new PooledResource<DynValue[]>(array, NoOpReturn);
+                array = Array.Empty<LuaValue>();
+                return new PooledResource<LuaValue[]>(array, NoOpReturn);
             }
 
             if (minimumLength <= MaxSmallArraySize)
@@ -133,7 +134,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 lock (cache._syncRoot)
                 {
                     SmallArrayEntry entry = cache._entries[minimumLength];
-                    DynValue[] cached = entry.Array;
+                    LuaValue[] cached = entry.Array;
                     if (cached != null)
                     {
                         cache._entries[minimumLength] = default;
@@ -142,28 +143,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                     }
                     else
                     {
-                        array = new DynValue[minimumLength];
+                        array = new LuaValue[minimumLength];
                     }
                 }
-                return new PooledResource<DynValue[]>(array, ReturnToPool);
+                return new PooledResource<LuaValue[]>(array, ReturnToPool);
             }
 
-            array = ArrayPool<DynValue>.Shared.Rent(minimumLength);
-            return new PooledResource<DynValue[]>(array, ReturnToPool);
+            array = ArrayPool<LuaValue>.Shared.Rent(minimumLength);
+            return new PooledResource<LuaValue[]>(array, ReturnToPool);
         }
 
         /// <summary>
-        /// Gets a pooled <see cref="DynValue"/> array.
+        /// Gets a pooled <see cref="LuaValue"/> array.
         /// </summary>
         /// <param name="minimumLength">The minimum required length of the array.</param>
         /// <returns>A <see cref="PooledResource{T}"/> containing the array that returns it to the pool when disposed.</returns>
-        public static PooledResource<DynValue[]> Get(int minimumLength)
+        public static PooledResource<LuaValue[]> Get(int minimumLength)
         {
             return Get(minimumLength, out _);
         }
 
         /// <summary>
-        /// Rents a <see cref="DynValue"/> array of at least the specified size.
+        /// Rents a <see cref="LuaValue"/> array of at least the specified size.
         /// </summary>
         /// <param name="minimumLength">The minimum required length of the array.</param>
         /// <returns>
@@ -174,13 +175,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// For small arrays (≤16 elements), uses thread-local caching for zero-contention access.
         /// Larger arrays are obtained from <see cref="ArrayPool{T}.Shared"/>.
         /// Always pair with <see cref="Return"/> to avoid memory leaks.
-        /// Prefer using the <see cref="Get(int, out DynValue[])"/> method with a using statement instead.
+        /// Prefer using the <see cref="Get(int, out LuaValue[])"/> method with a using statement instead.
         /// </remarks>
-        public static DynValue[] Rent(int minimumLength)
+        public static LuaValue[] Rent(int minimumLength)
         {
             if (minimumLength <= 0)
             {
-                return Array.Empty<DynValue>();
+                return Array.Empty<LuaValue>();
             }
 
             if (minimumLength <= MaxSmallArraySize)
@@ -189,7 +190,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 lock (cache._syncRoot)
                 {
                     SmallArrayEntry entry = cache._entries[minimumLength];
-                    DynValue[] cached = entry.Array;
+                    LuaValue[] cached = entry.Array;
                     if (cached != null)
                     {
                         cache._entries[minimumLength] = default;
@@ -197,10 +198,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                         return cached;
                     }
                 }
-                return new DynValue[minimumLength];
+                return new LuaValue[minimumLength];
             }
 
-            return ArrayPool<DynValue>.Shared.Rent(minimumLength);
+            return ArrayPool<LuaValue>.Shared.Rent(minimumLength);
         }
 
         /// <summary>
@@ -212,7 +213,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// Defaults to <c>true</c> for safety; set to <c>false</c> only when performance is critical
         /// and the array contents are known to be overwritten before next use.
         /// </param>
-        public static void Return(DynValue[] array, bool clearArray = true)
+        public static void Return(LuaValue[] array, bool clearArray = true)
         {
             if (array == null || array.Length == 0)
             {
@@ -248,7 +249,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             }
             else if (EstimateArrayBytes(array.Length) <= MaxCachedLargeArrayBytes)
             {
-                ArrayPool<DynValue>.Shared.Return(array, clearArray);
+                ArrayPool<LuaValue>.Shared.Return(array, clearArray);
             }
             else
             {
@@ -271,15 +272,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// Use this when you need to persist the array contents beyond the current scope
         /// but still want to return the pooled array for reuse.
         /// </remarks>
-        public static DynValue[] ToArrayAndReturn(DynValue[] array, int length)
+        public static LuaValue[] ToArrayAndReturn(LuaValue[] array, int length)
         {
             if (array == null || length <= 0)
             {
                 Return(array);
-                return Array.Empty<DynValue>();
+                return Array.Empty<LuaValue>();
             }
 
-            DynValue[] result = new DynValue[length];
+            LuaValue[] result = new LuaValue[length];
             Array.Copy(array, 0, result, 0, length);
             Return(array, clearArray: true);
             return result;
@@ -299,7 +300,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 {
                     for (int slot = 1; slot < cache._entries.Length; slot++)
                     {
-                        DynValue[] array = cache._entries[slot].Array;
+                        LuaValue[] array = cache._entries[slot].Array;
                         if (array != null)
                         {
                             retainedCount++;
@@ -357,7 +358,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 for (int i = 1; i < cache._entries.Length; i++)
                 {
                     SmallArrayEntry entry = cache._entries[i];
-                    DynValue[] array = entry.Array;
+                    LuaValue[] array = entry.Array;
                     if (array == null)
                     {
                         continue;
@@ -424,7 +425,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             }
         }
 
-        private static void AddRetainedSmallArray(DynValue[] array)
+        private static void AddRetainedSmallArray(LuaValue[] array)
         {
             long retainedBytes = Interlocked.Add(
                 ref RetainedSmallBytes,
@@ -433,12 +434,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             UpdatePeak(ref PeakRetainedSmallBytes, retainedBytes);
         }
 
-        private static void RemoveRetainedSmallArray(DynValue[] array)
+        private static void RemoveRetainedSmallArray(LuaValue[] array)
         {
             Interlocked.Add(ref RetainedSmallBytes, -EstimateArrayBytes(array.Length));
         }
 
-        private static void DropSmallArray(DynValue[] array)
+        private static void DropSmallArray(LuaValue[] array)
         {
             RemoveRetainedSmallArray(array);
             Interlocked.Increment(ref DroppedCount);
@@ -446,7 +447,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 
         private static long EstimateArrayBytes(int length)
         {
-            return IntPtr.Size + ((long)length * PoolElementSize<DynValue>.EstimatedBytes);
+            return IntPtr.Size + ((long)length * PoolElementSize<LuaValue>.EstimatedBytes);
         }
 
         private static void UpdatePeak(ref long target, long value)

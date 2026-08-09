@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
 {
     using System;
     using System.Reflection;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -216,31 +217,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 throw new ArgumentNullException(nameof(t));
             }
 
-            t.Set("name", DynValue.NewString(Name));
+            t.Set("name", LuaValue.NewString(Name));
 
             if (Type.IsByRef)
             {
-                t.Set("type", DynValue.NewString(Type.GetElementType().FullName));
+                t.Set("type", LuaValue.NewString(Type.GetElementType().FullName));
             }
             else
             {
-                t.Set("type", DynValue.NewString(Type.FullName));
+                t.Set("type", LuaValue.NewString(Type.FullName));
             }
 
             if (OriginalType.IsByRef)
             {
-                t.Set("origtype", DynValue.NewString(OriginalType.GetElementType().FullName));
+                t.Set("origtype", LuaValue.NewString(OriginalType.GetElementType().FullName));
             }
             else
             {
-                t.Set("origtype", DynValue.NewString(OriginalType.FullName));
+                t.Set("origtype", LuaValue.NewString(OriginalType.FullName));
             }
 
-            t.Set("default", DynValue.NewBoolean(HasDefaultValue));
-            t.Set("out", DynValue.NewBoolean(IsOut));
-            t.Set("ref", DynValue.NewBoolean(IsRef));
-            t.Set("varargs", DynValue.NewBoolean(IsVarArgs));
-            t.Set("restricted", DynValue.NewBoolean(HasBeenRestricted));
+            t.Set("default", LuaValue.NewBoolean(HasDefaultValue));
+            t.Set("out", LuaValue.NewBoolean(IsOut));
+            t.Set("ref", LuaValue.NewBoolean(IsRef));
+            t.Set("varargs", LuaValue.NewBoolean(IsVarArgs));
+            t.Set("restricted", LuaValue.NewBoolean(HasBeenRestricted));
         }
     }
 }

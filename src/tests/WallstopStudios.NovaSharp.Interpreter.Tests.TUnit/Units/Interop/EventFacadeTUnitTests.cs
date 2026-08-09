@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -18,11 +19,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             EventFacade facade = new(target.AddHandler, target.RemoveHandler, target);
             Script script = new();
 
-            DynValue add = facade.Index(script, DynValue.NewString("add"), true).Value;
-            DynValue remove = facade.Index(script, DynValue.NewString("remove"), true).Value;
+            LuaValue add = facade.Index(script, LuaValue.NewString("add"), true).Value;
+            LuaValue remove = facade.Index(script, LuaValue.NewString("remove"), true).Value;
 
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            DynValue handler = DynValue.NewCallback((_, _) => DynValue.Nil);
+            LuaValue handler = LuaValue.NewCallback((_, _) => LuaValue.Nil);
 
             CallbackArguments args = TestHelpers.CreateArguments(handler);
 
@@ -37,11 +38,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         [global::TUnit.Core.Test]
         public async Task IndexThrowsWhenNameUnsupported()
         {
-            EventFacade facade = new((_, _, _) => DynValue.Nil, (_, _, _) => DynValue.Nil, new());
+            EventFacade facade = new((_, _, _) => LuaValue.Nil, (_, _, _) => LuaValue.Nil, new());
             Script script = new();
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                facade.Index(script, DynValue.NewString("other"), true)
+                facade.Index(script, LuaValue.NewString("other"), true)
             )!;
 
             await Assert
@@ -53,14 +54,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         [global::TUnit.Core.Test]
         public async Task SetIndexAlwaysThrows()
         {
-            EventFacade facade = new((_, _, _) => DynValue.Nil, (_, _, _) => DynValue.Nil, new());
+            EventFacade facade = new((_, _, _) => LuaValue.Nil, (_, _, _) => LuaValue.Nil, new());
             Script script = new();
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 facade.SetIndex(
                     script,
-                    DynValue.NewString("any"),
-                    DynValue.NewNumber(1),
+                    LuaValue.NewString("any"),
+                    LuaValue.NewNumber(1),
                     isDirectIndexing: true
                 )
             )!;
@@ -75,16 +76,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         {
             public int AddInvokeCount { get; private set; }
             public int RemoveInvokeCount { get; private set; }
-            public DynValue LastHandler { get; private set; }
+            public LuaValue LastHandler { get; private set; }
 
-            public DynValue AddHandler(object _, ScriptExecutionContext __, CallbackArguments args)
+            public LuaValue AddHandler(object _, ScriptExecutionContext __, CallbackArguments args)
             {
                 AddInvokeCount++;
                 LastHandler = args[0];
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
 
-            public DynValue RemoveHandler(
+            public LuaValue RemoveHandler(
                 object _,
                 ScriptExecutionContext __,
                 CallbackArguments args
@@ -92,7 +93,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             {
                 RemoveInvokeCount++;
                 LastHandler = args[0];
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
         }
     }

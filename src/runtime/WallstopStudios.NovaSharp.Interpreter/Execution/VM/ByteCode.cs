@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System.Globalization;
     using System.IO;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using Cysharp.Text;
     using Debugging;
     using Execution.Scopes;
@@ -237,7 +238,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Emits a literal value (number/string/table/function/etc.).
         /// </summary>
-        public Instruction EmitLiteral(DynValue value)
+        public Instruction EmitLiteral(LuaValue value)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef) { OpCode = OpCode.Literal, Value = value }
@@ -529,7 +530,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="funcName">Name of the helper.</param>
         /// <param name="metaType">Metadata category.</param>
         /// <param name="value">Payload carried by the instruction.</param>
-        public Instruction EmitMeta(string funcName, OpCodeMetadataType metaType, DynValue value)
+        public Instruction EmitMeta(string funcName, OpCodeMetadataType metaType, LuaValue value)
         {
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
@@ -583,7 +584,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         new Instruction(_currentSourceRef)
                         {
                             OpCode = OpCode.Index,
-                            Value = DynValue.NewString(sym.NameValue),
+                            Value = LuaValue.NewString(sym.NameValue),
                         }
                     );
                     return 2;
@@ -622,7 +623,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             Symbol = sym,
                             NumVal = stackofs,
                             NumVal2 = tupleidx,
-                            Value = DynValue.NewString(sym.NameValue),
+                            Value = LuaValue.NewString(sym.NameValue),
                         }
                     );
                     return 2;
@@ -686,7 +687,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         public Instruction EmitIndex(bool isExpList = false, string baseName = null)
         {
             return EmitIndexCore(
-                DynValue.Nil,
+                LuaValue.Nil,
                 hasIndex: false,
                 isNameIndex: false,
                 isExpList,
@@ -702,7 +703,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="isExpList">Whether the index was produced by an expression list.</param>
         /// <param name="baseName">Optional name of the base variable being indexed.</param>
         public Instruction EmitIndex(
-            DynValue index,
+            LuaValue index,
             bool isNameIndex = false,
             bool isExpList = false,
             string baseName = null
@@ -712,7 +713,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         private Instruction EmitIndexCore(
-            DynValue index,
+            LuaValue index,
             bool hasIndex,
             bool isNameIndex,
             bool isExpList,
@@ -759,7 +760,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return EmitIndexSetCore(
                 stackofs,
                 tupleidx,
-                DynValue.Nil,
+                LuaValue.Nil,
                 hasIndex: false,
                 isNameIndex: false,
                 isExpList,
@@ -779,7 +780,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         public Instruction EmitIndexSet(
             int stackofs,
             int tupleidx,
-            DynValue index,
+            LuaValue index,
             bool isNameIndex = false,
             bool isExpList = false,
             string baseName = null
@@ -799,7 +800,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private Instruction EmitIndexSetCore(
             int stackofs,
             int tupleidx,
-            DynValue index,
+            LuaValue index,
             bool hasIndex,
             bool isNameIndex,
             bool isExpList,

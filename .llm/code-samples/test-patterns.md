@@ -65,9 +65,9 @@ ______________________________________________________________________
 
 ```csharp
 // TUnit async assertions
-await Assert.That(result.String).IsEqualTo("expected").ConfigureAwait(false);
-await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
-await Assert.That(result.Number).IsEqualTo(42.0).ConfigureAwait(false);
+await Assert.That(result.AsString()).IsEqualTo("expected").ConfigureAwait(false);
+await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
+await Assert.That(result.AsNumber()).IsEqualTo(42.0).ConfigureAwait(false);
 ```
 
 ______________________________________________________________________
@@ -138,8 +138,8 @@ For version-specific features, test BOTH scenarios:
 public async Task MathTypeAvailableInLua53Plus(LuaCompatibilityVersion version)
 {
     Script script = CreateScript(version);
-    DynValue result = script.DoString("return math.type(5)");
-    await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
+    LuaValue result = script.DoString("return math.type(5)");
+    await Assert.That(result.AsString()).IsEqualTo("integer").ConfigureAwait(false);
 }
 
 // NEGATIVE: Feature is absent in unsupported versions
@@ -148,8 +148,8 @@ public async Task MathTypeAvailableInLua53Plus(LuaCompatibilityVersion version)
 public async Task MathTypeShouldBeNilInPreLua53(LuaCompatibilityVersion version)
 {
     Script script = CreateScript(version);
-    DynValue result = script.DoString("return math.type");
-    await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+    LuaValue result = script.DoString("return math.type");
+    await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
 }
 ```
 

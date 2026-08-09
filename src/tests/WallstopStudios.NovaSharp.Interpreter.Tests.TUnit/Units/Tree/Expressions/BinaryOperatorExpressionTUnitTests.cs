@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
     using System;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -33,15 +34,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.Or,
                 "or",
-                ctx => new LiteralExpression(ctx, DynValue.True),
+                ctx => new LiteralExpression(ctx, LuaValue.True),
                 ctx =>
                 {
-                    rhsStub = new StubExpression(ctx, _ => DynValue.True);
+                    rhsStub = new StubExpression(ctx, _ => LuaValue.True);
                     return rhsStub;
                 }
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(rhsStub).IsNotNull().ConfigureAwait(false);
@@ -63,15 +64,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.Or,
                 "or",
-                ctx => new LiteralExpression(ctx, DynValue.Nil),
+                ctx => new LiteralExpression(ctx, LuaValue.Nil),
                 ctx =>
                 {
-                    rhsStub = new StubExpression(ctx, _ => DynValue.NewNumber(42));
+                    rhsStub = new StubExpression(ctx, _ => LuaValue.NewNumber(42));
                     return rhsStub;
                 }
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
             await Assert.That(rhsStub).IsNotNull().ConfigureAwait(false);
@@ -93,17 +94,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.And,
                 "and",
-                ctx => new LiteralExpression(ctx, DynValue.Nil),
+                ctx => new LiteralExpression(ctx, LuaValue.Nil),
                 ctx =>
                 {
-                    rhsStub = new StubExpression(ctx, _ => DynValue.NewNumber(99));
+                    rhsStub = new StubExpression(ctx, _ => LuaValue.NewNumber(99));
                     return rhsStub;
                 }
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
             await Assert.That(rhsStub).IsNotNull().ConfigureAwait(false);
             await Assert.That(rhsStub.EvalCount).IsEqualTo(0).ConfigureAwait(false);
         }
@@ -125,15 +126,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.And,
                 "and",
-                ctx => new LiteralExpression(ctx, DynValue.True),
+                ctx => new LiteralExpression(ctx, LuaValue.True),
                 ctx =>
                 {
-                    rhsStub = new StubExpression(ctx, _ => DynValue.NewNumber(1337));
+                    rhsStub = new StubExpression(ctx, _ => LuaValue.NewNumber(1337));
                     return rhsStub;
                 }
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Number).IsEqualTo(1337d).ConfigureAwait(false);
             await Assert.That(rhsStub).IsNotNull().ConfigureAwait(false);
@@ -154,11 +155,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpMod,
                 "%",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(-3)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(-3)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(2))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
         }
@@ -175,11 +176,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpFloorDiv,
                 "//",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(-5)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(-5)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(2))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Number).IsEqualTo(-3d).ConfigureAwait(false);
         }
@@ -196,11 +197,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpBitAnd,
                 "&",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(0xF0)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(0x0F))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(0xF0)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(0x0F))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Number).IsEqualTo(0d).ConfigureAwait(false);
         }
@@ -214,11 +215,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         )
         {
             Script script = new(version);
-            DynValue[] operands = new DynValue[]
+            LuaValue[] operands = new LuaValue[]
             {
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(1),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(1),
             };
             (TokenType Type, string Text)[] operators = new (TokenType, string)[]
             {
@@ -228,7 +229,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
             Expression expr = BuildExpressionChain(script, operands, operators);
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Number).IsEqualTo(6d).ConfigureAwait(false);
         }
@@ -247,8 +248,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpAdd,
                 "+",
-                ctx => new LiteralExpression(ctx, DynValue.True),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(1))
+                ctx => new LiteralExpression(ctx, LuaValue.True),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(1))
             );
 
             DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
@@ -272,8 +273,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpConcat,
                 "..",
-                ctx => new LiteralExpression(ctx, DynValue.NewPrimeTable()),
-                ctx => new LiteralExpression(ctx, DynValue.NewString("value"))
+                ctx => new LiteralExpression(ctx, LuaValue.NewPrimeTable()),
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("value"))
             );
 
             DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
@@ -297,11 +298,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpLessThan,
                 "<",
-                ctx => new LiteralExpression(ctx, DynValue.NewString("apple")),
-                ctx => new LiteralExpression(ctx, DynValue.NewString("banana"))
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("apple")),
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("banana"))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -320,11 +321,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpLessThanEqual,
                 "<=",
-                ctx => new LiteralExpression(ctx, DynValue.NewString("banana")),
-                ctx => new LiteralExpression(ctx, DynValue.NewString("banana"))
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("banana")),
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("banana"))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -351,15 +352,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 "<",
                 ctx => new LiteralExpression(
                     ctx,
-                    DynValue.NewNumber(LuaNumber.FromInteger(maxIntegerMinusOne))
+                    LuaValue.NewNumber(LuaNumber.FromInteger(maxIntegerMinusOne))
                 ),
                 ctx => new LiteralExpression(
                     ctx,
-                    DynValue.NewNumber(LuaNumber.FromInteger(maxInteger))
+                    LuaValue.NewNumber(LuaNumber.FromInteger(maxInteger))
                 )
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             // 9223372036854775806 < 9223372036854775807 should be true
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
@@ -385,15 +386,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 "<=",
                 ctx => new LiteralExpression(
                     ctx,
-                    DynValue.NewNumber(LuaNumber.FromInteger(maxInteger))
+                    LuaValue.NewNumber(LuaNumber.FromInteger(maxInteger))
                 ),
                 ctx => new LiteralExpression(
                     ctx,
-                    DynValue.NewNumber(LuaNumber.FromInteger(maxInteger))
+                    LuaValue.NewNumber(LuaNumber.FromInteger(maxInteger))
                 )
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             // maxinteger <= maxinteger should be true
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
@@ -414,11 +415,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpAdd,
                 "+",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(10))),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(20)))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(LuaNumber.FromInteger(10))),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(LuaNumber.FromInteger(20)))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
             await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(30L).ConfigureAwait(false);
@@ -438,11 +439,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpMinusOrSub,
                 "-",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(50))),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(20)))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(LuaNumber.FromInteger(50))),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(LuaNumber.FromInteger(20)))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
             await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(30L).ConfigureAwait(false);
@@ -462,11 +463,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpMul,
                 "*",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(6))),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(7)))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(LuaNumber.FromInteger(6))),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(LuaNumber.FromInteger(7)))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
             await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(42L).ConfigureAwait(false);
@@ -484,11 +485,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpFloorDiv,
                 "//",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(17))),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(5)))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(LuaNumber.FromInteger(17))),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(LuaNumber.FromInteger(5)))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             // 17 // 5 = 3 (integer)
             await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
@@ -509,8 +510,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpLessThan,
                 "<",
-                ctx => new LiteralExpression(ctx, DynValue.True),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(5))
+                ctx => new LiteralExpression(ctx, LuaValue.True),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(5))
             );
 
             DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
@@ -536,11 +537,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpEqual,
                 "==",
-                ctx => new LiteralExpression(ctx, DynValue.Nil),
-                ctx => new LiteralExpression(ctx, DynValue.Void)
+                ctx => new LiteralExpression(ctx, LuaValue.Nil),
+                ctx => new LiteralExpression(ctx, LuaValue.Void)
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -559,11 +560,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpEqual,
                 "==",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(1)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(1)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(2))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
@@ -657,8 +658,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 tokenType,
                 tokenText,
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(3)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(3)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(2))
             );
 
             ByteCode byteCode = new(script);
@@ -681,7 +682,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             object chain = BinaryOperatorExpression.BeginOperatorChain();
             BinaryOperatorExpression.AddExpressionToChain(
                 chain,
-                new LiteralExpression(context, DynValue.NewNumber(1))
+                new LiteralExpression(context, LuaValue.NewNumber(1))
             );
 
             InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
@@ -708,11 +709,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpEqual,
                 "==",
-                ctx => new LiteralExpression(ctx, DynValue.Nil),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+                ctx => new LiteralExpression(ctx, LuaValue.Nil),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(2))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
@@ -726,11 +727,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpAdd,
                 "+",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(4)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(6))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(4)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(6))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Number).IsEqualTo(10d).ConfigureAwait(false);
         }
@@ -745,11 +746,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpMod,
                 "%",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(-3)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(-3)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(2))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
         }
@@ -851,8 +852,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 tokenType,
                 tokenText,
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(left)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(right))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(left)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(right))
             );
 
             double result = expr.Eval(TestHelpers.CreateExecutionContext(script)).Number;
@@ -870,8 +871,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpMul,
                 "*",
-                ctx => new LiteralExpression(ctx, DynValue.NewString("a")),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("a")),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(2))
             );
 
             DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
@@ -891,11 +892,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpConcat,
                 "..",
-                ctx => new LiteralExpression(ctx, DynValue.NewString("Lua")),
-                ctx => new LiteralExpression(ctx, DynValue.NewString("Sharp"))
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("Lua")),
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("Sharp"))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.String).IsEqualTo("LuaSharp").ConfigureAwait(false);
         }
@@ -910,8 +911,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpConcat,
                 "..",
-                ctx => new LiteralExpression(ctx, DynValue.NewString("Lua")),
-                ctx => new LiteralExpression(ctx, DynValue.NewTable(ctx.Script))
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("Lua")),
+                ctx => new LiteralExpression(ctx, LuaValue.NewTable(ctx.Script))
             );
 
             DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
@@ -931,11 +932,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpLessThan,
                 "<",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(3)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(7))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(3)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(7))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -950,11 +951,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpGreaterThan,
                 ">",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(9)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(9)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(2))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -971,11 +972,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpLessThan,
                 "<",
-                ctx => new LiteralExpression(ctx, DynValue.NewString("alpha")),
-                ctx => new LiteralExpression(ctx, DynValue.NewString("beta"))
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("alpha")),
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("beta"))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -990,11 +991,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpLessThanEqual,
                 "<=",
-                ctx => new LiteralExpression(ctx, DynValue.NewString("cat")),
-                ctx => new LiteralExpression(ctx, DynValue.NewString("cat"))
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("cat")),
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("cat"))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -1009,11 +1010,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpEqual,
                 "==",
-                ctx => new LiteralExpression(ctx, DynValue.Nil),
-                ctx => new LiteralExpression(ctx, DynValue.Void)
+                ctx => new LiteralExpression(ctx, LuaValue.Nil),
+                ctx => new LiteralExpression(ctx, LuaValue.Void)
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -1025,7 +1026,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         )
         {
             Script script = new Script(version);
-            DynValue shared = DynValue.NewTable(script);
+            LuaValue shared = LuaValue.NewTable(script);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -1035,7 +1036,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 ctx => new LiteralExpression(ctx, shared)
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -1052,11 +1053,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpGreaterThanEqual,
                 ">=",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(4)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(4))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(4)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(4))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -1071,8 +1072,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpLessThan,
                 "<",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(1)),
-                ctx => new LiteralExpression(ctx, DynValue.NewString("x"))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(1)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("x"))
             );
 
             DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
@@ -1096,11 +1097,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpLessThan,
                 "<",
-                ctx => new LiteralExpression(ctx, DynValue.NewString("alpha")),
-                ctx => new LiteralExpression(ctx, DynValue.NewString("beta"))
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("alpha")),
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("beta"))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -1121,11 +1122,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpGreaterThan,
                 ">",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(5)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(3))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(5)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(3))
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -1144,8 +1145,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpLessThanEqual,
                 "<=",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(1)),
-                ctx => new LiteralExpression(ctx, DynValue.NewString("x"))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(1)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewString("x"))
             );
 
             DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
@@ -1168,11 +1169,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpEqual,
                 "==",
-                ctx => new LiteralExpression(ctx, DynValue.Nil),
-                ctx => new LiteralExpression(ctx, DynValue.Void)
+                ctx => new LiteralExpression(ctx, LuaValue.Nil),
+                ctx => new LiteralExpression(ctx, LuaValue.Void)
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -1185,11 +1186,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
             Expression expr = BuildExpressionChain(
                 script,
-                new[] { DynValue.NewNumber(2), DynValue.NewNumber(3), DynValue.NewNumber(2) },
+                new[] { LuaValue.NewNumber(2), LuaValue.NewNumber(3), LuaValue.NewNumber(2) },
                 new[] { (TokenType.OpPwr, "^"), (TokenType.OpPwr, "^") }
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert
                 .That(result.Number)
@@ -1205,12 +1206,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptLoadingContext ctx = new(script);
 
             Expression expr = BinaryOperatorExpression.CreatePowerExpression(
-                new LiteralExpression(ctx, DynValue.NewNumber(2)),
-                new LiteralExpression(ctx, DynValue.NewNumber(5)),
+                new LiteralExpression(ctx, LuaValue.NewNumber(2)),
+                new LiteralExpression(ctx, LuaValue.NewNumber(5)),
                 ctx
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Number).IsEqualTo(32d).ConfigureAwait(false);
         }
@@ -1225,11 +1226,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
             Expression expr = BuildExpressionChain(
                 script,
-                new[] { DynValue.NewNumber(1), DynValue.NewNumber(2), DynValue.NewNumber(3) },
+                new[] { LuaValue.NewNumber(1), LuaValue.NewNumber(2), LuaValue.NewNumber(3) },
                 new[] { (TokenType.OpAdd, "+"), (TokenType.OpMul, "*") }
             );
 
-            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+            LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
             await Assert.That(result.Number).IsEqualTo(7d).ConfigureAwait(false);
         }
@@ -1244,8 +1245,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.Or,
                 "or",
-                ctx => new LiteralExpression(ctx, DynValue.True),
-                ctx => new LiteralExpression(ctx, DynValue.False)
+                ctx => new LiteralExpression(ctx, LuaValue.True),
+                ctx => new LiteralExpression(ctx, LuaValue.False)
             );
 
             ByteCode byteCode = new(script);
@@ -1276,8 +1277,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.And,
                 "and",
-                ctx => new LiteralExpression(ctx, DynValue.True),
-                ctx => new LiteralExpression(ctx, DynValue.False)
+                ctx => new LiteralExpression(ctx, LuaValue.True),
+                ctx => new LiteralExpression(ctx, LuaValue.False)
             );
 
             ByteCode byteCode = new(script);
@@ -1312,8 +1313,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpGreaterThan,
                 ">",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(5)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(3))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(5)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(3))
             );
 
             ByteCode byteCode = new(script);
@@ -1374,12 +1375,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                     tokenText,
                     ctx =>
                         operandsAreStrings
-                            ? new LiteralExpression(ctx, DynValue.NewString("left"))
-                            : new LiteralExpression(ctx, DynValue.NewNumber(6)),
+                            ? new LiteralExpression(ctx, LuaValue.NewString("left"))
+                            : new LiteralExpression(ctx, LuaValue.NewNumber(6)),
                     ctx =>
                         operandsAreStrings
-                            ? new LiteralExpression(ctx, DynValue.NewString("right"))
-                            : new LiteralExpression(ctx, DynValue.NewNumber(3))
+                            ? new LiteralExpression(ctx, LuaValue.NewString("right"))
+                            : new LiteralExpression(ctx, LuaValue.NewNumber(3))
                 );
 
                 ByteCode byteCode = new(script);
@@ -1409,8 +1410,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                     script,
                     tokenType,
                     text,
-                    ctx => new LiteralExpression(ctx, DynValue.NewNumber(2)),
-                    ctx => new LiteralExpression(ctx, DynValue.NewNumber(1))
+                    ctx => new LiteralExpression(ctx, LuaValue.NewNumber(2)),
+                    ctx => new LiteralExpression(ctx, LuaValue.NewNumber(1))
                 );
 
                 ByteCode byteCode = new(script);
@@ -1450,8 +1451,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 script,
                 TokenType.OpNotEqual,
                 "~=",
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(1)),
-                ctx => new LiteralExpression(ctx, DynValue.NewNumber(2))
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(1)),
+                ctx => new LiteralExpression(ctx, LuaValue.NewNumber(2))
             );
 
             ByteCode byteCode = new(script);
@@ -1483,11 +1484,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             object chain = BinaryOperatorExpression.BeginOperatorChain();
             BinaryOperatorExpression.AddExpressionToChain(
                 chain,
-                new LiteralExpression(context, DynValue.NewNumber(1))
+                new LiteralExpression(context, LuaValue.NewNumber(1))
             );
             BinaryOperatorExpression.AddExpressionToChain(
                 chain,
-                new LiteralExpression(context, DynValue.NewNumber(2))
+                new LiteralExpression(context, LuaValue.NewNumber(2))
             );
 
             InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
@@ -1515,7 +1516,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             object chain = BinaryOperatorExpression.BeginOperatorChain();
             BinaryOperatorExpression.AddExpressionToChain(
                 chain,
-                new LiteralExpression(context, DynValue.NewNumber(42))
+                new LiteralExpression(context, LuaValue.NewNumber(42))
             );
             BinaryOperatorExpression.RemoveFirstExpressionForTests(chain);
 
@@ -1541,8 +1542,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptLoadingContext context = new(script);
             BinaryOperatorExpression expression = (BinaryOperatorExpression)
                 BinaryOperatorExpression.CreatePowerExpression(
-                    new LiteralExpression(context, DynValue.NewNumber(1)),
-                    new LiteralExpression(context, DynValue.NewNumber(2)),
+                    new LiteralExpression(context, LuaValue.NewNumber(1)),
+                    new LiteralExpression(context, LuaValue.NewNumber(2)),
                     context
                 );
             expression.SetOperatorForTests(BinaryOperatorExpression.Operator.NotAnOperator);
@@ -1564,8 +1565,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptLoadingContext context = new(script);
             BinaryOperatorExpression expression = (BinaryOperatorExpression)
                 BinaryOperatorExpression.CreatePowerExpression(
-                    new LiteralExpression(context, DynValue.NewNumber(3)),
-                    new LiteralExpression(context, DynValue.NewNumber(4)),
+                    new LiteralExpression(context, LuaValue.NewNumber(3)),
+                    new LiteralExpression(context, LuaValue.NewNumber(4)),
                     context
                 );
             BinaryOperatorExpression.Operator combined =
@@ -1601,7 +1602,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
         private static Expression BuildExpressionChain(
             Script script,
-            DynValue[] operands,
+            LuaValue[] operands,
             (TokenType Type, string Text)[] operators
         )
         {
@@ -1640,11 +1641,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
         private sealed class StubExpression : Expression
         {
-            private readonly Func<ScriptExecutionContext, DynValue> _evaluate;
+            private readonly Func<ScriptExecutionContext, LuaValue> _evaluate;
 
             public StubExpression(
                 ScriptLoadingContext context,
-                Func<ScriptExecutionContext, DynValue> evaluate
+                Func<ScriptExecutionContext, LuaValue> evaluate
             )
                 : base(context)
             {
@@ -1658,7 +1659,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 // No-op for coverage purposes; tests exercise Eval directly.
             }
 
-            public override DynValue Eval(ScriptExecutionContext context)
+            public override LuaValue Eval(ScriptExecutionContext context)
             {
                 EvalCount++;
                 return _evaluate(context);

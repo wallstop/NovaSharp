@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -56,7 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(metadata.ExpectsError).IsFalse().ConfigureAwait(false);
 
             // Run the fixture
-            DynValue result = helper.RunFixture();
+            LuaValue result = helper.RunFixture();
 
             // string.byte('Lua', 1.0) should return 76 (ASCII code of 'L')
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -73,7 +74,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(helper.FixtureExists()).IsTrue().ConfigureAwait(false);
 
-            DynValue result = helper.RunFixture();
+            LuaValue result = helper.RunFixture();
 
             // string.len('Nova') should return 4
             await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
@@ -89,7 +90,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(helper.FixtureExists()).IsTrue().ConfigureAwait(false);
 
-            DynValue result = helper.RunFixture();
+            LuaValue result = helper.RunFixture();
 
             // Fixture: return string.upper('NovaSharp') -> "NOVASHARP"
             await Assert.That(result.String).IsEqualTo("NOVASHARP").ConfigureAwait(false);
@@ -105,7 +106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(helper.FixtureExists()).IsTrue().ConfigureAwait(false);
 
-            DynValue result = helper.RunFixture();
+            LuaValue result = helper.RunFixture();
 
             // Fixture: return string.lower('NovaSharp') -> "novasharp"
             await Assert.That(result.String).IsEqualTo("novasharp").ConfigureAwait(false);
@@ -124,7 +125,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(helper.FixtureExists()).IsTrue().ConfigureAwait(false);
 
-            DynValue result = helper.RunFixture();
+            LuaValue result = helper.RunFixture();
 
             await Assert.That(result.String).IsEmpty().ConfigureAwait(false);
         }
@@ -142,7 +143,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(helper.FixtureExists()).IsTrue().ConfigureAwait(false);
 
-            DynValue result = helper.RunFixture();
+            LuaValue result = helper.RunFixture();
 
             // Fixture: return string.format('Value: %0.2f', 3.14159) -> "Value: 3.14"
             await Assert.That(result.String).IsEqualTo("Value: 3.14").ConfigureAwait(false);
@@ -181,7 +182,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Create a script with specific modules enabled
             Script script = new(CoreModules.StringLib);
 
-            DynValue result = helper.RunFixture(script);
+            LuaValue result = helper.RunFixture(script);
 
             await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
         }

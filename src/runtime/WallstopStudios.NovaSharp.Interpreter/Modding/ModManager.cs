@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
@@ -177,7 +178,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             /// <param name="mod">The mod container to invoke.</param>
             /// <param name="functionName">The function name to call.</param>
             /// <returns>The function result.</returns>
-            public DynValue Call(IModContainer mod, string functionName)
+            public LuaValue Call(IModContainer mod, string functionName)
             {
                 return _count switch
                 {
@@ -196,18 +197,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             /// <param name="modContainer">The built-in mod container to invoke.</param>
             /// <param name="function">The already-resolved function to call.</param>
             /// <returns>The function result.</returns>
-            public DynValue CallResolved(ModContainer modContainer, DynValue function)
+            public LuaValue CallResolved(ModContainer modContainer, LuaValue function)
             {
                 Script script = RequireLoadedScript(modContainer);
 
                 return _count switch
                 {
-                    0 => script.Call(function),
-                    1 => script.Call(function, _arg1),
-                    2 => script.Call(function, _arg1, _arg2),
-                    3 => script.Call(function, _arg1, _arg2, _arg3),
-                    4 => script.Call(function, _arg1, _arg2, _arg3, _arg4),
-                    _ => script.Call(function, _arg1, _arg2, _arg3, _arg4, _arg5),
+                    0 => script.CallValues(function),
+                    1 => script.CallObjectArgumentsCore(function, _arg1),
+                    2 => script.CallObjectArgumentsCore(function, _arg1, _arg2),
+                    3 => script.CallObjectArgumentsCore(function, _arg1, _arg2, _arg3),
+                    4 => script.CallObjectArgumentsCore(function, _arg1, _arg2, _arg3, _arg4),
+                    _ => script.CallObjectArgumentsCore(
+                        function,
+                        _arg1,
+                        _arg2,
+                        _arg3,
+                        _arg4,
+                        _arg5
+                    ),
                 };
             }
         }
@@ -542,7 +550,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// </summary>
         /// <param name="functionName">The name of the function to call.</param>
         /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
-        public IDictionary<string, DynValue> BroadcastCall(string functionName)
+        public IDictionary<string, LuaValue> BroadcastCall(string functionName)
         {
             return BroadcastCallFixed(functionName, default);
         }
@@ -553,7 +561,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="functionName">The name of the function to call.</param>
         /// <param name="arg">The argument to pass to the function.</param>
         /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
-        public IDictionary<string, DynValue> BroadcastCall(string functionName, object arg)
+        public IDictionary<string, LuaValue> BroadcastCall(string functionName, object arg)
         {
             return BroadcastCallFixed(functionName, new FixedBroadcastArguments(arg));
         }
@@ -565,7 +573,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="arg1">The first argument to pass to the function.</param>
         /// <param name="arg2">The second argument to pass to the function.</param>
         /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
-        public IDictionary<string, DynValue> BroadcastCall(
+        public IDictionary<string, LuaValue> BroadcastCall(
             string functionName,
             object arg1,
             object arg2
@@ -582,7 +590,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="arg2">The second argument to pass to the function.</param>
         /// <param name="arg3">The third argument to pass to the function.</param>
         /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
-        public IDictionary<string, DynValue> BroadcastCall(
+        public IDictionary<string, LuaValue> BroadcastCall(
             string functionName,
             object arg1,
             object arg2,
@@ -601,7 +609,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="arg3">The third argument to pass to the function.</param>
         /// <param name="arg4">The fourth argument to pass to the function.</param>
         /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
-        public IDictionary<string, DynValue> BroadcastCall(
+        public IDictionary<string, LuaValue> BroadcastCall(
             string functionName,
             object arg1,
             object arg2,
@@ -625,7 +633,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="arg4">The fourth argument to pass to the function.</param>
         /// <param name="arg5">The fifth argument to pass to the function.</param>
         /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
-        public IDictionary<string, DynValue> BroadcastCall(
+        public IDictionary<string, LuaValue> BroadcastCall(
             string functionName,
             object arg1,
             object arg2,
@@ -645,7 +653,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             "CA1031:Do not catch general exception types",
             Justification = "BroadcastCall must capture all errors to report them per-mod"
         )]
-        private Dictionary<string, DynValue> BroadcastCallFixed(
+        private Dictionary<string, LuaValue> BroadcastCallFixed(
             string functionName,
             FixedBroadcastArguments args
         )
@@ -653,7 +661,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             ValidateFunctionName(functionName);
 
             IReadOnlyList<string> modIds = GetLoadOrder();
-            Dictionary<string, DynValue> results = new Dictionary<string, DynValue>(
+            Dictionary<string, LuaValue> results = new Dictionary<string, LuaValue>(
                 StringComparer.Ordinal
             );
 
@@ -665,7 +673,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                     continue;
                 }
 
-                DynValue func = mod.GetGlobal(functionName);
+                LuaValue func = mod.GetGlobal(functionName);
                 if (func.Type != DataType.Function)
                 {
                     continue;
@@ -680,7 +688,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 catch (Exception ex)
                 {
                     // Store error as string for debugging
-                    results[modId] = DynValue.NewString(ZString.Concat("Error: ", ex.Message));
+                    results[modId] = LuaValue.NewString(ZString.Concat("Error: ", ex.Message));
                 }
             }
 
@@ -704,7 +712,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             "CA1031:Do not catch general exception types",
             Justification = "BroadcastCall must capture all errors to report them per-mod"
         )]
-        public IDictionary<string, DynValue> BroadcastCallObjectArguments(
+        public IDictionary<string, LuaValue> BroadcastCallObjectArguments(
             string functionName,
             object[] args
         )
@@ -736,7 +744,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             "CA1031:Do not catch general exception types",
             Justification = "BroadcastCall must capture all errors to report them per-mod"
         )]
-        public IDictionary<string, DynValue> BroadcastCallObjectArguments(
+        public IDictionary<string, LuaValue> BroadcastCallObjectArguments(
             string functionName,
             ReadOnlySpan<object> args
         )
@@ -744,7 +752,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             ValidateFunctionName(functionName);
 
             IReadOnlyList<string> modIds = GetLoadOrder();
-            Dictionary<string, DynValue> results = new Dictionary<string, DynValue>(
+            Dictionary<string, LuaValue> results = new Dictionary<string, LuaValue>(
                 StringComparer.Ordinal
             );
 
@@ -756,7 +764,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                     continue;
                 }
 
-                DynValue func = mod.GetGlobal(functionName);
+                LuaValue func = mod.GetGlobal(functionName);
                 if (func.Type != DataType.Function)
                 {
                     continue;
@@ -769,17 +777,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 catch (Exception ex)
                 {
                     // Store error as string for debugging
-                    results[modId] = DynValue.NewString(ZString.Concat("Error: ", ex.Message));
+                    results[modId] = LuaValue.NewString(ZString.Concat("Error: ", ex.Message));
                 }
             }
 
             return results;
         }
 
-        private static DynValue CallObjectArguments(
+        private static LuaValue CallObjectArguments(
             IModContainer mod,
             string functionName,
-            DynValue function,
+            LuaValue function,
             ReadOnlySpan<object> args
         )
         {
@@ -814,7 +822,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             "CA1031:Do not catch general exception types",
             Justification = "BroadcastCall must capture all errors to report them per-mod"
         )]
-        public IDictionary<string, DynValue> BroadcastCall(
+        public IDictionary<string, LuaValue> BroadcastCall(
             string functionName,
             params object[] args
         )
@@ -827,7 +835,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             }
 
             IReadOnlyList<string> modIds = GetLoadOrder();
-            Dictionary<string, DynValue> results = new Dictionary<string, DynValue>(
+            Dictionary<string, LuaValue> results = new Dictionary<string, LuaValue>(
                 StringComparer.Ordinal
             );
 
@@ -839,7 +847,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                     continue;
                 }
 
-                DynValue func = mod.GetGlobal(functionName);
+                LuaValue func = mod.GetGlobal(functionName);
                 if (func.Type != DataType.Function)
                 {
                     continue;
@@ -848,13 +856,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 try
                 {
                     results[modId] = mod is ModContainer modContainer
-                        ? RequireLoadedScript(modContainer).Call(func, args)
+                        ? RequireLoadedScript(modContainer).CallObjectArgumentsCore(func, args)
                         : mod.CallFunction(functionName, args);
                 }
                 catch (Exception ex)
                 {
                     // Store error as string for debugging
-                    results[modId] = DynValue.NewString(ZString.Concat("Error: ", ex.Message));
+                    results[modId] = LuaValue.NewString(ZString.Concat("Error: ", ex.Message));
                 }
             }
 
@@ -866,18 +874,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// </summary>
         /// <param name="modId">The ID of the mod.</param>
         /// <param name="globalName">The name of the global.</param>
-        /// <returns>The value, or <see cref="DynValue.Nil"/> if not found or mod not loaded.</returns>
-        public DynValue GetModGlobal(string modId, string globalName)
+        /// <returns>The value, or <see cref="LuaValue.Nil"/> if not found or mod not loaded.</returns>
+        public LuaValue GetModGlobal(string modId, string globalName)
         {
             if (string.IsNullOrEmpty(modId) || string.IsNullOrEmpty(globalName))
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
 
             IModContainer mod = GetMod(modId);
             if (mod == null || mod.State != ModLoadState.Loaded)
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
 
             return mod.GetGlobal(globalName);

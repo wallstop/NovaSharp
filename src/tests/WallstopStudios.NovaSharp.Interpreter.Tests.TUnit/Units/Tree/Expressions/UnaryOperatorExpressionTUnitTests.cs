@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 {
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -71,7 +72,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             Script script = new(version);
             ScriptLoadingContext context = new(script);
             Token fakeToken = CreateToken(TokenType.OpMinusOrSub, "++");
-            LiteralExpression literal = new(context, DynValue.NewNumber(1));
+            LiteralExpression literal = new(context, LuaValue.NewNumber(1));
             UnaryOperatorExpression expression = new(context, literal, fakeToken);
             ByteCode byteCode = new(script);
 
@@ -95,7 +96,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         {
             Script script = new(version);
             ScriptLoadingContext context = new(script);
-            LiteralExpression literal = new(context, DynValue.NewNumber(1));
+            LiteralExpression literal = new(context, LuaValue.NewNumber(1));
             Token fakeToken = CreateToken(TokenType.OpMinusOrSub, "++");
             UnaryOperatorExpression expression = new(context, literal, fakeToken);
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
@@ -122,11 +123,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
             UnaryOperatorExpression expression = CreateExpression(
                 script,
-                DynValue.NewNumber(5),
+                LuaValue.NewNumber(5),
                 "-"
             );
 
-            DynValue result = expression.Eval(executionContext);
+            LuaValue result = expression.Eval(executionContext);
 
             await Assert.That(result.Number).IsEqualTo(-5d).ConfigureAwait(false);
         }
@@ -141,9 +142,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         {
             Script script = new(version);
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
-            UnaryOperatorExpression expression = CreateExpression(script, DynValue.True, "not");
+            UnaryOperatorExpression expression = CreateExpression(script, LuaValue.True, "not");
 
-            DynValue result = expression.Eval(executionContext);
+            LuaValue result = expression.Eval(executionContext);
 
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
@@ -160,11 +161,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
             UnaryOperatorExpression expression = CreateExpression(
                 script,
-                DynValue.NewString("Lua"),
+                LuaValue.NewString("Lua"),
                 "#"
             );
 
-            DynValue result = expression.Eval(executionContext);
+            LuaValue result = expression.Eval(executionContext);
 
             await Assert.That(result.Number).IsEqualTo(3d).ConfigureAwait(false);
         }
@@ -181,7 +182,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
             UnaryOperatorExpression expression = CreateExpression(
                 script,
-                DynValue.NewNumber(5),
+                LuaValue.NewNumber(5),
                 "#"
             );
 
@@ -207,7 +208,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
             UnaryOperatorExpression expression = CreateExpression(
                 script,
-                DynValue.NewString("hello"),
+                LuaValue.NewString("hello"),
                 "-"
             );
 
@@ -233,11 +234,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
             UnaryOperatorExpression expression = CreateExpression(
                 script,
-                DynValue.NewNumber(0b1010),
+                LuaValue.NewNumber(0b1010),
                 "~"
             );
 
-            DynValue result = expression.Eval(executionContext);
+            LuaValue result = expression.Eval(executionContext);
 
             await Assert.That(result.Number).IsEqualTo(~0b1010).ConfigureAwait(false);
         }
@@ -254,7 +255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
             UnaryOperatorExpression expression = CreateExpression(
                 script,
-                DynValue.NewNumber(3.14),
+                LuaValue.NewNumber(3.14),
                 "~"
             );
 
@@ -290,7 +291,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             {
                 Script script = new(version);
                 ScriptLoadingContext context = new(script);
-                LiteralExpression literal = new(context, DynValue.NewNumber(1));
+                LiteralExpression literal = new(context, LuaValue.NewNumber(1));
                 UnaryOperatorExpression expression = new(context, literal, CreateToken(type, text));
                 ByteCode byteCode = new(script);
 
@@ -303,7 +304,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
         private static UnaryOperatorExpression CreateExpression(
             Script script,
-            DynValue operand,
+            LuaValue operand,
             string opText
         )
         {

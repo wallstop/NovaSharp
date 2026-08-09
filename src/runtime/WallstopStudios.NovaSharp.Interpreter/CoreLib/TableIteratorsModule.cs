@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -21,13 +22,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             internal IteratorCallbacks(Script script)
             {
-                NextArray = DynValue.NewCallback(script, TableIteratorsModule.NextArray);
-                Next = DynValue.NewCallback(script, TableIteratorsModule.Next);
+                NextArray = LuaValue.NewCallback(script, TableIteratorsModule.NextArray);
+                Next = LuaValue.NewCallback(script, TableIteratorsModule.Next);
             }
 
-            internal DynValue NextArray { get; }
+            internal LuaValue NextArray { get; }
 
-            internal DynValue Next { get; }
+            internal LuaValue Next { get; }
         }
 
         // ipairs (t)
@@ -40,7 +41,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `ipairs`, respecting `__ipairs` metamethods and otherwise yielding the array iterator triple.
         /// </summary>
         [NovaSharpModuleMethod(Name = "ipairs")]
-        public static DynValue Ipairs(
+        public static LuaValue Ipairs(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -50,13 +51,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue table = args[0];
+            LuaValue table = args[0];
 
             if (
                 executionContext.TryGetMetamethodTailCall(
                     table,
                     Metamethods.IPairs,
-                    out DynValue meta,
+                    out LuaValue meta,
                     args.GetArray()
                 )
             )
@@ -80,7 +81,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext.Script,
                 static script => new IteratorCallbacks(script)
             );
-            return DynValue.NewTuple(callbacks.NextArray, table, DynValue.FromNumber(0));
+            return LuaValue.NewTuple(callbacks.NextArray, table, LuaValue.FromNumber(0));
         }
 
         // pairs (t)
@@ -94,7 +95,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `pairs`, honoring `__pairs` metamethods or returning the default `next` iterator triple.
         /// </summary>
         [NovaSharpModuleMethod(Name = "pairs")]
-        public static DynValue Pairs(
+        public static LuaValue Pairs(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -104,13 +105,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue table = args[0];
+            LuaValue table = args[0];
 
             if (
                 executionContext.TryGetMetamethodTailCall(
                     table,
                     Metamethods.Pairs,
-                    out DynValue meta,
+                    out LuaValue meta,
                     args.GetArray()
                 )
             )
@@ -134,7 +135,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext.Script,
                 static script => new IteratorCallbacks(script)
             );
-            return DynValue.NewTuple(callbacks.Next, table);
+            return LuaValue.NewTuple(callbacks.Next, table);
         }
 
         // next (table [, index])
@@ -152,21 +153,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `next`, returning successive key/value pairs for a table (§3.3.6).
         /// </summary>
         [NovaSharpModuleMethod(Name = "next")]
-        public static DynValue Next(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Next(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue table = args.AsType(0, "next", DataType.Table);
-            DynValue index = args[1];
+            LuaValue table = args.AsType(0, "next", DataType.Table);
+            LuaValue index = args[1];
 
             TablePair? pair = table.Table.NextKey(index);
 
             if (pair.HasValue)
             {
-                return DynValue.NewTuple(pair.Value.Key, pair.Value.Value);
+                return LuaValue.NewTuple(pair.Value.Key, pair.Value.Value);
             }
             else
             {
@@ -182,7 +183,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Internal helper that drives the array-style iterator used by `ipairs`.
         /// </summary>
-        public static DynValue NextArray(
+        public static LuaValue NextArray(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -192,8 +193,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue table = args.AsType(0, "!!next_i!!", DataType.Table);
-            DynValue index = args.AsType(1, "!!next_i!!", DataType.Number);
+            LuaValue table = args.AsType(0, "!!next_i!!", DataType.Table);
+            LuaValue index = args.AsType(1, "!!next_i!!", DataType.Number);
 
             int idx = ((int)index.Number) + 1;
 
@@ -202,7 +203,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                 executionContext.Script.CompatibilityVersion
             );
-            DynValue val;
+            LuaValue val;
             if (version >= LuaCompatibilityVersion.Lua53)
             {
                 val = GetTableValueWithMetamethods(executionContext, table, idx);
@@ -214,11 +215,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (val.Type != DataType.Nil)
             {
-                return DynValue.NewTuple(DynValue.FromNumber(idx), val);
+                return LuaValue.NewTuple(LuaValue.FromNumber(idx), val);
             }
             else
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
         }
 
@@ -227,26 +228,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// This mimics the VM's index operation for metamethod-aware access.
         /// </summary>
         /// <param name="executionContext">The execution context for calling metamethods.</param>
-        /// <param name="table">The table DynValue to index.</param>
+        /// <param name="table">The table LuaValue to index.</param>
         /// <param name="key">The integer key to look up.</param>
-        /// <returns>The value at the given key, or DynValue.Nil if not found.</returns>
-        private static DynValue GetTableValueWithMetamethods(
+        /// <returns>The value at the given key, or LuaValue.Nil if not found.</returns>
+        private static LuaValue GetTableValueWithMetamethods(
             ScriptExecutionContext executionContext,
-            DynValue table,
+            LuaValue table,
             int key
         )
         {
             const int MaxMetamethodDepth = 10;
-            DynValue current = table;
-            DynValue keyValue = DynValue.FromNumber(key);
+            LuaValue current = table;
+            LuaValue keyValue = LuaValue.FromNumber(key);
 
             for (int depth = 0; depth < MaxMetamethodDepth; depth++)
             {
                 if (current.Type == DataType.Table)
                 {
                     // First try raw access
-                    DynValue rawVal = current.Table.Get(key);
-                    if (!rawVal.IsNil())
+                    LuaValue rawVal = current.Table.Get(key);
+                    if (!rawVal.IsNil)
                     {
                         return rawVal;
                     }
@@ -256,12 +257,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         !executionContext.TryGetMetamethod(
                             current,
                             Metamethods.Index,
-                            out DynValue indexMeta
-                        ) || indexMeta.IsNil()
+                            out LuaValue indexMeta
+                        ) || indexMeta.IsNil
                     )
                     {
                         // No __index metamethod, return nil
-                        return DynValue.Nil;
+                        return LuaValue.Nil;
                     }
 
                     if (
@@ -281,7 +282,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 else
                 {
                     // Non-table value encountered in chain, return nil
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             }
 

@@ -137,7 +137,7 @@ python scripts/lint/check-luanumber-usage.py --fail-on-issues
 
 ### check-vm-hotpath-allocations.py
 
-Rejects new allocation patterns in VM opcode and Lua-call hot paths. The guard flags non-allowlisted `new DynValue`, `DynValue.NewNumber`, `DynValue.NewInteger`, `new List<DynValue>`, `new DynValue[]`, visible-DynValue implicit `new[]` arrays, and `new ScriptExecutionContext` usage in the VM processor files plus current callback/context call-path files. It also catches matching target-typed `new(...)` declaration, return, expression-bodied return, stack-push, and direct callback `Invoke(new(...), ...)` context construction forms. Existing A1/A5 allocation debt is explicitly allowlisted by source context with reasons so those entries can be removed as the value and call layouts are fixed.
+Rejects new allocation patterns in VM opcode and Lua-call hot paths. The guard flags non-allowlisted `new List<LuaValue>`, `new LuaValue[]`, visible-`LuaValue` implicit `new[]` arrays, and `new ScriptExecutionContext` usage in the VM processor files plus current callback/context call-path files. It also catches matching target-typed collection and context `new(...)` declarations, returns, expression-bodied returns, and direct callback `Invoke(new(...), ...)` context construction forms. Scalar `LuaValue` construction and numeric factories are inline and allocation-free, so the guard intentionally does not flag them. Existing A5 allocation debt is explicitly allowlisted by source context with reasons so those entries can be removed as the call layouts are fixed.
 
 ```bash
 # Basic check

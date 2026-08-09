@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -29,7 +30,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LoadstringIsAvailableInLua51(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return type(loadstring)");
+            LuaValue result = script.DoString("return type(loadstring)");
             await Assert.That(result.String).IsEqualTo("function").ConfigureAwait(false);
         }
 
@@ -39,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Reference Lua 5.2 keeps loadstring as a deprecated-but-functional alias for load
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return type(loadstring)");
+            LuaValue result = script.DoString("return type(loadstring)");
             await Assert.That(result.String).IsEqualTo("function").ConfigureAwait(false);
         }
 
@@ -49,7 +50,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // loadstring was actually removed in Lua 5.3, not 5.2
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return type(loadstring)");
+            LuaValue result = script.DoString("return type(loadstring)");
             await Assert.That(result.String).IsEqualTo("nil").ConfigureAwait(false);
         }
 
@@ -62,7 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LoadstringCompilesStringInLua51(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local f, err = loadstring('return 42')
                 assert(f ~= nil, 'loadstring should return a function')
@@ -77,7 +78,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LoadstringUsesChunknameForErrors(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local f, err = loadstring('error(""boom"")', 'my-chunk')
                 assert(f ~= nil, 'loadstring should return a function')
@@ -95,14 +96,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local f, err = loadstring('function(')
                 return f, err
                 "
             );
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].IsNil).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(result.Tuple[1].Type)
                 .IsEqualTo(DataType.String)
@@ -139,7 +140,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LoadAcceptsReaderFunctionInLua51(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local done = false
                 local function reader()
@@ -163,7 +164,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LoadAcceptsStringsInLua52Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local f = load('return 42')
                 return f()
@@ -177,7 +178,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LoadAcceptsReaderFunctionInLua52Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local done = false
                 local function reader()
@@ -197,7 +198,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LoadUsesEnvParameterInLua52Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local env = { x = 100 }
                 local f = load('return x', 'chunk', 't', env)
@@ -232,7 +233,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task LoadsafeAcceptsStringsInLua52Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local f = loadsafe('return 99')
                 return f()
@@ -270,11 +271,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // load(123) tries to parse "123" as Lua code, which fails
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return load(123)");
+            LuaValue result = script.DoString("return load(123)");
 
             // Should return (nil, error_message) tuple, not throw
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].IsNil).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(result.Tuple[1].Type)
                 .IsEqualTo(DataType.String)
@@ -307,7 +308,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local parts = { 'return ', '1 + ', '2' }
                 local index = 0

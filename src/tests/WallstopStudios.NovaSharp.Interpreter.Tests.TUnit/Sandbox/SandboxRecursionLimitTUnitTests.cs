@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -70,7 +71,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             "
             );
 
-            DynValue result = script.DoString("return factorial(10)");
+            LuaValue result = script.DoString("return factorial(10)");
 
             await Assert.That(result.Number).IsEqualTo(3628800).ConfigureAwait(false);
         }
@@ -97,7 +98,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             );
 
             // Should complete (limited by internal stack, not sandbox)
-            DynValue result = script.DoString("return recurse(50)");
+            LuaValue result = script.DoString("return recurse(50)");
 
             await Assert.That(result.Number).IsEqualTo(50).ConfigureAwait(false);
         }

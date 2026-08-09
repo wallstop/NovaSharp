@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -24,7 +25,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
         /// <returns></returns>
-        public DynValue GetValue(Script script, object obj);
+        public LuaValue GetValue(Script script, object obj);
 
         /// <summary>
         /// Sets the value of the member
@@ -33,7 +34,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <param name="obj">The object.</param>
         /// <param name="value">The value.</param>
         /// <returns></returns>
-        public bool SetValue(Script script, object obj, DynValue value);
+        public bool SetValue(Script script, object obj, LuaValue value);
 
         /// <summary>
         /// Gets the type of the member.

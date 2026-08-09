@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
@@ -11,7 +12,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Gets the value stack snapshot.
         /// </summary>
-        public FastStack<DynValue> ValueStack { get; } =
+        public FastStack<LuaValue> ValueStack { get; } =
             new(VmStackDefaults.ValueStackInitialCapacity, VmStackDefaults.ValueStackMaxCapacity);
 
         /// <summary>

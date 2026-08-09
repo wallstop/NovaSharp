@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.ScriptExecution
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -15,7 +16,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             Script script = new();
             TestResource container = new(script);
-            DynValue dynValue = DynValue.NewTable(script);
+            LuaValue dynValue = LuaValue.NewTable(script);
 
             container.CheckScriptOwnership(dynValue);
             await Task.CompletedTask.ConfigureAwait(false);
@@ -27,7 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script scriptA = new();
             Script scriptB = new();
             TestResource container = new(scriptA);
-            DynValue dynValue = DynValue.NewTable(scriptB);
+            LuaValue dynValue = LuaValue.NewTable(scriptB);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 container.CheckScriptOwnership(dynValue)
@@ -43,7 +44,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         )
         {
             TestResource sharedContainer = new(owner: null);
-            DynValue dynValue = DynValue.NewTable(new Script(version));
+            LuaValue dynValue = LuaValue.NewTable(new Script(version));
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 sharedContainer.CheckScriptOwnership(dynValue)
@@ -60,7 +61,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script scriptA = new();
             Script scriptB = new();
             TestResource container = new(scriptA);
-            DynValue[] values = { DynValue.NewTable(scriptA), DynValue.NewTable(scriptB) };
+            LuaValue[] values = { LuaValue.NewTable(scriptA), LuaValue.NewTable(scriptB) };
 
             ExpectException<ScriptRuntimeException>(() => container.CheckScriptOwnership(values));
             await Task.CompletedTask.ConfigureAwait(false);
@@ -72,13 +73,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script scriptA = new();
             Script scriptB = new();
             TestResource container = new(scriptA);
-            DynValue nested = DynValue.NewTuple(
-                DynValue.NewNumber(1),
-                DynValue.NewTuple(DynValue.NewString("value"), DynValue.NewTable(scriptB))
+            LuaValue nested = LuaValue.NewTuple(
+                LuaValue.NewNumber(1),
+                LuaValue.NewTuple(LuaValue.NewString("value"), LuaValue.NewTable(scriptB))
             );
             for (int i = 0; i < 4_096; i++)
             {
-                nested = DynValue.NewTuple(nested);
+                nested = LuaValue.NewTuple(nested);
             }
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
@@ -93,7 +94,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task CheckScriptOwnershipIgnoresNullDynValues(LuaCompatibilityVersion version)
         {
             TestResource container = new(new Script(version));
-            container.CheckScriptOwnership(DynValue.Nil);
+            container.CheckScriptOwnership(LuaValue.Nil);
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
@@ -104,7 +105,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         )
         {
             TestResource container = new(new Script(version));
-            DynValue constant = DynValue.NewNumber(123);
+            LuaValue constant = LuaValue.NewNumber(123);
 
             container.CheckScriptOwnership(constant);
             await Task.CompletedTask.ConfigureAwait(false);

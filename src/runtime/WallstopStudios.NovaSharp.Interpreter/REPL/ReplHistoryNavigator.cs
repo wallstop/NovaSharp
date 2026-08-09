@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.REPL
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -41,7 +42,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.REPL
         /// <returns>
         /// This method returns the result of the computation, or null if more input is needed for a computation.
         /// </returns>
-        public override DynValue? Evaluate(string input)
+        public override LuaValue? Evaluate(string input)
         {
             _navi = -1;
             _last = (_last + 1) % _history.Length;

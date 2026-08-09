@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -265,7 +266,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             mod.Load();
 
-            DynValue counter = mod.GetGlobal("counter");
+            LuaValue counter = mod.GetGlobal("counter");
             await Assert.That(counter.Number).IsEqualTo(11).ConfigureAwait(false);
         }
 
@@ -275,8 +276,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             ModContainer mod = new ModContainer("my-mod", "My Mod");
             mod.Load();
 
-            DynValue modId = mod.GetGlobal("MOD_ID");
-            DynValue modName = mod.GetGlobal("MOD_NAME");
+            LuaValue modId = mod.GetGlobal("MOD_ID");
+            LuaValue modName = mod.GetGlobal("MOD_NAME");
 
             await Assert.That(modId.String).IsEqualTo("my-mod").ConfigureAwait(false);
             await Assert.That(modName.String).IsEqualTo("My Mod").ConfigureAwait(false);
@@ -381,7 +382,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             mod.Load();
 
             // Verify on_unload exists
-            DynValue func = mod.GetGlobal("on_unload");
+            LuaValue func = mod.GetGlobal("on_unload");
             await Assert.That(func.Type).IsEqualTo(DataType.Function).ConfigureAwait(false);
 
             mod.Unload();
@@ -457,7 +458,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             mod.ClearEntryPoints().AddEntryPoint("x = 1");
             mod.Reload();
 
-            DynValue x = mod.GetGlobal("x");
+            LuaValue x = mod.GetGlobal("x");
             await Assert.That(x.Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
@@ -503,7 +504,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             };
             mod.Load();
 
-            DynValue result = mod.DoString("return 1 + 2");
+            LuaValue result = mod.DoString("return 1 + 2");
 
             await Assert.That(result.Number).IsEqualTo(3).ConfigureAwait(false);
         }
@@ -531,7 +532,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             );
 
             mod.Load();
-            DynValue result = mod.CallFunction("add", 3, 4);
+            LuaValue result = mod.CallFunction("add", 3, 4);
 
             await Assert.That(result.Number).IsEqualTo(7).ConfigureAwait(false);
         }
@@ -551,12 +552,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             mod.Load();
 
-            DynValue zero = mod.CallFunction("argc");
-            DynValue one = mod.CallFunction("argc", "value");
-            DynValue two = mod.CallFunction("add2", 3, 4);
-            DynValue three = mod.CallFunction("add3", 1, 2, 3);
-            DynValue four = mod.CallFunction("add4", 1, 2, 3, 4);
-            DynValue five = mod.CallFunction("add5", 1, 2, 3, 4, 5);
+            LuaValue zero = mod.CallFunction("argc");
+            LuaValue one = mod.CallFunction("argc", "value");
+            LuaValue two = mod.CallFunction("add2", 3, 4);
+            LuaValue three = mod.CallFunction("add3", 1, 2, 3);
+            LuaValue four = mod.CallFunction("add4", 1, 2, 3, 4);
+            LuaValue five = mod.CallFunction("add5", 1, 2, 3, 4, 5);
 
             await Assert.That(zero.Number).IsEqualTo(0).ConfigureAwait(false);
             await Assert.That(one.Number).IsEqualTo(1).ConfigureAwait(false);
@@ -576,7 +577,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             mod.Load();
             object[] nullArgs = null;
 
-            DynValue result = mod.CallFunction("inspect", (object)null);
+            LuaValue result = mod.CallFunction("inspect", (object)null);
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 mod.CallFunction("inspect", nullArgs)
             );
@@ -595,8 +596,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             mod.Load();
 
-            DynValue spread = mod.CallFunction("argc", args);
-            DynValue single = mod.CallFunction("argc", (object)args);
+            LuaValue spread = mod.CallFunction("argc", args);
+            LuaValue single = mod.CallFunction("argc", (object)args);
 
             await Assert.That(spread.Number).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(single.Number).IsEqualTo(1).ConfigureAwait(false);
@@ -615,8 +616,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             mod.Load();
 
-            DynValue empty = mod.CallFunctionObjectArguments("argc", ReadOnlySpan<object>.Empty);
-            DynValue sliced = mod.CallFunctionObjectArguments("sum", paddedArgs.AsSpan(1, 3));
+            LuaValue empty = mod.CallFunctionObjectArguments("argc", ReadOnlySpan<object>.Empty);
+            LuaValue sliced = mod.CallFunctionObjectArguments("sum", paddedArgs.AsSpan(1, 3));
 
             await Assert.That(empty.Number).IsEqualTo(0).ConfigureAwait(false);
             await Assert.That(sliced.Number).IsEqualTo(6).ConfigureAwait(false);
@@ -632,7 +633,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             mod.Load();
 
-            DynValue result = mod.CallFunctionObjectArguments("sum", args);
+            LuaValue result = mod.CallFunctionObjectArguments("sum", args);
 
             await Assert.That(result.Number).IsEqualTo(6).ConfigureAwait(false);
         }
@@ -647,7 +648,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             mod.Load();
 
-            DynValue result = mod.CallFunctionObjectArguments("inspect", args.AsSpan());
+            LuaValue result = mod.CallFunctionObjectArguments("inspect", args.AsSpan());
 
             await Assert.That(result.String).IsEqualTo("nil").ConfigureAwait(false);
         }
@@ -659,7 +660,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 "function echo(value) return value end"
             );
             Script foreignScript = new Script();
-            DynValue foreignTable = DynValue.NewTable(foreignScript);
+            LuaValue foreignTable = LuaValue.NewTable(foreignScript);
             object[] args = new object[] { foreignTable };
 
             mod.Load();
@@ -722,7 +723,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             ModContainer mod = new ModContainer("test").AddEntryPoint("myValue = 'hello'");
 
             mod.Load();
-            DynValue value = mod.GetGlobal("myValue");
+            LuaValue value = mod.GetGlobal("myValue");
 
             await Assert.That(value.String).IsEqualTo("hello").ConfigureAwait(false);
         }
@@ -733,7 +734,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             ModContainer mod = new ModContainer("test");
             mod.Load();
 
-            DynValue value = mod.GetGlobal("nonexistent");
+            LuaValue value = mod.GetGlobal("nonexistent");
 
             await Assert.That(value.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
@@ -744,8 +745,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             ModContainer mod = new ModContainer("test");
             mod.Load();
 
-            mod.SetGlobal("myValue", DynValue.NewNumber(42));
-            DynValue result = mod.GetGlobal("myValue");
+            mod.SetGlobal("myValue", LuaValue.NewNumber(42));
+            LuaValue result = mod.GetGlobal("myValue");
 
             await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
         }
@@ -784,7 +785,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 ScriptConfigurator = (container, script) =>
                 {
                     configuratorCalled = true;
-                    script.Globals["custom_value"] = DynValue.NewNumber(123);
+                    script.Globals["custom_value"] = LuaValue.NewNumber(123);
                 },
             };
 
@@ -1174,7 +1175,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.Register(mod2);
             manager.LoadAll();
 
-            IDictionary<string, DynValue> results = manager.BroadcastCall("on_tick");
+            IDictionary<string, LuaValue> results = manager.BroadcastCall("on_tick");
 
             await Assert.That(results.Count).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(results["mod1"].String).IsEqualTo("mod1").ConfigureAwait(false);
@@ -1196,7 +1197,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.Register(mod2);
             manager.LoadAll();
 
-            IDictionary<string, DynValue> results = manager.BroadcastCall("on_tick");
+            IDictionary<string, LuaValue> results = manager.BroadcastCall("on_tick");
 
             await Assert.That(results.Count).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(results.ContainsKey("mod1")).IsTrue().ConfigureAwait(false);
@@ -1215,7 +1216,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.Register(mod);
             manager.LoadAll();
 
-            IDictionary<string, DynValue> results = manager.BroadcastCall("add", 10, 5);
+            IDictionary<string, LuaValue> results = manager.BroadcastCall("add", 10, 5);
 
             await Assert.That(results["mod1"].Number).IsEqualTo(15).ConfigureAwait(false);
         }
@@ -1237,7 +1238,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.Register(mod2);
             manager.LoadAll();
 
-            IDictionary<string, DynValue> results = manager.BroadcastCall("add5", 1, 2, 3, 4, 5);
+            IDictionary<string, LuaValue> results = manager.BroadcastCall("add5", 1, 2, 3, 4, 5);
 
             await Assert.That(results.Count).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(results["mod1"].Number).IsEqualTo(15).ConfigureAwait(false);
@@ -1252,7 +1253,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             fixedManager.Register(fixedMod);
             fixedManager.LoadAll();
 
-            IDictionary<string, DynValue> fixedResults = fixedManager.BroadcastCall(
+            IDictionary<string, LuaValue> fixedResults = fixedManager.BroadcastCall(
                 "add",
                 1,
                 2,
@@ -1266,7 +1267,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             paramsManager.Register(paramsMod);
             paramsManager.LoadAll();
 
-            IDictionary<string, DynValue> paramsResults = paramsManager.BroadcastCall(
+            IDictionary<string, LuaValue> paramsResults = paramsManager.BroadcastCall(
                 "add",
                 1,
                 2,
@@ -1296,8 +1297,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.Register(mod);
             manager.LoadAll();
 
-            IDictionary<string, DynValue> spread = manager.BroadcastCall("argc", args);
-            IDictionary<string, DynValue> single = manager.BroadcastCall("argc", (object)args);
+            IDictionary<string, LuaValue> spread = manager.BroadcastCall("argc", args);
+            IDictionary<string, LuaValue> single = manager.BroadcastCall("argc", (object)args);
 
             await Assert.That(spread["mod1"].Number).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(single["mod1"].Number).IsEqualTo(1).ConfigureAwait(false);
@@ -1319,7 +1320,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.Register(mod2);
             manager.LoadAll();
 
-            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+            IDictionary<string, LuaValue> results = manager.BroadcastCallObjectArguments(
                 "sum",
                 paddedArgs.AsSpan(1, 3)
             );
@@ -1345,7 +1346,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.Register(mod2);
             manager.LoadAll();
 
-            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+            IDictionary<string, LuaValue> results = manager.BroadcastCallObjectArguments(
                 "sum",
                 args
             );
@@ -1369,7 +1370,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.Register(missing);
             manager.LoadAll();
 
-            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+            IDictionary<string, LuaValue> results = manager.BroadcastCallObjectArguments(
                 "tick",
                 args.AsSpan()
             );
@@ -1395,7 +1396,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.Register(loaded);
             manager.Register(unloaded);
 
-            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+            IDictionary<string, LuaValue> results = manager.BroadcastCallObjectArguments(
                 "tick",
                 args.AsSpan()
             );
@@ -1421,7 +1422,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.Register(passing);
             manager.LoadAll();
 
-            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+            IDictionary<string, LuaValue> results = manager.BroadcastCallObjectArguments(
                 "tick",
                 args.AsSpan()
             );
@@ -1444,7 +1445,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.Register(mod);
             manager.LoadAll();
 
-            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+            IDictionary<string, LuaValue> results = manager.BroadcastCallObjectArguments(
                 "inspect",
                 args.AsSpan()
             );
@@ -1462,7 +1463,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.Register(mod);
             manager.LoadAll();
 
-            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+            IDictionary<string, LuaValue> results = manager.BroadcastCallObjectArguments(
                 "add",
                 args.AsSpan()
             );
@@ -1494,7 +1495,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             manager.Register(mod);
 
-            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+            IDictionary<string, LuaValue> results = manager.BroadcastCallObjectArguments(
                 "target",
                 paddedArgs.AsSpan(1, 5)
             );
@@ -1515,7 +1516,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             manager.Register(mod);
 
-            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+            IDictionary<string, LuaValue> results = manager.BroadcastCallObjectArguments(
                 "target",
                 paddedArgs.AsSpan(1, 3)
             );
@@ -1539,7 +1540,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.LoadAll();
             object[] nullArgs = null;
 
-            IDictionary<string, DynValue> results = manager.BroadcastCall("inspect", (object)null);
+            IDictionary<string, LuaValue> results = manager.BroadcastCall("inspect", (object)null);
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 manager.BroadcastCall("inspect", nullArgs)
             );
@@ -1556,7 +1557,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             manager.Register(mod);
 
-            IDictionary<string, DynValue> results = manager.BroadcastCall("target", 1, 2, 3, 4, 5);
+            IDictionary<string, LuaValue> results = manager.BroadcastCall("target", 1, 2, 3, 4, 5);
 
             await Assert.That(results.Count).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(results["custom"].Number).IsEqualTo(5).ConfigureAwait(false);
@@ -1574,7 +1575,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.Register(mod);
             manager.LoadAll();
 
-            DynValue value = manager.GetModGlobal("mod1", "myValue");
+            LuaValue value = manager.GetModGlobal("mod1", "myValue");
 
             await Assert.That(value.Number).IsEqualTo(42).ConfigureAwait(false);
         }
@@ -1584,7 +1585,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         {
             ModManager manager = new ModManager();
 
-            DynValue value = manager.GetModGlobal("nonexistent", "myValue");
+            LuaValue value = manager.GetModGlobal("nonexistent", "myValue");
 
             await Assert.That(value.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
@@ -1682,13 +1683,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             public int CallFunctionCallCount { get; private set; }
 
-            DynValue IModContainer.GetGlobal(string name)
+            LuaValue IModContainer.GetGlobal(string name)
             {
                 GetGlobalCallCount++;
                 return base.GetGlobal(name);
             }
 
-            DynValue IModContainer.CallFunction(string functionName, params object[] args)
+            LuaValue IModContainer.CallFunction(string functionName, params object[] args)
             {
                 CallFunctionCallCount++;
                 return base.CallFunction(functionName, args);
@@ -1698,7 +1699,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         private sealed class CustomModContainer : IModContainer
         {
             private readonly Script _script = new(CoreModulePresets.Default);
-            private readonly DynValue _function;
+            private readonly LuaValue _function;
 
             public CustomModContainer()
             {
@@ -1784,25 +1785,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 return ModOperationResult.Succeeded(ModLoadState.Loaded);
             }
 
-            public DynValue DoString(string code, string codeFriendlyName = null)
+            public LuaValue DoString(string code, string codeFriendlyName = null)
             {
                 return _script.DoString(code, null, codeFriendlyName);
             }
 
-            public DynValue CallFunction(string functionName, params object[] args)
+            public LuaValue CallFunction(string functionName, params object[] args)
             {
                 LastFunctionName = functionName;
                 LastArgumentCount = args == null ? -1 : args.Length;
                 LastFifthArgument = args == null || args.Length < 5 ? null : args[4];
-                return DynValue.NewNumber(LastArgumentCount);
+                return LuaValue.NewNumber(LastArgumentCount);
             }
 
-            public DynValue GetGlobal(string name)
+            public LuaValue GetGlobal(string name)
             {
-                return name == "target" ? _function : DynValue.Nil;
+                return name == "target" ? _function : LuaValue.Nil;
             }
 
-            public void SetGlobal(string name, DynValue value)
+            public void SetGlobal(string name, LuaValue value)
             {
                 _script.Globals.Set(name, value);
             }
@@ -1813,7 +1814,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 IModContainerObjectArguments
         {
             private readonly Script _script = new(CoreModulePresets.Default);
-            private readonly DynValue _function;
+            private readonly LuaValue _function;
 
             public SpanAwareCustomModContainer()
             {
@@ -1899,34 +1900,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 return ModOperationResult.Succeeded(ModLoadState.Loaded);
             }
 
-            public DynValue DoString(string code, string codeFriendlyName = null)
+            public LuaValue DoString(string code, string codeFriendlyName = null)
             {
                 return _script.DoString(code, null, codeFriendlyName);
             }
 
-            public DynValue CallFunction(string functionName, params object[] args)
+            public LuaValue CallFunction(string functionName, params object[] args)
             {
                 CallFunctionCallCount++;
                 LastArgumentCount = args == null ? -1 : args.Length;
-                return DynValue.NewNumber(LastArgumentCount);
+                return LuaValue.NewNumber(LastArgumentCount);
             }
 
-            public DynValue CallFunctionObjectArguments(
+            public LuaValue CallFunctionObjectArguments(
                 string functionName,
                 ReadOnlySpan<object> args
             )
             {
                 SpanCallCount++;
                 LastArgumentCount = args.Length;
-                return DynValue.NewNumber(args.Length);
+                return LuaValue.NewNumber(args.Length);
             }
 
-            public DynValue GetGlobal(string name)
+            public LuaValue GetGlobal(string name)
             {
-                return name == "target" ? _function : DynValue.Nil;
+                return name == "target" ? _function : LuaValue.Nil;
             }
 
-            public void SetGlobal(string name, DynValue value)
+            public void SetGlobal(string name, LuaValue value)
             {
                 _script.Globals.Set(name, value);
             }

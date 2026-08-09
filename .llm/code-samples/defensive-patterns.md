@@ -10,25 +10,20 @@ Return early with graceful fallbacks instead of throwing.
 
 ```csharp
 // BAD: Assumes input is valid
-public DynValue ProcessValue(DynValue input)
+public LuaValue ProcessValue(LuaValue input)
 {
-    return input.Table.Get("key");  // NullReferenceException if null
+    return input.AsTable().Get("key");  // Throws when input is not a table
 }
 
 // GOOD: Defensive with graceful fallback
-public DynValue ProcessValue(DynValue input)
+public LuaValue ProcessValue(LuaValue input)
 {
-    if (input == null || input.Type != DataType.Table)
+    if (!input.IsTable)
     {
-        return DynValue.Nil;
+        return LuaValue.Nil;
     }
 
-    Table table = input.Table;
-    if (table == null)
-    {
-        return DynValue.Nil;
-    }
-
+    LuaTable table = input.AsTable();
     return table.Get("key");
 }
 ```
@@ -40,8 +35,8 @@ ______________________________________________________________________
 Make success/failure explicit in the API.
 
 ```csharp
-// BAD: Returns null on failure
-public DynValue GetValue(string key)
+// BAD: Nullable return makes absence easy to overlook
+public LuaValue? GetValue(string key)
 {
     if (!_values.ContainsKey(key))
     {
@@ -51,11 +46,11 @@ public DynValue GetValue(string key)
 }
 
 // GOOD: Try-pattern makes success explicit
-public bool TryGetValue(string key, out DynValue result)
+public bool TryGetValue(string key, out LuaValue result)
 {
     if (string.IsNullOrEmpty(key))
     {
-        result = DynValue.Nil;
+        result = LuaValue.Nil;
         return false;
     }
 
@@ -63,19 +58,19 @@ public bool TryGetValue(string key, out DynValue result)
 }
 
 // ALSO GOOD: Return Nil for Lua semantics
-public DynValue GetValue(string key)
+public LuaValue GetValue(string key)
 {
     if (string.IsNullOrEmpty(key))
     {
-        return DynValue.Nil;
+        return LuaValue.Nil;
     }
 
-    if (_values.TryGetValue(key, out DynValue result))
+    if (_values.TryGetValue(key, out LuaValue result))
     {
         return result;
     }
 
-    return DynValue.Nil;
+    return LuaValue.Nil;
 }
 ```
 
@@ -120,17 +115,17 @@ Always check bounds before collection access.
 
 ```csharp
 // BAD: Assumes index is valid
-public DynValue GetArgument(int index)
+public LuaValue GetArgument(int index)
 {
     return _arguments[index];
 }
 
 // GOOD: Bounds checking with fallback
-public DynValue GetArgument(int index)
+public LuaValue GetArgument(int index)
 {
     if (_arguments == null || index < 0 || index >= _arguments.Length)
     {
-        return DynValue.Nil;
+        return LuaValue.Nil;
     }
 
     return _arguments[index];
@@ -185,7 +180,7 @@ Validate everything first, then update atomically.
 
 ```csharp
 // BAD: State can become inconsistent
-public void UpdateState(string key, DynValue value)
+public void UpdateState(string key, LuaValue value)
 {
     _keys.Add(key);        // Added
     _values[key] = value;  // What if this throws?
@@ -193,9 +188,9 @@ public void UpdateState(string key, DynValue value)
 }
 
 // GOOD: Validate first, then update
-public bool UpdateState(string key, DynValue value)
+public bool UpdateState(string key, LuaValue value)
 {
-    if (string.IsNullOrEmpty(key) || value == null)
+    if (string.IsNullOrEmpty(key))
     {
         return false;
     }

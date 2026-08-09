@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -30,7 +31,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task PairsVisitsEveryKeyExactlyOnce(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function check()
                     local t = {}
@@ -80,7 +81,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function check()
                     local t = {}
@@ -120,7 +121,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task NextResumesFromEveryReturnedKey(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function check()
                     local t = { 10, 20, 30 }
@@ -155,7 +156,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function check()
                     -- Clearing the key you are standing on is the one mutation the manual permits
@@ -192,7 +193,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task BorderIsAValidBoundaryForHoleyTables(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function check()
                     -- A border n satisfies t[n] ~= nil and t[n+1] == nil, for any table shape.
@@ -245,7 +246,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task SparseAndDenseIntegerKeysCoexist(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function check()
                     -- Forces a dense integer prefix into contiguous storage and keys far past it
@@ -288,7 +289,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function check()
                     -- Churn removes and re-adds keys many times; the traversal must always report
@@ -327,7 +328,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task NextRejectsKeysThatAreNotInTheTable(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function check()
                     local t = { a = 1 }

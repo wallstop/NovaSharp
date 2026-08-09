@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System.Collections.Generic;
     using System.Reflection;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -30,8 +31,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task InvokeThrowsWhenExecutionContextIsNull()
         {
-            CallbackFunction function = new((_, _) => DynValue.Nil);
-            List<DynValue> arguments = new() { DynValue.NewNumber(1) };
+            CallbackFunction function = new((_, _) => LuaValue.Nil);
+            List<LuaValue> arguments = new() { LuaValue.NewNumber(1) };
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 function.Invoke((ScriptExecutionContext)null, arguments)
@@ -48,7 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            CallbackFunction function = new((_, _) => DynValue.Nil);
+            CallbackFunction function = new((_, _) => LuaValue.Nil);
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 function.Invoke(context, null)
@@ -69,11 +70,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 (_, args) =>
                 {
                     captured = args;
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
 
-            List<DynValue> arguments = new() { DynValue.NewNumber(1), DynValue.NewNumber(2) };
+            List<LuaValue> arguments = new() { LuaValue.NewNumber(1), LuaValue.NewNumber(2) };
 
             function.Invoke(context, arguments, isMethodCall: true);
 
@@ -94,16 +95,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 (_, args) =>
                 {
                     captured = args;
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
 
-            List<DynValue> nilSelf = new() { default };
+            List<LuaValue> nilSelf = new() { default };
             function.Invoke(context, nilSelf, isMethodCall: true);
             await Assert.That(captured).IsNotNull().ConfigureAwait(false);
             await Assert.That(captured!.IsMethodCall).IsFalse().ConfigureAwait(false);
 
-            List<DynValue> nonUserData = new() { DynValue.NewString("self") };
+            List<LuaValue> nonUserData = new() { LuaValue.NewString("self") };
             function.Invoke(context, nonUserData, isMethodCall: true);
             await Assert.That(captured).IsNotNull().ConfigureAwait(false);
             await Assert.That(captured!.IsMethodCall).IsFalse().ConfigureAwait(false);
@@ -112,9 +113,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
             registrationScope.RegisterType<SampleUserData>();
 
-            bool created = UserData.TryCreate(new SampleUserData(), out DynValue userData);
+            bool created = UserData.TryCreate(new SampleUserData(), out LuaValue userData);
             await Assert.That(created).IsTrue().ConfigureAwait(false);
-            List<DynValue> userDataArgs = new() { userData };
+            List<LuaValue> userDataArgs = new() { userData };
 
             function.Invoke(context, userDataArgs, isMethodCall: true);
             await Assert.That(captured).IsNotNull().ConfigureAwait(false);
@@ -134,15 +135,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 (_, args) =>
                 {
                     capturedIsMethodCall = args.IsMethodCall;
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
 
-            List<DynValue> nilSelf = new() { default };
+            List<LuaValue> nilSelf = new() { default };
             function.Invoke(context, nilSelf, isMethodCall: true);
             await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
 
-            List<DynValue> nonUserData = new() { DynValue.NewString("self") };
+            List<LuaValue> nonUserData = new() { LuaValue.NewString("self") };
             function.Invoke(context, nonUserData, isMethodCall: true);
             await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
 
@@ -150,9 +151,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
             registrationScope.RegisterType<SampleUserData>();
 
-            bool created = UserData.TryCreate(new SampleUserData(), out DynValue userData);
+            bool created = UserData.TryCreate(new SampleUserData(), out LuaValue userData);
             await Assert.That(created).IsTrue().ConfigureAwait(false);
-            List<DynValue> userDataArgs = new() { userData };
+            List<LuaValue> userDataArgs = new() { userData };
 
             function.Invoke(context, userDataArgs, isMethodCall: true);
             await Assert.That(capturedIsMethodCall).IsTrue().ConfigureAwait(false);
@@ -170,15 +171,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 (CallbackArgumentsView args) =>
                 {
                     capturedIsMethodCall = args.IsMethodCall;
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
 
-            List<DynValue> nilSelf = new() { default };
+            List<LuaValue> nilSelf = new() { default };
             function.Invoke(script, nilSelf, isMethodCall: true);
             await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
 
-            List<DynValue> nonUserData = new() { DynValue.NewString("self") };
+            List<LuaValue> nonUserData = new() { LuaValue.NewString("self") };
             function.Invoke(script, nonUserData, isMethodCall: true);
             await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
 
@@ -186,9 +187,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
             registrationScope.RegisterType<SampleUserData>();
 
-            bool created = UserData.TryCreate(new SampleUserData(), out DynValue userData);
+            bool created = UserData.TryCreate(new SampleUserData(), out LuaValue userData);
             await Assert.That(created).IsTrue().ConfigureAwait(false);
-            List<DynValue> userDataArgs = new() { userData };
+            List<LuaValue> userDataArgs = new() { userData };
 
             function.Invoke(script, userDataArgs, isMethodCall: true);
             await Assert.That(capturedIsMethodCall).IsTrue().ConfigureAwait(false);
@@ -206,11 +207,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 {
                     capturedType = args[0].Type;
                     capturedIsMethodCall = args.IsMethodCall;
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
 
-            script.Call(DynValue.NewCallback(function), default(DynValue));
+            script.CallValues(LuaValue.NewCallback(function), default(LuaValue));
 
             await Assert.That(capturedType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
@@ -232,7 +233,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             CallbackFunction function = CallbackFunction.FromArgumentView(
                 (_, _) => throw new InvalidOperationException("Callback should not run.")
             );
-            List<DynValue> args = new() { DynValue.NewNumber(1), DynValue.NewNumber(2) };
+            List<LuaValue> args = new() { LuaValue.NewNumber(1), LuaValue.NewNumber(2) };
 
             ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
                 function.InvokeArgumentViewStack(context, args, offset, count)
@@ -251,11 +252,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 (_, args) =>
                 {
                     capturedType = args[0].Type;
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
 
-            script.Call(DynValue.NewCallback(function), default(DynValue));
+            script.CallValues(LuaValue.NewCallback(function), default(LuaValue));
 
             await Assert.That(capturedType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
@@ -301,9 +302,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             );
 
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            List<DynValue> args = new() { DynValue.NewNumber(41) };
+            List<LuaValue> args = new() { LuaValue.NewNumber(41) };
 
-            DynValue result = function.Invoke(context, args);
+            LuaValue result = function.Invoke(context, args);
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
@@ -353,7 +354,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task BindToScriptCachesPerScriptOwnedCallbackWithoutMutatingSharedCallback()
         {
-            CallbackFunction shared = new((_, _) => DynValue.Nil);
+            CallbackFunction shared = new((_, _) => LuaValue.Nil);
             Script firstScript = new();
             Script secondScript = new();
             object initialAdditionalData = new();
@@ -387,7 +388,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .IsSameReferenceAs(updatedAdditionalData)
                 .ConfigureAwait(false);
             Assert.Throws<ScriptRuntimeException>(() =>
-                first.Invoke(secondScript.CreateDynamicExecutionContext(), Array.Empty<DynValue>())
+                first.Invoke(secondScript.CreateDynamicExecutionContext(), Array.Empty<LuaValue>())
             );
         }
 
@@ -466,7 +467,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         private sealed class SampleUserData
         {
             private static readonly MethodInfo ValidCallbackMethodInfo = (
-                (Func<ScriptExecutionContext, CallbackArguments, DynValue>)ValidCallback
+                (Func<ScriptExecutionContext, CallbackArguments, LuaValue>)ValidCallback
             ).Method;
 
             private static readonly MethodInfo ArgumentViewCallbackMethodInfo = (
@@ -478,11 +479,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             ).Method;
 
             private static readonly MethodInfo PrivateCallbackMethodInfo = (
-                (Func<ScriptExecutionContext, CallbackArguments, DynValue>)PrivateCallback
+                (Func<ScriptExecutionContext, CallbackArguments, LuaValue>)PrivateCallback
             ).Method;
 
             private static readonly MethodInfo BadSignatureMethodInfo = (
-                (Func<ScriptExecutionContext, int, DynValue>)BadSignature
+                (Func<ScriptExecutionContext, int, LuaValue>)BadSignature
             ).Method;
 
             public static int AddOne(int value)
@@ -490,38 +491,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 return value + 1;
             }
 
-            public static DynValue ValidCallback(
+            public static LuaValue ValidCallback(
                 ScriptExecutionContext context,
                 CallbackArguments args
             )
             {
-                return DynValue.NewNumber(args[0].Number + 1);
+                return LuaValue.NewNumber(args[0].Number + 1);
             }
 
-            public static DynValue ValidArgumentViewCallback(
+            public static LuaValue ValidArgumentViewCallback(
                 ScriptExecutionContext context,
                 CallbackArgumentsView args
             )
             {
-                return DynValue.NewNumber(args[0].Number + 1);
+                return LuaValue.NewNumber(args[0].Number + 1);
             }
 
-            public static DynValue ValidArgumentViewNoContextCallback(CallbackArgumentsView args)
+            public static LuaValue ValidArgumentViewNoContextCallback(CallbackArgumentsView args)
             {
-                return DynValue.NewNumber(args[0].Number + 1);
+                return LuaValue.NewNumber(args[0].Number + 1);
             }
 
-            internal static DynValue PrivateCallback(
+            internal static LuaValue PrivateCallback(
                 ScriptExecutionContext context,
                 CallbackArguments args
             )
             {
-                return DynValue.NewNumber(args[0].Number + 1);
+                return LuaValue.NewNumber(args[0].Number + 1);
             }
 
-            public static DynValue BadSignature(ScriptExecutionContext context, int value)
+            public static LuaValue BadSignature(ScriptExecutionContext context, int value)
             {
-                return DynValue.NewNumber(value);
+                return LuaValue.NewNumber(value);
             }
 
             public static MethodInfo GetPublicCallbackMethod()

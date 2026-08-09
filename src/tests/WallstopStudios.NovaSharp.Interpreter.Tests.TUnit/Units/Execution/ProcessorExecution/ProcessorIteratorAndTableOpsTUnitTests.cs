@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -19,7 +20,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            FastStack<DynValue> stack = processor.GetValueStackForTests();
+            FastStack<LuaValue> stack = processor.GetValueStackForTests();
             stack.Clear();
 
             Table iteratorHost = new(script);
@@ -27,14 +28,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Table meta = new(script);
             meta.Set(
                 "__iterator",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (ctx, args) =>
                     {
                         called = true;
-                        return DynValue.NewTuple(
-                            DynValue.NewString("fn"),
-                            DynValue.NewString("state"),
-                            DynValue.NewNumber(5)
+                        return LuaValue.NewTuple(
+                            LuaValue.NewString("fn"),
+                            LuaValue.NewString("state"),
+                            LuaValue.NewNumber(5)
                         );
                     }
                 )
@@ -42,12 +43,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             iteratorHost.MetaTable = meta;
 
             stack.Push(
-                DynValue.NewTuple(DynValue.NewTable(iteratorHost), DynValue.Nil, DynValue.Nil)
+                LuaValue.NewTuple(LuaValue.NewTable(iteratorHost), LuaValue.Nil, LuaValue.Nil)
             );
 
             processor.ExecIterPrepForTests(new Instruction(SourceRef.GetClrLocation()));
 
-            DynValue tuple = stack.Peek();
+            LuaValue tuple = stack.Peek();
             await Assert.That(called).IsTrue();
             await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple);
             await Assert.That(tuple.Tuple[0].String).IsEqualTo("fn");
@@ -60,17 +61,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            FastStack<DynValue> stack = processor.GetValueStackForTests();
+            FastStack<LuaValue> stack = processor.GetValueStackForTests();
             stack.Clear();
 
             Table table = new(script);
-            table.Set(1, DynValue.NewString("value"));
+            table.Set(1, LuaValue.NewString("value"));
 
-            stack.Push(DynValue.NewTuple(DynValue.NewTable(table), DynValue.Nil, DynValue.Nil));
+            stack.Push(LuaValue.NewTuple(LuaValue.NewTable(table), LuaValue.Nil, LuaValue.Nil));
 
             processor.ExecIterPrepForTests(new Instruction(SourceRef.GetClrLocation()));
 
-            DynValue tuple = stack.Peek();
+            LuaValue tuple = stack.Peek();
             await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple);
             await Assert.That(tuple.Tuple[0].Type).IsEqualTo(DataType.UserData);
             await Assert
@@ -83,10 +84,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            FastStack<DynValue> stack = processor.GetValueStackForTests();
+            FastStack<LuaValue> stack = processor.GetValueStackForTests();
             stack.Clear();
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewNumber(2));
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewNumber(2));
 
             ExpectException<InternalErrorException>(() =>
                 processor.ExecTblInitIForTests(new Instruction(SourceRef.GetClrLocation()))
@@ -98,11 +99,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            FastStack<DynValue> stack = processor.GetValueStackForTests();
+            FastStack<LuaValue> stack = processor.GetValueStackForTests();
             stack.Clear();
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewNumber(2));
-            stack.Push(DynValue.NewString("not-table"));
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewNumber(2));
+            stack.Push(LuaValue.NewString("not-table"));
 
             ExpectException<InternalErrorException>(() =>
                 processor.ExecTblInitNForTests(new Instruction(SourceRef.GetClrLocation()))

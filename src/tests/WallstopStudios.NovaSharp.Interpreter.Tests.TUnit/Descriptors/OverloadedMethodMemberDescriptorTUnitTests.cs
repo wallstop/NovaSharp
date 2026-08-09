@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.Collections.Generic;
     using System.Reflection;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -70,7 +71,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             MethodMemberDescriptor overload = new(method);
             descriptor.AddOverload(overload);
 
-            DynValue value = descriptor.GetValue(script, new TestOverloadClass());
+            LuaValue value = descriptor.GetValue(script, new TestOverloadClass());
 
             await Assert.That(value.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
@@ -87,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             OverloadedMethodMemberDescriptor descriptor = new("Method", typeof(TestOverloadClass));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                descriptor.SetValue(script, new TestOverloadClass(), DynValue.Nil)
+                descriptor.SetValue(script, new TestOverloadClass(), LuaValue.Nil)
             );
 
             await Assert
@@ -242,7 +243,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             UserData.RegisterType<TestOverloadClass>();
             script.Globals["TestClass"] = typeof(TestOverloadClass);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 return obj.WithInt(42)
@@ -339,7 +340,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             descriptor.AddOverload(overload);
 
             TestOverloadClass obj = new();
-            Func<Execution.ScriptExecutionContext, CallbackArguments, DynValue> callback =
+            Func<Execution.ScriptExecutionContext, CallbackArguments, LuaValue> callback =
                 descriptor.GetCallback(script, obj);
 
             await Assert.That(callback).IsNotNull().ConfigureAwait(false);
@@ -463,9 +464,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             CallbackFunction callback = descriptor.GetCallbackFunction(script, instance);
 
             // Call with different argument types to trigger cache overflow
-            DynValue resultInt = script.Call(callback, DynValue.NewNumber(42));
-            DynValue resultStr = script.Call(callback, DynValue.NewString("hello"));
-            DynValue resultDbl = script.Call(callback, DynValue.NewNumber(3.14));
+            LuaValue resultInt = script.Call(callback, LuaValue.NewNumber(42));
+            LuaValue resultStr = script.Call(callback, LuaValue.NewString("hello"));
+            LuaValue resultDbl = script.Call(callback, LuaValue.NewNumber(3.14));
 
             await Assert.That(resultInt.Number).IsEqualTo(42).ConfigureAwait(false);
             await Assert.That(resultStr.Number).IsEqualTo(5).ConfigureAwait(false);
@@ -493,14 +494,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             // First call with an object - caches the method with hasObject = true
             CallbackFunction callbackWithObj = descriptor.GetCallbackFunction(script, instance);
-            DynValue result1 = script.Call(callbackWithObj, DynValue.NewNumber(10));
+            LuaValue result1 = script.Call(callbackWithObj, LuaValue.NewNumber(10));
 
             // Second call without an object - should not match cache and resolve again
             CallbackFunction callbackWithoutObj = descriptor.GetCallbackFunction(script, null);
 
             // This call won't work (no static overload) but exercises the cache mismatch path
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.Call(callbackWithoutObj, DynValue.NewNumber(20))
+                script.Call(callbackWithoutObj, LuaValue.NewNumber(20))
             );
 
             await Assert.That(result1.Number).IsEqualTo(10).ConfigureAwait(false);
@@ -526,7 +527,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             script.Globals["Arg2"] = typeof(UserDataArg2);
 
             // Call with different userdata types to exercise cache mismatch
-            DynValue result1 = script.DoString(
+            LuaValue result1 = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 local arg1 = Arg1.__new()
@@ -534,7 +535,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 "
             );
 
-            DynValue result2 = script.DoString(
+            LuaValue result2 = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 local arg2 = Arg2.__new()
@@ -562,7 +563,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             script.Globals["TestClass"] = typeof(ExtensibleClass);
 
             // Call the extension method
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 return obj.ExtensionMethod()
@@ -585,7 +586,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             script.Globals["TestClass"] = typeof(VarArgsClass);
 
             // Call with no varargs (empty array)
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 return obj.WithVarArgs()
@@ -608,7 +609,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             script.Globals["TestClass"] = typeof(VarArgsClass);
 
             // Call with multiple varargs
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 return obj.WithVarArgs(1, 2, 3)
@@ -637,7 +638,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             int[] testArray = new[] { 1, 2, 3, 4, 5 };
             script.Globals["testArray"] = UserData.Create(testArray);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 return obj.WithVarArgsExact(testArray)
@@ -676,7 +677,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             CallbackFunction callback = descriptor.GetCallbackFunction(script, instance);
 
             // This should trigger the cache overflow path since cache size is 0
-            DynValue result = script.Call(callback, DynValue.NewNumber(42));
+            LuaValue result = script.Call(callback, LuaValue.NewNumber(42));
 
             await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
         }
@@ -700,7 +701,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             script.Globals["Arg1"] = typeof(UserDataArg1);
 
             // First call with UserData to cache a method with UserData type
-            DynValue result1 = script.DoString(
+            LuaValue result1 = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 local arg = Arg1.__new()
@@ -710,7 +711,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             // Second call with non-UserData type to trigger cache mismatch
             // The cache entry has UserData type but we're calling with a number
-            DynValue result2 = script.DoString(
+            LuaValue result2 = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 return obj.MixedArgs(123)
@@ -759,7 +760,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             CallbackFunction callback = descriptor.GetCallbackFunction(script, instance);
 
             // Make a call with int argument
-            DynValue result = script.Call(callback, DynValue.NewNumber(42));
+            LuaValue result = script.Call(callback, LuaValue.NewNumber(42));
 
             // Verify cache is now populated
             await Assert
@@ -787,7 +788,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             script.Globals["TestClass"] = typeof(CacheTestClass);
 
             // Multiple calls with same signature in a loop
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 local total = 0
@@ -832,15 +833,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             CallbackFunction callback = descriptor.GetCallbackFunction(script, instance);
 
             // First call with one int argument
-            DynValue result1 = script.Call(callback, DynValue.NewNumber(42));
+            LuaValue result1 = script.Call(callback, LuaValue.NewNumber(42));
             await Assert.That(result1.Number).IsEqualTo(42).ConfigureAwait(false);
 
             // Second call with string - different type, should resolve correctly
-            DynValue result2 = script.Call(callback, DynValue.NewString("hello"));
+            LuaValue result2 = script.Call(callback, LuaValue.NewString("hello"));
             await Assert.That(result2.Number).IsEqualTo(5).ConfigureAwait(false);
 
             // Third call with int again - should work
-            DynValue result3 = script.Call(callback, DynValue.NewNumber(99));
+            LuaValue result3 = script.Call(callback, LuaValue.NewNumber(99));
             await Assert.That(result3.Number).IsEqualTo(99).ConfigureAwait(false);
         }
 
@@ -875,7 +876,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             CallbackFunction callback = descriptor.GetCallbackFunction(script, instance);
 
             // Make a call to populate cache
-            script.Call(callback, DynValue.NewNumber(42));
+            script.Call(callback, LuaValue.NewNumber(42));
 
             // Verify cache is populated
             await Assert
@@ -907,7 +908,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             script.Globals["TestClass"] = typeof(TestOverloadClass);
 
             // Multiple calls with no arguments
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 local total = 0
@@ -935,7 +936,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             UserData.RegisterType<MultiArgClass>();
             script.Globals["TestClass"] = typeof(MultiArgClass);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 local total = 0
@@ -967,7 +968,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             for (int arity = 4; arity <= 7; arity++)
             {
-                DynValue result = CallFixedArity(script, callback, arity);
+                LuaValue result = CallFixedArity(script, callback, arity);
                 CallbackArguments matchArgs = CreateNumberArguments(arity);
 
                 await Assert
@@ -1012,7 +1013,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             descriptor.PrepareForWiring(table);
 
             // The overloads table should exist and have at least one entry
-            DynValue overloadsTable = table.Get("overloads");
+            LuaValue overloadsTable = table.Get("overloads");
             await Assert.That(overloadsTable.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
             await Assert.That(overloadsTable.Table.Length).IsGreaterThan(0).ConfigureAwait(false);
         }
@@ -1052,7 +1053,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             script.Globals["TestClass"] = typeof(OutRefClass);
 
             // Call method with out parameter - NovaSharp returns nil for out params
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 local value, outVal = obj.TryGetValue('test')
@@ -1077,7 +1078,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             script.Globals["TestClass"] = typeof(OutRefClass);
 
             // Call method with ref parameter - NovaSharp handles ref as in/out
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 local value = obj.Increment(10)
@@ -1087,7 +1088,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             // Ref parameters in NovaSharp may return tuple with modified value
             // If result is nil, the method was still called (exercises ref scoring)
-            await Assert.That(result.IsNotNil() || result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNotNil() || result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
@@ -1103,7 +1104,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             script.Globals["TestClass"] = typeof(TestOverloadClass);
 
             // Call with extra arguments - should still work but with penalty
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 return obj.WithInt(42, 'extra', 'arguments')
@@ -1126,7 +1127,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             UserData.RegisterType<ScriptInjectedClass>();
             script.Globals["TestClass"] = typeof(ScriptInjectedClass);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 return obj.GetScriptName('test')
@@ -1151,7 +1152,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             UserData.RegisterType<ScriptInjectedClass>();
             script.Globals["TestClass"] = typeof(ScriptInjectedClass);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 return obj.HasContext()
@@ -1200,7 +1201,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             script.Globals["TestClass"] = typeof(VarArgsClass);
 
             // Call with many varargs - malus should be applied but still work
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 return obj.WithVarArgs(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
@@ -1222,7 +1223,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             UserData.RegisterType<ScriptInjectedClass>();
             script.Globals["TestClass"] = typeof(ScriptInjectedClass);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local obj = TestClass.__new()
                 return obj.CountArgs('a', 'b', 'c')
@@ -1284,7 +1285,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             descriptor.AddOverload(new MethodMemberDescriptor(method));
         }
 
-        private static DynValue CallFixedArity(
+        private static LuaValue CallFixedArity(
             Script script,
             CallbackFunction callback,
             int arity
@@ -1293,47 +1294,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             {
                 4 => script.Call(
                     callback,
-                    DynValue.NewNumber(1),
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3),
-                    DynValue.NewNumber(4)
+                    LuaValue.NewNumber(1),
+                    LuaValue.NewNumber(2),
+                    LuaValue.NewNumber(3),
+                    LuaValue.NewNumber(4)
                 ),
                 5 => script.Call(
                     callback,
-                    DynValue.NewNumber(1),
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3),
-                    DynValue.NewNumber(4),
-                    DynValue.NewNumber(5)
+                    LuaValue.NewNumber(1),
+                    LuaValue.NewNumber(2),
+                    LuaValue.NewNumber(3),
+                    LuaValue.NewNumber(4),
+                    LuaValue.NewNumber(5)
                 ),
                 6 => script.Call(
                     callback,
-                    DynValue.NewNumber(1),
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3),
-                    DynValue.NewNumber(4),
-                    DynValue.NewNumber(5),
-                    DynValue.NewNumber(6)
+                    LuaValue.NewNumber(1),
+                    LuaValue.NewNumber(2),
+                    LuaValue.NewNumber(3),
+                    LuaValue.NewNumber(4),
+                    LuaValue.NewNumber(5),
+                    LuaValue.NewNumber(6)
                 ),
                 7 => script.Call(
                     callback,
-                    DynValue.NewNumber(1),
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3),
-                    DynValue.NewNumber(4),
-                    DynValue.NewNumber(5),
-                    DynValue.NewNumber(6),
-                    DynValue.NewNumber(7)
+                    LuaValue.NewNumber(1),
+                    LuaValue.NewNumber(2),
+                    LuaValue.NewNumber(3),
+                    LuaValue.NewNumber(4),
+                    LuaValue.NewNumber(5),
+                    LuaValue.NewNumber(6),
+                    LuaValue.NewNumber(7)
                 ),
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
 
         private static CallbackArguments CreateNumberArguments(int count)
         {
-            List<DynValue> args = new(count);
+            List<LuaValue> args = new(count);
             for (int i = 1; i <= count; i++)
             {
-                args.Add(DynValue.NewNumber(i));
+                args.Add(LuaValue.NewNumber(i));
             }
 
             return new CallbackArguments(args, isMethodCall: false);

@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -24,7 +25,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task StdInIsFileUserDataHandle(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue stdin = script.DoString("return io.stdin");
+            LuaValue stdin = script.DoString("return io.stdin");
 
             await Assert.That(stdin.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
             await Assert
@@ -38,7 +39,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task StdInEqualsItselfButNotStdOut(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "return io.stdin == io.stdin, io.stdin ~= io.stdout, io.stdin == 1, io.stdin ~= 1"
             );
 
@@ -53,7 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task StdOutIsFileUserDataHandle(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue stdout = script.DoString("return io.stdout");
+            LuaValue stdout = script.DoString("return io.stdout");
 
             await Assert.That(stdout.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
             await Assert
@@ -67,7 +68,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task StdErrIsFileUserDataHandle(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue stderr = script.DoString("return io.stderr");
+            LuaValue stderr = script.DoString("return io.stderr");
 
             await Assert.That(stderr.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
             await Assert
@@ -81,7 +82,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task RequireIoExposesSameStdHandles(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local io_module = require('io')
                 return io_module.stdin == io.stdin, io_module.stdout == io.stdout
@@ -97,7 +98,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task IoInputReturnsCurrentStdInHandle(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString("return io.input() == io.stdin");
+            LuaValue result = script.DoString("return io.input() == io.stdin");
 
             await Assert.That(result.CastToBool()).IsTrue().ConfigureAwait(false);
         }
@@ -107,7 +108,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task IoOutputReturnsCurrentStdOutHandle(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString("return io.output() == io.stdout");
+            LuaValue result = script.DoString("return io.output() == io.stdout");
 
             await Assert.That(result.CastToBool()).IsTrue().ConfigureAwait(false);
         }
@@ -118,8 +119,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScript(version);
 
-            DynValue indexResult = script.DoString("return io.stdin[1]");
-            await Assert.That(indexResult.IsNil()).IsTrue().ConfigureAwait(false);
+            LuaValue indexResult = script.DoString("return io.stdin[1]");
+            await Assert.That(indexResult.IsNil).IsTrue().ConfigureAwait(false);
 
             ScriptRuntimeException assignException = Assert.Throws<ScriptRuntimeException>(() =>
             {
@@ -138,8 +139,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = CreateScript(version);
 
-            DynValue indexResult = script.DoString("return io.stdout[1]");
-            await Assert.That(indexResult.IsNil()).IsTrue().ConfigureAwait(false);
+            LuaValue indexResult = script.DoString("return io.stdout[1]");
+            await Assert.That(indexResult.IsNil).IsTrue().ConfigureAwait(false);
 
             ScriptRuntimeException assignException = Assert.Throws<ScriptRuntimeException>(() =>
             {

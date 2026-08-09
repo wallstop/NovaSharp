@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
@@ -24,7 +25,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         /// </summary>
         /// <param name="funcName">Name of the function.</param>
         public ObjectCallbackMemberDescriptor(string funcName)
-            : this(funcName, (o, c, a) => DynValue.Void, Array.Empty<ParameterDescriptor>()) { }
+            : this(funcName, (o, c, a) => LuaValue.Void, Array.Empty<ParameterDescriptor>()) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ObjectCallbackMemberDescriptor"/> class.
@@ -65,7 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         /// <param name="context">The context.</param>
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
-        public override DynValue Execute(
+        public override LuaValue Execute(
             Script script,
             object obj,
             ScriptExecutionContext context,
@@ -79,7 +80,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
             }
             else
             {
-                return DynValue.Void;
+                return LuaValue.Void;
             }
         }
     }

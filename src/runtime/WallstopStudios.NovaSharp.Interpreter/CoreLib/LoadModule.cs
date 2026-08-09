@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System.IO;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -29,11 +30,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
             ioTable = ModuleArgumentValidation.RequireTable(ioTable, nameof(ioTable));
 
-            DynValue package = globalTable.Get("package");
+            LuaValue package = globalTable.Get("package");
 
-            if (package.IsNil())
+            if (package.IsNil)
             {
-                package = DynValue.NewTable(globalTable.OwnerScript);
+                package = LuaValue.NewTable(globalTable.OwnerScript);
                 globalTable["package"] = package;
             }
             else if (package.Type != DataType.Table)
@@ -49,13 +50,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             string cfg = System.IO.Path.DirectorySeparatorChar + "\n;\n?\n!\n-\n";
 #endif
 
-            package.Table.Set("config", DynValue.NewString(cfg));
+            package.Table.Set("config", LuaValue.NewString(cfg));
 
-            DynValue loaded = package.Table.RawGet("loaded");
+            LuaValue loaded = package.Table.RawGet("loaded");
 
             if (loaded.Type != DataType.Table)
             {
-                loaded = DynValue.NewTable(globalTable.OwnerScript);
+                loaded = LuaValue.NewTable(globalTable.OwnerScript);
                 package.Table.Set("loaded", loaded);
             }
 
@@ -151,11 +152,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Callback arguments following the Lua signature (<c>ld, source, mode, env</c>).
         /// </param>
         /// <returns>
-        /// A <see cref="DynValue"/> representing the compiled chunk or <c>(nil, errorMessage)</c> on
+        /// A <see cref="LuaValue"/> representing the compiled chunk or <c>(nil, errorMessage)</c> on
         /// failure.
         /// </returns>
         [NovaSharpModuleMethod(Name = "load")]
-        public static DynValue Load(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Load(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -187,7 +188,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments matching the Lua <c>load</c> signature.</param>
         /// <returns>Compiled chunk or <c>(nil, errorMessage)</c> tuple.</returns>
         [NovaSharpModuleMethod(Name = "loadsafe")]
-        public static DynValue LoadSafe(
+        public static LuaValue LoadSafe(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -221,7 +222,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="defaultEnv">Optional default environment when callers omit `env`.</param>
         /// <param name="allowStrings">Whether to accept strings as chunk sources (false for Lua 5.1 load).</param>
         /// <returns>Compiled chunk or <c>(nil, errorMessage)</c>.</returns>
-        public static DynValue LoadCore(
+        public static LuaValue LoadCore(
             ScriptExecutionContext executionContext,
             CallbackArguments args,
             Table defaultEnv,
@@ -237,7 +238,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             try
             {
                 Script s = executionContext.Script;
-                DynValue ld = args[0];
+                LuaValue ld = args[0];
                 string script = string.Empty;
                 LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                     s.CompatibilityVersion
@@ -254,7 +255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     {
                         while (true)
                         {
-                            DynValue ret = executionContext.Script.Call(ld).ToScalar();
+                            LuaValue ret = executionContext.Script.CallValues(ld).ToScalar();
                             if (ret.Type == DataType.String)
                             {
                                 string fragment = ret.String;
@@ -286,14 +287,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                                 continue;
                             }
 
-                            if (ret.IsNil())
+                            if (ret.IsNil)
                             {
                                 break;
                             }
 
-                            return DynValue.NewTuple(
-                                DynValue.Nil,
-                                DynValue.NewString("reader function must return a string")
+                            return LuaValue.NewTuple(
+                                LuaValue.Nil,
+                                LuaValue.NewString("reader function must return a string")
                             );
                         }
 
@@ -330,22 +331,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     args.AsType(0, "load", DataType.Function, false);
                 }
 
-                DynValue source = args.AsType(1, "load", DataType.String, true);
-                DynValue env = args.AsType(3, "load", DataType.Table, true);
+                LuaValue source = args.AsType(1, "load", DataType.String, true);
+                LuaValue env = args.AsType(3, "load", DataType.Table, true);
 
-                DynValue fn = s.LoadString(
+                LuaValue fn = s.LoadString(
                     script,
-                    !env.IsNil() ? env.Table : defaultEnv,
-                    !source.IsNil() ? source.String : "=(load)"
+                    !env.IsNil ? env.Table : defaultEnv,
+                    !source.IsNil ? source.String : "=(load)"
                 );
 
                 return fn;
             }
             catch (SyntaxErrorException ex)
             {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(GetSyntaxErrorMessage(ex))
+                return LuaValue.NewTuple(
+                    LuaValue.Nil,
+                    LuaValue.NewString(GetSyntaxErrorMessage(ex))
                 );
             }
         }
@@ -376,12 +377,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Callback arguments following the Lua 5.1 signature (<c>string, chunkname</c>).
         /// </param>
         /// <returns>
-        /// A <see cref="DynValue"/> representing the compiled chunk or <c>(nil, errorMessage)</c> on
+        /// A <see cref="LuaValue"/> representing the compiled chunk or <c>(nil, errorMessage)</c> on
         /// failure.
         /// </returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "loadstring")]
-        public static DynValue LoadString(
+        public static LuaValue LoadString(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -397,22 +398,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             try
             {
                 Script s = executionContext.Script;
-                DynValue stringArg = args.AsType(0, "loadstring", DataType.String, false);
-                DynValue chunkname = args.AsType(1, "loadstring", DataType.String, true);
+                LuaValue stringArg = args.AsType(0, "loadstring", DataType.String, false);
+                LuaValue chunkname = args.AsType(1, "loadstring", DataType.String, true);
 
-                DynValue fn = s.LoadString(
+                LuaValue fn = s.LoadString(
                     stringArg.String,
                     null,
-                    !chunkname.IsNil() ? chunkname.String : "=(loadstring)"
+                    !chunkname.IsNil ? chunkname.String : "=(loadstring)"
                 );
 
                 return fn;
             }
             catch (SyntaxErrorException ex)
             {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(GetSyntaxErrorMessage(ex))
+                return LuaValue.NewTuple(
+                    LuaValue.Nil,
+                    LuaValue.NewString(GetSyntaxErrorMessage(ex))
                 );
             }
         }
@@ -428,7 +429,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments (<c>filename, mode, env</c>).</param>
         /// <returns>Compiled chunk or <c>(nil, errorMessage)</c>.</returns>
         [NovaSharpModuleMethod(Name = "loadfile")]
-        public static DynValue LoadFile(
+        public static LuaValue LoadFile(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -456,7 +457,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments (<c>filename, mode, env</c>).</param>
         /// <returns>Compiled chunk or <c>(nil, errorMessage)</c>.</returns>
         [NovaSharpModuleMethod(Name = "loadfilesafe")]
-        public static DynValue LoadFileSafe(
+        public static LuaValue LoadFileSafe(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -477,7 +478,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Caller-supplied arguments.</param>
         /// <param name="defaultEnv">Optional environment to use when callers omit one.</param>
         /// <returns>Compiled chunk or <c>(nil, errorMessage)</c>.</returns>
-        private static DynValue LoadFileImpl(
+        private static LuaValue LoadFileImpl(
             ScriptExecutionContext executionContext,
             CallbackArguments args,
             Table defaultEnv
@@ -492,24 +493,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             try
             {
                 Script s = executionContext.Script;
-                DynValue env = args.AsType(2, "loadfile", DataType.Table, true);
-                Table resolvedEnv = env.IsNil() ? defaultEnv : env.Table;
+                LuaValue env = args.AsType(2, "loadfile", DataType.Table, true);
+                Table resolvedEnv = env.IsNil ? defaultEnv : env.Table;
 
-                if (args.Count == 0 || args[0].IsNil())
+                if (args.Count == 0 || args[0].IsNil)
                 {
                     return LoadFromStandardInput(s, resolvedEnv);
                 }
 
-                DynValue filename = args.AsType(0, "loadfile", DataType.String, false);
-                DynValue fn = s.LoadFile(filename.String, resolvedEnv);
+                LuaValue filename = args.AsType(0, "loadfile", DataType.String, false);
+                LuaValue fn = s.LoadFile(filename.String, resolvedEnv);
 
                 return fn;
             }
             catch (SyntaxErrorException ex)
             {
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(GetSyntaxErrorMessage(ex))
+                return LuaValue.NewTuple(
+                    LuaValue.Nil,
+                    LuaValue.NewString(GetSyntaxErrorMessage(ex))
                 );
             }
             catch (System.IO.FileNotFoundException ex)
@@ -528,17 +529,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 {
                     errorMessage = ex.Message;
                 }
-                return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(errorMessage));
+                return LuaValue.NewTuple(LuaValue.Nil, LuaValue.NewString(errorMessage));
             }
             catch (System.IO.IOException ex)
             {
                 // Per Lua spec: loadfile returns (nil, error_message) for IO errors
-                return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(ex.Message));
+                return LuaValue.NewTuple(LuaValue.Nil, LuaValue.NewString(ex.Message));
             }
             catch (System.UnauthorizedAccessException ex)
             {
                 // Per Lua spec: loadfile returns (nil, error_message) for permission errors
-                return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(ex.Message));
+                return LuaValue.NewTuple(LuaValue.Nil, LuaValue.NewString(ex.Message));
             }
         }
 
@@ -592,7 +593,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <returns>Tail-call request that executes the loaded chunk.</returns>
         /// <exception cref="ScriptRuntimeException">Propagates syntax errors to the caller.</exception>
         [NovaSharpModuleMethod(Name = "dofile")]
-        public static DynValue DoFile(
+        public static LuaValue DoFile(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -608,15 +609,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             try
             {
                 Script script = executionContext.Script;
-                if (args.Count == 0 || args[0].IsNil())
+                if (args.Count == 0 || args[0].IsNil)
                 {
-                    DynValue stdinChunk = LoadFromStandardInput(script, null);
-                    return DynValue.NewTailCallReq(stdinChunk);
+                    LuaValue stdinChunk = LoadFromStandardInput(script, null);
+                    return LuaValue.NewTailCallReq(stdinChunk);
                 }
 
-                DynValue fileArgument = args.AsType(0, "dofile", DataType.String, false);
-                DynValue fn = script.LoadFile(fileArgument.String);
-                return DynValue.NewTailCallReq(fn); // tail call to dofile
+                LuaValue fileArgument = args.AsType(0, "dofile", DataType.String, false);
+                LuaValue fn = script.LoadFile(fileArgument.String);
+                return LuaValue.NewTailCallReq(fn); // tail call to dofile
             }
             catch (SyntaxErrorException ex)
             {
@@ -682,7 +683,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments where index 0 is the module name.</param>
         /// <returns>Compiled module chunk.</returns>
         [NovaSharpModuleMethod(Name = "__require_clr_impl")]
-        public static DynValue RequireClrCore(
+        public static LuaValue RequireClrCore(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -694,17 +695,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             Script s = executionContext.Script;
-            DynValue v = args.AsType(0, "__require_clr_impl", DataType.String, false);
+            LuaValue v = args.AsType(0, "__require_clr_impl", DataType.String, false);
 
             // Check module access restrictions
             CheckModuleAccess(s, v.String);
 
-            DynValue fn = s.RequireModule(v.String);
+            LuaValue fn = s.RequireModule(v.String);
 
             return fn; // tail call to dofile
         }
 
-        private static DynValue LoadFromStandardInput(Script script, Table globalContext)
+        private static LuaValue LoadFromStandardInput(Script script, Table globalContext)
         {
             Stream stdin = script.Options.Stdin;
 

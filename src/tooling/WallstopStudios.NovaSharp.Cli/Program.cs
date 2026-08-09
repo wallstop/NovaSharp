@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Cli
     using System;
     using System.IO;
     using System.Security;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Cli.Commands;
     using WallstopStudios.NovaSharp.Cli.Commands.Implementations;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -28,7 +29,7 @@ namespace WallstopStudios.NovaSharp.Cli
 
             Script script = new(CoreModulePresets.Complete)
             {
-                Globals = { ["makestatic"] = (Func<string, DynValue>)(MakeStatic) },
+                Globals = { ["makestatic"] = (Func<string, LuaValue>)(MakeStatic) },
             };
 
             if (CheckArgs(args, new ShellContext(script)))
@@ -50,7 +51,7 @@ namespace WallstopStudios.NovaSharp.Cli
             }
         }
 
-        private static DynValue MakeStatic(string type)
+        private static LuaValue MakeStatic(string type)
         {
             Type tt = Type.GetType(type);
             if (tt == null)
@@ -59,10 +60,10 @@ namespace WallstopStudios.NovaSharp.Cli
             }
             else
             {
-                return UserData.TryCreateStatic(tt, out DynValue value) ? value : DynValue.Nil;
+                return UserData.TryCreateStatic(tt, out LuaValue value) ? value : LuaValue.Nil;
             }
 
-            return DynValue.Nil;
+            return LuaValue.Nil;
         }
 
         private static void InterpreterLoop(ReplInterpreter interpreter, ShellContext shellContext)
@@ -79,7 +80,7 @@ namespace WallstopStudios.NovaSharp.Cli
 
             try
             {
-                DynValue? result = interpreter.Evaluate(s);
+                LuaValue? result = interpreter.Evaluate(s);
 
                 if (result.HasValue && result.Value.Type != DataType.Void)
                 {

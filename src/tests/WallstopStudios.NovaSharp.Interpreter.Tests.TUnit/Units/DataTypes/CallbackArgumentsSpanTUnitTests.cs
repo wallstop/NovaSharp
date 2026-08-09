@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -139,7 +140,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
         private static TryGetSpanResult ExecuteTryGetSpan(CallbackArguments args)
         {
-            bool result = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+            bool result = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
             double[] numbers = new double[span.Length];
             for (int i = 0; i < span.Length; i++)
             {
@@ -148,10 +149,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             return new TryGetSpanResult(result, span.Length, numbers);
         }
 
-        private static TryGetSpanResult ExecuteViewTryGetSpan(DynValue[] backing)
+        private static TryGetSpanResult ExecuteViewTryGetSpan(LuaValue[] backing)
         {
-            CallbackArgumentsView args = new((IList<DynValue>)backing, false);
-            bool result = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+            CallbackArgumentsView args = new((IList<LuaValue>)backing, false);
+            bool result = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
             double[] numbers = new double[span.Length];
             for (int i = 0; i < span.Length; i++)
             {
@@ -161,12 +162,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         private static TryGetSpanResult ExecuteFastStackTryGetSpan(
-            FastStack<DynValue> stack,
+            FastStack<LuaValue> stack,
             int offset,
             int count
         )
         {
-            bool result = stack.TryGetSpan(offset, count, out ReadOnlySpan<DynValue> span);
+            bool result = stack.TryGetSpan(offset, count, out ReadOnlySpan<LuaValue> span);
             double[] numbers = new double[span.Length];
             for (int i = 0; i < span.Length; i++)
             {
@@ -177,65 +178,65 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         private static TryGetSpanResult ExecuteFastStackDynamicTryGetSpan(
-            FastStackDynamic<DynValue> stack,
+            FastStackDynamic<LuaValue> stack,
             int offset,
             int count
         )
         {
-            bool result = stack.TryGetSpan(offset, count, out ReadOnlySpan<DynValue> span);
+            bool result = stack.TryGetSpan(offset, count, out ReadOnlySpan<LuaValue> span);
             return new TryGetSpanResult(result, span.Length);
         }
 
         private static TryGetSpanResult ExecuteFastStackSliceTryGetSpan(
-            FastStack<DynValue> stack,
+            FastStack<LuaValue> stack,
             int offset,
             int count,
             bool reversed = false
         )
         {
-            Slice<DynValue> slice = new(stack, offset, count, reversed);
+            Slice<LuaValue> slice = new(stack, offset, count, reversed);
             CallbackArguments args = new(slice, false);
             return ExecuteTryGetSpan(args);
         }
 
         private static TryGetSpanResult ExecuteArraySliceTryGetSpan(
-            DynValue[] backing,
+            LuaValue[] backing,
             int offset,
             int count,
             bool reversed = false
         )
         {
-            Slice<DynValue> slice = new(backing, offset, count, reversed);
+            Slice<LuaValue> slice = new(backing, offset, count, reversed);
             CallbackArguments args = new(slice, false);
             return ExecuteTryGetSpan(args);
         }
 
-        private static TryGetSpanResult ExecuteListSliceTryGetSpan(List<DynValue> backing)
+        private static TryGetSpanResult ExecuteListSliceTryGetSpan(List<LuaValue> backing)
         {
-            Slice<DynValue> slice = new(backing, 0, backing.Count, false);
+            Slice<LuaValue> slice = new(backing, 0, backing.Count, false);
             CallbackArguments args = new(slice, false);
             return ExecuteTryGetSpan(args);
         }
 
         private static TryGetSpanResult ExecuteFastStackDynamicSliceTryGetSpan(
-            FastStackDynamic<DynValue> backing
+            FastStackDynamic<LuaValue> backing
         )
         {
-            Slice<DynValue> slice = new(backing, 0, backing.Count, false);
+            Slice<LuaValue> slice = new(backing, 0, backing.Count, false);
             CallbackArguments args = new(slice, false);
             return ExecuteTryGetSpan(args);
         }
 
         private static TryGetSpanResult ExecuteViewSliceTryGetSpan(
-            IList<DynValue> backing,
+            IList<LuaValue> backing,
             int offset,
             int count,
             bool reversed = false
         )
         {
-            Slice<DynValue> slice = new(backing, offset, count, reversed);
+            Slice<LuaValue> slice = new(backing, offset, count, reversed);
             CallbackArgumentsView args = new(slice, false);
-            bool result = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+            bool result = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
             double[] numbers = new double[span.Length];
             for (int i = 0; i < span.Length; i++)
             {
@@ -246,21 +247,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         private static TryGetSpanResult ExecuteViewSliceSubrangeTryGetSpan(
-            IList<DynValue> backing,
+            IList<LuaValue> backing,
             int sliceOffset,
             int sliceCount,
             int viewOffset,
             int viewCount
         )
         {
-            Slice<DynValue> slice = new(backing, sliceOffset, sliceCount, false);
+            Slice<LuaValue> slice = new(backing, sliceOffset, sliceCount, false);
             CallbackArgumentsView args = new(
                 slice,
                 offset: viewOffset,
                 count: viewCount,
                 isMethodCall: false
             );
-            bool result = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+            bool result = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
             double[] numbers = new double[span.Length];
             for (int i = 0; i < span.Length; i++)
             {
@@ -271,15 +272,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         private static TryGetSpanResult ExecuteViewSliceSkipMethodCallTryGetSpan(
-            IList<DynValue> backing,
+            IList<LuaValue> backing,
             int offset,
             int count
         )
         {
-            Slice<DynValue> slice = new(backing, offset, count, false);
+            Slice<LuaValue> slice = new(backing, offset, count, false);
             CallbackArgumentsView args = new(slice, isMethodCall: true);
             CallbackArgumentsView skipped = args.SkipMethodCall();
-            bool result = skipped.TryGetSpan(out ReadOnlySpan<DynValue> span);
+            bool result = skipped.TryGetSpan(out ReadOnlySpan<LuaValue> span);
             double[] numbers = new double[span.Length];
             for (int i = 0; i < span.Length; i++)
             {
@@ -290,10 +291,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         private static TryGetSpanResult ExecuteSkippedFastStackSliceTryGetSpan(
-            FastStack<DynValue> stack
+            FastStack<LuaValue> stack
         )
         {
-            Slice<DynValue> slice = new(stack, 0, stack.Count, false);
+            Slice<LuaValue> slice = new(stack, 0, stack.Count, false);
             CallbackArguments args = new(slice, true);
             return ExecuteTryGetSpan(args.SkipMethodCall());
         }
@@ -307,11 +308,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             TryGetSpanResult captured = default;
 
             script.Globals["capture"] =
-                (Func<CallbackArguments, DynValue>)(
+                (Func<CallbackArguments, LuaValue>)(
                     args =>
                     {
                         captured = ExecuteTryGetSpan(args);
-                        return DynValue.Nil;
+                        return LuaValue.Nil;
                     }
                 );
 
@@ -319,10 +320,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             return captured;
         }
 
-        private static SubrangeResult ExecuteViewSubrange(FastStackDynamic<DynValue> backing)
+        private static SubrangeResult ExecuteViewSubrange(FastStackDynamic<LuaValue> backing)
         {
             CallbackArgumentsView args = new(backing, offset: 1, count: 2, isMethodCall: false);
-            bool found = args.TryRawGet(-1, translateVoids: true, out DynValue missing);
+            bool found = args.TryRawGet(-1, translateVoids: true, out LuaValue missing);
             return new SubrangeResult(
                 args.RawGet(-1, translateVoids: true) == null,
                 found,
@@ -339,30 +340,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             bool translateVoids
         )
         {
-            bool found = args.TryRawGet(index, translateVoids, out DynValue value);
+            bool found = args.TryRawGet(index, translateVoids, out LuaValue value);
             return new PresenceResult(found, value.Type);
         }
 
         private static PresenceResult ExecuteViewTryRawGet(
-            IList<DynValue> backing,
+            IList<LuaValue> backing,
             int index,
             bool translateVoids
         )
         {
             CallbackArgumentsView args = new(backing, isMethodCall: false);
-            bool found = args.TryRawGet(index, translateVoids, out DynValue value);
+            bool found = args.TryRawGet(index, translateVoids, out LuaValue value);
             return new PresenceResult(found, value.Type);
         }
 
         private static FixedPresenceResult ExecuteFixedTryRawGet(int count, bool useArgumentView)
         {
-            DynValue one = DynValue.NewNumber(1);
-            DynValue two = DynValue.NewNumber(2);
-            DynValue three = DynValue.NewNumber(3);
-            DynValue four = DynValue.NewNumber(4);
-            DynValue five = DynValue.NewNumber(5);
-            DynValue six = DynValue.NewNumber(6);
-            DynValue seven = DynValue.NewNumber(7);
+            LuaValue one = LuaValue.NewNumber(1);
+            LuaValue two = LuaValue.NewNumber(2);
+            LuaValue three = LuaValue.NewNumber(3);
+            LuaValue four = LuaValue.NewNumber(4);
+            LuaValue five = LuaValue.NewNumber(5);
+            LuaValue six = LuaValue.NewNumber(6);
+            LuaValue seven = LuaValue.NewNumber(7);
 
             if (useArgumentView)
             {
@@ -409,14 +410,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                     allStoredArgumentsFound &= args.TryRawGet(
                         i,
                         translateVoids: false,
-                        out DynValue _
+                        out LuaValue _
                     );
                 }
 
                 bool missingArgumentFound = args.TryRawGet(
                     count,
                     translateVoids: false,
-                    out DynValue missingArgument
+                    out LuaValue missingArgument
                 );
                 return new FixedPresenceResult(
                     args.Count,
@@ -454,14 +455,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 allLegacyStoredArgumentsFound &= legacyArgs.TryRawGet(
                     i,
                     translateVoids: false,
-                    out DynValue _
+                    out LuaValue _
                 );
             }
 
             bool legacyMissingArgumentFound = legacyArgs.TryRawGet(
                 count,
                 translateVoids: false,
-                out DynValue legacyMissingArgument
+                out LuaValue legacyMissingArgument
             );
             return new FixedPresenceResult(
                 legacyArgs.Count,
@@ -474,11 +475,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         private static DataType[] ExecutePooledTupleExpansion()
         {
             CallbackArguments args = new(
-                new[] { DynValue.NewNumber(1), DynValue.NewTuple(DynValue.Void, DynValue.Nil) },
+                new[] { LuaValue.NewNumber(1), LuaValue.NewTuple(LuaValue.Void, LuaValue.Nil) },
                 isMethodCall: false
             );
 
-            using PooledResource<DynValue[]> pooled = args.GetPooledArray(out DynValue[] values);
+            using PooledResource<LuaValue[]> pooled = args.GetPooledArray(out LuaValue[] values);
             DataType[] types = new DataType[args.Count];
             for (int i = 0; i < types.Length; i++)
             {
@@ -493,13 +494,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             if (useArgumentView)
             {
                 CallbackArgumentsView args = new(
-                    DynValue.NewNumber(1),
+                    LuaValue.NewNumber(1),
                     default,
                     isMethodCall: false
                 );
-                DynValue? raw = args.RawGet(1, translateVoids: false);
-                DynValue value = args[1];
-                DynValue[] buffer = new DynValue[args.Count];
+                LuaValue? raw = args.RawGet(1, translateVoids: false);
+                LuaValue value = args[1];
+                LuaValue[] buffer = new LuaValue[args.Count];
                 args.CopyTo(buffer);
 
                 return new NullStoredArgumentResult(
@@ -510,10 +511,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 );
             }
 
-            CallbackArguments legacyArgs = new(DynValue.NewNumber(1), default, isMethodCall: false);
-            DynValue? legacyRaw = legacyArgs.RawGet(1, translateVoids: false);
-            DynValue legacyValue = legacyArgs[1];
-            DynValue[] legacyBuffer = new DynValue[legacyArgs.Count];
+            CallbackArguments legacyArgs = new(LuaValue.NewNumber(1), default, isMethodCall: false);
+            LuaValue? legacyRaw = legacyArgs.RawGet(1, translateVoids: false);
+            LuaValue legacyValue = legacyArgs[1];
+            LuaValue[] legacyBuffer = new LuaValue[legacyArgs.Count];
             legacyArgs.CopyTo(legacyBuffer);
 
             return new NullStoredArgumentResult(
@@ -526,15 +527,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
         private static NullStoredArgumentResult ExecuteNullTupleExpansion(bool useArgumentView)
         {
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(10), default);
-            DynValue[] backing = new[] { DynValue.NewNumber(1), tuple };
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewNumber(10), default);
+            LuaValue[] backing = new[] { LuaValue.NewNumber(1), tuple };
 
             if (useArgumentView)
             {
-                CallbackArgumentsView args = new((IList<DynValue>)backing, false);
-                DynValue? raw = args.RawGet(2, translateVoids: false);
-                DynValue value = args[2];
-                DynValue[] buffer = new DynValue[args.Count];
+                CallbackArgumentsView args = new((IList<LuaValue>)backing, false);
+                LuaValue? raw = args.RawGet(2, translateVoids: false);
+                LuaValue value = args[2];
+                LuaValue[] buffer = new LuaValue[args.Count];
                 args.CopyTo(buffer);
 
                 return new NullStoredArgumentResult(
@@ -547,9 +548,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             else
             {
                 CallbackArguments args = new(backing, false);
-                DynValue? raw = args.RawGet(2, translateVoids: false);
-                DynValue value = args[2];
-                DynValue[] buffer = new DynValue[args.Count];
+                LuaValue? raw = args.RawGet(2, translateVoids: false);
+                LuaValue value = args[2];
+                LuaValue[] buffer = new LuaValue[args.Count];
                 args.CopyTo(buffer);
 
                 return new NullStoredArgumentResult(
@@ -563,33 +564,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
         private static TryGetSpanMetadata ExecuteTryGetSpanMetadata(CallbackArguments args)
         {
-            bool success = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+            bool success = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
             return new TryGetSpanMetadata(success, span.Length);
         }
 
-        private static TryGetSpanMetadata ExecuteViewTryGetSpanMetadata(DynValue[] backing)
+        private static TryGetSpanMetadata ExecuteViewTryGetSpanMetadata(LuaValue[] backing)
         {
-            CallbackArgumentsView args = new((IList<DynValue>)backing, false);
-            bool success = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+            CallbackArgumentsView args = new((IList<LuaValue>)backing, false);
+            bool success = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
             return new TryGetSpanMetadata(success, span.Length);
         }
 
-        private static DataType GetArgumentViewTypeAtZero(DynValue[] backing)
+        private static DataType GetArgumentViewTypeAtZero(LuaValue[] backing)
         {
-            CallbackArgumentsView args = new((IList<DynValue>)backing, false);
+            CallbackArgumentsView args = new((IList<LuaValue>)backing, false);
             return args[0].Type;
         }
 
-        private static DynValue CreateArrayValueRequiringNormalization(string valueKind)
+        private static LuaValue CreateArrayValueRequiringNormalization(string valueKind)
         {
             switch (valueKind)
             {
                 case "null":
                     return default;
                 case "void":
-                    return DynValue.Void;
+                    return LuaValue.Void;
                 case "tuple":
-                    return DynValue.NewTuple(DynValue.NewNumber(10), DynValue.NewNumber(11));
+                    return LuaValue.NewTuple(LuaValue.NewNumber(10), LuaValue.NewNumber(11));
                 default:
                     throw new ArgumentOutOfRangeException(nameof(valueKind));
             }
@@ -601,7 +602,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             int skip = 0
         )
         {
-            DynValue[] buffer = new DynValue[bufferSize];
+            LuaValue[] buffer = new LuaValue[bufferSize];
             int count =
                 skip == 0 ? args.CopyTo(buffer.AsSpan()) : args.CopyTo(buffer.AsSpan(), skip);
             double[] numbers = new double[count];
@@ -613,13 +614,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         private static CopyToResult ExecuteViewCopyTo(
-            IList<DynValue> backing,
+            IList<LuaValue> backing,
             int bufferSize,
             int skip = 0
         )
         {
             CallbackArgumentsView args = new(backing, false);
-            DynValue[] buffer = new DynValue[bufferSize];
+            LuaValue[] buffer = new LuaValue[bufferSize];
             int count =
                 skip == 0 ? args.CopyTo(buffer.AsSpan()) : args.CopyTo(buffer.AsSpan(), skip);
             double[] numbers = new double[count];
@@ -630,11 +631,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             return new CopyToResult(count, numbers);
         }
 
-        private static CopyToResult ExecuteViewSkipMethodCall(DynValue[] backing)
+        private static CopyToResult ExecuteViewSkipMethodCall(LuaValue[] backing)
         {
-            CallbackArgumentsView args = new((IList<DynValue>)backing, true);
+            CallbackArgumentsView args = new((IList<LuaValue>)backing, true);
             CallbackArgumentsView skipped = args.SkipMethodCall();
-            DynValue[] buffer = new DynValue[skipped.Count];
+            LuaValue[] buffer = new LuaValue[skipped.Count];
             int count = skipped.CopyTo(buffer.AsSpan());
             double[] numbers = new double[count];
             for (int i = 0; i < count; i++)
@@ -647,7 +648,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task TryGetSpanReturnsFalseForEmptyList()
         {
-            List<DynValue> args = new();
+            List<LuaValue> args = new();
             CallbackArguments callbackArgs = new(args, false);
 
             TryGetSpanResult result = ExecuteTryGetSpan(callbackArgs);
@@ -659,11 +660,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task TryGetSpanReturnsTrueForArray()
         {
-            DynValue[] backing = new[]
+            LuaValue[] backing = new[]
             {
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
             };
             CallbackArguments args = new(backing, false);
 
@@ -675,11 +676,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(result.Numbers[1]).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(result.Numbers[2]).IsEqualTo(3).ConfigureAwait(false);
 
-            DynValue[] defaultNilBacking =
+            LuaValue[] defaultNilBacking =
             {
-                DynValue.NewNumber(1),
+                LuaValue.NewNumber(1),
                 default,
-                DynValue.NewNumber(3),
+                LuaValue.NewNumber(3),
             };
             TryGetSpanMetadata defaultNilLegacy = ExecuteTryGetSpanMetadata(
                 new CallbackArguments(defaultNilBacking, false)
@@ -694,11 +695,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewTryGetSpanReturnsTrueForArray()
         {
-            DynValue[] backing = new[]
+            LuaValue[] backing = new[]
             {
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
             };
 
             TryGetSpanResult result = ExecuteViewTryGetSpan(backing);
@@ -713,10 +714,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewSubrangeDoesNotExposeValuesBeforeOffset()
         {
-            FastStackDynamic<DynValue> backing = new(startingCapacity: 4);
-            backing.Push(DynValue.NewString("function-slot"));
-            backing.Push(DynValue.NewNumber(10));
-            backing.Push(DynValue.NewNumber(20));
+            FastStackDynamic<LuaValue> backing = new(startingCapacity: 4);
+            backing.Push(LuaValue.NewString("function-slot"));
+            backing.Push(LuaValue.NewNumber(10));
+            backing.Push(LuaValue.NewNumber(20));
 
             SubrangeResult result = ExecuteViewSubrange(backing);
 
@@ -745,7 +746,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 await Assert.That(result.IndexerType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
                 await Assert.That(result.CopyType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
 
-                DynValue[] backing = new[] { DynValue.Nil, DynValue.Void, DynValue.NewNumber(3) };
+                LuaValue[] backing = new[] { LuaValue.Nil, LuaValue.Void, LuaValue.NewNumber(3) };
                 PresenceResult explicitNil = useArgumentView
                     ? ExecuteViewTryRawGet(backing, 0, translateVoids: false)
                     : ExecuteTryRawGet(
@@ -834,10 +835,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DataType indexerType
         )
         {
-            DynValue[] backing = new[]
+            LuaValue[] backing = new[]
             {
                 CreateArrayValueRequiringNormalization(valueKind),
-                DynValue.NewNumber(2),
+                LuaValue.NewNumber(2),
             };
             CallbackArguments args = new(backing, false);
 
@@ -858,7 +859,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task TryGetSpanReturnsTrueWhenTrailingArrayVoidIsTrimmed()
         {
-            DynValue[] backing = new[] { DynValue.NewNumber(1), DynValue.Void };
+            LuaValue[] backing = new[] { LuaValue.NewNumber(1), LuaValue.Void };
             CallbackArguments args = new(backing, false);
 
             TryGetSpanResult legacy = ExecuteTryGetSpan(args);
@@ -876,10 +877,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task FastStackTryGetSpanExposesValidRanges()
         {
-            FastStack<DynValue> stack = new(4);
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewNumber(2));
-            stack.Push(DynValue.NewNumber(3));
+            FastStack<LuaValue> stack = new(4);
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewNumber(2));
+            stack.Push(LuaValue.NewNumber(3));
 
             TryGetSpanResult result = ExecuteFastStackTryGetSpan(stack, offset: 1, count: 2);
 
@@ -892,11 +893,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task TryGetSpanReturnsTrueForFastStackSlice()
         {
-            FastStack<DynValue> stack = new(4);
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewNumber(2));
-            stack.Push(DynValue.NewNumber(3));
-            stack.Push(DynValue.NewNumber(4));
+            FastStack<LuaValue> stack = new(4);
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewNumber(2));
+            stack.Push(LuaValue.NewNumber(3));
+            stack.Push(LuaValue.NewNumber(4));
 
             TryGetSpanResult result = ExecuteFastStackSliceTryGetSpan(stack, offset: 1, count: 3);
 
@@ -910,11 +911,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewTryGetSpanReturnsTrueForFastStackSlice()
         {
-            FastStack<DynValue> stack = new(4);
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewNumber(2));
-            stack.Push(DynValue.NewNumber(3));
-            stack.Push(DynValue.NewNumber(4));
+            FastStack<LuaValue> stack = new(4);
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewNumber(2));
+            stack.Push(LuaValue.NewNumber(3));
+            stack.Push(LuaValue.NewNumber(4));
 
             TryGetSpanResult result = ExecuteViewSliceTryGetSpan(stack, offset: 1, count: 3);
 
@@ -928,12 +929,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewTryGetSpanComposesFastStackSliceSubrange()
         {
-            FastStack<DynValue> stack = new(5);
-            stack.Push(DynValue.NewNumber(99));
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewNumber(2));
-            stack.Push(DynValue.NewNumber(3));
-            stack.Push(DynValue.NewNumber(100));
+            FastStack<LuaValue> stack = new(5);
+            stack.Push(LuaValue.NewNumber(99));
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewNumber(2));
+            stack.Push(LuaValue.NewNumber(3));
+            stack.Push(LuaValue.NewNumber(100));
 
             TryGetSpanResult result = ExecuteViewSliceSubrangeTryGetSpan(
                 stack,
@@ -952,12 +953,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewSkipMethodCallPreservesFastStackSliceSpan()
         {
-            FastStack<DynValue> stack = new(5);
-            stack.Push(DynValue.NewNumber(99));
-            stack.Push(DynValue.NewString("self"));
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewNumber(2));
-            stack.Push(DynValue.NewNumber(100));
+            FastStack<LuaValue> stack = new(5);
+            stack.Push(LuaValue.NewNumber(99));
+            stack.Push(LuaValue.NewString("self"));
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewNumber(2));
+            stack.Push(LuaValue.NewNumber(100));
 
             TryGetSpanResult result = ExecuteViewSliceSkipMethodCallTryGetSpan(
                 stack,
@@ -974,13 +975,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task TryGetSpanReturnsTrueForArraySlice()
         {
-            DynValue[] backing =
+            LuaValue[] backing =
             {
-                DynValue.NewNumber(99),
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
-                DynValue.NewNumber(100),
+                LuaValue.NewNumber(99),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
+                LuaValue.NewNumber(100),
             };
 
             TryGetSpanResult result = ExecuteArraySliceTryGetSpan(backing, offset: 1, count: 3);
@@ -995,13 +996,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewTryGetSpanReturnsTrueForArraySlice()
         {
-            DynValue[] backing =
+            LuaValue[] backing =
             {
-                DynValue.NewNumber(99),
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
-                DynValue.NewNumber(100),
+                LuaValue.NewNumber(99),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
+                LuaValue.NewNumber(100),
             };
 
             TryGetSpanResult result = ExecuteViewSliceTryGetSpan(backing, offset: 1, count: 3);
@@ -1016,12 +1017,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task TryGetSpanReturnsTrueWhenTrailingArraySliceVoidIsTrimmed()
         {
-            DynValue[] backing =
+            LuaValue[] backing =
             {
-                DynValue.NewNumber(99),
-                DynValue.NewNumber(1),
-                DynValue.Void,
-                DynValue.NewNumber(100),
+                LuaValue.NewNumber(99),
+                LuaValue.NewNumber(1),
+                LuaValue.Void,
+                LuaValue.NewNumber(100),
             };
 
             TryGetSpanResult result = ExecuteArraySliceTryGetSpan(backing, offset: 1, count: 2);
@@ -1034,12 +1035,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewTryGetSpanReturnsTrueWhenTrailingArraySliceVoidIsTrimmed()
         {
-            DynValue[] backing =
+            LuaValue[] backing =
             {
-                DynValue.NewNumber(99),
-                DynValue.NewNumber(1),
-                DynValue.Void,
-                DynValue.NewNumber(100),
+                LuaValue.NewNumber(99),
+                LuaValue.NewNumber(1),
+                LuaValue.Void,
+                LuaValue.NewNumber(100),
             };
 
             TryGetSpanResult result = ExecuteViewSliceTryGetSpan(backing, offset: 1, count: 2);
@@ -1052,11 +1053,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task TryGetSpanReturnsFalseForReversedArraySlice()
         {
-            DynValue[] backing =
+            LuaValue[] backing =
             {
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
             };
 
             TryGetSpanResult result = ExecuteArraySliceTryGetSpan(
@@ -1073,11 +1074,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewTryGetSpanReturnsFalseForReversedArraySlice()
         {
-            DynValue[] backing =
+            LuaValue[] backing =
             {
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
             };
 
             TryGetSpanResult result = ExecuteViewSliceTryGetSpan(
@@ -1098,11 +1099,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             string valueKind
         )
         {
-            DynValue[] backing =
+            LuaValue[] backing =
             {
-                DynValue.NewNumber(99),
+                LuaValue.NewNumber(99),
                 CreateArrayValueRequiringNormalization(valueKind),
-                DynValue.NewNumber(2),
+                LuaValue.NewNumber(2),
             };
 
             TryGetSpanResult result = ExecuteArraySliceTryGetSpan(backing, offset: 1, count: 2);
@@ -1118,11 +1119,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             string valueKind
         )
         {
-            DynValue[] backing =
+            LuaValue[] backing =
             {
-                DynValue.NewNumber(99),
+                LuaValue.NewNumber(99),
                 CreateArrayValueRequiringNormalization(valueKind),
-                DynValue.NewNumber(2),
+                LuaValue.NewNumber(2),
             };
 
             TryGetSpanResult result = ExecuteViewSliceTryGetSpan(backing, offset: 1, count: 2);
@@ -1134,11 +1135,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task TryGetSpanReturnsTrueForSkippedFastStackSliceMethodCall()
         {
-            FastStack<DynValue> stack = new(4);
-            stack.Push(DynValue.NewString("self"));
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewNumber(2));
-            stack.Push(DynValue.NewNumber(3));
+            FastStack<LuaValue> stack = new(4);
+            stack.Push(LuaValue.NewString("self"));
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewNumber(2));
+            stack.Push(LuaValue.NewNumber(3));
 
             TryGetSpanResult result = ExecuteSkippedFastStackSliceTryGetSpan(stack);
 
@@ -1152,10 +1153,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task TryGetSpanReturnsFalseForReversedFastStackSlice()
         {
-            FastStack<DynValue> stack = new(3);
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewNumber(2));
-            stack.Push(DynValue.NewNumber(3));
+            FastStack<LuaValue> stack = new(3);
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewNumber(2));
+            stack.Push(LuaValue.NewNumber(3));
 
             TryGetSpanResult result = ExecuteFastStackSliceTryGetSpan(
                 stack,
@@ -1175,9 +1176,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             string valueKind
         )
         {
-            FastStack<DynValue> stack = new(2);
+            FastStack<LuaValue> stack = new(2);
             stack.Push(CreateArrayValueRequiringNormalization(valueKind));
-            stack.Push(DynValue.NewNumber(2));
+            stack.Push(LuaValue.NewNumber(2));
 
             TryGetSpanResult result = ExecuteFastStackSliceTryGetSpan(stack, offset: 0, count: 2);
 
@@ -1188,9 +1189,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task TryGetSpanReturnsFalseWhenFastStackSliceTupleExpansionNeeded()
         {
-            FastStack<DynValue> stack = new(2);
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewTuple(DynValue.NewNumber(10), DynValue.NewNumber(20)));
+            FastStack<LuaValue> stack = new(2);
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewTuple(LuaValue.NewNumber(10), LuaValue.NewNumber(20)));
 
             TryGetSpanResult result = ExecuteFastStackSliceTryGetSpan(stack, offset: 0, count: 2);
 
@@ -1201,7 +1202,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task TryGetSpanReturnsFalseForListSlice()
         {
-            List<DynValue> backing = new() { DynValue.NewNumber(1), DynValue.NewNumber(2) };
+            List<LuaValue> backing = new() { LuaValue.NewNumber(1), LuaValue.NewNumber(2) };
 
             TryGetSpanResult result = ExecuteListSliceTryGetSpan(backing);
 
@@ -1212,7 +1213,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewTryGetSpanReturnsFalseForListSlice()
         {
-            List<DynValue> backing = new() { DynValue.NewNumber(1), DynValue.NewNumber(2) };
+            List<LuaValue> backing = new() { LuaValue.NewNumber(1), LuaValue.NewNumber(2) };
 
             TryGetSpanResult result = ExecuteViewSliceTryGetSpan(backing, offset: 0, count: 2);
 
@@ -1223,9 +1224,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task TryGetSpanReturnsFalseForFastStackDynamicSlice()
         {
-            FastStackDynamic<DynValue> backing = new(startingCapacity: 2);
-            backing.Push(DynValue.NewNumber(1));
-            backing.Push(DynValue.NewNumber(2));
+            FastStackDynamic<LuaValue> backing = new(startingCapacity: 2);
+            backing.Push(LuaValue.NewNumber(1));
+            backing.Push(LuaValue.NewNumber(2));
 
             TryGetSpanResult result = ExecuteFastStackDynamicSliceTryGetSpan(backing);
 
@@ -1236,9 +1237,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewTryGetSpanReturnsFalseForFastStackDynamicSlice()
         {
-            FastStackDynamic<DynValue> backing = new(startingCapacity: 2);
-            backing.Push(DynValue.NewNumber(1));
-            backing.Push(DynValue.NewNumber(2));
+            FastStackDynamic<LuaValue> backing = new(startingCapacity: 2);
+            backing.Push(LuaValue.NewNumber(1));
+            backing.Push(LuaValue.NewNumber(2));
 
             TryGetSpanResult result = ExecuteViewSliceTryGetSpan(backing, offset: 0, count: 2);
 
@@ -1249,8 +1250,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task FastStackTryGetSpanRejectsInvalidRanges()
         {
-            FastStack<DynValue> stack = new(2);
-            stack.Push(DynValue.NewNumber(1));
+            FastStack<LuaValue> stack = new(2);
+            stack.Push(LuaValue.NewNumber(1));
 
             TryGetSpanResult negativeStart = ExecuteFastStackTryGetSpan(
                 stack,
@@ -1275,9 +1276,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task FastStackDynamicTryGetSpanReturnsFalseBecauseListBackingIsUnsupported()
         {
-            FastStackDynamic<DynValue> stack = new(startingCapacity: 2);
-            stack.Push(DynValue.NewNumber(1));
-            stack.Push(DynValue.NewNumber(2));
+            FastStackDynamic<LuaValue> stack = new(startingCapacity: 2);
+            stack.Push(LuaValue.NewNumber(1));
+            stack.Push(LuaValue.NewNumber(2));
 
             TryGetSpanResult result = ExecuteFastStackDynamicTryGetSpan(stack, offset: 0, count: 2);
 
@@ -1289,7 +1290,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task TryGetSpanReturnsFalseForList()
         {
             // Lists don't expose their backing array, so TryGetSpan returns false
-            List<DynValue> backing = new() { DynValue.NewNumber(1), DynValue.NewNumber(2) };
+            List<LuaValue> backing = new() { LuaValue.NewNumber(1), LuaValue.NewNumber(2) };
             CallbackArguments args = new(backing, false);
 
             TryGetSpanResult result = ExecuteTryGetSpan(args);
@@ -1300,8 +1301,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task TryGetSpanReturnsFalseWhenTupleExpansionNeeded()
         {
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(10), DynValue.NewNumber(20));
-            DynValue[] backing = new[] { DynValue.NewNumber(1), tuple };
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewNumber(10), LuaValue.NewNumber(20));
+            LuaValue[] backing = new[] { LuaValue.NewNumber(1), tuple };
             CallbackArguments args = new(backing, false);
 
             // When tuple expansion changes Count from array length, TryGetSpan returns false
@@ -1314,11 +1315,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task CopyToSpanCopiesAllElements()
         {
-            DynValue[] backing = new[]
+            LuaValue[] backing = new[]
             {
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
             };
             CallbackArguments args = new(backing, false);
 
@@ -1333,11 +1334,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task CopyToSpanHandlesSmallDestination()
         {
-            DynValue[] backing = new[]
+            LuaValue[] backing = new[]
             {
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
             };
             CallbackArguments args = new(backing, false);
 
@@ -1351,7 +1352,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task CopyToSpanHandlesEmptyArgs()
         {
-            List<DynValue> backing = new();
+            List<LuaValue> backing = new();
             CallbackArguments args = new(backing, false);
 
             CopyToResult result = ExecuteCopyTo(args, 3);
@@ -1362,7 +1363,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task CopyToSpanHandlesEmptyDestination()
         {
-            DynValue[] backing = new[] { DynValue.NewNumber(1), DynValue.NewNumber(2) };
+            LuaValue[] backing = new[] { LuaValue.NewNumber(1), LuaValue.NewNumber(2) };
             CallbackArguments args = new(backing, false);
 
             CopyToResult result = ExecuteCopyTo(args, 0);
@@ -1373,8 +1374,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task CopyToSpanExpandsTuples()
         {
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(10), DynValue.NewNumber(20));
-            DynValue[] backing = new[] { DynValue.NewNumber(1), tuple };
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewNumber(10), LuaValue.NewNumber(20));
+            LuaValue[] backing = new[] { LuaValue.NewNumber(1), tuple };
             CallbackArguments args = new(backing, false);
 
             CopyToResult result = ExecuteCopyTo(args, 5);
@@ -1389,8 +1390,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewCopyToSpanExpandsTuples()
         {
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(10), DynValue.NewNumber(20));
-            DynValue[] backing = new[] { DynValue.NewNumber(1), tuple };
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewNumber(10), LuaValue.NewNumber(20));
+            LuaValue[] backing = new[] { LuaValue.NewNumber(1), tuple };
 
             CopyToResult result = ExecuteViewCopyTo(backing, 5);
 
@@ -1403,11 +1404,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task ArgumentViewSkipMethodCallSkipsSelf()
         {
-            DynValue[] backing = new[]
+            LuaValue[] backing = new[]
             {
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
             };
 
             CopyToResult result = ExecuteViewSkipMethodCall(backing);
@@ -1420,12 +1421,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task CopyToSpanWithSkipCopiesRemaining()
         {
-            DynValue[] backing = new[]
+            LuaValue[] backing = new[]
             {
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
-                DynValue.NewNumber(4),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
+                LuaValue.NewNumber(4),
             };
             CallbackArguments args = new(backing, false);
 
@@ -1439,7 +1440,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task CopyToSpanWithSkipHandlesSkipAll()
         {
-            DynValue[] backing = new[] { DynValue.NewNumber(1), DynValue.NewNumber(2) };
+            LuaValue[] backing = new[] { LuaValue.NewNumber(1), LuaValue.NewNumber(2) };
             CallbackArguments args = new(backing, false);
 
             CopyToResult result = ExecuteCopyTo(args, 3, 5);
@@ -1450,7 +1451,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task CopyToSpanWithSkipHandlesZeroSkip()
         {
-            DynValue[] backing = new[] { DynValue.NewNumber(1), DynValue.NewNumber(2) };
+            LuaValue[] backing = new[] { LuaValue.NewNumber(1), LuaValue.NewNumber(2) };
             CallbackArguments args = new(backing, false);
 
             CopyToResult result = ExecuteCopyTo(args, 3, 0);
@@ -1463,12 +1464,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task CopyToSpanWithSkipExpandsTuples()
         {
-            DynValue tuple = DynValue.NewTuple(
-                DynValue.NewNumber(10),
-                DynValue.NewNumber(20),
-                DynValue.NewNumber(30)
+            LuaValue tuple = LuaValue.NewTuple(
+                LuaValue.NewNumber(10),
+                LuaValue.NewNumber(20),
+                LuaValue.NewNumber(30)
             );
-            DynValue[] backing = new[] { DynValue.NewNumber(1), tuple };
+            LuaValue[] backing = new[] { LuaValue.NewNumber(1), tuple };
             CallbackArguments args = new(backing, false);
 
             CopyToResult result = ExecuteCopyTo(args, 5, 2);
@@ -1487,17 +1488,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             double[] capturedNumbers = null;
 
             script.Globals["capture"] =
-                (Func<CallbackArguments, DynValue>)(
+                (Func<CallbackArguments, LuaValue>)(
                     args =>
                     {
-                        DynValue[] buffer = new DynValue[10];
+                        LuaValue[] buffer = new LuaValue[10];
                         int count = args.CopyTo(buffer.AsSpan());
                         capturedNumbers = new double[count];
                         for (int i = 0; i < count; i++)
                         {
                             capturedNumbers[i] = buffer[i].Number;
                         }
-                        return DynValue.Nil;
+                        return LuaValue.Nil;
                     }
                 );
 
@@ -1543,11 +1544,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task CountPropertyReflectsArguments()
         {
-            DynValue[] backing = new[]
+            LuaValue[] backing = new[]
             {
-                DynValue.NewNumber(1),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
+                LuaValue.NewNumber(1),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
             };
             CallbackArguments args = new(backing, false);
 
@@ -1557,8 +1558,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task CountPropertyExpandsTuples()
         {
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(10), DynValue.NewNumber(20));
-            DynValue[] backing = new[] { DynValue.NewNumber(1), tuple };
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewNumber(10), LuaValue.NewNumber(20));
+            LuaValue[] backing = new[] { LuaValue.NewNumber(1), tuple };
             CallbackArguments args = new(backing, false);
 
             // 1 + 2 tuple elements = 3
@@ -1568,8 +1569,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task IndexerAccessesExpandedTuples()
         {
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(10), DynValue.NewNumber(20));
-            DynValue[] backing = new[] { DynValue.NewNumber(1), tuple };
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewNumber(10), LuaValue.NewNumber(20));
+            LuaValue[] backing = new[] { LuaValue.NewNumber(1), tuple };
             CallbackArguments args = new(backing, false);
 
             await Assert.That(args[0].Number).IsEqualTo(1).ConfigureAwait(false);
@@ -1580,7 +1581,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [Test]
         public async Task IsMethodCallPropertyReturnsCorrectValue()
         {
-            DynValue[] backing = new[] { DynValue.NewNumber(1) };
+            LuaValue[] backing = new[] { LuaValue.NewNumber(1) };
 
             CallbackArguments nonMethodCall = new(backing, false);
             CallbackArguments methodCall = new(backing, true);

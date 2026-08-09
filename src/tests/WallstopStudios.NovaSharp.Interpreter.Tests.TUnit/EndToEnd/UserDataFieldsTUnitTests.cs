@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -266,7 +267,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     Script script = new();
                     SomeClass obj = new() { IntProp = 321 };
                     script.Globals["myobj"] = obj;
-                    DynValue result = script.DoString("myobj.IntProp = 19;");
+                    LuaValue result = script.DoString("myobj.IntProp = 19;");
                     return Task.FromResult((result, obj));
                 },
                 async tuple =>

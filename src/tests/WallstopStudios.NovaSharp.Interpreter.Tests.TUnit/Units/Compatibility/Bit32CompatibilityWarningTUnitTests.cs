@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -56,7 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
                 }
             );
 
-            DynValue result = script.DoString("return require('bit32') ~= nil");
+            LuaValue result = script.DoString("return require('bit32') ~= nil");
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(warnings.Count).IsZero().ConfigureAwait(false);

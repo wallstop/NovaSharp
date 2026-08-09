@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
 
     /// <summary>
     /// Provides thread-safe pooled access to <see cref="List{T}"/> instances.
@@ -11,7 +12,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// <remarks>
     /// Usage pattern:
     /// <code>
-    /// using (ListPool&lt;DynValue&gt;.Get(out List&lt;DynValue&gt; list))
+    /// using (ListPool&lt;LuaValue&gt;.Get(out List&lt;LuaValue&gt; list))
     /// {
     ///     list.Add(value1);
     ///     list.Add(value2);

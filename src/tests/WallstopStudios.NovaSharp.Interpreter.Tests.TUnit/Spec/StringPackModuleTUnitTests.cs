@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Assertions.Extensions;
     using global::TUnit.Core;
@@ -21,7 +22,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackUnpackInteger(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('i4', 42)
                 local unpacked = string.unpack('i4', packed)
@@ -37,7 +38,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackUnpackNegativeInteger(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('i4', -12345)
                 local unpacked = string.unpack('i4', packed)
@@ -53,7 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackUnpackSignedByte(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('b', -1)
                 local unpacked = string.unpack('b', packed)
@@ -69,7 +70,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackUnpackUnsignedByte(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('B', 255)
                 local unpacked = string.unpack('B', packed)
@@ -85,7 +86,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackUnpackDouble(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('d', 3.14159265358979)
                 local unpacked = string.unpack('d', packed)
@@ -101,7 +102,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackUnpackFloat(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('f', 3.14)
                 local unpacked = string.unpack('f', packed)
@@ -117,7 +118,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackUnpackZeroTerminatedString(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('z', 'hello')
                 local unpacked = string.unpack('z', packed)
@@ -133,7 +134,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackUnpackLengthPrefixedString(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('s4', 'world')
                 local unpacked = string.unpack('s4', packed)
@@ -149,7 +150,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackUnpackFixedSizeString(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('c10', 'test')
                 local unpacked = string.unpack('c10', packed)
@@ -165,7 +166,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackUnpackLittleEndian(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('<I2', 0x0102)
                 local b1 = string.byte(packed, 1)
@@ -184,7 +185,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackUnpackBigEndian(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('>I2', 0x0102)
                 local b1 = string.byte(packed, 1)
@@ -203,7 +204,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackUnpackMultipleValues(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('i4 i4 z', 100, 200, 'test')
                 local a, b, c = string.unpack('i4 i4 z', packed)
@@ -222,7 +223,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackSizeReturnsCorrectSize(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString("return string.packsize('i4 d B')");
+            LuaValue result = script.DoString("return string.packsize('i4 d B')");
 
             await Assert.That(result.Number).IsEqualTo(4 + 8 + 1);
         }
@@ -245,7 +246,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task UnpackReturnsNextPosition(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('i4 i4', 10, 20)
                 local a, b, nextpos = string.unpack('i4 i4', packed)
@@ -261,7 +262,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task UnpackWithPosition(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('i4 i4', 10, 20)
                 local b = string.unpack('i4', packed, 5)
@@ -316,7 +317,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackLuaInteger(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('j', 9223372036854775807)
                 local unpacked = string.unpack('j', packed)
@@ -332,7 +333,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task PackPaddingByte(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local packed = string.pack('BxB', 1, 2)
                 return #packed

@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
     using System.Collections.Generic;
     using System.Reflection;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -91,7 +92,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 MethodInfo method,
                 LuaCompatibilityAttribute compatibility,
                 string[] names,
-                Func<ScriptExecutionContext, CallbackArguments, DynValue> legacyCallback,
+                Func<ScriptExecutionContext, CallbackArguments, LuaValue> legacyCallback,
                 ScriptFunctionCallbackView argumentViewCallback,
                 ScriptFunctionCallbackViewNoContext argumentViewNoContextCallback,
                 Action<Table, Table> init
@@ -130,7 +131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             /// <summary>
             /// Gets the cached legacy callback delegate, when applicable.
             /// </summary>
-            public Func<ScriptExecutionContext, CallbackArguments, DynValue> LegacyCallback { get; }
+            public Func<ScriptExecutionContext, CallbackArguments, LuaValue> LegacyCallback { get; }
 
             /// <summary>
             /// Gets the cached argument-view callback delegate, when applicable.
@@ -380,26 +381,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             }
 
             Script ownerScript = table.OwnerScript;
-            DynValue novaSharpTable = DynValue.NewTable(ownerScript);
+            LuaValue novaSharpTable = LuaValue.NewTable(ownerScript);
             Table m = novaSharpTable.Table;
             LuaCompatibilityProfile profile =
                 ownerScript != null
                     ? ownerScript.CompatibilityProfile
                     : LuaCompatibilityProfile.ForVersion(Script.GlobalOptions.CompatibilityVersion);
 
-            table.Set("_G", DynValue.NewTable(table));
-            table.Set("_VERSION", DynValue.NewString(profile.DisplayName));
+            table.Set("_G", LuaValue.NewTable(table));
+            table.Set("_VERSION", LuaValue.NewString(profile.DisplayName));
             table.Set("_NovaSharp", novaSharpTable);
 
-            m.Set("version", DynValue.NewString(Script.VERSION));
-            m.Set("luacompat", DynValue.NewString(profile.DisplayName));
-            m.Set("platform", DynValue.NewString(Script.GlobalOptions.Platform.GetPlatformName()));
-            m.Set("is_aot", DynValue.NewBoolean(Script.GlobalOptions.Platform.IsRunningOnAOT()));
-            m.Set("is_unity", DynValue.NewBoolean(PlatformAutoDetector.IsRunningOnUnity));
-            m.Set("is_mono", DynValue.NewBoolean(PlatformAutoDetector.IsRunningOnMono));
-            m.Set("is_clr4", DynValue.NewBoolean(PlatformAutoDetector.IsRunningOnClr4));
-            m.Set("is_pcl", DynValue.NewBoolean(PlatformAutoDetector.IsPortableFramework));
-            m.Set("banner", DynValue.NewString(Script.GetBanner()));
+            m.Set("version", LuaValue.NewString(Script.VERSION));
+            m.Set("luacompat", LuaValue.NewString(profile.DisplayName));
+            m.Set("platform", LuaValue.NewString(Script.GlobalOptions.Platform.GetPlatformName()));
+            m.Set("is_aot", LuaValue.NewBoolean(Script.GlobalOptions.Platform.IsRunningOnAOT()));
+            m.Set("is_unity", LuaValue.NewBoolean(PlatformAutoDetector.IsRunningOnUnity));
+            m.Set("is_mono", LuaValue.NewBoolean(PlatformAutoDetector.IsRunningOnMono));
+            m.Set("is_clr4", LuaValue.NewBoolean(PlatformAutoDetector.IsRunningOnClr4));
+            m.Set("is_pcl", LuaValue.NewBoolean(PlatformAutoDetector.IsPortableFramework));
+            m.Set("banner", LuaValue.NewString(Script.GetBanner()));
 
             return table;
         }
@@ -471,7 +472,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                         string name = names[nameIndex];
                         table.Set(
                             name,
-                            DynValue.NewCallbackView(
+                            LuaValue.NewCallbackView(
                                 ownerScript,
                                 action.ArgumentViewNoContextCallback,
                                 name
@@ -488,7 +489,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                         string name = names[nameIndex];
                         table.Set(
                             name,
-                            DynValue.NewCallbackView(ownerScript, action.ArgumentViewCallback, name)
+                            LuaValue.NewCallbackView(ownerScript, action.ArgumentViewCallback, name)
                         );
                     }
                     continue;
@@ -497,7 +498,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 for (int nameIndex = 0; nameIndex < names.Length; nameIndex++)
                 {
                     string name = names[nameIndex];
-                    table.Set(name, DynValue.NewCallback(ownerScript, action.LegacyCallback, name));
+                    table.Set(name, LuaValue.NewCallback(ownerScript, action.LegacyCallback, name));
                 }
             }
 
@@ -569,7 +570,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                     );
                     ScriptFunctionCallbackView viewFunc = null;
                     ScriptFunctionCallbackViewNoContext viewNoContextFunc = null;
-                    Func<ScriptExecutionContext, CallbackArguments, DynValue> func = null;
+                    Func<ScriptExecutionContext, CallbackArguments, LuaValue> func = null;
 
                     if (hasArgumentViewNoContextSignature)
                     {
@@ -722,21 +723,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
         private static Func<
             ScriptExecutionContext,
             CallbackArguments,
-            DynValue
+            LuaValue
         > CreateLegacyCallback(MethodInfo mi)
         {
 #if NETFX_CORE
             Delegate deleg = mi.CreateDelegate(
-                typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>)
+                typeof(Func<ScriptExecutionContext, CallbackArguments, LuaValue>)
             );
 #else
             Delegate deleg = Delegate.CreateDelegate(
-                typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>),
+                typeof(Func<ScriptExecutionContext, CallbackArguments, LuaValue>),
                 mi
             );
 #endif
 
-            return (Func<ScriptExecutionContext, CallbackArguments, DynValue>)deleg;
+            return (Func<ScriptExecutionContext, CallbackArguments, LuaValue>)deleg;
         }
 
         private static Action<Table, Table> CreateModuleInit(MethodInfo mi)
@@ -757,20 +758,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
         )
         {
             FieldInfo fi = constant.Field;
-            DynValue constantValue;
+            LuaValue constantValue;
 
             if (fi.FieldType == typeof(string))
             {
-                constantValue = DynValue.NewString(fi.GetValue(o) as string);
+                constantValue = LuaValue.NewString(fi.GetValue(o) as string);
             }
             else if (fi.FieldType == typeof(double))
             {
-                constantValue = DynValue.NewNumber((double)fi.GetValue(o));
+                constantValue = LuaValue.NewNumber((double)fi.GetValue(o));
             }
             else if (fi.FieldType == typeof(long))
             {
                 // Lua 5.3+ integer constants (math.maxinteger, math.mininteger)
-                constantValue = DynValue.NewInteger((long)fi.GetValue(o));
+                constantValue = LuaValue.NewInteger((long)fi.GetValue(o));
             }
             else
             {
@@ -810,7 +811,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
 
             string val = fi.GetValue(o) as string;
 
-            DynValue fn = table.OwnerScript.LoadFunctionWithoutCompilationCache(
+            LuaValue fn = table.OwnerScript.LoadFunctionWithoutCompilationCache(
                 val,
                 table,
                 scriptField.PrimaryName
@@ -833,7 +834,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             {
                 Table table = null;
 
-                DynValue found = gtable.Get(moduleNamespace);
+                LuaValue found = gtable.Get(moduleNamespace);
 
                 if (found.Type == DataType.Table)
                 {
@@ -842,24 +843,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 else
                 {
                     table = new Table(gtable.OwnerScript);
-                    gtable.Set(moduleNamespace, DynValue.NewTable(table));
+                    gtable.Set(moduleNamespace, LuaValue.NewTable(table));
                 }
 
-                DynValue package = gtable.RawGet("package");
+                LuaValue package = gtable.RawGet("package");
 
                 if (package.Type != DataType.Table)
                 {
-                    gtable.Set("package", package = DynValue.NewTable(gtable.OwnerScript));
+                    gtable.Set("package", package = LuaValue.NewTable(gtable.OwnerScript));
                 }
 
-                DynValue loaded = package.Table.RawGet("loaded");
+                LuaValue loaded = package.Table.RawGet("loaded");
 
                 if (loaded.Type != DataType.Table)
                 {
-                    package.Table.Set("loaded", loaded = DynValue.NewTable(gtable.OwnerScript));
+                    package.Table.Set("loaded", loaded = LuaValue.NewTable(gtable.OwnerScript));
                 }
 
-                loaded.Table.Set(moduleNamespace, DynValue.NewTable(table));
+                loaded.Table.Set(moduleNamespace, LuaValue.NewTable(table));
 
                 return table;
             }
@@ -956,7 +957,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 return;
             }
 
-            globals.Set(functionName, DynValue.Nil);
+            globals.Set(functionName, LuaValue.Nil);
         }
 
         private static void RemoveTableFunction(Table globals, string memberName)
@@ -966,11 +967,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 return;
             }
 
-            DynValue tableNamespace = globals.RawGet("table");
+            LuaValue tableNamespace = globals.RawGet("table");
 
             if (tableNamespace.Type == DataType.Table)
             {
-                tableNamespace.Table.Set(memberName, DynValue.Nil);
+                tableNamespace.Table.Set(memberName, LuaValue.Nil);
             }
         }
     }

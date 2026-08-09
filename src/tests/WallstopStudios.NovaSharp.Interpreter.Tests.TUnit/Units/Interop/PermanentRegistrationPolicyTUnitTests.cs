@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -67,20 +68,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             public bool TryIndex(
                 Script script,
                 object obj,
-                DynValue index,
+                LuaValue index,
                 bool isDirectIndexing,
-                out DynValue value
+                out LuaValue value
             )
             {
-                value = DynValue.Nil;
+                value = LuaValue.Nil;
                 return true;
             }
 
             public bool SetIndex(
                 Script script,
                 object obj,
-                DynValue index,
-                DynValue value,
+                LuaValue index,
+                LuaValue value,
                 bool isDirectIndexing
             )
             {
@@ -92,9 +93,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 return obj?.ToString() ?? string.Empty;
             }
 
-            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
             {
-                value = DynValue.Nil;
+                value = LuaValue.Nil;
                 return true;
             }
 

@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
@@ -47,23 +48,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         public Type Type { get; private set; }
 
         /// <inheritdoc/>
-        public DynValue? Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+        public LuaValue? Index(Script script, object obj, LuaValue index, bool isDirectIndexing)
         {
-            return TryIndex(script, obj, index, isDirectIndexing, out DynValue value)
+            return TryIndex(script, obj, index, isDirectIndexing, out LuaValue value)
                 ? value
-                : null;
+                : (LuaValue?)null;
         }
 
         /// <inheritdoc/>
         public bool TryIndex(
             Script script,
             object obj,
-            DynValue index,
+            LuaValue index,
             bool isDirectIndexing,
-            out DynValue value
+            out LuaValue value
         )
         {
-            value = DynValue.Nil;
+            value = LuaValue.Nil;
             return false;
         }
 
@@ -71,8 +72,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         public bool SetIndex(
             Script script,
             object obj,
-            DynValue index,
-            DynValue value,
+            LuaValue index,
+            LuaValue value,
             bool isDirectIndexing
         )
         {
@@ -91,15 +92,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         }
 
         /// <inheritdoc/>
-        public DynValue? MetaIndex(Script script, object obj, string metaname)
+        public LuaValue? MetaIndex(Script script, object obj, string metaname)
         {
-            return TryMetaIndex(script, obj, metaname, out DynValue value) ? value : null;
+            return TryMetaIndex(script, obj, metaname, out LuaValue value)
+                ? value
+                : (LuaValue?)null;
         }
 
         /// <inheritdoc/>
-        public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+        public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
         {
-            value = DynValue.Nil;
+            value = LuaValue.Nil;
             return false;
         }
 

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System;
     using System.Globalization;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -110,11 +111,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             script.Globals["SampleFlagSet"] = typeof(SampleFlagSet);
             script.Globals.Set("o", UserData.Create(target).Value);
 
-            DynValue value = script.DoString("return " + code);
+            LuaValue value = script.DoString("return " + code);
 
             return VerifyAsync(value);
 
-            async Task VerifyAsync(DynValue result)
+            async Task VerifyAsync(LuaValue result)
             {
                 await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
                 await Assert.That(result.String).IsEqualTo(expected).ConfigureAwait(false);

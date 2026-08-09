@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     using System;
     using System.Diagnostics.CodeAnalysis;
     using System.IO;
+    using global::NovaSharp;
     using BenchmarkDotNet.Attributes;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -36,7 +37,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private Script _namedCachedFileScript;
         private string _cachedFileName = string.Empty;
         private string _cachedFileFriendlyName = string.Empty;
-        private DynValue _precompiledFunction = DynValue.Nil;
+        private LuaValue _precompiledFunction = LuaValue.Nil;
         private CompiledScript _compiledHandle;
         private CompiledScript _compiledStreamHandle;
         private CompiledScript _compiledFileHandle;
@@ -146,7 +147,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// Compiles and immediately executes the script, exercising end-to-end loading.
         /// </summary>
         [Benchmark(Description = "Compile + Execute")]
-        public DynValue CompileAndExecute()
+        public LuaValue CompileAndExecute()
         {
             Script script = new(CoreModulePresets.Complete);
             return script.DoString(_scriptSource, null, $"compile_execute_{_currentComplexity}");
@@ -156,7 +157,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// Measures script compilation without executing the resulting chunk.
         /// </summary>
         [Benchmark(Description = "Compile Only")]
-        public DynValue CompileOnly()
+        public LuaValue CompileOnly()
         {
             Script script = new(CoreModulePresets.Complete);
             return script.LoadString(_scriptSource, null, $"compile_{_currentComplexity}");
@@ -166,7 +167,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// Measures stream compilation without executing the resulting chunk.
         /// </summary>
         [Benchmark(Description = "Compile Stream Only")]
-        public DynValue CompileStreamOnly()
+        public LuaValue CompileStreamOnly()
         {
             Script script = new(CoreModulePresets.Complete);
             using MemoryStream stream = new(_scriptSourceBytes);
@@ -179,7 +180,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// Measures file-loader compilation without executing the resulting chunk.
         /// </summary>
         [Benchmark(Description = "Compile File Only")]
-        public DynValue CompileFileOnly()
+        public LuaValue CompileFileOnly()
         {
             Script script = new(
                 CoreModulePresets.Complete,
@@ -192,7 +193,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// Measures standalone function preparation without executing the resulting function.
         /// </summary>
         [Benchmark(Description = "Prepare Function Only")]
-        public DynValue PrepareFunctionOnly()
+        public LuaValue PrepareFunctionOnly()
         {
             Script script = new(CoreModulePresets.Complete);
             return script
@@ -207,27 +208,27 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// Loads a chunk already present in the script compilation cache.
         /// </summary>
         [Benchmark(Description = "Load Cached")]
-        public DynValue LoadCached() => _cachedScript.LoadString(_scriptSource);
+        public LuaValue LoadCached() => _cachedScript.LoadString(_scriptSource);
 
         /// <summary>
         /// Loads a named chunk already present in the script compilation cache.
         /// </summary>
         [Benchmark(Description = "Load Cached Named")]
-        public DynValue LoadCachedNamed() =>
+        public LuaValue LoadCachedNamed() =>
             _namedCachedScript.LoadString(_scriptSource, null, _cachedFriendlyName);
 
         /// <summary>
         /// Prepares a standalone function already present in the script compilation cache.
         /// </summary>
         [Benchmark(Description = "Prepare Function Cached")]
-        public DynValue PrepareFunctionCached() =>
+        public LuaValue PrepareFunctionCached() =>
             _cachedFunctionScript.PrepareFunction(_functionSource).Function;
 
         /// <summary>
         /// Prepares a named standalone function already present in the script compilation cache.
         /// </summary>
         [Benchmark(Description = "Prepare Function Cached Named")]
-        public DynValue PrepareFunctionCachedNamed() =>
+        public LuaValue PrepareFunctionCachedNamed() =>
             _namedCachedFunctionScript
                 .PrepareFunction(_functionSource, funcFriendlyName: _cachedFunctionFriendlyName)
                 .Function;
@@ -236,26 +237,26 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// Executes a chunk already present in the script compilation cache through the easy API.
         /// </summary>
         [Benchmark(Description = "DoString Cached")]
-        public DynValue DoStringCached() => _cachedScript.DoString(_scriptSource);
+        public LuaValue DoStringCached() => _cachedScript.DoString(_scriptSource);
 
         /// <summary>
         /// Executes a named chunk already present in the script compilation cache through the easy API.
         /// </summary>
         [Benchmark(Description = "DoString Cached Named")]
-        public DynValue DoStringCachedNamed() =>
+        public LuaValue DoStringCachedNamed() =>
             _namedCachedScript.DoString(_scriptSource, null, _cachedFriendlyName);
 
         /// <summary>
         /// Executes a file-backed chunk already present in the script compilation cache through the easy API.
         /// </summary>
         [Benchmark(Description = "DoFile Cached")]
-        public DynValue DoFileCached() => _cachedFileScript.DoFile(_cachedFileName);
+        public LuaValue DoFileCached() => _cachedFileScript.DoFile(_cachedFileName);
 
         /// <summary>
         /// Executes a named file-backed chunk already present in the script compilation cache through the easy API.
         /// </summary>
         [Benchmark(Description = "DoFile Cached Named")]
-        public DynValue DoFileCachedNamed() =>
+        public LuaValue DoFileCachedNamed() =>
             _namedCachedFileScript.DoFile(
                 _cachedFileName,
                 codeFriendlyName: _cachedFileFriendlyName
@@ -265,13 +266,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// Executes the precompiled chunk, isolating runtime overhead.
         /// </summary>
         [Benchmark(Description = "Execute Precompiled")]
-        public DynValue ExecutePrecompiled() => _precompiledScript.Call(_precompiledFunction);
+        public LuaValue ExecutePrecompiled() => _precompiledScript.CallValues(_precompiledFunction);
 
         /// <summary>
         /// Executes the explicit prepare-once handle, isolating handle forwarding overhead.
         /// </summary>
         [Benchmark(Description = "Execute Prepared String Handle")]
-        public DynValue ExecutePreparedStringHandle() => _compiledHandle.Execute();
+        public LuaValue ExecutePreparedStringHandle() => _compiledHandle.Execute();
 
         /// <summary>
         /// Executes a prepared handle and converts the first scalar result through ExecuteAs.
@@ -289,13 +290,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// Executes a stream-prepared handle, isolating handle forwarding overhead.
         /// </summary>
         [Benchmark(Description = "Execute Prepared Stream Handle")]
-        public DynValue ExecutePreparedStreamHandle() => _compiledStreamHandle.Execute();
+        public LuaValue ExecutePreparedStreamHandle() => _compiledStreamHandle.Execute();
 
         /// <summary>
         /// Executes a file-prepared handle, isolating handle forwarding overhead.
         /// </summary>
         [Benchmark(Description = "Execute Prepared File Handle")]
-        public DynValue ExecutePreparedFileHandle() => _compiledFileHandle.Execute();
+        public LuaValue ExecutePreparedFileHandle() => _compiledFileHandle.Execute();
 
         private sealed class StaticStringScriptLoader : ScriptLoaderBase
         {
@@ -332,22 +333,22 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     public class BoundFunctionBenchmarks
     {
         private Script _script;
-        private DynValue _function = DynValue.Nil;
-        private DynValue _nestedFunction = DynValue.Nil;
-        private DynValue _sixArgFunction = DynValue.Nil;
-        private DynValue _sevenArgFunction = DynValue.Nil;
-        private DynValue _zeroArgFunction = DynValue.Nil;
-        private DynValue _doubleArgFunction = DynValue.Nil;
+        private LuaValue _function = LuaValue.Nil;
+        private LuaValue _nestedFunction = LuaValue.Nil;
+        private LuaValue _sixArgFunction = LuaValue.Nil;
+        private LuaValue _sevenArgFunction = LuaValue.Nil;
+        private LuaValue _zeroArgFunction = LuaValue.Nil;
+        private LuaValue _doubleArgFunction = LuaValue.Nil;
         private object[] _nestedFunctionPath = Array.Empty<object>();
         private object[] _paddedNestedFunctionPath = Array.Empty<object>();
-        private DynValue _arg1 = DynValue.Nil;
-        private DynValue _arg2 = DynValue.Nil;
-        private DynValue _arg3 = DynValue.Nil;
-        private DynValue _arg4 = DynValue.Nil;
-        private DynValue _arg5 = DynValue.Nil;
-        private DynValue _arg6 = DynValue.Nil;
-        private DynValue _arg7 = DynValue.Nil;
-        private DynValue _doubleDynValueArg = DynValue.Nil;
+        private LuaValue _arg1 = LuaValue.Nil;
+        private LuaValue _arg2 = LuaValue.Nil;
+        private LuaValue _arg3 = LuaValue.Nil;
+        private LuaValue _arg4 = LuaValue.Nil;
+        private LuaValue _arg5 = LuaValue.Nil;
+        private LuaValue _arg6 = LuaValue.Nil;
+        private LuaValue _arg7 = LuaValue.Nil;
+        private LuaValue _doubleDynValueArg = LuaValue.Nil;
         private double _doubleArg;
         private object _boxedDoubleArg;
         private CompiledScript _boundGlobalHandle;
@@ -393,78 +394,78 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _boundSevenArgHandle = _script.PrepareGlobalFunction("update7");
             _boundZeroArgHandle = _script.PrepareGlobalFunction("tick");
             _boundDoubleArgHandle = _script.PrepareGlobalFunction("updateDouble");
-            _arg1 = DynValue.FromNumber(1);
-            _arg2 = DynValue.FromNumber(2);
-            _arg3 = DynValue.FromNumber(3);
-            _arg4 = DynValue.FromNumber(4);
-            _arg5 = DynValue.FromNumber(5);
-            _arg6 = DynValue.FromNumber(6);
-            _arg7 = DynValue.FromNumber(7);
+            _arg1 = LuaValue.FromNumber(1);
+            _arg2 = LuaValue.FromNumber(2);
+            _arg3 = LuaValue.FromNumber(3);
+            _arg4 = LuaValue.FromNumber(4);
+            _arg5 = LuaValue.FromNumber(5);
+            _arg6 = LuaValue.FromNumber(6);
+            _arg7 = LuaValue.FromNumber(7);
             _doubleArg = 1.25d;
             _boxedDoubleArg = _doubleArg;
-            _doubleDynValueArg = DynValue.FromNumber(_doubleArg);
+            _doubleDynValueArg = LuaValue.FromNumber(_doubleArg);
         }
 
         /// <summary>
         /// Resolves a global function on every call before invoking it.
         /// </summary>
         [Benchmark(Description = "Call Global Lookup")]
-        public DynValue CallGlobalLookup() =>
-            _script.Call(_script.Globals.Get("update"), _arg1, _arg2, _arg3);
+        public LuaValue CallGlobalLookup() =>
+            _script.CallValues(_script.Globals.Get("update"), _arg1, _arg2, _arg3);
 
         /// <summary>
         /// Resolves a nested global function on every call before invoking it.
         /// </summary>
         [Benchmark(Description = "Call Nested Global Lookup")]
-        public DynValue CallNestedGlobalLookup() =>
-            _script.Call(_script.Globals.Get("api", "system", "update"), _arg1, _arg2, _arg3);
+        public LuaValue CallNestedGlobalLookup() =>
+            _script.CallValues(_script.Globals.Get("api", "system", "update"), _arg1, _arg2, _arg3);
 
         /// <summary>
         /// Calls a manually cached global function value.
         /// </summary>
         [Benchmark(Description = "Call Cached Global")]
-        public DynValue CallCachedGlobal() => _script.Call(_function, _arg1, _arg2, _arg3);
+        public LuaValue CallCachedGlobal() => _script.CallValues(_function, _arg1, _arg2, _arg3);
 
         /// <summary>
         /// Calls a manually cached nested global function value.
         /// </summary>
         [Benchmark(Description = "Call Cached Nested Global")]
-        public DynValue CallCachedNestedGlobal() =>
-            _script.Call(_nestedFunction, _arg1, _arg2, _arg3);
+        public LuaValue CallCachedNestedGlobal() =>
+            _script.CallValues(_nestedFunction, _arg1, _arg2, _arg3);
 
         /// <summary>
         /// Calls a manually cached six-argument global function value.
         /// </summary>
         [Benchmark(Description = "Call Cached 6-Arg Global")]
-        public DynValue CallCachedSixArgGlobal() =>
-            _script.Call(_sixArgFunction, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6);
+        public LuaValue CallCachedSixArgGlobal() =>
+            _script.CallValues(_sixArgFunction, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6);
 
         /// <summary>
         /// Calls a manually cached seven-argument global function value.
         /// </summary>
         [Benchmark(Description = "Call Cached 7-Arg Global")]
-        public DynValue CallCachedSevenArgGlobal() =>
-            _script.Call(_sevenArgFunction, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7);
+        public LuaValue CallCachedSevenArgGlobal() =>
+            _script.CallValues(_sevenArgFunction, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7);
 
         /// <summary>
         /// Calls a manually cached zero-argument global function value.
         /// </summary>
         [Benchmark(Description = "Call Cached Zero-Arg Global")]
-        public DynValue CallCachedZeroArgGlobal() => _script.Call(_zeroArgFunction);
+        public LuaValue CallCachedZeroArgGlobal() => _script.CallValues(_zeroArgFunction);
 
         /// <summary>
-        /// Calls a manually cached one-argument global function with a cached DynValue.
+        /// Calls a manually cached one-argument global function with a cached LuaValue.
         /// </summary>
-        [Benchmark(Description = "Call Cached Double DynValue Global")]
-        public DynValue CallCachedDoubleDynValueGlobal() =>
-            _script.Call(_doubleArgFunction, _doubleDynValueArg);
+        [Benchmark(Description = "Call Cached Double LuaValue Global")]
+        public LuaValue CallCachedDoubleDynValueGlobal() =>
+            _script.CallValues(_doubleArgFunction, _doubleDynValueArg);
 
         /// <summary>
         /// Executes a global function handle resolved once through the public prepare API.
         /// </summary>
         [Benchmark(Description = "Execute Prepared Global Handle")]
-        public DynValue ExecutePreparedGlobalHandle() =>
-            _boundGlobalHandle.Execute(_arg1, _arg2, _arg3);
+        public LuaValue ExecutePreparedGlobalHandle() =>
+            _boundGlobalHandle.ExecuteValues(_arg1, _arg2, _arg3);
 
         /// <summary>
         /// Executes a global function handle and converts the first scalar result through ExecuteAs.
@@ -484,48 +485,48 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// Executes a nested global function handle resolved once through the public prepare API.
         /// </summary>
         [Benchmark(Description = "Execute Prepared Nested Global Handle")]
-        public DynValue ExecutePreparedNestedGlobalHandle() =>
-            _boundNestedGlobalHandle.Execute(_arg1, _arg2, _arg3);
+        public LuaValue ExecutePreparedNestedGlobalHandle() =>
+            _boundNestedGlobalHandle.ExecuteValues(_arg1, _arg2, _arg3);
 
         /// <summary>
         /// Executes a six-argument global function handle resolved once through the public prepare API.
         /// </summary>
         [Benchmark(Description = "Execute Prepared 6-Arg Handle")]
-        public DynValue ExecutePreparedSixArgHandle() =>
-            _boundSixArgHandle.Execute(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6);
+        public LuaValue ExecutePreparedSixArgHandle() =>
+            _boundSixArgHandle.ExecuteValues(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6);
 
         /// <summary>
         /// Executes a seven-argument global function handle resolved once through the public prepare API.
         /// </summary>
         [Benchmark(Description = "Execute Prepared 7-Arg Handle")]
-        public DynValue ExecutePreparedSevenArgHandle() =>
-            _boundSevenArgHandle.Execute(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7);
+        public LuaValue ExecutePreparedSevenArgHandle() =>
+            _boundSevenArgHandle.ExecuteValues(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7);
 
         /// <summary>
         /// Executes a zero-argument global function handle resolved once through the public prepare API.
         /// </summary>
         [Benchmark(Description = "Execute Prepared Zero-Arg Handle")]
-        public DynValue ExecutePreparedZeroArgHandle() => _boundZeroArgHandle.Execute();
+        public LuaValue ExecutePreparedZeroArgHandle() => _boundZeroArgHandle.Execute();
 
         /// <summary>
-        /// Executes a one-argument global function handle with a cached DynValue argument.
+        /// Executes a one-argument global function handle with a cached LuaValue argument.
         /// </summary>
-        [Benchmark(Description = "Execute Prepared Double DynValue Handle")]
-        public DynValue ExecutePreparedDoubleDynValueHandle() =>
-            _boundDoubleArgHandle.Execute(_doubleDynValueArg);
+        [Benchmark(Description = "Execute Prepared Double LuaValue Handle")]
+        public LuaValue ExecutePreparedDoubleDynValueHandle() =>
+            _boundDoubleArgHandle.ExecuteValues(_doubleDynValueArg);
 
         /// <summary>
         /// Executes a one-argument global function handle through the primitive double overload.
         /// </summary>
         [Benchmark(Description = "Execute Prepared Double Primitive Handle")]
-        public DynValue ExecutePreparedDoublePrimitiveHandle() =>
+        public LuaValue ExecutePreparedDoublePrimitiveHandle() =>
             _boundDoubleArgHandle.Execute(_doubleArg);
 
         /// <summary>
         /// Executes a one-argument global function handle through the forced object convenience path.
         /// </summary>
         [Benchmark(Description = "Execute Prepared Double Object Handle")]
-        public DynValue ExecutePreparedDoubleObjectHandle() =>
+        public LuaValue ExecutePreparedDoubleObjectHandle() =>
             _boundDoubleArgHandle.Execute(_boxedDoubleArg);
 
         /// <summary>
@@ -533,7 +534,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// per-call boxing of the primitive input.
         /// </summary>
         [Benchmark(Description = "Execute Prepared Double Boxed Object Handle")]
-        public DynValue ExecutePreparedDoubleBoxedObjectHandle() =>
+        public LuaValue ExecutePreparedDoubleBoxedObjectHandle() =>
             _boundDoubleArgHandle.Execute((object)_doubleArg);
 
         /// <summary>

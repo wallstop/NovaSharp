@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
     using System.Linq.Expressions;
     using System.Reflection;
     using System.Threading;
+    using global::NovaSharp;
     using Diagnostics;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -189,7 +190,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
         /// <returns></returns>
-        public DynValue GetValue(Script script, object obj)
+        public LuaValue GetValue(Script script, object obj)
         {
             this.CheckAccess(MemberDescriptorAccess.CanRead, obj);
 
@@ -343,7 +344,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         /// <param name="script">The script.</param>
         /// <param name="obj">The object.</param>
         /// <param name="value">The value to set.</param>
-        public void SetValue(Script script, object obj, DynValue value)
+        public void SetValue(Script script, object obj, LuaValue value)
         {
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
 
@@ -451,18 +452,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 throw new ArgumentNullException(nameof(t));
             }
 
-            t.Set("class", DynValue.NewString(GetType().FullName));
-            t.Set("visibility", DynValue.NewString(PropertyInfo.GetClrVisibility()));
-            t.Set("name", DynValue.NewString(Name));
-            t.Set("static", DynValue.NewBoolean(IsStatic));
-            t.Set("read", DynValue.NewBoolean(CanRead));
-            t.Set("write", DynValue.NewBoolean(CanWrite));
-            t.Set("decltype", DynValue.NewString(PropertyInfo.DeclaringType.FullName));
+            t.Set("class", LuaValue.NewString(GetType().FullName));
+            t.Set("visibility", LuaValue.NewString(PropertyInfo.GetClrVisibility()));
+            t.Set("name", LuaValue.NewString(Name));
+            t.Set("static", LuaValue.NewBoolean(IsStatic));
+            t.Set("read", LuaValue.NewBoolean(CanRead));
+            t.Set("write", LuaValue.NewBoolean(CanWrite));
+            t.Set("decltype", LuaValue.NewString(PropertyInfo.DeclaringType.FullName));
             t.Set(
                 "declvtype",
-                DynValue.NewBoolean(Framework.Do.IsValueType(PropertyInfo.DeclaringType))
+                LuaValue.NewBoolean(Framework.Do.IsValueType(PropertyInfo.DeclaringType))
             );
-            t.Set("type", DynValue.NewString(PropertyInfo.PropertyType.FullName));
+            t.Set("type", LuaValue.NewString(PropertyInfo.PropertyType.FullName));
         }
 
         /// <summary>

@@ -2,12 +2,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
+    // Shared pool or JIT initialization from parallel tests can be charged to the measuring thread.
+    [global::TUnit.Core.NotInParallel]
     public sealed class PrecompiledRecursiveCallAllocationTUnitTests
     {
         private const long Fibonacci20CallPrologueBudgetBytesPerCall = 1_050_817L;
@@ -26,7 +29,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 FibonacciCallableSource,
                 "recursive_alloc_fib20.lua"
             );
-            DynValue input = DynValue.NewNumber(20);
+            LuaValue input = LuaValue.NewNumber(20);
 
             MeasureAllocations(recursive, input, expectedNumber: 6765d, iterations: 1);
             ForceFullCollection();
@@ -60,7 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 NonTailCallableSource,
                 "recursive_alloc_nontail.lua"
             );
-            DynValue input = DynValue.NewNumber(256);
+            LuaValue input = LuaValue.NewNumber(256);
 
             MeasureAllocations(recursive, input, expectedNumber: 256d, iterations: 1);
             ForceFullCollection();
@@ -89,13 +92,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         )
         {
             CompiledScript chunk = script.PrepareString(source, null, chunkName);
-            DynValue function = chunk.Execute();
+            LuaValue function = chunk.Execute();
             return script.PrepareCallable(function);
         }
 
         private static long MeasureAllocations(
             CompiledScript recursive,
-            DynValue input,
+            LuaValue input,
             double expectedNumber,
             int iterations
         )
@@ -103,7 +106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = recursive.Execute(input);
+                LuaValue result = recursive.ExecuteValues(input);
                 if (result.Number != expectedNumber)
                 {
                     throw new InvalidOperationException(

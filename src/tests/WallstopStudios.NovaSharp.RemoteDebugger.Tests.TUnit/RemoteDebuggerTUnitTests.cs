@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit
     using System.Linq;
     using System.Reflection;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -142,7 +143,7 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit
         public async Task WatchesEvaluateExpressionsAgainstScriptState()
         {
             Script script = BuildScript("return watched", "tunit-watch-eval.lua");
-            script.Globals.Set("watched", DynValue.NewNumber(10));
+            script.Globals.Set("watched", LuaValue.NewNumber(10));
             using RemoteDebuggerHarness harness = new(script, freeRunAfterAttach: false);
             DebugServer server = harness.Server;
             using RemoteDebuggerTestClient client = harness.CreateClient();
@@ -159,13 +160,13 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit
                 .ConfigureAwait(false);
 
             DynamicExpression watch = server.GetWatchItems().Single();
-            DynValue firstValue = watch.Evaluate();
+            LuaValue firstValue = watch.Evaluate();
             await Assert.That(watch.IsConstant()).IsFalse().ConfigureAwait(false);
             await Assert.That(firstValue.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(firstValue.Number).IsEqualTo(10).ConfigureAwait(false);
 
-            script.Globals.Set("watched", DynValue.NewNumber(42));
-            DynValue updatedValue = watch.Evaluate();
+            script.Globals.Set("watched", LuaValue.NewNumber(42));
+            LuaValue updatedValue = watch.Evaluate();
             await Assert.That(updatedValue.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
@@ -195,7 +196,7 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit
             await Assert.That(messages.Last()).Contains("function(()").ConfigureAwait(false);
 
             DynamicExpression watch = server.GetWatchItems().Single();
-            DynValue value = watch.Evaluate();
+            LuaValue value = watch.Evaluate();
             await Assert.That(watch.ExpressionCode).IsEqualTo("function(()").ConfigureAwait(false);
             await Assert.That(watch.IsConstant()).IsTrue().ConfigureAwait(false);
             await Assert.That(value.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
@@ -428,7 +429,7 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit
                     BasePtr = 0x20,
                     RetAddress = -1,
                     Name = null,
-                    Value = DynValue.NewString("entry"),
+                    Value = LuaValue.NewString("entry"),
                     LValue = SymbolRef.DefaultEnv,
                 },
                 new WatchItem
@@ -437,9 +438,18 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit
                     BasePtr = 0x40,
                     RetAddress = 0x50,
                     Name = "foo",
-                    Value = DynValue.NewNumber(42),
+                    Value = LuaValue.NewNumber(42),
                     LValue = SymbolRef.Global("foo", SymbolRef.DefaultEnv),
                     IsError = true,
+                },
+                new WatchItem
+                {
+                    Address = 0x60,
+                    BasePtr = 0x70,
+                    RetAddress = 0x80,
+                    Name = "table",
+                    Value = LuaValue.NewTable(new Table(script)),
+                    LValue = SymbolRef.Global("table", SymbolRef.DefaultEnv),
                 },
             };
 
@@ -452,7 +462,13 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit
             string payload = callStackMessages.First(m => ContainsOrdinal(m, "<callstack"));
             await Assert.That(payload).Contains("&lt;chunk-root&gt;").ConfigureAwait(false);
             await Assert.That(payload).Contains("foo").ConfigureAwait(false);
+            await Assert
+                .That(payload)
+                .Contains("value=\"&quot;entry&quot;\"")
+                .ConfigureAwait(false);
             await Assert.That(payload).Contains("value=\"42\"").ConfigureAwait(false);
+            await Assert.That(payload).Contains("value=\"(Table)\"").ConfigureAwait(false);
+            await Assert.That(payload).Contains("type=\"table\"").ConfigureAwait(false);
 
             server.Update(WatchType.CallStack, frames);
             server.Update(WatchType.VStack, frames);
@@ -473,7 +489,7 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit
                 new WatchItem
                 {
                     Name = "value",
-                    Value = DynValue.NewNumber(5),
+                    Value = LuaValue.NewNumber(5),
                     LValue = SymbolRef.Global("value", SymbolRef.DefaultEnv),
                 },
             };

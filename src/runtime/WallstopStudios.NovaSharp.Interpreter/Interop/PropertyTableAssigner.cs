@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
     using System.Globalization;
     using System.Linq;
     using System.Reflection;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -165,7 +166,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
             _propertyMap.Add(name, null);
         }
 
-        private bool TryAssignProperty(object obj, string name, DynValue value)
+        private bool TryAssignProperty(object obj, string name, LuaValue value)
         {
             if (_propertyMap.TryGetValue(name, out PropertyInfo pi))
             {
@@ -203,7 +204,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
             return false;
         }
 
-        private void AssignProperty(object obj, string name, DynValue value)
+        private void AssignProperty(object obj, string name, LuaValue value)
         {
             if (TryAssignProperty(obj, name, value))
             {

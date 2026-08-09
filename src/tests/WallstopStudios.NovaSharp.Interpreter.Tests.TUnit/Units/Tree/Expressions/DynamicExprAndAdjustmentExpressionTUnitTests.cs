@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -20,11 +21,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             Script script = new();
             ScriptLoadingContext context = new(script);
             SymbolRef dynamicRef = SymbolRef.Global("value", SymbolRef.DefaultEnv);
-            StubExpression inner = new(context, DynValue.NewNumber(7), dynamicRef);
+            StubExpression inner = new(context, LuaValue.NewNumber(7), dynamicRef);
             DynamicExprExpression expression = new(inner, context);
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
 
-            DynValue result = expression.Eval(executionContext);
+            LuaValue result = expression.Eval(executionContext);
 
             await Assert.That(context.Anonymous).IsTrue().ConfigureAwait(false);
             await Assert.That(inner.EvalCount).IsEqualTo(1).ConfigureAwait(false);
@@ -41,7 +42,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             Script script = new();
             ScriptLoadingContext context = new(script);
             DynamicExprExpression expression = new(
-                new StubExpression(context, DynValue.NewNumber(1)),
+                new StubExpression(context, LuaValue.NewNumber(1)),
                 context
             );
 
@@ -59,11 +60,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(5), DynValue.NewNumber(9));
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewNumber(5), LuaValue.NewNumber(9));
             AdjustmentExpression expression = new(context, new StubExpression(context, tuple));
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
 
-            DynValue result = expression.Eval(executionContext);
+            LuaValue result = expression.Eval(executionContext);
 
             await Assert.That(result.Number).IsEqualTo(5).ConfigureAwait(false);
         }
@@ -73,7 +74,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         {
             Script script = new();
             ScriptLoadingContext context = new(script);
-            StubExpression inner = new(context, DynValue.NewNumber(3));
+            StubExpression inner = new(context, LuaValue.NewNumber(3));
             AdjustmentExpression expression = new(context, inner);
             ByteCode byteCode = new(script);
 
@@ -89,12 +90,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
     internal sealed class StubExpression : Expression
     {
-        private readonly DynValue _value;
+        private readonly LuaValue _value;
         private readonly SymbolRef _dynamic;
 
         internal StubExpression(
             ScriptLoadingContext context,
-            DynValue value,
+            LuaValue value,
             SymbolRef dynamicRef = null
         )
             : base(context)
@@ -113,7 +114,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             bc.EmitNop("stub");
         }
 
-        public override DynValue Eval(ScriptExecutionContext context)
+        public override LuaValue Eval(ScriptExecutionContext context)
         {
             EvalCount++;
             return _value;

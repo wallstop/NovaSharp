@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
 {
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -9,8 +10,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
     /// <remarks>
     /// <para>
     /// This is the "slot" half of the slot/value split: a slot is the mutable identity that a
-    /// closure captures, while the <see cref="DynValue"/> it holds is an immutable value that can
-    /// be shared freely. Before the split, a local was itself a mutable <see cref="DynValue"/>, so
+    /// closure captures, while the <see cref="LuaValue"/> it holds is an immutable value that can
+    /// be shared freely. Before the split, a local was itself a mutable <see cref="LuaValue"/>, so
     /// every read had to clone defensively (<c>AsReadOnly()</c>) to prevent later assignments from
     /// retroactively changing values already pushed onto the value stack or stored in tables.
     /// </para>
@@ -21,10 +22,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
     /// </remarks>
     internal sealed class ValueSlot
     {
-        private DynValue _value;
+        private LuaValue _value;
 
         /// <summary>
-        /// Initializes a new slot holding <see cref="DynValue.Nil"/>.
+        /// Initializes a new slot holding <see cref="LuaValue.Nil"/>.
         /// </summary>
         internal ValueSlot()
         {
@@ -35,7 +36,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// Initializes a new slot holding the specified value.
         /// </summary>
         /// <param name="value">The initial value.</param>
-        internal ValueSlot(DynValue value)
+        internal ValueSlot(LuaValue value)
         {
             _value = value;
         }
@@ -43,7 +44,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// <summary>
         /// Gets or sets the value currently held by this slot.
         /// </summary>
-        internal DynValue Value
+        internal LuaValue Value
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _value; }

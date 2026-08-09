@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System;
     using System.Collections.Generic;
     using System.Runtime.InteropServices;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -16,15 +17,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         [StructLayout(LayoutKind.Sequential)]
         private struct FixedArgumentStorage
         {
-            internal DynValue _arg0;
-            internal DynValue _arg1;
-            internal DynValue _arg2;
-            internal DynValue _arg3;
-            internal DynValue _arg4;
-            internal DynValue _arg5;
-            internal DynValue _arg6;
+            internal LuaValue _arg0;
+            internal LuaValue _arg1;
+            internal LuaValue _arg2;
+            internal LuaValue _arg3;
+            internal LuaValue _arg4;
+            internal LuaValue _arg5;
+            internal LuaValue _arg6;
 
-            internal FixedArgumentStorage(DynValue arg0)
+            internal FixedArgumentStorage(LuaValue arg0)
             {
                 _arg0 = arg0;
                 _arg1 = default;
@@ -35,7 +36,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _arg6 = default;
             }
 
-            internal FixedArgumentStorage(DynValue arg0, DynValue arg1)
+            internal FixedArgumentStorage(LuaValue arg0, LuaValue arg1)
             {
                 _arg0 = arg0;
                 _arg1 = arg1;
@@ -46,7 +47,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _arg6 = default;
             }
 
-            internal FixedArgumentStorage(DynValue arg0, DynValue arg1, DynValue arg2)
+            internal FixedArgumentStorage(LuaValue arg0, LuaValue arg1, LuaValue arg2)
             {
                 _arg0 = arg0;
                 _arg1 = arg1;
@@ -58,10 +59,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             internal FixedArgumentStorage(
-                DynValue arg0,
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3
+                LuaValue arg0,
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3
             )
             {
                 _arg0 = arg0;
@@ -74,11 +75,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             internal FixedArgumentStorage(
-                DynValue arg0,
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3,
-                DynValue arg4
+                LuaValue arg0,
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3,
+                LuaValue arg4
             )
             {
                 _arg0 = arg0;
@@ -91,12 +92,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             internal FixedArgumentStorage(
-                DynValue arg0,
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3,
-                DynValue arg4,
-                DynValue arg5
+                LuaValue arg0,
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3,
+                LuaValue arg4,
+                LuaValue arg5
             )
             {
                 _arg0 = arg0;
@@ -109,13 +110,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             internal FixedArgumentStorage(
-                DynValue arg0,
-                DynValue arg1,
-                DynValue arg2,
-                DynValue arg3,
-                DynValue arg4,
-                DynValue arg5,
-                DynValue arg6
+                LuaValue arg0,
+                LuaValue arg1,
+                LuaValue arg2,
+                LuaValue arg3,
+                LuaValue arg4,
+                LuaValue arg5,
+                LuaValue arg6
             )
             {
                 _arg0 = arg0;
@@ -130,7 +131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             /// <summary>
             /// Gets the raw fixed argument stored at the specified index.
             /// </summary>
-            internal readonly DynValue Get(int index)
+            internal readonly LuaValue Get(int index)
             {
                 return index switch
                 {
@@ -148,13 +149,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             /// <summary>
             /// Exposes the leading fixed arguments as a contiguous read-only span.
             /// </summary>
-            internal ReadOnlySpan<DynValue> AsSpan(int count)
+            internal ReadOnlySpan<LuaValue> AsSpan(int count)
             {
                 return MemoryMarshal.CreateReadOnlySpan(ref _arg0, count);
             }
         }
 
-        private readonly IList<DynValue> _args;
+        private readonly IList<LuaValue> _args;
         private FixedArgumentStorage _fixedArgs;
         private readonly int _count;
         private readonly int _fixedCount;
@@ -165,7 +166,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="args">The arguments.</param>
         /// <param name="isMethodCall">if set to <c>true</c> [is method call].</param>
-        public CallbackArguments(IList<DynValue> args, bool isMethodCall)
+        public CallbackArguments(IList<LuaValue> args, bool isMethodCall)
         {
             _args = args;
             _fixedArgs = default;
@@ -173,7 +174,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (_args.Count > 0)
             {
-                DynValue last = _args[^1];
+                LuaValue last = _args[^1];
 
                 _count = CalculateExpandedCount(_args.Count, last, out _lastIsTuple);
             }
@@ -195,7 +196,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             IsMethodCall = isMethodCall;
         }
 
-        internal CallbackArguments(DynValue arg, bool isMethodCall)
+        internal CallbackArguments(LuaValue arg, bool isMethodCall)
         {
             _args = null;
             _fixedArgs = new FixedArgumentStorage(arg);
@@ -204,7 +205,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             IsMethodCall = isMethodCall;
         }
 
-        internal CallbackArguments(DynValue arg1, DynValue arg2, bool isMethodCall)
+        internal CallbackArguments(LuaValue arg1, LuaValue arg2, bool isMethodCall)
         {
             _args = null;
             _fixedArgs = new FixedArgumentStorage(arg1, arg2);
@@ -213,7 +214,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             IsMethodCall = isMethodCall;
         }
 
-        internal CallbackArguments(DynValue arg1, DynValue arg2, DynValue arg3, bool isMethodCall)
+        internal CallbackArguments(LuaValue arg1, LuaValue arg2, LuaValue arg3, bool isMethodCall)
         {
             _args = null;
             _fixedArgs = new FixedArgumentStorage(arg1, arg2, arg3);
@@ -223,10 +224,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         internal CallbackArguments(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
             bool isMethodCall
         )
         {
@@ -238,11 +239,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         internal CallbackArguments(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
             bool isMethodCall
         )
         {
@@ -254,13 +255,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         internal CallbackArguments(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7,
             bool isMethodCall
         )
         {
@@ -272,12 +273,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         internal CallbackArguments(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
             bool isMethodCall
         )
         {
@@ -302,47 +303,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public bool IsMethodCall { get; private set; }
 
         /// <summary>
-        /// Gets the <see cref="DynValue"/> at the specified index, or Void if not found
+        /// Gets the <see cref="LuaValue"/> at the specified index, or Void if not found
         /// </summary>
-        public DynValue this[int index]
+        public LuaValue this[int index]
         {
             get
             {
-                return TryRawGet(index, translateVoids: true, out DynValue value)
+                return TryRawGet(index, translateVoids: true, out LuaValue value)
                     ? value
-                    : DynValue.Void;
+                    : LuaValue.Void;
             }
         }
 
         /// <summary>
-        /// Gets the <see cref="DynValue" /> at the specified index, or null.
+        /// Gets the <see cref="LuaValue" /> at the specified index, or null.
         /// </summary>
         /// <param name="index">The index.</param>
         /// <param name="translateVoids">if set to <c>true</c> all voids are translated to nils.</param>
         /// <returns></returns>
         /// <remarks>
-        /// Retained for compatibility. Use <see cref="TryRawGet(int, bool, out DynValue)"/> when
+        /// Retained for compatibility. Use <see cref="TryRawGet(int, bool, out LuaValue)"/> when
         /// argument presence must be distinguished from an explicit nil or void value.
         /// </remarks>
-        public DynValue? RawGet(int index, bool translateVoids)
+        public LuaValue? RawGet(int index, bool translateVoids)
         {
-            return TryRawGet(index, translateVoids, out DynValue value) ? value : null;
+            return TryRawGet(index, translateVoids, out LuaValue value) ? value : (LuaValue?)null;
         }
 
         /// <summary>
-        /// Tries to get the <see cref="DynValue" /> at the specified index.
+        /// Tries to get the <see cref="LuaValue" /> at the specified index.
         /// </summary>
         /// <param name="index">The index.</param>
         /// <param name="translateVoids">if set to <c>true</c> all voids are translated to nils.</param>
         /// <param name="value">
-        /// When successful, receives the argument; otherwise, receives <see cref="DynValue.Void"/>.
+        /// When successful, receives the argument; otherwise, receives <see cref="LuaValue.Void"/>.
         /// </param>
         /// <returns><c>true</c> when the argument is present; otherwise, <c>false</c>.</returns>
-        public bool TryRawGet(int index, bool translateVoids, out DynValue value)
+        public bool TryRawGet(int index, bool translateVoids, out LuaValue value)
         {
             if (index < 0 || index >= _count)
             {
-                value = DynValue.Void;
+                value = LuaValue.Void;
                 return false;
             }
 
@@ -377,13 +378,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 }
                 else
                 {
-                    value = DynValue.Nil;
+                    value = LuaValue.Nil;
                 }
             }
 
             if (translateVoids && value.Type == DataType.Void)
             {
-                value = DynValue.Nil;
+                value = LuaValue.Nil;
             }
 
             return true;
@@ -391,7 +392,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         private static int CalculateExpandedCount(
             int storedCount,
-            DynValue last,
+            LuaValue last,
             out bool lastIsTuple
         )
         {
@@ -411,7 +412,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return storedCount;
         }
 
-        private DynValue GetFixedArgument(int index)
+        private LuaValue GetFixedArgument(int index)
         {
             return _fixedArgs.Get(index);
         }
@@ -421,14 +422,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="skip">The number of elements to skip (default= 0).</param>
         /// <returns></returns>
-        public DynValue[] GetArray(int skip = 0)
+        public LuaValue[] GetArray(int skip = 0)
         {
             if (skip >= _count)
             {
-                return Array.Empty<DynValue>();
+                return Array.Empty<LuaValue>();
             }
 
-            DynValue[] vals = new DynValue[_count - skip];
+            LuaValue[] vals = new LuaValue[_count - skip];
 
             for (int i = skip; i < _count; i++)
             {
@@ -447,7 +448,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="type">The type desired.</param>
         /// <param name="allowNil">if set to <c>true</c> nil values are allowed.</param>
         /// <returns></returns>
-        public DynValue AsType(int argNum, string funcName, DataType type, bool allowNil = false)
+        public LuaValue AsType(int argNum, string funcName, DataType type, bool allowNil = false)
         {
             return this[argNum]
                 .CheckType(
@@ -487,7 +488,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public int AsInt(int argNum, string funcName)
         {
-            DynValue v = AsType(argNum, funcName, DataType.Number, false);
+            LuaValue v = AsType(argNum, funcName, DataType.Number, false);
             double d = v.Number;
             return (int)d;
         }
@@ -500,7 +501,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public long AsLong(int argNum, string funcName)
         {
-            DynValue v = AsType(argNum, funcName, DataType.Number, false);
+            LuaValue v = AsType(argNum, funcName, DataType.Number, false);
             double d = v.Number;
             return (long)d;
         }
@@ -528,17 +529,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             // Get the Lua version for version-aware number formatting
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
-            DynValue argument = this[argNum];
+            LuaValue argument = this[argNum];
             if ((argument.Type == DataType.Table) && (argument.Table.MetaTable != null))
             {
-                DynValue? stringMeta = argument.Table.MetaTable.RawGet(Metamethods.ToStringMeta);
-                if (!stringMeta.HasValue)
+                if (
+                    !argument.Table.MetaTable.TryRawGet(
+                        Metamethods.ToStringMeta,
+                        out LuaValue stringMeta
+                    ) || stringMeta.IsNil
+                )
                 {
                     return argument.ToPrintString(version);
-                    ;
                 }
 
-                DynValue v = executionContext.Script.Call(stringMeta.Value, argument);
+                LuaValue v = executionContext.Script.CallValues(stringMeta, argument);
 
                 if (v.Type != DataType.String)
                 {
@@ -567,7 +571,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 if (_args != null)
                 {
-                    Slice<DynValue> slice = new(_args, 1, _args.Count - 1, false);
+                    Slice<LuaValue> slice = new(_args, 1, _args.Count - 1, false);
                     return new CallbackArguments(slice, false);
                 }
 
@@ -634,7 +638,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// fixed-field storage and there is no tuple expansion or void translation required.
         /// Use this in hot paths where avoiding allocation is critical.
         /// </remarks>
-        public bool TryGetSpan(out ReadOnlySpan<DynValue> span)
+        public bool TryGetSpan(out ReadOnlySpan<LuaValue> span)
         {
             // Cannot return span if last argument is a tuple (would need to expand it)
             if (_lastIsTuple)
@@ -647,7 +651,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 if (_count == 0)
                 {
-                    span = ReadOnlySpan<DynValue>.Empty;
+                    span = ReadOnlySpan<LuaValue>.Empty;
                     return true;
                 }
 
@@ -662,9 +666,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             // Try to get span from different backing types
-            if (_args is DynValue[] array)
+            if (_args is LuaValue[] array)
             {
-                span = new ReadOnlySpan<DynValue>(array, 0, _count);
+                span = new ReadOnlySpan<LuaValue>(array, 0, _count);
                 if (ContainsArgumentNeedingNormalization(span))
                 {
                     span = default;
@@ -674,7 +678,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return true;
             }
 
-            if (_args is Slice<DynValue> slice && slice.TryGetSpan(0, _count, out span))
+            if (_args is Slice<LuaValue> slice && slice.TryGetSpan(0, _count, out span))
             {
                 if (ContainsArgumentNeedingNormalization(span))
                 {
@@ -685,7 +689,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return true;
             }
 
-            if (_args is List<DynValue>)
+            if (_args is List<LuaValue>)
             {
                 span = default;
                 return false;
@@ -695,11 +699,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return false;
         }
 
-        private static bool ContainsArgumentNeedingNormalization(ReadOnlySpan<DynValue> span)
+        private static bool ContainsArgumentNeedingNormalization(ReadOnlySpan<LuaValue> span)
         {
             for (int i = 0; i < span.Length; i++)
             {
-                DynValue value = span[i];
+                LuaValue value = span[i];
                 if (value.Type == DataType.Tuple || value.Type == DataType.Void)
                 {
                     return true;
@@ -718,7 +722,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// This method handles tuple expansion correctly and is suitable when <see cref="TryGetSpan"/>
         /// returns <c>false</c>. It does not allocate.
         /// </remarks>
-        public int CopyTo(Span<DynValue> destination)
+        public int CopyTo(Span<LuaValue> destination)
         {
             int toCopy = Math.Min(_count, destination.Length);
             for (int i = 0; i < toCopy; i++)
@@ -734,7 +738,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="destination">The span to copy arguments into.</param>
         /// <param name="skip">The number of leading arguments to skip.</param>
         /// <returns>The number of arguments copied.</returns>
-        public int CopyTo(Span<DynValue> destination, int skip)
+        public int CopyTo(Span<LuaValue> destination, int skip)
         {
             if (skip >= _count)
             {
@@ -759,29 +763,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Use this method when you need to pass arguments to methods that require an array,
         /// but want to avoid allocating a new array for each call.
         /// <code>
-        /// using (PooledResource&lt;DynValue[]&gt; pooled = args.GetPooledArray(out DynValue[] array))
+        /// using (PooledResource&lt;LuaValue[]&gt; pooled = args.GetPooledArray(out LuaValue[] array))
         /// {
         ///     // Use array...
         /// }
         /// </code>
         /// </remarks>
-        internal DataStructs.PooledResource<DynValue[]> GetPooledArray(
-            out DynValue[] array,
+        internal DataStructs.PooledResource<LuaValue[]> GetPooledArray(
+            out LuaValue[] array,
             int skip = 0
         )
         {
             int count = _count - skip;
             if (count <= 0)
             {
-                array = Array.Empty<DynValue>();
-                return new DataStructs.PooledResource<DynValue[]>(array, _ => { });
+                array = Array.Empty<LuaValue>();
+                return new DataStructs.PooledResource<LuaValue[]>(array, _ => { });
             }
 
-            DataStructs.PooledResource<DynValue[]> pooled = DataStructs.DynValueArrayPool.Get(
+            DataStructs.PooledResource<LuaValue[]> pooled = DataStructs.DynValueArrayPool.Get(
                 count,
                 out array
             );
-            CopyTo(new Span<DynValue>(array, 0, count), skip);
+            CopyTo(new Span<LuaValue>(array, 0, count), skip);
             return pooled;
         }
     }

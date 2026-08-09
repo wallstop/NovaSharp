@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System;
     using System.Diagnostics.CodeAnalysis;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -69,7 +70,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaIntegerHelper.TryGetInteger(number, out value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool TryGetIntegerFromDynValue(DynValue value, out long integer)
+        private static bool TryGetIntegerFromDynValue(LuaValue value, out long integer)
         {
             return LuaIntegerHelper.TryGetInteger(value, out integer);
         }
@@ -81,7 +82,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         )
         {
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue value = args.AsType(index, funcName, DataType.Number, false);
+            LuaValue value = args.AsType(index, funcName, DataType.Number, false);
 
             // Use TryGetIntegerFromDynValue to preserve integer precision when the
             // underlying LuaNumber is already an integer (avoids double conversion loss)
@@ -99,7 +100,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return integer;
         }
 
-        private static DynValue Exec1(
+        private static LuaValue Exec1(
             CallbackArguments args,
             string funcName,
             Func<double, double> func
@@ -107,11 +108,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue arg = args.AsType(0, funcName, DataType.Number, false);
-            return DynValue.NewNumber(func(arg.Number));
+            LuaValue arg = args.AsType(0, funcName, DataType.Number, false);
+            return LuaValue.NewNumber(func(arg.Number));
         }
 
-        private static DynValue Exec2(
+        private static LuaValue Exec2(
             CallbackArguments args,
             string funcName,
             Func<double, double, double> func
@@ -119,16 +120,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue arg = args.AsType(0, funcName, DataType.Number, false);
-            DynValue arg2 = args.AsType(1, funcName, DataType.Number, false);
-            return DynValue.NewNumber(func(arg.Number, arg2.Number));
+            LuaValue arg = args.AsType(0, funcName, DataType.Number, false);
+            LuaValue arg2 = args.AsType(1, funcName, DataType.Number, false);
+            return LuaValue.NewNumber(func(arg.Number, arg2.Number));
         }
 
         /// <summary>
         /// Two-argument executor that always returns a float result.
         /// Used for operations like exponentiation that always produce floats per Lua spec.
         /// </summary>
-        private static DynValue Exec2Float(
+        private static LuaValue Exec2Float(
             CallbackArguments args,
             string funcName,
             Func<double, double, double> func
@@ -136,12 +137,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue arg = args.AsType(0, funcName, DataType.Number, false);
-            DynValue arg2 = args.AsType(1, funcName, DataType.Number, false);
-            return DynValue.NewFloat(func(arg.Number, arg2.Number));
+            LuaValue arg = args.AsType(0, funcName, DataType.Number, false);
+            LuaValue arg2 = args.AsType(1, funcName, DataType.Number, false);
+            return LuaValue.NewFloat(func(arg.Number, arg2.Number));
         }
 
-        private static DynValue Exec2N(
+        private static LuaValue Exec2N(
             CallbackArguments args,
             string funcName,
             double defVal,
@@ -150,13 +151,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue arg = args.AsType(0, funcName, DataType.Number, false);
-            DynValue arg2 = args.AsType(1, funcName, DataType.Number, true);
+            LuaValue arg = args.AsType(0, funcName, DataType.Number, false);
+            LuaValue arg2 = args.AsType(1, funcName, DataType.Number, true);
 
-            return DynValue.NewNumber(func(arg.Number, arg2.IsNil() ? defVal : arg2.Number));
+            return LuaValue.NewNumber(func(arg.Number, arg2.IsNil ? defVal : arg2.Number));
         }
 
-        private static DynValue Execaccum(
+        private static LuaValue Execaccum(
             CallbackArguments args,
             string funcName,
             Func<double, double, double> func
@@ -175,7 +176,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             for (int i = 0; i < args.Count; i++)
             {
-                DynValue arg = args.AsType(i, funcName, DataType.Number, false);
+                LuaValue arg = args.AsType(i, funcName, DataType.Number, false);
 
                 if (i == 0)
                 {
@@ -187,7 +188,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
             }
 
-            return DynValue.NewNumber(accum);
+            return LuaValue.NewNumber(accum);
         }
 
         /// <summary>
@@ -200,10 +201,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments where index 0 is the value to inspect.</param>
-        /// <returns>`"integer"`, `"float"`, or <see cref="DynValue.Nil"/> for non-numbers.</returns>
+        /// <returns>`"integer"`, `"float"`, or <see cref="LuaValue.Nil"/> for non-numbers.</returns>
         [NovaSharpModuleMethod(Name = "type")]
         [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
-        public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -212,14 +213,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             // Per Lua spec, math.type returns nil for non-numbers (doesn't throw)
-            DynValue value = args[0];
+            LuaValue value = args[0];
             if (value.Type != DataType.Number)
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
 
             // Use the LuaNumber's subtype information to determine integer vs float
-            return DynValue.NewString(value.LuaNumber.LuaTypeName);
+            return LuaValue.NewString(value.LuaNumber.LuaTypeName);
         }
 
         /// <summary>
@@ -228,10 +229,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments where index 0 supplies the value to convert.</param>
-        /// <returns>The converted integer or <see cref="DynValue.Nil"/>.</returns>
+        /// <returns>The converted integer or <see cref="LuaValue.Nil"/>.</returns>
         [NovaSharpModuleMethod(Name = "tointeger")]
         [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
-        public static DynValue ToInteger(
+        public static LuaValue ToInteger(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -246,21 +247,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgumentNoValue(0, "tointeger", DataType.Number);
             }
 
-            DynValue value = args[0];
+            LuaValue value = args[0];
 
             // Per Lua 5.3+ spec, math.tointeger returns nil for non-convertible types
             // (including boolean, table, function, userdata, etc.) - it does NOT throw an error.
             if (value.Type != DataType.Number && value.Type != DataType.String)
             {
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
 
             if (TryGetIntegerFromDynValue(value, out long integer))
             {
-                return DynValue.NewInteger(integer);
+                return LuaValue.NewInteger(integer);
             }
 
-            return DynValue.Nil;
+            return LuaValue.Nil;
         }
 
         /// <summary>
@@ -268,10 +269,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments specifying the two integers to compare.</param>
-        /// <returns><see cref="DynValue.True"/> when the first argument is &lt; the second.</returns>
+        /// <returns><see cref="LuaValue.True"/> when the first argument is &lt; the second.</returns>
         [NovaSharpModuleMethod(Name = "ult")]
         [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
-        public static DynValue Ult(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Ult(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -283,7 +284,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             ulong leftUnsigned = unchecked((ulong)left);
             ulong rightUnsigned = unchecked((ulong)right);
 
-            return DynValue.FromBoolean(leftUnsigned < rightUnsigned);
+            return LuaValue.FromBoolean(leftUnsigned < rightUnsigned);
         }
 
         /// <summary>
@@ -298,7 +299,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments where index 0 supplies the number to process.</param>
         /// <returns>Absolute value as a number (integer subtype preserved when applicable).</returns>
         [NovaSharpModuleMethod(Name = "abs")]
-        public static DynValue Abs(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Abs(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -306,7 +307,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue arg = args.AsType(0, "abs", DataType.Number, false);
+            LuaValue arg = args.AsType(0, "abs", DataType.Number, false);
 
             // For integer subtypes, preserve integer semantics per Lua 5.3+ spec
             // Use unsigned arithmetic to handle mininteger overflow correctly:
@@ -320,10 +321,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     // For mininteger, this wraps back to mininteger
                     n = (long)(0UL - (ulong)n);
                 }
-                return DynValue.NewInteger(n);
+                return LuaValue.NewInteger(n);
             }
 
-            return DynValue.NewNumber(Math.Abs(arg.Number));
+            return LuaValue.NewNumber(Math.Abs(arg.Number));
         }
 
         /// <summary>
@@ -333,7 +334,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments containing the operand.</param>
         /// <returns>Arccosine result in radians.</returns>
         [NovaSharpModuleMethod(Name = "acos")]
-        public static DynValue Acos(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Acos(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -349,7 +350,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments containing the operand.</param>
         /// <returns>Arcsine result in radians.</returns>
         [NovaSharpModuleMethod(Name = "asin")]
-        public static DynValue Asin(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Asin(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -365,7 +366,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments providing the operand.</param>
         /// <returns>Arctangent result.</returns>
         [NovaSharpModuleMethod(Name = "atan")]
-        public static DynValue Atan(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Atan(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -381,7 +382,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments containing <c>y</c> and <c>x</c>.</param>
         /// <returns>Arctangent result in radians.</returns>
         [NovaSharpModuleMethod(Name = "atan2")]
-        public static DynValue Atan2(
+        public static LuaValue Atan2(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -405,7 +406,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments with the number to round.</param>
         /// <returns>The rounded value (integer subtype when result fits in integer range, Lua 5.3+ only).</returns>
         [NovaSharpModuleMethod(Name = "ceil")]
-        public static DynValue Ceil(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Ceil(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -413,7 +414,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue arg = args.AsType(0, "ceil", DataType.Number, false);
+            LuaValue arg = args.AsType(0, "ceil", DataType.Number, false);
 
             // Check version for integer promotion behavior
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
@@ -424,7 +425,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // Lua 5.1/5.2: always return float
             if (!supportsIntegerSubtype)
             {
-                return DynValue.NewNumber(Math.Ceiling(arg.Number));
+                return LuaValue.NewNumber(Math.Ceiling(arg.Number));
             }
 
             // Lua 5.3+: If input is already an integer, return it unchanged
@@ -441,10 +442,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // so simple <= comparison doesn't work correctly for boundary values.
             if (LuaIntegerHelper.TryGetInteger(result, out long intResult))
             {
-                return DynValue.NewInteger(intResult);
+                return LuaValue.NewInteger(intResult);
             }
 
-            return DynValue.NewFloat(result);
+            return LuaValue.NewFloat(result);
         }
 
         /// <summary>
@@ -454,7 +455,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments providing the angle.</param>
         /// <returns>Cosine of the supplied angle.</returns>
         [NovaSharpModuleMethod(Name = "cos")]
-        public static DynValue Cos(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Cos(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -470,7 +471,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments supplying the operand.</param>
         /// <returns>Hyperbolic cosine value.</returns>
         [NovaSharpModuleMethod(Name = "cosh")]
-        public static DynValue Cosh(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Cosh(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -486,7 +487,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments containing the angle in radians.</param>
         /// <returns>Angle in degrees.</returns>
         [NovaSharpModuleMethod(Name = "deg")]
-        public static DynValue Deg(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Deg(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -502,7 +503,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments providing the exponent.</param>
         /// <returns>Result of <c>e^x</c>.</returns>
         [NovaSharpModuleMethod(Name = "exp")]
-        public static DynValue Exp(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Exp(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -523,7 +524,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments with the value to round.</param>
         /// <returns>The rounded value (integer subtype when result fits in integer range, Lua 5.3+ only).</returns>
         [NovaSharpModuleMethod(Name = "floor")]
-        public static DynValue Floor(
+        public static LuaValue Floor(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -534,7 +535,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue arg = args.AsType(0, "floor", DataType.Number, false);
+            LuaValue arg = args.AsType(0, "floor", DataType.Number, false);
 
             // Check version for integer promotion behavior
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
@@ -545,7 +546,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // Lua 5.1/5.2: always return float
             if (!supportsIntegerSubtype)
             {
-                return DynValue.NewNumber(Math.Floor(arg.Number));
+                return LuaValue.NewNumber(Math.Floor(arg.Number));
             }
 
             // Lua 5.3+: If input is already an integer, return it unchanged
@@ -562,10 +563,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // so simple <= comparison doesn't work correctly for boundary values.
             if (LuaIntegerHelper.TryGetInteger(result, out long intResult))
             {
-                return DynValue.NewInteger(intResult);
+                return LuaValue.NewInteger(intResult);
             }
 
-            return DynValue.NewFloat(result);
+            return LuaValue.NewFloat(result);
         }
 
         /// <summary>
@@ -579,7 +580,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments supplying dividend and divisor.</param>
         /// <returns>Remainder value.</returns>
         [NovaSharpModuleMethod(Name = "fmod")]
-        public static DynValue Fmod(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Fmod(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -587,8 +588,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue arg1 = args.AsType(0, "fmod", DataType.Number, false);
-            DynValue arg2 = args.AsType(1, "fmod", DataType.Number, false);
+            LuaValue arg1 = args.AsType(0, "fmod", DataType.Number, false);
+            LuaValue arg2 = args.AsType(1, "fmod", DataType.Number, false);
 
             double divisor = arg2.Number;
 
@@ -602,7 +603,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             // Use % operator (C's fmod) - sign matches dividend, truncates toward zero
-            return DynValue.NewNumber(arg1.Number % divisor);
+            return LuaValue.NewNumber(arg1.Number % divisor);
         }
 
         /// <summary>
@@ -617,7 +618,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <returns>Remainder value (same as fmod).</returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
         [NovaSharpModuleMethod(Name = "mod")]
-        public static DynValue Mod(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Mod(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -635,7 +636,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments providing the number to decompose.</param>
         /// <returns>Tuple {m, e} as defined by Lua.</returns>
         [NovaSharpModuleMethod(Name = "frexp")]
-        public static DynValue Frexp(
+        public static LuaValue Frexp(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -647,7 +648,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             // http://stackoverflow.com/questions/389993/extracting-mantissa-and-exponent-from-double-in-c-sharp
 
-            DynValue arg = args.AsType(0, "frexp", DataType.Number, false);
+            LuaValue arg = args.AsType(0, "frexp", DataType.Number, false);
 
             double d = arg.Number;
 
@@ -678,7 +679,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (mantissa == 0)
             {
-                return DynValue.NewTuple(DynValue.FromNumber(0), DynValue.FromNumber(0));
+                return LuaValue.NewTuple(LuaValue.FromNumber(0), LuaValue.FromNumber(0));
             }
 
             /* Normalize */
@@ -701,7 +702,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 m = -m;
             }
 
-            return DynValue.NewTuple(DynValue.NewNumber(m), DynValue.NewNumber(e));
+            return LuaValue.NewTuple(LuaValue.NewNumber(m), LuaValue.NewNumber(e));
         }
 
         /// <summary>
@@ -712,7 +713,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments containing mantissa and exponent.</param>
         /// <returns>Result of <c>mantissa * 2^exp</c>.</returns>
         [NovaSharpModuleMethod(Name = "ldexp")]
-        public static DynValue Ldexp(
+        public static LuaValue Ldexp(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -736,7 +737,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments providing the value (and optional base for 5.2+).</param>
         /// <returns>The logarithm result.</returns>
         [NovaSharpModuleMethod(Name = "log")]
-        public static DynValue Log(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Log(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -744,7 +745,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue arg = args.AsType(0, "log", DataType.Number, false);
+            LuaValue arg = args.AsType(0, "log", DataType.Number, false);
 
             // Lua 5.1: only natural log, ignore any base argument
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
@@ -752,17 +753,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             if (version <= LuaCompatibilityVersion.Lua51)
             {
-                return DynValue.NewNumber(Math.Log(arg.Number));
+                return LuaValue.NewNumber(Math.Log(arg.Number));
             }
 
             // Lua 5.2+: optional base parameter (default: e for natural log)
-            DynValue baseArg = args.AsType(1, "log", DataType.Number, true);
-            if (baseArg.IsNil())
+            LuaValue baseArg = args.AsType(1, "log", DataType.Number, true);
+            if (baseArg.IsNil)
             {
-                return DynValue.NewNumber(Math.Log(arg.Number));
+                return LuaValue.NewNumber(Math.Log(arg.Number));
             }
 
-            return DynValue.NewNumber(Math.Log(arg.Number, baseArg.Number));
+            return LuaValue.NewNumber(Math.Log(arg.Number, baseArg.Number));
         }
 
         /// <summary>
@@ -778,7 +779,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <returns>The base-10 logarithm result.</returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua54)]
         [NovaSharpModuleMethod(Name = "log10")]
-        public static DynValue Log10(
+        public static LuaValue Log10(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -797,7 +798,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Numeric arguments to compare.</param>
         /// <returns>Maximum value.</returns>
         [NovaSharpModuleMethod(Name = "max")]
-        public static DynValue Max(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Max(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -813,7 +814,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Numeric arguments to compare.</param>
         /// <returns>Minimum value.</returns>
         [NovaSharpModuleMethod(Name = "min")]
-        public static DynValue Min(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Min(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -834,14 +835,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments with the value to split.</param>
         /// <returns>Tuple {integerPart, fractionalPart}.</returns>
         [NovaSharpModuleMethod(Name = "modf")]
-        public static DynValue Modf(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Modf(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue arg = args.AsType(0, "modf", DataType.Number, false);
+            LuaValue arg = args.AsType(0, "modf", DataType.Number, false);
 
             double value = arg.Number;
             double integerPart = Math.Truncate(value);
@@ -879,26 +880,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // Lua 5.1/5.2: both parts are floats
             if (!supportsIntegerSubtype)
             {
-                return DynValue.NewTuple(
-                    DynValue.NewNumber(integerPart),
-                    DynValue.NewNumber(fractionalPart)
+                return LuaValue.NewTuple(
+                    LuaValue.NewNumber(integerPart),
+                    LuaValue.NewNumber(fractionalPart)
                 );
             }
 
             // Lua 5.3+: integer part is integer subtype if it fits
-            DynValue integerResult;
+            LuaValue integerResult;
             if (TryGetIntegerFromDouble(integerPart, out long integerValue))
             {
-                integerResult = DynValue.NewInteger(integerValue);
+                integerResult = LuaValue.NewInteger(integerValue);
             }
             else
             {
                 // Value outside integer range (e.g., very large float)
-                integerResult = DynValue.NewNumber(integerPart);
+                integerResult = LuaValue.NewNumber(integerPart);
             }
 
             // Fractional part is always a float
-            return DynValue.NewTuple(integerResult, DynValue.NewFloat(fractionalPart));
+            return LuaValue.NewTuple(integerResult, LuaValue.NewFloat(fractionalPart));
         }
 
         /// <summary>
@@ -911,7 +912,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <returns>Exponentiation result as a float (per Lua spec, exponentiation always returns float).</returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua54)]
         [NovaSharpModuleMethod(Name = "pow")]
-        public static DynValue Pow(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Pow(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -928,7 +929,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments containing the degree value.</param>
         /// <returns>Angle in radians.</returns>
         [NovaSharpModuleMethod(Name = "rad")]
-        public static DynValue Rad(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Rad(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -963,7 +964,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             "CA5394:Do not use insecure randomness",
             Justification = "Lua math.random is intentionally deterministic and non-cryptographic."
         )]
-        public static DynValue Random(
+        public static LuaValue Random(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -981,19 +982,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw new ScriptRuntimeException("wrong number of arguments");
             }
 
-            DynValue m = args.AsType(0, "random", DataType.Number, true);
-            DynValue n = args.AsType(1, "random", DataType.Number, true);
+            LuaValue m = args.AsType(0, "random", DataType.Number, true);
+            LuaValue n = args.AsType(1, "random", DataType.Number, true);
             IRandomProvider r = executionContext.Script.RandomProvider;
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
             // No arguments: return float in [0, 1)
-            if (m.IsNil() && n.IsNil())
+            if (m.IsNil && n.IsNil)
             {
-                return DynValue.NewNumber(r.NextDouble());
+                return LuaValue.NewNumber(r.NextDouble());
             }
 
             // One argument
-            if (n.IsNil())
+            if (n.IsNil)
             {
                 // Resolve version for proper comparison
                 LuaCompatibilityVersion effectiveVersion = LuaVersionDefaults.Resolve(version);
@@ -1048,7 +1049,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 {
                     if (effectiveVersion >= LuaCompatibilityVersion.Lua54)
                     {
-                        return DynValue.NewNumber(r.NextInt64());
+                        return LuaValue.NewNumber(r.NextInt64());
                     }
 
                     throw new ScriptRuntimeException(
@@ -1072,10 +1073,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 if (effectiveVersion < LuaCompatibilityVersion.Lua53 && mVal < 1)
                 {
                     // Return a garbage result similar to what reference Lua would produce
-                    return DynValue.NewNumber(r.NextLong(mVal, 1));
+                    return LuaValue.NewNumber(r.NextLong(mVal, 1));
                 }
 
-                return DynValue.NewNumber(r.NextLong(1, mVal));
+                return LuaValue.NewNumber(r.NextLong(1, mVal));
             }
 
             // Two arguments: math.random(m, n) returns integer in [m, n]
@@ -1135,10 +1136,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 // Return a garbage result similar to what reference Lua would produce
                 // when the interval arithmetic overflows.
-                return DynValue.NewNumber(r.NextLong(nValue, mValue));
+                return LuaValue.NewNumber(r.NextLong(nValue, mValue));
             }
 
-            return DynValue.NewNumber(r.NextLong(mValue, nValue));
+            return LuaValue.NewNumber(r.NextLong(mValue, nValue));
         }
 
         /// <summary>
@@ -1159,7 +1160,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </param>
         /// <returns>
         /// Lua 5.4+: Returns the two seed components that were effectively used.
-        /// Lua 5.1-5.3: Returns <see cref="DynValue.Nil"/> (no return value).
+        /// Lua 5.1-5.3: Returns <see cref="LuaValue.Nil"/> (no return value).
         /// </returns>
         [NovaSharpModuleMethod(Name = "randomseed")]
         [SuppressMessage(
@@ -1167,7 +1168,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             "CA5394:Do not use insecure randomness",
             Justification = "Lua math.randomseed mirrors the non-cryptographic behavior of the upstream interpreter."
         )]
-        public static DynValue RandomSeed(
+        public static LuaValue RandomSeed(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -1187,13 +1188,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             bool isLua54OrLater = effectiveVersion >= LuaCompatibilityVersion.Lua54;
 
-            DynValue x = args.AsType(0, "randomseed", DataType.Number, true);
-            DynValue y = args.AsType(1, "randomseed", DataType.Number, true);
+            LuaValue x = args.AsType(0, "randomseed", DataType.Number, true);
+            LuaValue y = args.AsType(1, "randomseed", DataType.Number, true);
 
             // Lua 5.1-5.3: require exactly one argument, return nothing
             if (!isLua54OrLater)
             {
-                if (x.IsNil())
+                if (x.IsNil)
                 {
                     throw ScriptRuntimeException.BadArgumentNoValue(
                         0,
@@ -1209,18 +1210,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                             x.LuaNumber.IsInteger ? x.LuaNumber.AsInteger : x.LuaNumber.AsFloat
                         )
                 );
-                return DynValue.Nil;
+                return LuaValue.Nil;
             }
 
             // Lua 5.4+: 0-2 arguments, return seed tuple
             (long seedX, long seedY) result;
 
-            if (x.IsNil())
+            if (x.IsNil)
             {
                 // No arguments: use system randomness
                 result = r.SetSeedFromSystemRandom();
             }
-            else if (y.IsNil())
+            else if (y.IsNil)
             {
                 // One argument: convert to 128-bit seed
                 // Lua 5.4+: require integer representation
@@ -1252,9 +1253,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             // Return the two seed components (Lua 5.4 behavior)
-            return DynValue.NewTuple(
-                DynValue.NewNumber(result.seedX),
-                DynValue.NewNumber(result.seedY)
+            return LuaValue.NewTuple(
+                LuaValue.NewNumber(result.seedX),
+                LuaValue.NewNumber(result.seedY)
             );
         }
 
@@ -1265,7 +1266,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments containing the angle.</param>
         /// <returns>Sine value.</returns>
         [NovaSharpModuleMethod(Name = "sin")]
-        public static DynValue Sin(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Sin(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -1281,7 +1282,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments containing the operand.</param>
         /// <returns>Hyperbolic sine value.</returns>
         [NovaSharpModuleMethod(Name = "sinh")]
-        public static DynValue Sinh(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Sinh(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -1297,7 +1298,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments containing the operand.</param>
         /// <returns>Square root value.</returns>
         [NovaSharpModuleMethod(Name = "sqrt")]
-        public static DynValue Sqrt(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Sqrt(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -1313,7 +1314,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments with the angle.</param>
         /// <returns>Tangent result.</returns>
         [NovaSharpModuleMethod(Name = "tan")]
-        public static DynValue Tan(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Tan(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -1329,7 +1330,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments containing the operand.</param>
         /// <returns>Hyperbolic tangent value.</returns>
         [NovaSharpModuleMethod(Name = "tanh")]
-        public static DynValue Tanh(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Tanh(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,

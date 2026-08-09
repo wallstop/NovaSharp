@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
     using System.Collections.Generic;
     using System.Globalization;
     using System.Reflection;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -209,7 +210,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
 
                         if (descr != null)
                         {
-                            if (UserData.TryCreateStatic(nestedType, out DynValue staticUserData))
+                            if (UserData.TryCreateStatic(nestedType, out LuaValue staticUserData))
                             {
                                 AddDynValue(nestedType.Name, staticUserData);
                             }
@@ -275,16 +276,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
                 || Framework.Do.GetAssembly(Type) == Framework.Do.GetAssembly(GetType())
             )
             {
-                t.Set("skip", DynValue.NewBoolean(true));
+                t.Set("skip", LuaValue.NewBoolean(true));
             }
             else
             {
-                t.Set("visibility", DynValue.NewString(Type.GetClrVisibility()));
+                t.Set("visibility", LuaValue.NewString(Type.GetClrVisibility()));
 
-                t.Set("class", DynValue.NewString(GetType().FullName));
-                DynValue tm = DynValue.NewPrimeTable();
+                t.Set("class", LuaValue.NewString(GetType().FullName));
+                LuaValue tm = LuaValue.NewPrimeTable();
                 t.Set("members", tm);
-                DynValue tmm = DynValue.NewPrimeTable();
+                LuaValue tmm = LuaValue.NewPrimeTable();
                 t.Set("metamembers", tmm);
 
                 Serialize(tm.Table, Members);
@@ -306,7 +307,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
             {
                 if (pair.Value is IWireableDescriptor sd)
                 {
-                    DynValue mt = DynValue.NewPrimeTable();
+                    LuaValue mt = LuaValue.NewPrimeTable();
                     t.Set(pair.Key, mt);
                     sd.PrepareForWiring(mt.Table);
                 }
@@ -314,7 +315,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
                 {
                     t.Set(
                         pair.Key,
-                        DynValue.NewString(
+                        LuaValue.NewString(
                             "unsupported member type : " + pair.Value.GetType().FullName
                         )
                     );

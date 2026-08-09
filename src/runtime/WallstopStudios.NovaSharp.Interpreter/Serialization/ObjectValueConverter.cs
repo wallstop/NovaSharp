@@ -3,12 +3,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
     using System;
     using System.Collections;
     using System.Reflection;
+    using global::NovaSharp;
     using Interop.Converters;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
-    /// Converts CLR objects (primitives, collections, POCOs) to <see cref="DynValue"/> trees.
+    /// Converts CLR objects (primitives, collections, POCOs) to <see cref="LuaValue"/> trees.
     /// </summary>
     public static class ObjectValueConverter
     {
@@ -17,10 +18,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
         /// </summary>
         /// <param name="script">Owning script used for table allocation and conversions.</param>
         /// <param name="o">The CLR object to convert.</param>
-        /// <returns>A <see cref="DynValue"/> representing the object graph.</returns>
-        public static DynValue SerializeObjectToDynValue(Script script, object o)
+        /// <returns>A <see cref="LuaValue"/> representing the object graph.</returns>
+        public static LuaValue SerializeObjectToDynValue(Script script, object o)
         {
-            return SerializeObjectToDynValueCore(script, o, DynValue.Nil);
+            return SerializeObjectToDynValueCore(script, o, LuaValue.Nil);
         }
 
         /// <summary>
@@ -29,20 +30,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
         /// <param name="script">Owning script used for table allocation and conversions.</param>
         /// <param name="o">The CLR object to convert.</param>
         /// <param name="valueForNulls">The value used when encountering <c>null</c> references.</param>
-        /// <returns>A <see cref="DynValue"/> representing the object graph.</returns>
-        public static DynValue SerializeObjectToDynValue(
+        /// <returns>A <see cref="LuaValue"/> representing the object graph.</returns>
+        public static LuaValue SerializeObjectToDynValue(
             Script script,
             object o,
-            DynValue? valueForNulls
+            LuaValue? valueForNulls
         )
         {
             return SerializeObjectToDynValueCore(script, o, valueForNulls.GetValueOrDefault());
         }
 
-        private static DynValue SerializeObjectToDynValueCore(
+        private static LuaValue SerializeObjectToDynValueCore(
             Script script,
             object o,
-            DynValue valueForNulls
+            LuaValue valueForNulls
         )
         {
             if (o == null)
@@ -50,14 +51,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
                 return valueForNulls;
             }
 
-            if (ClrToScriptConversions.TryObjectToTrivialDynValue(script, o, out DynValue value))
+            if (ClrToScriptConversions.TryObjectToTrivialDynValue(script, o, out LuaValue value))
             {
                 return value;
             }
 
             if (o is Enum)
             {
-                return DynValue.NewNumber(
+                return LuaValue.NewNumber(
                     NumericConversions.TypeToDouble(Enum.GetUnderlyingType(o.GetType()), o)
                 );
             }
@@ -85,7 +86,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
                 }
             }
 
-            return DynValue.NewTable(t);
+            return LuaValue.NewTable(t);
         }
     }
 }

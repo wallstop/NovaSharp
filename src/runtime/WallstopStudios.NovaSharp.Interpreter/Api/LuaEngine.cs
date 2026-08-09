@@ -127,7 +127,7 @@ namespace NovaSharp
 
             try
             {
-                return WrapResult(_script.Call(function.ToDynValue(_script)));
+                return WrapResult(_script.CallValues(function.ToDynValue(_script)));
             }
             catch (InterpreterException exception)
             {
@@ -149,7 +149,7 @@ namespace NovaSharp
             try
             {
                 return WrapResult(
-                    _script.Call(
+                    _script.CallValues(
                         function.ToDynValue(_script),
                         arg0.ToDynValueAfterOwnerChecked(_script)
                     )
@@ -175,7 +175,7 @@ namespace NovaSharp
             try
             {
                 return WrapResult(
-                    _script.Call(
+                    _script.CallValues(
                         function.ToDynValue(_script),
                         arg0.ToDynValueAfterOwnerChecked(_script),
                         arg1.ToDynValueAfterOwnerChecked(_script)
@@ -202,7 +202,7 @@ namespace NovaSharp
             try
             {
                 return WrapResult(
-                    _script.Call(
+                    _script.CallValues(
                         function.ToDynValue(_script),
                         arg0.ToDynValueAfterOwnerChecked(_script),
                         arg1.ToDynValueAfterOwnerChecked(_script),
@@ -229,21 +229,21 @@ namespace NovaSharp
 
             try
             {
-                DynValue functionValue = function.ToDynValue(_script);
+                LuaValue functionValue = function.ToDynValue(_script);
                 switch (args.Length)
                 {
                     case 0:
-                        return WrapResult(_script.Call(functionValue));
+                        return WrapResult(_script.CallValues(functionValue));
                     case 1:
                         return WrapResult(
-                            _script.Call(
+                            _script.CallValues(
                                 functionValue,
                                 args[0].ToDynValueAfterOwnerChecked(_script)
                             )
                         );
                     case 2:
                         return WrapResult(
-                            _script.Call(
+                            _script.CallValues(
                                 functionValue,
                                 args[0].ToDynValueAfterOwnerChecked(_script),
                                 args[1].ToDynValueAfterOwnerChecked(_script)
@@ -251,7 +251,7 @@ namespace NovaSharp
                         );
                     case 3:
                         return WrapResult(
-                            _script.Call(
+                            _script.CallValues(
                                 functionValue,
                                 args[0].ToDynValueAfterOwnerChecked(_script),
                                 args[1].ToDynValueAfterOwnerChecked(_script),
@@ -260,16 +260,12 @@ namespace NovaSharp
                         );
                 }
 
-                using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
-                    args.Length,
-                    out DynValue[] converted
-                );
                 for (int i = 0; i < args.Length; i++)
                 {
-                    converted[i] = args[i].ToDynValueAfterOwnerChecked(_script);
+                    args[i].ToDynValueAfterOwnerChecked(_script);
                 }
 
-                return WrapResult(_script.Call(functionValue, converted.AsSpan(0, args.Length)));
+                return WrapResult(_script.CallValues(functionValue, args));
             }
             catch (InterpreterException exception)
             {
@@ -317,7 +313,7 @@ namespace NovaSharp
                 args => InvokeCallback(callback, args),
                 name
             );
-            return Wrap(DynValue.FromCallback(function));
+            return Wrap(LuaValue.FromCallback(function));
         }
 
         /// <summary>
@@ -333,7 +329,7 @@ namespace NovaSharp
 
             try
             {
-                DynValue value = _script.CreateCoroutine(function.ToDynValue(_script));
+                LuaValue value = _script.CreateCoroutineValue(function.ToDynValue(_script));
                 return new LuaCoroutine(_script, value);
             }
             catch (InterpreterException exception)
@@ -377,7 +373,7 @@ namespace NovaSharp
         /// <summary>
         /// Wraps a VM value as an engine-owned facade value.
         /// </summary>
-        internal LuaValue Wrap(DynValue value)
+        internal LuaValue Wrap(LuaValue value)
         {
             ThrowIfDisposed();
             return LuaValue.Wrap(_script, value);
@@ -386,13 +382,13 @@ namespace NovaSharp
         /// <summary>
         /// Wraps the first scalar VM result as an engine-owned facade value.
         /// </summary>
-        internal LuaValue WrapResult(DynValue value)
+        internal LuaValue WrapResult(LuaValue value)
         {
             ThrowIfDisposed();
             return LuaValue.WrapResult(_script, value);
         }
 
-        private DynValue InvokeCallback(LuaCallback callback, CallbackArgumentsView args)
+        private LuaValue InvokeCallback(LuaCallback callback, CallbackArgumentsView args)
         {
             try
             {
@@ -403,13 +399,18 @@ namespace NovaSharp
                         .ToDynValue(_script);
                 }
 
+                if (args.TryGetSpan(out ReadOnlySpan<LuaValue> span))
+                {
+                    return callback(new LuaContext(this), span).ToDynValue(_script);
+                }
+
                 using PooledResource<LuaValue[]> pooled = SystemArrayPool<LuaValue>.Get(
                     count,
                     out LuaValue[] values
                 );
                 for (int i = 0; i < count; i++)
                 {
-                    values[i] = Wrap(args[i]);
+                    values[i] = args[i];
                 }
 
                 return callback(new LuaContext(this), new ReadOnlySpan<LuaValue>(values, 0, count))

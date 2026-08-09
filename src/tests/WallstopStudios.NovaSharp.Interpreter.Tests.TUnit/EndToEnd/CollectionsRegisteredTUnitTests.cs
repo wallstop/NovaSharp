@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Diagnostics;
     using System.Diagnostics.CodeAnalysis;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -274,7 +275,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             );
         }
 
-        private static Task RunScriptAsync(string code, Func<DynValue, Task> asserts)
+        private static Task RunScriptAsync(string code, Func<LuaValue, Task> asserts)
         {
             return RunScriptAsync(
                 code,
@@ -284,7 +285,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         private static Task RunScriptAsync(
             string code,
-            Func<DynValue, RegCollMethods, Task> asserts
+            Func<LuaValue, RegCollMethods, Task> asserts
         )
         {
             using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
@@ -311,7 +312,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 script.Globals["o"] = host;
                 script.Globals["ctor"] = UserData.CreateStatic<RegCollItem>();
 
-                DynValue result = script.DoString(code);
+                LuaValue result = script.DoString(code);
                 return asserts(result, host);
             }
             catch (ScriptRuntimeException ex)

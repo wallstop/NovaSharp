@@ -2,7 +2,6 @@ namespace NovaSharp
 {
     using System;
     using WallstopStudios.NovaSharp.Interpreter;
-    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
@@ -12,9 +11,9 @@ namespace NovaSharp
     public sealed class LuaFunction
     {
         private readonly Script _script;
-        private readonly DynValue _function;
+        private readonly LuaValue _function;
 
-        internal LuaFunction(Script script, DynValue function)
+        internal LuaFunction(Script script, LuaValue function)
         {
             _script = script ?? throw new ArgumentNullException(nameof(script));
             _function = function;
@@ -28,7 +27,7 @@ namespace NovaSharp
             _script.ThrowIfDisposed();
             try
             {
-                return LuaValue.WrapResult(_script, _script.Call(_function));
+                return LuaValue.WrapResult(_script, _script.CallValues(_function));
             }
             catch (InterpreterException exception)
             {
@@ -46,7 +45,7 @@ namespace NovaSharp
             {
                 return LuaValue.WrapResult(
                     _script,
-                    _script.Call(_function, arg0.ToDynValueAfterOwnerChecked(_script))
+                    _script.CallValues(_function, arg0.ToDynValueAfterOwnerChecked(_script))
                 );
             }
             catch (InterpreterException exception)
@@ -65,7 +64,7 @@ namespace NovaSharp
             {
                 return LuaValue.WrapResult(
                     _script,
-                    _script.Call(
+                    _script.CallValues(
                         _function,
                         arg0.ToDynValueAfterOwnerChecked(_script),
                         arg1.ToDynValueAfterOwnerChecked(_script)
@@ -88,7 +87,7 @@ namespace NovaSharp
             {
                 return LuaValue.WrapResult(
                     _script,
-                    _script.Call(
+                    _script.CallValues(
                         _function,
                         arg0.ToDynValueAfterOwnerChecked(_script),
                         arg1.ToDynValueAfterOwnerChecked(_script),
@@ -122,19 +121,12 @@ namespace NovaSharp
             _script.ThrowIfDisposed();
             try
             {
-                using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
-                    args.Length,
-                    out DynValue[] converted
-                );
                 for (int i = 0; i < args.Length; i++)
                 {
-                    converted[i] = args[i].ToDynValueAfterOwnerChecked(_script);
+                    args[i].ToDynValueAfterOwnerChecked(_script);
                 }
 
-                return LuaValue.WrapResult(
-                    _script,
-                    _script.Call(_function, converted.AsSpan(0, args.Length))
-                );
+                return LuaValue.WrapResult(_script, _script.CallValues(_function, args));
             }
             catch (InterpreterException exception)
             {
@@ -154,7 +146,7 @@ namespace NovaSharp
         /// <summary>
         /// Returns the underlying VM function after validating engine ownership.
         /// </summary>
-        internal DynValue ToDynValue(Script expectedOwner)
+        internal LuaValue ToDynValue(Script expectedOwner)
         {
             _script.ThrowIfDisposed();
             LuaEngine.EnsureSameOwner(_script, expectedOwner);

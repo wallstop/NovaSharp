@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -18,12 +19,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            FastStack<DynValue> stack = processor.GetValueStackForTests();
+            FastStack<LuaValue> stack = processor.GetValueStackForTests();
             stack.Clear();
 
-            DynValue value = DynValue.NewNumber(7);
+            LuaValue value = LuaValue.NewNumber(7);
             IUserDataDescriptor descriptor = new RejectingUserDataDescriptor();
-            DynValue userdata = UserData.Create(new RejectingUserData(), descriptor);
+            LuaValue userdata = UserData.Create(new RejectingUserData(), descriptor);
 
             stack.Push(value);
             stack.Push(userdata);
@@ -31,7 +32,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Instruction instruction = new Instruction(SourceRef.GetClrLocation())
             {
                 OpCode = OpCode.IndexSetN,
-                Value = DynValue.NewString("missing"),
+                Value = LuaValue.NewString("missing"),
                 NumVal = 0,
                 NumVal2 = 0,
             };
@@ -48,20 +49,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
-            FastStack<DynValue> stack = processor.GetValueStackForTests();
+            FastStack<LuaValue> stack = processor.GetValueStackForTests();
             stack.Clear();
 
             Table table = new(script);
             Table meta = new(script);
-            meta.Set("__index", DynValue.NewCallback((ctx, args) => DynValue.NewString("ignored")));
+            meta.Set("__index", LuaValue.NewCallback((ctx, args) => LuaValue.NewString("ignored")));
             table.MetaTable = meta;
 
-            stack.Push(DynValue.NewTable(table));
+            stack.Push(LuaValue.NewTable(table));
 
             Instruction instruction = new Instruction(SourceRef.GetClrLocation())
             {
                 OpCode = OpCode.IndexL,
-                Value = DynValue.NewString("field"),
+                Value = LuaValue.NewString("field"),
             };
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
@@ -71,7 +72,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(exception.Message).Contains("cannot multi-index through metamethods");
 
             stack.Clear();
-            DynValue legacyUserData = UserData.Create(
+            LuaValue legacyUserData = UserData.Create(
                 new RejectingUserData(),
                 new RejectingUserDataDescriptor()
             );
@@ -79,22 +80,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Instruction legacyInstruction = new Instruction(SourceRef.GetClrLocation())
             {
                 OpCode = OpCode.IndexN,
-                Value = DynValue.NewString("legacy-nil"),
+                Value = LuaValue.NewString("legacy-nil"),
             };
 
             processor.ExecIndexForTests(legacyInstruction, 0);
 
-            await Assert.That(stack.Pop().IsNil()).IsTrue();
+            await Assert.That(stack.Pop().IsNil).IsTrue();
 
             PresenceAwareUserDataDescriptor presenceDescriptor = new();
-            DynValue presenceUserData = UserData.Create(
+            LuaValue presenceUserData = UserData.Create(
                 new RejectingUserData(),
                 presenceDescriptor
             );
             Instruction presenceInstruction = new Instruction(SourceRef.GetClrLocation())
             {
                 OpCode = OpCode.IndexN,
-                Value = DynValue.NewString("handled"),
+                Value = LuaValue.NewString("handled"),
             };
             stack.Push(presenceUserData);
 
@@ -103,7 +104,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(stack.Pop().IsVoid()).IsTrue();
 
             stack.Push(presenceUserData);
-            presenceInstruction.Value = DynValue.NewString("missing");
+            presenceInstruction.Value = LuaValue.NewString("missing");
             ScriptRuntimeException missingException = ExpectException<ScriptRuntimeException>(() =>
                 processor.ExecIndexForTests(presenceInstruction, 0)
             );
@@ -122,20 +123,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             public bool TryIndex(
                 Script script,
                 object obj,
-                DynValue index,
+                LuaValue index,
                 bool isDirectIndexing,
-                out DynValue value
+                out LuaValue value
             )
             {
-                value = DynValue.Nil;
+                value = LuaValue.Nil;
                 return true;
             }
 
             public bool SetIndex(
                 Script script,
                 object obj,
-                DynValue index,
-                DynValue value,
+                LuaValue index,
+                LuaValue value,
                 bool isDirectIndexing
             )
             {
@@ -147,9 +148,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 return Name;
             }
 
-            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
             {
-                value = DynValue.Nil;
+                value = LuaValue.Nil;
                 return false;
             }
 
@@ -168,26 +169,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             public bool TryIndex(
                 Script script,
                 object obj,
-                DynValue index,
+                LuaValue index,
                 bool isDirectIndexing,
-                out DynValue value
+                out LuaValue value
             )
             {
                 if (index.String == "handled")
                 {
-                    value = DynValue.Void;
+                    value = LuaValue.Void;
                     return true;
                 }
 
-                value = DynValue.Nil;
+                value = LuaValue.Nil;
                 return false;
             }
 
             public bool SetIndex(
                 Script script,
                 object obj,
-                DynValue index,
-                DynValue value,
+                LuaValue index,
+                LuaValue value,
                 bool isDirectIndexing
             )
             {
@@ -199,9 +200,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 return Name;
             }
 
-            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
             {
-                value = DynValue.Nil;
+                value = LuaValue.Nil;
                 return false;
             }
 

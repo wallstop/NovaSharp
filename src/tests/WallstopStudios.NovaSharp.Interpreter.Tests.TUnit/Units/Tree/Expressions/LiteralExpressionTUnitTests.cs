@@ -40,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         public async Task LiteralExpressionParsesNilToken()
         {
             LiteralExpression expression = ParseLiteral("nil");
-            await Assert.That(expression.Value.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(expression.Value.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

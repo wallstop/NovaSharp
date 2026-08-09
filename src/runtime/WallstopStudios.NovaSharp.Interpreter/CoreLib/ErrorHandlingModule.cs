@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -34,7 +35,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments where index 0 is the function to call and the rest flow into it.</param>
         /// <returns>A tuple beginning with <c>true</c>/<c>false</c> followed by the function results or error message.</returns>
         [NovaSharpModuleMethod(Name = "pcall")]
-        public static DynValue Pcall(
+        public static LuaValue Pcall(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -49,16 +50,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 "pcall",
                 executionContext,
                 args,
-                DynValue.Nil,
+                LuaValue.Nil,
                 hasHandlerBeforeUnwind: false
             );
         }
 
-        private static DynValue SetErrorHandlerStrategy(
+        private static LuaValue SetErrorHandlerStrategy(
             string funcName,
             ScriptExecutionContext executionContext,
             CallbackArguments args,
-            DynValue handlerBeforeUnwind,
+            LuaValue handlerBeforeUnwind,
             bool hasHandlerBeforeUnwind
         )
         {
@@ -81,8 +82,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue v = args[0];
-            DynValue[] a = new DynValue[args.Count - 1];
+            LuaValue v = args[0];
+            LuaValue[] a = new LuaValue[args.Count - 1];
 
             for (int i = 1; i < args.Count; i++)
             {
@@ -93,7 +94,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 try
                 {
-                    DynValue ret = args[0].Callback.Invoke(executionContext, a);
+                    LuaValue ret = args[0].Callback.Invoke(executionContext, a);
                     if (ret.Type == DataType.TailCallRequest)
                     {
                         if (
@@ -119,7 +120,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                             tailCallData.ErrorHandlerBeforeUnwind = handlerBeforeUnwind;
                         }
 
-                        return DynValue.NewTailCallReq(tailCallData);
+                        return LuaValue.NewTailCallReq(tailCallData);
                     }
                     else if (ret.Type == DataType.YieldRequest)
                     {
@@ -130,7 +131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     }
                     else
                     {
-                        return DynValue.NewTupleNested(DynValue.True, ret);
+                        return LuaValue.NewTupleNested(LuaValue.True, ret);
                     }
                 }
                 catch (ScriptRuntimeException ex)
@@ -146,17 +147,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     {
                         ex.DecoratedMessage = ex.Message;
                     }
-                    return DynValue.NewTupleNested(
-                        DynValue.False,
-                        DynValue.NewString(ex.DecoratedMessage)
+                    return LuaValue.NewTupleNested(
+                        LuaValue.False,
+                        LuaValue.NewString(ex.DecoratedMessage)
                     );
                 }
             }
             else if (args[0].Type != DataType.Function)
             {
-                return DynValue.NewTupleNested(
-                    DynValue.False,
-                    DynValue.NewString("attempt to " + funcName + " a non-function")
+                return LuaValue.NewTupleNested(
+                    LuaValue.False,
+                    LuaValue.NewString("attempt to " + funcName + " a non-function")
                 );
             }
             else
@@ -173,7 +174,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     tailCallData.ErrorHandlerBeforeUnwind = handlerBeforeUnwind;
                 }
 
-                return DynValue.NewTailCallReq(tailCallData);
+                return LuaValue.NewTailCallReq(tailCallData);
             }
         }
 
@@ -231,18 +232,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return callback;
         }
 
-        private static DynValue MakeReturnTuple(bool retstatus, CallbackArguments args)
+        private static LuaValue MakeReturnTuple(bool retstatus, CallbackArguments args)
         {
-            DynValue[] rets = new DynValue[args.Count + 1];
+            LuaValue[] rets = new LuaValue[args.Count + 1];
 
             for (int i = 0; i < args.Count; i++)
             {
                 rets[i + 1] = args[i];
             }
 
-            rets[0] = DynValue.FromBoolean(retstatus);
+            rets[0] = LuaValue.FromBoolean(retstatus);
 
-            return DynValue.NewTuple(rets);
+            return LuaValue.NewTuple(rets);
         }
 
         /// <summary>
@@ -253,7 +254,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments representing the protected call's return values.</param>
         /// <returns>Tuple with <c>true</c> followed by the original return values.</returns>
-        public static DynValue PcallContinuation(
+        public static LuaValue PcallContinuation(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -274,7 +275,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments containing the error object/message.</param>
         /// <returns>Tuple beginning with <c>false</c> followed by the error payload.</returns>
-        public static DynValue PcallOnError(
+        public static LuaValue PcallOnError(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -302,7 +303,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments where index 0 is the function and index 1 is the error handler.</param>
         /// <returns>A tuple matching <c>pcall</c>'s result contract.</returns>
         [NovaSharpModuleMethod(Name = "xpcall")]
-        public static DynValue Xpcall(
+        public static LuaValue Xpcall(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -325,16 +326,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // - Lua 5.1: xpcall(f, err) — Only 2 arguments supported. Extra arguments are IGNORED.
             // - Lua 5.2+: xpcall(f, msgh [,arg1, ...]) — Extra arguments are passed to f.
             // Note: SetErrorHandlerStrategy expects args[0] to be the function, and args[1+] to be args to pass.
-            DynValue[] a;
+            LuaValue[] a;
             if (isLua51)
             {
                 // Lua 5.1: Only pass the function itself, no extra args
-                a = new DynValue[] { args[0] };
+                a = new LuaValue[] { args[0] };
             }
             else
             {
                 // Lua 5.2+: Pass function (index 0) and all extra args (index 2+), skip handler (index 1)
-                using (ListPool<DynValue>.Get(out List<DynValue> tempList))
+                using (ListPool<LuaValue>.Get(out List<LuaValue> tempList))
                 {
                     for (int i = 0; i < args.Count; i++)
                     {
@@ -343,7 +344,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                             tempList.Add(args[i]);
                         }
                     }
-                    a = ListPool<DynValue>.ToExactArray(tempList);
+                    a = ListPool<LuaValue>.ToExactArray(tempList);
                 }
             }
 
@@ -355,7 +356,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // NOTE: All versions throw if no handler argument is provided at all.
 
             // Missing handler argument throws in all versions
-            if (!args.TryRawGet(1, translateVoids: false, out DynValue handlerArg))
+            if (!args.TryRawGet(1, translateVoids: false, out LuaValue handlerArg))
             {
                 throw ScriptRuntimeException.BadArgument(
                     1,
@@ -366,7 +367,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
             }
 
-            DynValue handler = DynValue.Nil;
+            LuaValue handler = LuaValue.Nil;
             if (handlerArg.Type == DataType.Function || handlerArg.Type == DataType.ClrFunction)
             {
                 handler = handlerArg;

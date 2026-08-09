@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.CodeDom;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Hardwire.Utils;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -58,8 +59,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         public async Task LoadDescriptorsFromTableCreatesSequentialList()
         {
             Table list = new(owner: null);
-            list.Append(DynValue.NewTable(CreateParameterTable("first", isRef: true)));
-            list.Append(DynValue.NewTable(CreateParameterTable("second", isOut: true)));
+            list.Append(LuaValue.NewTable(CreateParameterTable("first", isRef: true)));
+            list.Append(LuaValue.NewTable(CreateParameterTable("second", isOut: true)));
 
             IReadOnlyList<HardwireParameterDescriptor> descriptors =
                 HardwireParameterDescriptor.LoadDescriptorsFromTable(list);
@@ -83,7 +84,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         public async Task LoadDescriptorsFromTableThrowsWhenEntryNotTable()
         {
             Table list = new(owner: null);
-            list.Append(DynValue.NewNumber(1));
+            list.Append(LuaValue.NewNumber(1));
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 HardwireParameterDescriptor.LoadDescriptorsFromTable(list)
@@ -154,14 +155,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         )
         {
             Table table = new(owner: null);
-            table.Set("name", DynValue.NewString(name));
-            table.Set("origtype", DynValue.NewString(typeof(string).FullName));
-            table.Set("default", DynValue.NewBoolean(hasDefault));
-            table.Set("out", DynValue.NewBoolean(isOut));
-            table.Set("ref", DynValue.NewBoolean(isRef));
-            table.Set("varargs", DynValue.NewBoolean(false));
-            table.Set("type", DynValue.NewString(typeof(string).FullName));
-            table.Set("restricted", DynValue.NewBoolean(false));
+            table.Set("name", LuaValue.NewString(name));
+            table.Set("origtype", LuaValue.NewString(typeof(string).FullName));
+            table.Set("default", LuaValue.NewBoolean(hasDefault));
+            table.Set("out", LuaValue.NewBoolean(isOut));
+            table.Set("ref", LuaValue.NewBoolean(isRef));
+            table.Set("varargs", LuaValue.NewBoolean(false));
+            table.Set("type", LuaValue.NewString(typeof(string).FullName));
+            table.Set("restricted", LuaValue.NewBoolean(false));
 
             return table;
         }

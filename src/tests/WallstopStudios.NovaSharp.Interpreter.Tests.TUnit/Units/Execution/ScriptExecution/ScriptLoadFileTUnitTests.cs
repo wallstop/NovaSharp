@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -40,7 +41,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             await Assert.That(exception.Message).Contains(unexpected.GetType().Name);
         }
 
-        private static TException ExpectException<TException>(Func<DynValue> action)
+        private static TException ExpectException<TException>(Func<LuaValue> action)
             where TException : Exception
         {
             try

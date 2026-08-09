@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -69,7 +70,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             descriptor.PrepareForWiring(table);
 
-            DynValue paramsTable = table.Get("params");
+            LuaValue paramsTable = table.Get("params");
             await Assert.That(paramsTable.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
             await Assert.That(paramsTable.Table.Length).IsEqualTo(1).ConfigureAwait(false);
         }
@@ -83,7 +84,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             UserData.RegisterType<int[]>();
             script.Globals["arr"] = array;
 
-            DynValue result = script.DoString("return arr[1]");
+            LuaValue result = script.DoString("return arr[1]");
 
             await Assert.That(result.Number).IsEqualTo(20).ConfigureAwait(false);
         }
@@ -120,7 +121,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             UserData.RegisterType<int[,]>();
             script.Globals["arr"] = array;
 
-            DynValue result = script.DoString("return arr[1, 1]");
+            LuaValue result = script.DoString("return arr[1, 1]");
 
             await Assert.That(result.Number).IsEqualTo(4).ConfigureAwait(false);
         }
@@ -159,7 +160,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             UserData.RegisterType<int[,,]>();
             script.Globals["arr"] = array;
 
-            DynValue result = script.DoString("return arr[1, 1, 1]");
+            LuaValue result = script.DoString("return arr[1, 1, 1]");
 
             await Assert.That(result.Number).IsEqualTo(7).ConfigureAwait(false);
         }
@@ -192,11 +193,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             object[] array = new object[2];
             ArrayMemberDescriptor descriptor = new("set_Item", isSetter: true);
-            DynValue index = DynValue.NewNumber(1);
-            DynValue value = DynValue.NewString("payload");
+            LuaValue index = LuaValue.NewNumber(1);
+            LuaValue value = LuaValue.NewString("payload");
             CallbackArguments args = TestHelpers.CreateArguments(index, value);
 
-            DynValue warmup = descriptor.Execute(script, array, context, args);
+            LuaValue warmup = descriptor.Execute(script, array, context, args);
             await Assert.That(warmup.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
             await Assert.That(array[1]).IsEqualTo("payload").ConfigureAwait(false);
 
@@ -231,12 +232,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             const long maxAllocatedBytesPerCall = 16L;
             Script script = new();
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            DynValue expected = DynValue.NewString("payload");
-            object[] array = { DynValue.Nil, expected };
+            LuaValue expected = LuaValue.NewString("payload");
+            object[] array = { LuaValue.Nil, expected };
             ArrayMemberDescriptor descriptor = new("get_Item", isSetter: false);
-            CallbackArguments args = TestHelpers.CreateArguments(DynValue.NewNumber(1));
+            CallbackArguments args = TestHelpers.CreateArguments(LuaValue.NewNumber(1));
 
-            DynValue warmup = descriptor.Execute(script, array, context, args);
+            LuaValue warmup = descriptor.Execute(script, array, context, args);
             await Assert.That(warmup).IsEqualTo(expected).ConfigureAwait(false);
 
             GC.Collect();
@@ -271,8 +272,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             int[] array = new int[2];
             ArrayMemberDescriptor descriptor = new("set_Item", isSetter: true);
             CallbackArguments args = TestHelpers.CreateArguments(
-                DynValue.NewString("bad-index"),
-                DynValue.NewPrimeTable()
+                LuaValue.NewString("bad-index"),
+                LuaValue.NewPrimeTable()
             );
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -293,8 +294,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             int[] array = new int[1];
             ArrayMemberDescriptor descriptor = new("set_Item", isSetter: true);
             CallbackArguments args = TestHelpers.CreateArguments(
-                DynValue.NewNumber(99),
-                DynValue.NewPrimeTable()
+                LuaValue.NewNumber(99),
+                LuaValue.NewPrimeTable()
             );
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -316,7 +317,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             int[,] array = new int[2, 2];
             ArrayMemberDescriptor descriptor = new("get_Item", isSetter: false);
-            CallbackArguments args = TestHelpers.CreateArguments(DynValue.NewNumber(0));
+            CallbackArguments args = TestHelpers.CreateArguments(LuaValue.NewNumber(0));
 
             ArgumentException actual = Assert.Throws<ArgumentException>(() =>
                 descriptor.Execute(script, array, context, args)
@@ -356,7 +357,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             descriptor.PrepareForWiring(table);
 
-            DynValue paramsTable = table.Get("params");
+            LuaValue paramsTable = table.Get("params");
             await Assert.That(paramsTable.Table.Length).IsEqualTo(2).ConfigureAwait(false);
         }
 
@@ -374,7 +375,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = descriptor.Execute(script, array, context, args);
+                LuaValue result = descriptor.Execute(script, array, context, args);
 
                 if (result.Type != DataType.Void || !ReferenceEquals(array[1], expectedValue))
                 {
@@ -393,7 +394,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             object[] array,
             ScriptExecutionContext context,
             CallbackArguments args,
-            DynValue expectedValue,
+            LuaValue expectedValue,
             int iterations
         )
         {
@@ -401,7 +402,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = descriptor.Execute(script, array, context, args);
+                LuaValue result = descriptor.Execute(script, array, context, args);
 
                 if (result != expectedValue)
                 {

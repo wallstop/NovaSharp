@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -23,7 +24,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             SymbolRef symbol = SymbolRef.Local("resource", 0, SymbolRefAttributes.ToBeClosed);
             bool closed = false;
-            DynValue closable = CreateClosableValue(script, _ => closed = true);
+            LuaValue closable = CreateClosableValue(script, _ => closed = true);
 
             CallStackItem frame = new()
             {
@@ -36,11 +37,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             processor.CloseSymbolsSubsetForTests(
                 frame,
                 new[] { symbol },
-                DynValue.NewString("err")
+                LuaValue.NewString("err")
             );
 
             await Assert.That(closed).IsTrue();
-            await Assert.That(frame.LocalScope[0].Value.IsNil()).IsTrue();
+            await Assert.That(frame.LocalScope[0].Value.IsNil).IsTrue();
             bool containsIndex =
                 frame.ToBeClosedIndices != null && frame.ToBeClosedIndices.Contains(0);
             await Assert.That(containsIndex).IsFalse();
@@ -60,14 +61,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             SymbolRef symbol = SymbolRef.Local("resource", 0, SymbolRefAttributes.ToBeClosed);
             CallStackItem frame = new()
             {
-                LocalScope = new[] { new ValueSlot(DynValue.NewTable(new Table(script))) },
+                LocalScope = new[] { new ValueSlot(LuaValue.NewTable(new Table(script))) },
                 BlocksToClose = new List<List<SymbolRef>> { new List<SymbolRef> { symbol } },
                 ToBeClosedIndices = new HashSet<int> { 0 },
             };
             processor.PushCallStackFrameForTests(frame);
 
             ExpectException<ScriptRuntimeException>(() =>
-                processor.CloseSymbolsSubsetForTests(frame, new[] { symbol }, DynValue.Nil)
+                processor.CloseSymbolsSubsetForTests(frame, new[] { symbol }, LuaValue.Nil)
             );
         }
 
@@ -79,14 +80,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             processor.ClearCallStackForTests();
 
             bool closed = false;
-            DynValue closable = CreateClosableValue(script, _ => closed = true);
+            LuaValue closable = CreateClosableValue(script, _ => closed = true);
 
             CallStackItem frame = new()
             {
                 LocalScope = new[]
                 {
                     new ValueSlot(closable),
-                    new ValueSlot(DynValue.NewNumber(7)),
+                    new ValueSlot(LuaValue.NewNumber(7)),
                 },
                 BlocksToClose = new List<List<SymbolRef>>
                 {
@@ -132,8 +133,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             {
                 LocalScope = new[]
                 {
-                    new ValueSlot(DynValue.NewNumber(1)),
-                    new ValueSlot(DynValue.NewNumber(2)),
+                    new ValueSlot(LuaValue.NewNumber(1)),
+                    new ValueSlot(LuaValue.NewNumber(2)),
                 },
             };
             processor.PushCallStackFrameForTests(frame);
@@ -157,27 +158,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(remaining[1]).IsEqualTo(2d);
         }
 
-        private static DynValue CreateClosableValue(Script script, Action<DynValue> onClose = null)
+        private static LuaValue CreateClosableValue(Script script, Action<LuaValue> onClose = null)
         {
             Table token = new(script);
             Table metatable = new(script);
             metatable.Set(
                 "__close",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (ctx, args) =>
                     {
                         if (onClose != null)
                         {
-                            DynValue payload = args.Count > 1 ? args[1] : DynValue.Nil;
+                            LuaValue payload = args.Count > 1 ? args[1] : LuaValue.Nil;
                             onClose(payload);
                         }
 
-                        return DynValue.Nil;
+                        return LuaValue.Nil;
                     }
                 )
             );
             token.MetaTable = metatable;
-            return DynValue.NewTable(token);
+            return LuaValue.NewTable(token);
         }
 
         private static TException ExpectException<TException>(Action action)

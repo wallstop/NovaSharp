@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop
 {
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -18,9 +19,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <returns></returns>
         public bool TryIndex(
             Script script,
-            DynValue index,
+            LuaValue index,
             bool isDirectIndexing,
-            out DynValue value
+            out LuaValue value
         );
 
         /// <summary>
@@ -31,7 +32,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <param name="value">The value to be set</param>
         /// <param name="isDirectIndexing">If set to true, it's indexed with a name, if false it's indexed through brackets.</param>
         /// <returns></returns>
-        public bool SetIndex(Script script, DynValue index, DynValue value, bool isDirectIndexing);
+        public bool SetIndex(Script script, LuaValue index, LuaValue value, bool isDirectIndexing);
 
         /// <summary>
         ///
@@ -49,6 +50,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <param name="script">The script originating the request</param>
         /// <param name="metaname">The name of the metamember.</param>
         /// <returns></returns>
-        public bool TryMetaIndex(Script script, string metaname, out DynValue value);
+        public bool TryMetaIndex(Script script, string metaname, out LuaValue value);
     }
 }

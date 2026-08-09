@@ -49,7 +49,7 @@ rg "pattern" src/runtime/       # Specific directory
 # Results
 rg -l "pattern"                 # List matching files
 rg -c "pattern"                 # Count matches
-rg -o "DynValue\.\w+"           # Show only matched text
+rg -o "LuaValue\.\w+"           # Show only matched text
 ```
 
 ______________________________________________________________________
@@ -81,9 +81,9 @@ ______________________________________________________________________
 ### Find All Usages of a Type
 
 ```bash
-rg "DynValue" --type cs -l      # Files using DynValue
-rg "new DynValue" --type cs     # Instantiations
-rg "DynValue\.(NewString|NewNumber)" --type cs  # Factory methods
+rg "LuaValue" --type cs -l      # Files using LuaValue
+rg "new LuaValue" --type cs     # Instantiations
+rg "LuaValue\.(FromString|FromNumber)" --type cs  # Public factory methods
 ```
 
 ### Find Method Implementations
@@ -143,7 +143,7 @@ Each stage can be debugged independently:
 
 | File                                  | Purpose                  |
 | ------------------------------------- | ------------------------ |
-| `DataTypes/DynValue.cs`               | Universal value type     |
+| `Api/LuaValue.cs`                     | Universal value type     |
 | `DataTypes/Table.cs`                  | Lua table implementation |
 | `Execution/ScriptExecutionContext.cs` | Execution state          |
 
@@ -158,7 +158,7 @@ ______________________________________________________________________
 public async Task MinimalReproduction()
 {
     Script script = new Script();
-    DynValue result = script.DoString("return <failing code>");
+    LuaValue result = script.DoString("return <failing code>");
 }
 ```
 
@@ -176,12 +176,12 @@ done
 dotnet run -c Release --project src/tooling/WallstopStudios.NovaSharp.Cli -e "print(<test code>)"
 ```
 
-### 3. Inspect DynValue
+### 3. Inspect LuaValue
 
 ```csharp
-DynValue value = script.DoString("return something");
-Console.WriteLine($"Type: {value.Type}");
-Console.WriteLine($"Value: {value.ToDebugPrintString()}");
+LuaValue value = script.DoString("return something");
+Console.WriteLine($"Kind: {value.Kind}");
+Console.WriteLine($"Value: {value}");
 ```
 
 ______________________________________________________________________

@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
 
@@ -13,7 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// Gets the metatable associated with the specified value, honoring type metatables when needed.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal Table GetMetatable(DynValue value)
+        internal Table GetMetatable(LuaValue value)
         {
             if (value.Type == DataType.Table)
             {
@@ -34,16 +35,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <paramref name="op1"/> and <paramref name="op2"/>.
         /// </summary>
         internal bool TryGetBinaryMetamethod(
-            DynValue op1,
-            DynValue op2,
+            LuaValue op1,
+            LuaValue op2,
             string eventName,
-            out DynValue metamethod
+            out LuaValue metamethod
         )
         {
             Table op1MetaTable = GetMetatable(op1);
             if (op1MetaTable != null)
             {
-                if (op1MetaTable.TryRawGet(eventName, out DynValue meta1) && meta1.IsNotNil())
+                if (op1MetaTable.TryRawGet(eventName, out LuaValue meta1) && meta1.IsNotNil())
                 {
                     metamethod = meta1;
                     return true;
@@ -53,7 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             Table op2MetaTable = GetMetatable(op2);
             if (op2MetaTable != null)
             {
-                if (op2MetaTable.TryRawGet(eventName, out DynValue meta2) && meta2.IsNotNil())
+                if (op2MetaTable.TryRawGet(eventName, out LuaValue meta2) && meta2.IsNotNil())
                 {
                     metamethod = meta2;
                     return true;
@@ -92,7 +93,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
             }
 
-            metamethod = DynValue.Nil;
+            metamethod = LuaValue.Nil;
             return false;
         }
 
@@ -100,9 +101,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// Attempts to resolve the metamethod for the given value, probing userdata descriptors first.
         /// </summary>
         internal bool TryGetMetamethod(
-            DynValue value,
+            LuaValue value,
             string metamethod,
-            out DynValue resolvedMetamethod
+            out LuaValue resolvedMetamethod
         )
         {
             if (value.Type == DataType.UserData)
@@ -125,14 +126,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
-        /// Resolves the metamethod for the given value, or returns <see cref="DynValue.Nil"/> when
+        /// Resolves the metamethod for the given value, or returns <see cref="LuaValue.Nil"/> when
         /// none is available.
         /// </summary>
-        internal DynValue GetMetamethod(DynValue value, string metamethod)
+        internal LuaValue GetMetamethod(LuaValue value, string metamethod)
         {
-            return TryGetMetamethod(value, metamethod, out DynValue resolvedMetamethod)
+            return TryGetMetamethod(value, metamethod, out LuaValue resolvedMetamethod)
                 ? resolvedMetamethod
-                : DynValue.Nil;
+                : LuaValue.Nil;
         }
 
         /// <summary>
@@ -140,25 +141,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryGetMetamethodRaw(
-            DynValue value,
+            LuaValue value,
             string metamethod,
-            out DynValue resolvedMetamethod
+            out LuaValue resolvedMetamethod
         )
         {
             Table metatable = GetMetatable(value);
 
             if (metatable == null)
             {
-                resolvedMetamethod = DynValue.Nil;
+                resolvedMetamethod = LuaValue.Nil;
                 return false;
             }
 
             if (
-                !metatable.TryRawGet(metamethod, out resolvedMetamethod)
-                || resolvedMetamethod.IsNil()
+                !metatable.TryRawGet(metamethod, out resolvedMetamethod) || resolvedMetamethod.IsNil
             )
             {
-                resolvedMetamethod = DynValue.Nil;
+                resolvedMetamethod = LuaValue.Nil;
                 return false;
             }
 
@@ -166,15 +166,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
-        /// Resolves the metamethod from the metatable only, or returns <see cref="DynValue.Nil"/>
+        /// Resolves the metamethod from the metatable only, or returns <see cref="LuaValue.Nil"/>
         /// when none is available.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal DynValue GetMetamethodRaw(DynValue value, string metamethod)
+        internal LuaValue GetMetamethodRaw(LuaValue value, string metamethod)
         {
-            return TryGetMetamethodRaw(value, metamethod, out DynValue resolvedMetamethod)
+            return TryGetMetamethodRaw(value, metamethod, out LuaValue resolvedMetamethod)
                 ? resolvedMetamethod
-                : DynValue.Nil;
+                : LuaValue.Nil;
         }
 
         /// <summary>

@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -20,9 +21,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current execution context.</param>
         /// <param name="args">Arguments where index 0 is the function to wrap.</param>
-        /// <returns>A thread <see cref="DynValue"/> representing the created coroutine.</returns>
+        /// <returns>A thread <see cref="LuaValue"/> representing the created coroutine.</returns>
         [NovaSharpModuleMethod(Name = "create")]
-        public static DynValue Create(
+        public static LuaValue Create(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -38,7 +39,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 args.AsType(0, "create", DataType.Function); // this throws
             }
 
-            return executionContext.Script.CreateCoroutine(args[0]);
+            return executionContext.Script.CreateCoroutineValue(args[0]);
         }
 
         /// <summary>
@@ -48,7 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments where index 0 is the function to wrap.</param>
         /// <returns>A CLR callback that resumes the wrapped coroutine.</returns>
         [NovaSharpModuleMethod(Name = "wrap")]
-        public static DynValue Wrap(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Wrap(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
@@ -61,8 +62,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 args.AsType(0, "wrap", DataType.Function); // this throws
             }
 
-            DynValue handle = Create(executionContext, args);
-            return DynValue.NewCallback(
+            LuaValue handle = Create(executionContext, args);
+            return LuaValue.NewCallback(
                 executionContext.Script,
                 (ctx, callArgs) => ResumeCoroutineWithArguments(handle.Coroutine, callArgs, 0)
             );
@@ -75,7 +76,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments (handle plus optional resume parameters).</param>
         /// <returns>A tuple beginning with <c>true</c>/<c>false</c> followed by yielded results or an error message.</returns>
         [NovaSharpModuleMethod(Name = "resume")]
-        public static DynValue Resume(
+        public static LuaValue Resume(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -86,21 +87,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue handle = args.AsType(0, "resume", DataType.Thread);
+            LuaValue handle = args.AsType(0, "resume", DataType.Thread);
 
             try
             {
-                DynValue ret = ResumeCoroutineWithArguments(handle.Coroutine, args, 1);
+                LuaValue ret = ResumeCoroutineWithArguments(handle.Coroutine, args, 1);
 
-                using (ListPool<DynValue>.Get(out List<DynValue> retval))
+                using (ListPool<LuaValue>.Get(out List<LuaValue> retval))
                 {
-                    retval.Add(DynValue.True);
+                    retval.Add(LuaValue.True);
 
                     if (ret.Type == DataType.Tuple)
                     {
                         for (int i = 0; i < ret.Tuple.Length; i++)
                         {
-                            DynValue v = ret.Tuple[i];
+                            LuaValue v = ret.Tuple[i];
 
                             if ((i == ret.Tuple.Length - 1) && (v.Type == DataType.Tuple))
                             {
@@ -117,16 +118,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         retval.Add(ret);
                     }
 
-                    return DynValue.NewTuple(ListPool<DynValue>.ToExactArray(retval));
+                    return LuaValue.NewTuple(ListPool<LuaValue>.ToExactArray(retval));
                 }
             }
             catch (ScriptRuntimeException ex)
             {
-                return DynValue.NewTuple(DynValue.False, DynValue.NewString(ex.Message));
+                return LuaValue.NewTuple(LuaValue.False, LuaValue.NewString(ex.Message));
             }
         }
 
-        private static DynValue ResumeCoroutineWithArguments(
+        private static LuaValue ResumeCoroutineWithArguments(
             Coroutine coroutine,
             CallbackArguments args,
             int skip
@@ -141,20 +142,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             switch (count)
             {
                 case 1:
-                    return coroutine.Resume(args[skip]);
+                    return coroutine.ResumeValues(args[skip]);
                 case 2:
-                    return coroutine.Resume(args[skip], args[skip + 1]);
+                    return coroutine.ResumeValues(args[skip], args[skip + 1]);
                 case 3:
-                    return coroutine.Resume(args[skip], args[skip + 1], args[skip + 2]);
+                    return coroutine.ResumeValues(args[skip], args[skip + 1], args[skip + 2]);
                 case 4:
-                    return coroutine.Resume(
+                    return coroutine.ResumeValues(
                         args[skip],
                         args[skip + 1],
                         args[skip + 2],
                         args[skip + 3]
                     );
                 default:
-                    return coroutine.Resume(args.GetArray(skip));
+                    return coroutine.ResumeValues(args.GetArray(skip));
             }
         }
 
@@ -170,7 +171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <returns>The close result tuple provided by the coroutine.</returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua54)]
         [NovaSharpModuleMethod(Name = "close")]
-        public static DynValue Close(
+        public static LuaValue Close(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -181,7 +182,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue handle = args.AsType(0, "close", DataType.Thread);
+            LuaValue handle = args.AsType(0, "close", DataType.Thread);
             return handle.Coroutine.Close();
         }
 
@@ -190,9 +191,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current execution context.</param>
         /// <param name="args">Arguments passed to the resuming caller.</param>
-        /// <returns>A yield request <see cref="DynValue"/>.</returns>
+        /// <returns>A yield request <see cref="LuaValue"/>.</returns>
         [NovaSharpModuleMethod(Name = "yield")]
-        public static DynValue Yield(
+        public static LuaValue Yield(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -206,22 +207,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return YieldWithArguments(args);
         }
 
-        private static DynValue YieldWithArguments(CallbackArguments args)
+        private static LuaValue YieldWithArguments(CallbackArguments args)
         {
             switch (args.Count)
             {
                 case 0:
-                    return DynValue.NewYieldReq();
+                    return LuaValue.NewYieldReq();
                 case 1:
-                    return DynValue.NewYieldReq(args[0]);
+                    return LuaValue.NewYieldReq(args[0]);
                 case 2:
-                    return DynValue.NewYieldReq(args[0], args[1]);
+                    return LuaValue.NewYieldReq(args[0], args[1]);
                 case 3:
-                    return DynValue.NewYieldReq(args[0], args[1], args[2]);
+                    return LuaValue.NewYieldReq(args[0], args[1], args[2]);
                 case 4:
-                    return DynValue.NewYieldReq(args[0], args[1], args[2], args[3]);
+                    return LuaValue.NewYieldReq(args[0], args[1], args[2], args[3]);
                 default:
-                    return DynValue.NewYieldReq(args.GetArray());
+                    return LuaValue.NewYieldReq(args.GetArray());
             }
         }
 
@@ -239,7 +240,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Ignored but validated per Lua semantics.</param>
         /// <returns>The running coroutine, optionally with a boolean indicating main status (5.2+).</returns>
         [NovaSharpModuleMethod(Name = "running")]
-        public static DynValue Running(
+        public static LuaValue Running(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -263,10 +264,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             if (version == LuaCompatibilityVersion.Lua51)
             {
                 // Lua 5.1: Returns nil when called by the main thread
-                return isMain ? DynValue.Nil : DynValue.NewCoroutine(c);
+                return isMain ? LuaValue.Nil : LuaValue.NewCoroutine(c);
             }
 
-            return DynValue.NewTuple(DynValue.NewCoroutine(c), DynValue.FromBoolean(isMain));
+            return LuaValue.NewTuple(LuaValue.NewCoroutine(c), LuaValue.FromBoolean(isMain));
         }
 
         /// <summary>
@@ -274,9 +275,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current execution context.</param>
         /// <param name="args">Arguments (handle whose state is queried).</param>
-        /// <returns>A string <see cref="DynValue"/> (running, normal, suspended, or dead).</returns>
+        /// <returns>A string <see cref="LuaValue"/> (running, normal, suspended, or dead).</returns>
         [NovaSharpModuleMethod(Name = "status")]
-        public static DynValue Status(
+        public static LuaValue Status(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -287,7 +288,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            DynValue handle = args.AsType(0, "status", DataType.Thread);
+            LuaValue handle = args.AsType(0, "status", DataType.Thread);
             Coroutine running = executionContext.CallingCoroutine;
             CoroutineState cs = handle.Coroutine.State;
 
@@ -296,14 +297,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 case CoroutineState.Main:
                 case CoroutineState.Running:
                     return (handle.Coroutine == running)
-                        ? DynValue.NewString("running")
-                        : DynValue.NewString("normal");
+                        ? LuaValue.NewString("running")
+                        : LuaValue.NewString("normal");
                 case CoroutineState.NotStarted:
                 case CoroutineState.Suspended:
                 case CoroutineState.ForceSuspended:
-                    return DynValue.NewString("suspended");
+                    return LuaValue.NewString("suspended");
                 case CoroutineState.Dead:
-                    return DynValue.NewString("dead");
+                    return LuaValue.NewString("dead");
                 default:
                     throw new InternalErrorException("Unexpected coroutine state {0}", cs);
             }
@@ -320,7 +321,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <returns><c>true</c> when yielding is allowed; otherwise <c>false</c>.</returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
         [NovaSharpModuleMethod(Name = "isyieldable")]
-        public static DynValue IsYieldable(
+        public static LuaValue IsYieldable(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -336,16 +337,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext.Script.CompatibilityVersion
             );
 
-            if (version >= LuaCompatibilityVersion.Lua54 && args.Count > 0 && !args[0].IsNil())
+            if (version >= LuaCompatibilityVersion.Lua54 && args.Count > 0 && !args[0].IsNil)
             {
                 // Check the specified coroutine instead of the current context
-                DynValue coArg = args.AsType(0, "isyieldable", DataType.Thread, true);
+                LuaValue coArg = args.AsType(0, "isyieldable", DataType.Thread, true);
                 if (coArg.Type == DataType.Thread)
                 {
                     Coroutine co = coArg.Coroutine;
                     // A coroutine is yieldable if it's running or suspended (but not dead or main)
                     CoroutineState state = co.State;
-                    return DynValue.FromBoolean(
+                    return LuaValue.FromBoolean(
                         state == CoroutineState.Running
                             || state == CoroutineState.Suspended
                             || state == CoroutineState.NotStarted
@@ -354,7 +355,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
             }
 
-            return DynValue.FromBoolean(executionContext.IsYieldable());
+            return LuaValue.FromBoolean(executionContext.IsYieldable());
         }
     }
 }

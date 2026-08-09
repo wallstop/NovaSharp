@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Assertions.Extensions;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -62,14 +63,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             bool found = wrapper.TryIndex(
                 script,
                 new object(),
-                DynValue.NewNumber(42),
+                LuaValue.NewNumber(42),
                 isDirectIndexing: true,
-                out DynValue result
+                out LuaValue result
             );
 
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(found).IsTrue().ConfigureAwait(false);
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -77,7 +78,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         {
             StubUserDataDescriptor inner = new("TestFile", typeof(object))
             {
-                IndexResult = DynValue.NewString("method-result"),
+                IndexResult = LuaValue.NewString("method-result"),
             };
             IUserDataDescriptor wrapper = CreateDescriptor(inner);
             Script script = new();
@@ -85,9 +86,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             bool found = wrapper.TryIndex(
                 script,
                 new object(),
-                DynValue.NewString("read"),
+                LuaValue.NewString("read"),
                 isDirectIndexing: true,
-                out DynValue result
+                out LuaValue result
             );
 
             await Assert.That(found).IsTrue().ConfigureAwait(false);
@@ -100,7 +101,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         {
             StubUserDataDescriptor inner = new("TestFile", typeof(object))
             {
-                IndexResult = DynValue.NewString("null-index-result"),
+                IndexResult = LuaValue.NewString("null-index-result"),
             };
             IUserDataDescriptor wrapper = CreateDescriptor(inner);
             Script script = new();
@@ -110,11 +111,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 new object(),
                 index: default,
                 isDirectIndexing: true,
-                out DynValue result
+                out LuaValue result
             );
 
             await Assert.That(found).IsTrue().ConfigureAwait(false);
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -128,8 +129,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 wrapper.SetIndex(
                     script,
                     new object(),
-                    DynValue.NewNumber(42),
-                    DynValue.NewString("value"),
+                    LuaValue.NewNumber(42),
+                    LuaValue.NewString("value"),
                     isDirectIndexing: true
                 )
             )!;
@@ -147,8 +148,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             bool result = wrapper.SetIndex(
                 script,
                 new object(),
-                DynValue.NewString("field"),
-                DynValue.NewString("value"),
+                LuaValue.NewString("field"),
+                LuaValue.NewString("value"),
                 isDirectIndexing: true
             );
 
@@ -168,7 +169,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                     script,
                     new object(),
                     index: default,
-                    DynValue.NewString("value"),
+                    LuaValue.NewString("value"),
                     isDirectIndexing: true
                 )
             );
@@ -195,12 +196,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         {
             StubUserDataDescriptor inner = new("TestFile", typeof(object))
             {
-                MetaIndexResult = DynValue.NewString("__gc"),
+                MetaIndexResult = LuaValue.NewString("__gc"),
             };
             IUserDataDescriptor wrapper = CreateDescriptor(inner);
             Script script = new();
 
-            bool found = wrapper.TryMetaIndex(script, new object(), "__gc", out DynValue result);
+            bool found = wrapper.TryMetaIndex(script, new object(), "__gc", out LuaValue result);
 
             await Assert.That(found).IsTrue().ConfigureAwait(false);
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
@@ -269,11 +270,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
             public Type Type { get; }
 
-            public DynValue IndexResult { get; set; } = DynValue.Nil;
+            public LuaValue IndexResult { get; set; } = LuaValue.Nil;
 
             public string AsStringResult { get; set; } = "stub";
 
-            public DynValue MetaIndexResult { get; set; } = DynValue.Nil;
+            public LuaValue MetaIndexResult { get; set; } = LuaValue.Nil;
 
             public bool IsTypeCompatibleResult { get; set; }
 
@@ -284,9 +285,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             public bool TryIndex(
                 Script script,
                 object obj,
-                DynValue index,
+                LuaValue index,
                 bool isDirectIndexing,
-                out DynValue value
+                out LuaValue value
             )
             {
                 value = IndexResult;
@@ -296,8 +297,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             public bool SetIndex(
                 Script script,
                 object obj,
-                DynValue index,
-                DynValue value,
+                LuaValue index,
+                LuaValue value,
                 bool isDirectIndexing
             )
             {
@@ -310,7 +311,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 return AsStringResult;
             }
 
-            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
             {
                 value = MetaIndexResult;
                 return true;

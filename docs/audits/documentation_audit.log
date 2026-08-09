@@ -2,62 +2,64 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 172 undocumented public/internal type declarations.
+Found 176 undocumented public/internal type declarations.
 
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs
   - line 9: missing XML docs for `class ComVisibleAttribute`
   - line 14: missing XML docs for `class GuidAttribute`
+- src/runtime/WallstopStudios.NovaSharp.Interpreter/CompiledScript.cs
+  - line 621: missing XML docs for `ExecuteValues()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/DebugModule.cs
-  - line 1441: missing XML docs for `Value`
-  - line 1446: missing XML docs for `Function`
-  - line 1447: missing XML docs for `Mask`
-  - line 1448: missing XML docs for `Count`
-  - line 1461: missing XML docs for `Upvalue`
-  - line 1463: missing XML docs for `ReferenceId`
-  - line 1465: missing XML docs for `ToString()`
-  - line 1476: missing XML docs for `Name`
-  - line 1478: missing XML docs for `Type`
-  - line 1480: missing XML docs for `TryIndex()`
-  - line 1492: missing XML docs for `SetIndex()`
-  - line 1503: missing XML docs for `AsString()`
-  - line 1513: missing XML docs for `TryMetaIndex()`
-  - line 1519: missing XML docs for `IsTypeCompatible()`
+  - line 1442: missing XML docs for `Value`
+  - line 1447: missing XML docs for `Function`
+  - line 1448: missing XML docs for `Mask`
+  - line 1449: missing XML docs for `Count`
+  - line 1462: missing XML docs for `Upvalue`
+  - line 1464: missing XML docs for `ReferenceId`
+  - line 1466: missing XML docs for `ToString()`
+  - line 1477: missing XML docs for `Name`
+  - line 1479: missing XML docs for `Type`
+  - line 1481: missing XML docs for `TryIndex()`
+  - line 1493: missing XML docs for `SetIndex()`
+  - line 1504: missing XML docs for `AsString()`
+  - line 1514: missing XML docs for `TryMetaIndex()`
+  - line 1520: missing XML docs for `IsTypeCompatible()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/IO/FileUserDataDescriptor.cs
-  - line 20: missing XML docs for `Name`
-  - line 22: missing XML docs for `Type`
-  - line 24: missing XML docs for `Index()`
-  - line 31: missing XML docs for `TryIndex()`
-  - line 49: missing XML docs for `SetIndex()`
-  - line 66: missing XML docs for `AsString()`
-  - line 71: missing XML docs for `MetaIndex()`
-  - line 76: missing XML docs for `TryMetaIndex()`
-  - line 81: missing XML docs for `IsTypeCompatible()`
+  - line 21: missing XML docs for `Name`
+  - line 23: missing XML docs for `Type`
+  - line 25: missing XML docs for `Index()`
+  - line 32: missing XML docs for `TryIndex()`
+  - line 50: missing XML docs for `SetIndex()`
+  - line 67: missing XML docs for `AsString()`
+  - line 72: missing XML docs for `MetaIndex()`
+  - line 79: missing XML docs for `TryMetaIndex()`
+  - line 84: missing XML docs for `IsTypeCompatible()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableIteratorsModule.cs
-  - line 28: missing XML docs for `NextArray`
-  - line 30: missing XML docs for `Next`
+  - line 29: missing XML docs for `NextArray`
+  - line 31: missing XML docs for `Next`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableModule.cs
-  - line 35: missing XML docs for `Compare()`
+  - line 36: missing XML docs for `Compare()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/Utf8Module.cs
-  - line 33: missing XML docs for `Strict`
-  - line 35: missing XML docs for `Lax`
+  - line 34: missing XML docs for `Strict`
+  - line 36: missing XML docs for `Lax`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/CollectionPools.cs
-  - line 147: missing XML docs for `GetStatistics()`
-  - line 152: missing XML docs for `Trim()`
-  - line 218: missing XML docs for `GetStatistics()`
-  - line 223: missing XML docs for `Trim()`
-  - line 277: missing XML docs for `GetStatistics()`
-  - line 282: missing XML docs for `Trim()`
-  - line 325: missing XML docs for `GetStatistics()`
-  - line 330: missing XML docs for `Trim()`
-  - line 373: missing XML docs for `GetStatistics()`
-  - line 378: missing XML docs for `Trim()`
+  - line 148: missing XML docs for `GetStatistics()`
+  - line 153: missing XML docs for `Trim()`
+  - line 219: missing XML docs for `GetStatistics()`
+  - line 224: missing XML docs for `Trim()`
+  - line 278: missing XML docs for `GetStatistics()`
+  - line 283: missing XML docs for `Trim()`
+  - line 326: missing XML docs for `GetStatistics()`
+  - line 331: missing XML docs for `Trim()`
+  - line 374: missing XML docs for `GetStatistics()`
+  - line 379: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/DynValueArrayPool.cs
-  - line 61: missing XML docs for `Array`
-  - line 63: missing XML docs for `ReturnedAt`
-  - line 82: missing XML docs for `GetStatistics()`
-  - line 87: missing XML docs for `Trim()`
-  - line 288: missing XML docs for `GetStatistics()`
-  - line 322: missing XML docs for `Trim()`
+  - line 62: missing XML docs for `Array`
+  - line 64: missing XML docs for `ReturnedAt`
+  - line 83: missing XML docs for `GetStatistics()`
+  - line 88: missing XML docs for `Trim()`
+  - line 289: missing XML docs for `GetStatistics()`
+  - line 323: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/GenericPool.cs
   - line 29: missing XML docs for `Value`
   - line 31: missing XML docs for `ReturnedAt`
@@ -103,16 +105,21 @@ Found 172 undocumented public/internal type declarations.
   - line 281: missing XML docs for `GetStatistics()`
   - line 286: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/CallbackFunction.cs
-  - line 23: missing XML docs for `class SharedState`
-  - line 25: missing XML docs for `AdditionalData`
+  - line 24: missing XML docs for `class SharedState`
+  - line 26: missing XML docs for `AdditionalData`
+- src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/Closure.cs
+  - line 459: missing XML docs for `CallValues()`
+- src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/Coroutine.cs
+  - line 207: missing XML docs for `ResumeValues()`
+  - line 455: missing XML docs for `ResumeValues()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/UserData.cs
-  - line 681: missing XML docs for `Dispose()`
+  - line 682: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Errors/InterpreterException.cs
   - line 101: missing XML docs for `ErrorHandlerBeforeUnwindDecorated`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/CallStackItem.cs
-  - line 54: missing XML docs for `HasErrorHandlerBeforeUnwind`
-  - line 56: missing XML docs for `ErrorHandlerBeforeUnwindInProgress`
-  - line 58: missing XML docs for `SetErrorHandlerBeforeUnwind()`
+  - line 55: missing XML docs for `HasErrorHandlerBeforeUnwind`
+  - line 57: missing XML docs for `ErrorHandlerBeforeUnwindInProgress`
+  - line 59: missing XML docs for `SetErrorHandlerBeforeUnwind()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/CallStackItemPool.cs
   - line 61: missing XML docs for `Item`
   - line 63: missing XML docs for `ReturnedAt`
@@ -121,23 +128,23 @@ Found 172 undocumented public/internal type declarations.
   - line 169: missing XML docs for `GetStatistics()`
   - line 194: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs
-  - line 42: missing XML docs for `ReturnAddress`
-  - line 44: missing XML docs for `ErrorHandler`
-  - line 46: missing XML docs for `Continuation`
-  - line 48: missing XML docs for `ErrorHandlerBeforeUnwind`
-  - line 50: missing XML docs for `HasErrorHandlerBeforeUnwind`
-  - line 1549: missing XML docs for `Count`
+  - line 43: missing XML docs for `ReturnAddress`
+  - line 45: missing XML docs for `ErrorHandler`
+  - line 47: missing XML docs for `Continuation`
+  - line 49: missing XML docs for `ErrorHandlerBeforeUnwind`
+  - line 51: missing XML docs for `HasErrorHandlerBeforeUnwind`
+  - line 1550: missing XML docs for `Count`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/BasicDescriptors/DispatchingUserDataDescriptor.cs
-  - line 313: missing XML docs for `TryIndex()`
-  - line 815: missing XML docs for `TryMetaIndex()`
+  - line 314: missing XML docs for `TryIndex()`
+  - line 816: missing XML docs for `TryMetaIndex()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/CustomConverterRegistry.cs
-  - line 51: missing XML docs for `Converter`
-  - line 53: missing XML docs for `TryConverter`
+  - line 52: missing XML docs for `Converter`
+  - line 54: missing XML docs for `TryConverter`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/UserDataAccess.cs
-  - line 12: missing XML docs for `TryIndex()`
-  - line 31: missing XML docs for `TryMetaIndex()`
-  - line 49: missing XML docs for `TryIndex()`
-  - line 67: missing XML docs for `TryMetaIndex()`
+  - line 13: missing XML docs for `TryIndex()`
+  - line 32: missing XML docs for `TryMetaIndex()`
+  - line 50: missing XML docs for `TryIndex()`
+  - line 68: missing XML docs for `TryMetaIndex()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/UserDataRegistries/ExtensionMethodsRegistry.cs
   - line 40: missing XML docs for `SyncRoot`
   - line 42: missing XML docs for `Registry`
@@ -148,11 +155,11 @@ Found 172 undocumented public/internal type declarations.
   - line 96: missing XML docs for `Clone()`
   - line 313: missing XML docs for `EnterIsolationScope()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs
-  - line 624: missing XML docs for `BeginDefaultOptionsScope()`
-  - line 732: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
-  - line 4771: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
-  - line 4779: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
-  - line 4906: missing XML docs for `Dispose()`
+  - line 625: missing XML docs for `BeginDefaultOptionsScope()`
+  - line 733: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
+  - line 4806: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
+  - line 4814: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
+  - line 4941: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf2.cs
   - line 198: missing XML docs for `FromT0()`
   - line 211: missing XML docs for `FromT1()`

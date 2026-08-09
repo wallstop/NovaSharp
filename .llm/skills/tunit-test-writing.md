@@ -141,8 +141,8 @@ ______________________________________________________________________
 public async Task MathTypeAvailableInLua53Plus(LuaCompatibilityVersion version)
 {
     Script script = CreateScript(version);
-    DynValue result = script.DoString("return math.type(5)");
-    await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
+    LuaValue result = script.DoString("return math.type(5)");
+    await Assert.That(result.AsString()).IsEqualTo("integer").ConfigureAwait(false);
 }
 ```
 
@@ -154,8 +154,8 @@ public async Task MathTypeAvailableInLua53Plus(LuaCompatibilityVersion version)
 public async Task MathTypeShouldBeNilInPreLua53(LuaCompatibilityVersion version)
 {
     Script script = CreateScript(version);
-    DynValue result = script.DoString("return math.type");
-    await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+    LuaValue result = script.DoString("return math.type");
+    await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
 }
 ```
 

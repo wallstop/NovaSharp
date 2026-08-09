@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -73,7 +74,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = NewScript(version);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function f() return 1 + f() end
                 local ok, err = pcall(f)
@@ -99,7 +100,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             // ~20k non-tail frames is far below the default ceiling (~250k overflow depth) yet far deeper
             // than any realistic program, proving the default ceiling does not clip legitimate recursion.
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function sum(n)
                     if n == 0 then return 0 end
@@ -170,7 +171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             // Drive many caught overflows, then confirm the VM still executes normally (pool/stacks
             // recovered cleanly each time, no rented frame orphaned on the overflow path).
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function f(n) return 1 + f(n + 1) end
                 local failures = 0
@@ -209,21 +210,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             // unwind. When pcall's target is a CLR function, pcall invokes it directly and catches the
             // overflow in CLR (ErrorHandlingModule CLR-target path), so the entry setup must roll back the
             // value-stack slots it pushed or they are left orphaned on the shared value stack.
-            script.Globals["reenter"] = DynValue.NewCallback(
+            script.Globals["reenter"] = LuaValue.NewCallback(
                 (context, args) => context.Call(args[0])
             );
-            script.Globals["probe_before"] = DynValue.NewCallback(
+            script.Globals["probe_before"] = LuaValue.NewCallback(
                 (context, _) =>
                 {
                     depthBefore = context.GetCallingProcessorValueStackDepthForTests();
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
-            script.Globals["probe_after"] = DynValue.NewCallback(
+            script.Globals["probe_after"] = LuaValue.NewCallback(
                 (context, _) =>
                 {
                     depthAfter = context.GetCallingProcessorValueStackDepthForTests();
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
 
@@ -256,7 +257,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             // ceiling for coroutines created later: they inherit the ceiling baked at script creation.
             script.Options.MaxVmCallStackSize = 0;
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local co = coroutine.create(function()
                     local function f(n) return 1 + f(n + 1) end

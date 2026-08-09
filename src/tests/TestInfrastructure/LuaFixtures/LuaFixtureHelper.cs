@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.LuaFixtures
     using System.Runtime.CompilerServices;
     using System.Text;
     using System.Text.RegularExpressions;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
@@ -205,7 +206,7 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.LuaFixtures
         /// <param name="script">The script to execute the fixture with.</param>
         /// <param name="suffix">Optional suffix for fixtures with multiple snippets.</param>
         /// <returns>The result of executing the fixture.</returns>
-        public DynValue RunFixture(Script script, string suffix = null)
+        public LuaValue RunFixture(Script script, string suffix = null)
         {
             ArgumentNullException.ThrowIfNull(script);
 
@@ -218,7 +219,7 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.LuaFixtures
         /// </summary>
         /// <param name="suffix">Optional suffix for fixtures with multiple snippets.</param>
         /// <returns>The result of executing the fixture.</returns>
-        public DynValue RunFixture(string suffix = null)
+        public LuaValue RunFixture(string suffix = null)
         {
             return RunFixture(new Script(), suffix);
         }

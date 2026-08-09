@@ -22,6 +22,7 @@ using MoonScript = MoonSharp.Interpreter.Script;
 using MoonScriptExecutionContext = MoonSharp.Interpreter.ScriptExecutionContext;
 using NLuaFunction = NLua.LuaFunction;
 using NLuaState = NLua.Lua;
+using NovaLuaValue = global::NovaSharp.LuaValue;
 
 /// <summary>
 /// BenchmarkDotNet suite that compares NovaSharp, MoonSharp, NLua, and Lua-CSharp compilation/execution throughput.
@@ -167,7 +168,7 @@ public class LuaPerformanceBenchmarks : IDisposable
     /// <summary>
     /// Executes the previously compiled NovaSharp chunk.
     /// </summary>
-    public DynValue NovaSharpExecute() => _novaSharpFunction.Execute();
+    public NovaLuaValue NovaSharpExecute() => _novaSharpFunction.Execute();
 
     [Benchmark(Description = "MoonSharp Compile")]
     /// <summary>
@@ -400,9 +401,9 @@ public class LuaInteropBenchmarks : IDisposable
     private Script _novaSharpLuaToClrScript;
     private CompiledScript _novaSharpLuaToClrFunction;
     private Script _novaSharpClrToLuaScript;
-    private DynValue _novaSharpAddFunction = DynValue.Nil;
-    private DynValue _novaSharpOne = DynValue.Nil;
-    private DynValue _novaSharpTwo = DynValue.Nil;
+    private NovaLuaValue _novaSharpAddFunction = NovaLuaValue.Nil;
+    private NovaLuaValue _novaSharpOne = NovaLuaValue.Nil;
+    private NovaLuaValue _novaSharpTwo = NovaLuaValue.Nil;
     private MoonScript _moonSharpLuaToClrScript;
     private MoonDynValue _moonSharpLuaToClrFunction = MoonDynValue.Nil;
     private MoonScript _moonSharpClrToLuaScript;
@@ -437,7 +438,7 @@ public class LuaInteropBenchmarks : IDisposable
         MoonScript.WarmUp();
 
         _novaSharpLuaToClrScript = new Script(CoreModulePresets.Complete);
-        _novaSharpLuaToClrScript.Globals["add"] = DynValue.NewCallbackView(
+        _novaSharpLuaToClrScript.Globals["add"] = NovaLuaValue.NewCallbackView(
             (ScriptFunctionCallbackViewNoContext)AddForNovaSharp,
             "add"
         );
@@ -449,8 +450,8 @@ public class LuaInteropBenchmarks : IDisposable
         _novaSharpClrToLuaScript = new Script(CoreModulePresets.Complete);
         _novaSharpClrToLuaScript.DoString(ClrToLuaSource, null, "interop_clr_to_lua");
         _novaSharpAddFunction = _novaSharpClrToLuaScript.Globals.Get("add");
-        _novaSharpOne = DynValue.FromNumber(1);
-        _novaSharpTwo = DynValue.FromNumber(2);
+        _novaSharpOne = NovaLuaValue.FromNumber(1);
+        _novaSharpTwo = NovaLuaValue.FromNumber(2);
 
         _moonSharpLuaToClrScript = new MoonScript(MoonCoreModules.Preset_Complete);
         _moonSharpLuaToClrScript.Globals["add"] = MoonDynValue.NewCallback(AddForMoonSharp, "add");
@@ -505,9 +506,9 @@ public class LuaInteropBenchmarks : IDisposable
     /// <summary>
     /// Executes one million Lua-to-CLR two-argument callback calls on NovaSharp.
     /// </summary>
-    public DynValue NovaSharpLuaToClrInterop()
+    public NovaLuaValue NovaSharpLuaToClrInterop()
     {
-        DynValue result = _novaSharpLuaToClrFunction.Execute();
+        NovaLuaValue result = _novaSharpLuaToClrFunction.Execute();
         ValidateInteropTotal(
             nameof(NovaSharpLuaToClrInterop),
             result.Number,
@@ -575,7 +576,7 @@ public class LuaInteropBenchmarks : IDisposable
         for (int i = 0; i < InteropCallCount; i++)
         {
             total += _novaSharpClrToLuaScript
-                .Call(_novaSharpAddFunction, _novaSharpOne, _novaSharpTwo)
+                .CallValues(_novaSharpAddFunction, _novaSharpOne, _novaSharpTwo)
                 .Number;
         }
 
@@ -644,9 +645,9 @@ public class LuaInteropBenchmarks : IDisposable
         return total;
     }
 
-    private static DynValue AddForNovaSharp(CallbackArgumentsView args)
+    private static NovaLuaValue AddForNovaSharp(CallbackArgumentsView args)
     {
-        return DynValue.FromNumber(args[0].Number + args[1].Number);
+        return NovaLuaValue.FromNumber(args[0].Number + args[1].Number);
     }
 
     private static string CreateLuaToClrSource(int callCount) =>

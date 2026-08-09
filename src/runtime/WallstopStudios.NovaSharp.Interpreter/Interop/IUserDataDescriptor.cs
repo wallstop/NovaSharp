@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -29,9 +30,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         public bool TryIndex(
             Script script,
             object obj,
-            DynValue index,
+            LuaValue index,
             bool isDirectIndexing,
-            out DynValue value
+            out LuaValue value
         );
 
         /// <summary>
@@ -46,8 +47,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         public bool SetIndex(
             Script script,
             object obj,
-            DynValue index,
-            DynValue value,
+            LuaValue index,
+            LuaValue value,
             bool isDirectIndexing
         );
 
@@ -75,7 +76,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <param name="obj">The object (null if a static request is done)</param>
         /// <param name="metaname">The name of the metamember.</param>
         /// <returns></returns>
-        public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value);
+        public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value);
 
         /// <summary>
         /// Determines whether the specified object is compatible with the specified type.

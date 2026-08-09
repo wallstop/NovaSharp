@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.CodeDom;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Hardwire;
     using WallstopStudios.NovaSharp.Hardwire.Generators;
@@ -22,8 +23,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
 
             Table descriptorTable = new(owner: null);
-            descriptorTable.Set("name", DynValue.NewString("Items"));
-            descriptorTable.Set("setter", DynValue.True);
+            descriptorTable.Set("name", LuaValue.NewString("Items"));
+            descriptorTable.Set("setter", LuaValue.True);
 
             CodeTypeMemberCollection members = new CodeTypeMemberCollection();
             CodeExpression[] expressions = generator.Generate(descriptorTable, context, members);
@@ -58,9 +59,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
 
             Table descriptorTable = new(owner: null);
-            descriptorTable.Set("name", DynValue.NewString("Entries"));
-            descriptorTable.Set("setter", DynValue.False);
-            descriptorTable.Set("params", DynValue.NewTable(CreateParameterList()));
+            descriptorTable.Set("name", LuaValue.NewString("Entries"));
+            descriptorTable.Set("setter", LuaValue.False);
+            descriptorTable.Set("params", LuaValue.NewTable(CreateParameterList()));
 
             CodeTypeMemberCollection members = new CodeTypeMemberCollection();
             _ = generator.Generate(descriptorTable, context, members);
@@ -125,15 +126,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             Table list = new(owner: null);
             Table descriptor = new(owner: null);
-            descriptor.Set("name", DynValue.NewString("value"));
-            descriptor.Set("origtype", DynValue.NewString("System.Int32"));
-            descriptor.Set("default", DynValue.False);
-            descriptor.Set("out", DynValue.False);
-            descriptor.Set("ref", DynValue.False);
-            descriptor.Set("varargs", DynValue.False);
-            descriptor.Set("restricted", DynValue.False);
-            descriptor.Set("type", DynValue.NewString("System.Int32"));
-            list.Set(1, DynValue.NewTable(descriptor));
+            descriptor.Set("name", LuaValue.NewString("value"));
+            descriptor.Set("origtype", LuaValue.NewString("System.Int32"));
+            descriptor.Set("default", LuaValue.False);
+            descriptor.Set("out", LuaValue.False);
+            descriptor.Set("ref", LuaValue.False);
+            descriptor.Set("varargs", LuaValue.False);
+            descriptor.Set("restricted", LuaValue.False);
+            descriptor.Set("type", LuaValue.NewString("System.Int32"));
+            list.Set(1, LuaValue.NewTable(descriptor));
             return list;
         }
 

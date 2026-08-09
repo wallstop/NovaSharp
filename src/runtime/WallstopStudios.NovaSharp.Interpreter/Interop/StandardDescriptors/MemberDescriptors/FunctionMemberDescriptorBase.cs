@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
     using System;
     using System.Collections.Generic;
     using System.Reflection;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -116,7 +117,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         /// <param name="script">The script for which the callback must be generated.</param>
         /// <param name="obj">The object (null for static).</param>
         /// <returns></returns>
-        public Func<ScriptExecutionContext, CallbackArguments, DynValue> GetCallback(
+        public Func<ScriptExecutionContext, CallbackArguments, LuaValue> GetCallback(
             Script script,
             object obj = null
         )
@@ -136,24 +137,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         }
 
         /// <summary>
-        /// Gets the callback function as a DynValue.
+        /// Gets the callback function as a LuaValue.
         /// </summary>
         /// <param name="script">The script for which the callback must be generated.</param>
         /// <param name="obj">The object (null for static).</param>
         /// <returns></returns>
-        public DynValue GetCallbackAsDynValue(Script script, object obj = null)
+        public LuaValue GetCallbackAsDynValue(Script script, object obj = null)
         {
-            return DynValue.NewCallback(GetCallbackFunction(script, obj));
+            return LuaValue.NewCallback(GetCallbackFunction(script, obj));
         }
 
         /// <summary>
-        /// Creates a callback DynValue starting from a MethodInfo.
+        /// Creates a callback LuaValue starting from a MethodInfo.
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="mi">The mi.</param>
         /// <param name="obj">The object.</param>
         /// <returns></returns>
-        public static DynValue CreateCallbackDynValue(
+        public static LuaValue CreateCallbackDynValue(
             Script script,
             MethodInfo mi,
             object obj = null
@@ -270,9 +271,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                 }
                 else if (i == parameters.Length - 1 && VarArgsArrayType != null)
                 {
-                    List<DynValue> extraArgs = new();
+                    List<LuaValue> extraArgs = new();
 
-                    while (args.TryRawGet(j, translateVoids: false, out DynValue arg))
+                    while (args.TryRawGet(j, translateVoids: false, out LuaValue arg))
                     {
                         j += 1;
                         extraArgs.Add(arg);
@@ -283,7 +284,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                     // given a single table parameter, should it use it as an array or as an object itself ?
                     if (extraArgs.Count == 1)
                     {
-                        DynValue arg = extraArgs[0];
+                        LuaValue arg = extraArgs[0];
 
                         if (arg.Type == DataType.UserData && arg.UserData.Object != null)
                         {
@@ -321,13 +322,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                 // else, convert it
                 else
                 {
-                    DynValue arg = args.TryRawGet(
+                    LuaValue arg = args.TryRawGet(
                         j,
                         translateVoids: false,
-                        out DynValue suppliedArgument
+                        out LuaValue suppliedArgument
                     )
                         ? suppliedArgument
-                        : DynValue.Void;
+                        : LuaValue.Void;
                     pars[i] = ScriptToClrConversions.DynValueToObjectOfType(
                         arg,
                         parameters[i].Type,
@@ -347,9 +348,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         /// <param name="script">The script.</param>
         /// <param name="outParams">The out parameters indices, or null. See <see cref="BuildArgumentList" />.</param>
         /// <param name="pars">The parameters passed to the function.</param>
-        /// <param name="retv">The return value from the function. Use DynValue.Void if the function returned no value.</param>
-        /// <returns>A DynValue to be returned to scripts</returns>
-        protected static DynValue BuildReturnValue(
+        /// <param name="retv">The return value from the function. Use LuaValue.Void if the function returned no value.</param>
+        /// <returns>A LuaValue to be returned to scripts</returns>
+        protected static LuaValue BuildReturnValue(
             Script script,
             IList<int> outParams,
             object[] pars,
@@ -367,11 +368,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
             }
             else
             {
-                DynValue[] rets = new DynValue[outParams.Count + 1];
+                LuaValue[] rets = new LuaValue[outParams.Count + 1];
 
-                if (retv is DynValue value && value.IsVoid())
+                if (retv is LuaValue value && value.IsVoid())
                 {
-                    rets[0] = DynValue.Nil;
+                    rets[0] = LuaValue.Nil;
                 }
                 else
                 {
@@ -386,7 +387,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                     );
                 }
 
-                return DynValue.NewTuple(rets);
+                return LuaValue.NewTuple(rets);
             }
         }
 
@@ -398,7 +399,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         /// <param name="context">The context.</param>
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
-        public abstract DynValue Execute(
+        public abstract LuaValue Execute(
             Script script,
             object obj,
             ScriptExecutionContext context,
@@ -414,14 +415,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         }
 
         /// <summary>
-        /// Gets the value of this member as a <see cref="DynValue" /> to be exposed to scripts.
+        /// Gets the value of this member as a <see cref="LuaValue" /> to be exposed to scripts.
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="obj">The object owning this member, or null if static.</param>
         /// <returns>
-        /// The value of this member as a <see cref="DynValue" />.
+        /// The value of this member as a <see cref="LuaValue" />.
         /// </returns>
-        public virtual DynValue GetValue(Script script, object obj)
+        public virtual LuaValue GetValue(Script script, object obj)
         {
             this.CheckAccess(MemberDescriptorAccess.CanRead, obj);
             return GetCallbackAsDynValue(script, obj);
@@ -434,7 +435,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         /// <param name="obj">The object.</param>
         /// <param name="value">The value to assign.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        public virtual void SetValue(Script script, object obj, DynValue value)
+        public virtual void SetValue(Script script, object obj, LuaValue value)
         {
             this.CheckAccess(MemberDescriptorAccess.CanWrite, obj);
         }

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -24,9 +25,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         public async Task SerializePrimeTableFormatsEntries()
         {
             Table table = new(owner: null);
-            table.Set(DynValue.NewString("answer"), DynValue.NewNumber(42));
-            table.Set(DynValue.NewString("message"), DynValue.NewString("hello"));
-            table.Set(DynValue.NewString("flag"), DynValue.NewBoolean(true));
+            table.SetValue(LuaValue.NewString("answer"), LuaValue.NewNumber(42));
+            table.SetValue(LuaValue.NewString("message"), LuaValue.NewString("hello"));
+            table.SetValue(LuaValue.NewString("flag"), LuaValue.NewBoolean(true));
 
             string serialized = table.Serialize(prefixReturn: true);
 
@@ -53,10 +54,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         public async Task SerializeNestedTableRecurses()
         {
             Table inner = new(owner: null);
-            inner.Set(DynValue.NewString("value"), DynValue.NewNumber(1));
+            inner.SetValue(LuaValue.NewString("value"), LuaValue.NewNumber(1));
 
             Table outer = new(owner: null);
-            outer.Set(DynValue.NewString("inner"), DynValue.NewTable(inner));
+            outer.SetValue(LuaValue.NewString("inner"), LuaValue.NewTable(inner));
 
             string serialized = outer.Serialize(prefixReturn: false);
 
@@ -71,8 +72,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         public async Task SerializeInvalidIdentifierUsesBracketNotation()
         {
             Table table = new(owner: null);
-            table.Set(DynValue.NewString("with space"), DynValue.NewNumber(3));
-            table.Set(DynValue.NewString("local"), DynValue.NewNumber(4));
+            table.SetValue(LuaValue.NewString("with space"), LuaValue.NewNumber(3));
+            table.SetValue(LuaValue.NewString("local"), LuaValue.NewNumber(4));
 
             string serialized = table.Serialize(prefixReturn: false);
 
@@ -84,8 +85,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         public async Task SerializeNonStringAndDigitPrefixedKeysUseIndexerNotation()
         {
             Table table = new(owner: null);
-            table.Set(DynValue.NewNumber(5), DynValue.NewString("value"));
-            table.Set(DynValue.NewString("1start"), DynValue.NewNumber(10));
+            table.SetValue(LuaValue.NewNumber(5), LuaValue.NewString("value"));
+            table.SetValue(LuaValue.NewString("1start"), LuaValue.NewNumber(10));
 
             string serialized = table.Serialize(prefixReturn: false);
 
@@ -109,12 +110,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         [global::TUnit.Core.Test]
         public async Task SerializeValueEscapesStringAndHandlesTuple()
         {
-            DynValue str = DynValue.NewString("line\nbreak");
+            LuaValue str = LuaValue.NewString("line\nbreak");
             await Assert
                 .That(SerializationExtensions.SerializeValue(str))
                 .IsEqualTo("\"line\\nbreak\"");
 
-            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(5), DynValue.NewNumber(6));
+            LuaValue tuple = LuaValue.NewTuple(LuaValue.NewNumber(5), LuaValue.NewNumber(6));
             await Assert
                 .That(SerializationExtensions.SerializeValue(tuple))
                 .IsEqualTo("5")
@@ -125,10 +126,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         public async Task SerializeValueReturnsNilForVoidAndNil()
         {
             await Assert
-                .That(SerializationExtensions.SerializeValue(DynValue.Nil))
+                .That(SerializationExtensions.SerializeValue(LuaValue.Nil))
                 .IsEqualTo("nil");
             await Assert
-                .That(SerializationExtensions.SerializeValue(DynValue.Void))
+                .That(SerializationExtensions.SerializeValue(LuaValue.Void))
                 .IsEqualTo("nil");
         }
 
@@ -136,17 +137,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         public async Task SerializeValueSerializesBooleans()
         {
             await Assert
-                .That(SerializationExtensions.SerializeValue(DynValue.NewBoolean(true)))
+                .That(SerializationExtensions.SerializeValue(LuaValue.NewBoolean(true)))
                 .IsEqualTo("true");
             await Assert
-                .That(SerializationExtensions.SerializeValue(DynValue.NewBoolean(false)))
+                .That(SerializationExtensions.SerializeValue(LuaValue.NewBoolean(false)))
                 .IsEqualTo("false");
         }
 
         [global::TUnit.Core.Test]
         public async Task SerializeValueTupleWithNoValuesReturnsNil()
         {
-            DynValue emptyTuple = DynValue.NewTuple(Array.Empty<DynValue>());
+            LuaValue emptyTuple = LuaValue.NewTuple(Array.Empty<LuaValue>());
 
             await Assert
                 .That(SerializationExtensions.SerializeValue(emptyTuple))
@@ -157,7 +158,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         [global::TUnit.Core.Test]
         public async Task SerializeValueUsesInvariantCultureForNumbers()
         {
-            DynValue number = DynValue.NewNumber(1234.5);
+            LuaValue number = LuaValue.NewNumber(1234.5);
 
             await Assert
                 .That(SerializationExtensions.SerializeValue(number))
@@ -169,16 +170,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         public async Task SerializeRoundtripExecutesInLua()
         {
             Table nested = new(owner: null);
-            nested.Set(DynValue.NewNumber(1), DynValue.NewString("first"));
+            nested.SetValue(LuaValue.NewNumber(1), LuaValue.NewString("first"));
 
             Table table = new(owner: null);
-            table.Set(DynValue.NewString("answer"), DynValue.NewNumber(42));
-            table.Set(DynValue.NewString("nested"), DynValue.NewTable(nested));
+            table.SetValue(LuaValue.NewString("answer"), LuaValue.NewNumber(42));
+            table.SetValue(LuaValue.NewString("nested"), LuaValue.NewTable(nested));
 
             string serialized = table.Serialize(prefixReturn: true);
 
             Script script = new(CoreModules.Basic);
-            DynValue evaluated = script.DoString(serialized);
+            LuaValue evaluated = script.DoString(serialized);
 
             await Assert.That(evaluated.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
             await Assert
@@ -186,7 +187,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
                 .IsEqualTo(42)
                 .ConfigureAwait(false);
 
-            DynValue nestedValue = evaluated.Table.Get("nested");
+            LuaValue nestedValue = evaluated.Table.Get("nested");
             await Assert.That(nestedValue.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
             await Assert
                 .That(nestedValue.Table.Get(1).String)
@@ -199,7 +200,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         {
             Script script = new(CoreModules.Basic | CoreModules.GlobalConsts);
             Table table = new(script);
-            table.Set(DynValue.NewNumber(1), DynValue.NewNumber(2));
+            table.SetValue(LuaValue.NewNumber(1), LuaValue.NewNumber(2));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 table.Serialize()
@@ -213,7 +214,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         {
             Script script = new(CoreModules.Basic | CoreModules.GlobalConsts);
             Table table = new(script);
-            DynValue tableValue = DynValue.NewTable(table);
+            LuaValue tableValue = LuaValue.NewTable(table);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 tableValue.SerializeValue()
@@ -243,7 +244,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Serialization
         [global::TUnit.Core.Test]
         public async Task SerializeValueThrowsForNonPrimitiveValues()
         {
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil, "nonPrimitive");
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.Nil, "nonPrimitive");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 callback.SerializeValue()

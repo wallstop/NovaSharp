@@ -1,17 +1,18 @@
 #if HASDYNAMIC
-using WallstopStudios.NovaSharp.Interpreter.Execution;
-using WallstopStudios.NovaSharp.Interpreter.DataTypes;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using WallstopStudios.NovaSharp.Interpreter.REPL;
-
 namespace WallstopStudios.NovaSharp.Interpreter
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using global::NovaSharp;
+    using DataTypes;
+    using Execution;
+    using REPL;
+
     /// <summary>
     /// This class contains extension methods providing async wrappers of many methods.
     /// Asynchronous execution is performed by scheduling the method on the thread pool (through a Task.Factory.StartNew).
@@ -22,12 +23,22 @@ namespace WallstopStudios.NovaSharp.Interpreter
     {
         private static Task<T> ExecAsync<T>(Func<T> func)
         {
-            return Task.Factory.StartNew<T>(func);
+            return Task.Factory.StartNew(
+                func,
+                CancellationToken.None,
+                TaskCreationOptions.DenyChildAttach,
+                TaskScheduler.Default
+            );
         }
 
         private static Task ExecAsyncVoid(Action func)
         {
-            return Task.Factory.StartNew(func);
+            return Task.Factory.StartNew(
+                func,
+                CancellationToken.None,
+                TaskCreationOptions.DenyChildAttach,
+                TaskScheduler.Default
+            );
         }
 
         /// <summary>
@@ -38,7 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="function">The function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public static Task<DynValue> CallAsync(this Closure function)
+        public static Task<LuaValue> CallAsync(this Closure function)
         {
             return ExecAsync(() => function.Call());
         }
@@ -52,7 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="args">The arguments to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public static Task<DynValue> CallAsync(this Closure function, params object[] args)
+        public static Task<LuaValue> CallAsync(this Closure function, params object[] args)
         {
             return ExecAsync(() => function.Call(args));
         }
@@ -66,7 +77,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="args">The arguments to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public static Task<DynValue> CallAsync(this Closure function, params DynValue[] args)
+        public static Task<LuaValue> CallAsync(this Closure function, LuaValue[] args)
         {
             return ExecAsync(() => function.Call(args));
         }
@@ -81,9 +92,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalContext">The global context.</param>
         /// <param name="codeFriendlyName">Name of the code - used to report errors, etc. Also used by debuggers to locate the original source file.</param>
         /// <returns>
-        /// A DynValue containing the result of the processing of the loaded chunk.
+        /// A LuaValue containing the result of the processing of the loaded chunk.
         /// </returns>
-        public static Task<DynValue> DoStringAsync(
+        public static Task<LuaValue> DoStringAsync(
             this Script script,
             string code,
             Table globalContext = null,
@@ -103,9 +114,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalContext">The global context.</param>
         /// <param name="codeFriendlyName">Name of the code - used to report errors, etc. Also used by debuggers to locate the original source file.</param>
         /// <returns>
-        /// A DynValue containing the result of the processing of the loaded chunk.
+        /// A LuaValue containing the result of the processing of the loaded chunk.
         /// </returns>
-        public static Task<DynValue> DoStreamAsync(
+        public static Task<LuaValue> DoStreamAsync(
             this Script script,
             Stream stream,
             Table globalContext = null,
@@ -125,9 +136,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalContext">The global context.</param>
         /// <param name="codeFriendlyName">Name of the code - used to report errors, etc. Also used by debuggers to locate the original source file.</param>
         /// <returns>
-        /// A DynValue containing the result of the processing of the loaded chunk.
+        /// A LuaValue containing the result of the processing of the loaded chunk.
         /// </returns>
-        public static Task<DynValue> DoFileAsync(
+        public static Task<LuaValue> DoFileAsync(
             this Script script,
             string filename,
             Table globalContext = null,
@@ -147,9 +158,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalTable">The global table to bind to this chunk.</param>
         /// <param name="funcFriendlyName">Name of the function used to report errors, etc.</param>
         /// <returns>
-        /// A DynValue containing a function which will execute the loaded code.
+        /// A LuaValue containing a function which will execute the loaded code.
         /// </returns>
-        public static Task<DynValue> LoadFunctionAsync(
+        public static Task<LuaValue> LoadFunctionAsync(
             this Script script,
             string code,
             Table globalTable = null,
@@ -169,9 +180,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalTable">The global table to bind to this chunk.</param>
         /// <param name="codeFriendlyName">Name of the code - used to report errors, etc.</param>
         /// <returns>
-        /// A DynValue containing a function which will execute the loaded code.
+        /// A LuaValue containing a function which will execute the loaded code.
         /// </returns>
-        public static Task<DynValue> LoadStringAsync(
+        public static Task<LuaValue> LoadStringAsync(
             this Script script,
             string code,
             Table globalTable = null,
@@ -191,9 +202,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalTable">The global table to bind to this chunk.</param>
         /// <param name="codeFriendlyName">Name of the code - used to report errors, etc.</param>
         /// <returns>
-        /// A DynValue containing a function which will execute the loaded code.
+        /// A LuaValue containing a function which will execute the loaded code.
         /// </returns>
-        public static Task<DynValue> LoadStreamAsync(
+        public static Task<LuaValue> LoadStreamAsync(
             this Script script,
             Stream stream,
             Table globalTable = null,
@@ -216,7 +227,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// stream is readonly!
         /// or
         /// function arg has upvalues other than _ENV</exception>
-        public static Task DumpAsync(this Script script, DynValue function, Stream stream)
+        public static Task DumpAsync(this Script script, LuaValue function, Stream stream)
         {
             return ExecAsyncVoid(() => script.Dump(function, stream));
         }
@@ -230,9 +241,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="globalContext">The global table to bind to this chunk.</param>
         /// <param name="friendlyFilename">The filename to be used in error messages.</param>
         /// <returns>
-        /// A DynValue containing a function which will execute the loaded code.
+        /// A LuaValue containing a function which will execute the loaded code.
         /// </returns>
-        public static Task<DynValue> LoadFileAsync(
+        public static Task<LuaValue> LoadFileAsync(
             this Script script,
             string filename,
             Table globalContext = null,
@@ -252,9 +263,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public static Task<DynValue> CallAsync(this Script script, DynValue function)
+        internal static Task<LuaValue> CallValuesAsync(this Script script, LuaValue function)
         {
-            return ExecAsync(() => script.Call(function));
+            return ExecAsync(() => script.CallValues(function));
         }
 
         /// <summary>
@@ -268,13 +279,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public static Task<DynValue> CallAsync(
+        internal static Task<LuaValue> CallValuesAsync(
             this Script script,
-            DynValue function,
-            params DynValue[] args
+            LuaValue function,
+            params LuaValue[] args
         )
         {
-            return ExecAsync(() => script.Call(function, args));
+            return ExecAsync(() => script.CallValues(function, args));
         }
 
         /// <summary>
@@ -288,13 +299,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The return value(s) of the function call.
         /// </returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public static Task<DynValue> CallAsync(
+        internal static Task<LuaValue> CallObjectArgumentsCoreAsync(
             this Script script,
-            DynValue function,
+            LuaValue function,
             params object[] args
         )
         {
-            return ExecAsync(() => script.Call(function, args));
+            return ExecAsync(() => script.CallObjectArgumentsCore(function, args));
         }
 
         /// <summary>
@@ -305,7 +316,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="function">The Lua/NovaSharp function to be called</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public static Task<DynValue> CallAsync(this Script script, object function)
+        public static Task<LuaValue> CallAsync(this Script script, object function)
         {
             return ExecAsync(() => script.Call(function));
         }
@@ -320,13 +331,31 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="args">The arguments to pass to the function.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
-        public static Task<DynValue> CallAsync(
+        public static Task<LuaValue> CallAsync(
             this Script script,
             object function,
             params object[] args
         )
         {
             return ExecAsync(() => script.Call(function, args));
+        }
+
+        /// <summary>
+        /// Asynchronously calls the specified function with preconverted Lua arguments.
+        /// This method is supported only on .NET 4.x and .NET 4.x PCL targets.
+        /// </summary>
+        /// <param name="script">The script.</param>
+        /// <param name="function">The Lua/NovaSharp function to be called.</param>
+        /// <param name="args">The preconverted Lua arguments to pass to the function.</param>
+        /// <returns>The return value(s) of the function call.</returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
+        public static Task<LuaValue> CallAsync(this Script script, object function, LuaValue[] args)
+        {
+            return ExecAsync(() =>
+            {
+                LuaValue convertedFunction = LuaValue.FromObject(script, function);
+                return script.CallValues(convertedFunction, args);
+            });
         }
 
         /// <summary>
@@ -357,7 +386,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>
         /// This method returns the result of the computation, or null if more input is needed for a computation.
         /// </returns>
-        public static Task<DynValue?> EvaluateAsync(this ReplInterpreter interpreter, string input)
+        public static Task<LuaValue?> EvaluateAsync(this ReplInterpreter interpreter, string input)
         {
             return ExecAsync(() => interpreter.Evaluate(input));
         }
@@ -372,7 +401,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
-        public static Task<DynValue> ResumeAsync(this Coroutine cor, params DynValue[] args)
+        public static Task<LuaValue> ResumeAsync(this Coroutine cor, LuaValue[] args)
         {
             return ExecAsync(() => cor.Resume(args));
         }
@@ -386,10 +415,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="context">The ScriptExecutionContext.</param>
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
-        public static Task<DynValue> ResumeAsync(
+        public static Task<LuaValue> ResumeAsync(
             this Coroutine cor,
             ScriptExecutionContext context,
-            params DynValue[] args
+            LuaValue[] args
         )
         {
             return ExecAsync(() => cor.Resume(context, args));
@@ -404,7 +433,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="cor">The coroutine</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
-        public static Task<DynValue> ResumeAsync(this Coroutine cor)
+        public static Task<LuaValue> ResumeAsync(this Coroutine cor)
         {
             return ExecAsync(() => cor.Resume());
         }
@@ -417,7 +446,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="cor">The coroutine</param>
         /// <param name="context">The ScriptExecutionContext.</param>
         /// <returns></returns>
-        public static Task<DynValue> ResumeAsync(this Coroutine cor, ScriptExecutionContext context)
+        public static Task<LuaValue> ResumeAsync(this Coroutine cor, ScriptExecutionContext context)
         {
             return ExecAsync(() => cor.Resume(context));
         }
@@ -432,7 +461,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
-        public static Task<DynValue> ResumeAsync(this Coroutine cor, params object[] args)
+        public static Task<LuaValue> ResumeAsync(this Coroutine cor, params object[] args)
         {
             return ExecAsync(() => cor.Resume(args));
         }
@@ -446,7 +475,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="context">The ScriptExecutionContext.</param>
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
-        public static Task<DynValue> ResumeAsync(
+        public static Task<LuaValue> ResumeAsync(
             this Coroutine cor,
             ScriptExecutionContext context,
             params object[] args

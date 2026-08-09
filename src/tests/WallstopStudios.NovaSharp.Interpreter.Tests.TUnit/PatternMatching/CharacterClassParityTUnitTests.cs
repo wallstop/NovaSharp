@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.PatternMatching;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using global::NovaSharp;
 using global::TUnit.Core;
 using WallstopStudios.NovaSharp.Interpreter.Compatibility;
 using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -439,7 +440,7 @@ public sealed class CharacterClassParityTUnitTests
         List<int> codes = [];
         for (int i = 0; i <= 127; i++)
         {
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 $"return string.match(string.char({i}), '{pattern}')"
             );
             if (result.Type != DataType.Nil)
@@ -627,7 +628,7 @@ public sealed class CharacterClassParityTUnitTests
     )
     {
         Script script = new Script(version);
-        DynValue result = script.DoString(
+        LuaValue result = script.DoString(
             $"return string.match({EscapeString(character)}, '%p') ~= nil"
         );
         await Assert.That(result.Boolean).IsEqualTo(shouldMatch).ConfigureAwait(false);

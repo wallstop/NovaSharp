@@ -2,13 +2,14 @@ namespace WallstopStudios.NovaSharp.Hardwire.Generators
 {
     using System;
     using System.CodeDom;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Serialization;
 
     /// <summary>
-    /// Generates descriptors for constant <see cref="DynValue"/> members.
+    /// Generates descriptors for constant <see cref="LuaValue"/> members.
     /// </summary>
     public class DynValueMemberDescriptorGenerator : IHardwireGenerator
     {
@@ -17,7 +18,7 @@ namespace WallstopStudios.NovaSharp.Hardwire.Generators
 
         /// <inheritdoc />
         /// <summary>
-        /// Emits a nested descriptor that either stores the serialized DynValue or exposes a static userdata handle.
+        /// Emits a nested descriptor that either stores the serialized LuaValue or exposes a static userdata handle.
         /// </summary>
         public CodeExpression[] Generate(
             Table table,
@@ -41,10 +42,10 @@ namespace WallstopStudios.NovaSharp.Hardwire.Generators
             }
 
             string className = "DVAL_" + Guid.NewGuid().ToString("N");
-            DynValue kval = table.Get("value");
+            LuaValue kval = table.Get("value");
 
-            DynValue vtype = table.Get("type");
-            DynValue vstaticType = table.Get("staticType");
+            LuaValue vtype = table.Get("type");
+            LuaValue vstaticType = table.Get("staticType");
 
             string type = (vtype.Type == DataType.String) ? vtype.String : null;
             string staticType = (vstaticType.Type == DataType.String) ? vstaticType.String : null;
@@ -77,15 +78,18 @@ namespace WallstopStudios.NovaSharp.Hardwire.Generators
                 CodeMemberProperty p = new()
                 {
                     Name = "Value",
-                    Type = new CodeTypeReference(typeof(DynValue)),
+                    Type = new CodeTypeReference(typeof(LuaValue)),
                     Attributes = MemberAttributes.Override | MemberAttributes.Public,
                 };
                 p.GetStatements.Add(
                     new CodeMethodReturnStatement(
                         new CodeMethodInvokeExpression(
-                            new CodeTypeReferenceExpression(typeof(UserData)),
-                            "CreateStatic",
-                            new CodeTypeOfExpression(staticType)
+                            new CodeMethodInvokeExpression(
+                                new CodeTypeReferenceExpression(typeof(UserData)),
+                                "CreateStatic",
+                                new CodeTypeOfExpression(staticType)
+                            ),
+                            "GetValueOrDefault"
                         )
                     )
                 );

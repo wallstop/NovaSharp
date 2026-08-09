@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
 {
     using System;
     using System.Linq;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -77,7 +78,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
             {
                 string name = names[i];
                 object value = values.GetValue(i);
-                DynValue cvalue = UserData.Create(value, this);
+                LuaValue cvalue = UserData.Create(value, this);
 
                 AddDynValue(name, cvalue);
             }
@@ -92,12 +93,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
             {
                 IsFlags = true;
 
-                AddEnumMethod("flagsAnd", DynValue.NewCallback(CallbackAnd));
-                AddEnumMethod("flagsOr", DynValue.NewCallback(CallbackOr));
-                AddEnumMethod("flagsXor", DynValue.NewCallback(CallbackXor));
-                AddEnumMethod("flagsNot", DynValue.NewCallback(CallbackBwNot));
-                AddEnumMethod("hasAll", DynValue.NewCallback(CallbackHasAll));
-                AddEnumMethod("hasAny", DynValue.NewCallback(CallbackHasAny));
+                AddEnumMethod("flagsAnd", LuaValue.NewCallback(CallbackAnd));
+                AddEnumMethod("flagsOr", LuaValue.NewCallback(CallbackOr));
+                AddEnumMethod("flagsXor", LuaValue.NewCallback(CallbackXor));
+                AddEnumMethod("flagsNot", LuaValue.NewCallback(CallbackBwNot));
+                AddEnumMethod("hasAll", LuaValue.NewCallback(CallbackHasAll));
+                AddEnumMethod("hasAny", LuaValue.NewCallback(CallbackHasAny));
             }
         }
 
@@ -106,7 +107,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="dynValue">The dyn value.</param>
-        private void AddEnumMethod(string name, DynValue dynValue)
+        private void AddEnumMethod(string name, LuaValue dynValue)
         {
             if (!HasMember(name))
             {
@@ -122,7 +123,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <summary>
         /// Gets the value of the enum as a long
         /// </summary>
-        private long GetValueSigned(DynValue dv)
+        private long GetValueSigned(LuaValue dv)
         {
             CreateSignedConversionFunctions();
 
@@ -148,7 +149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <summary>
         /// Gets the value of the enum as a ulong
         /// </summary>
-        private ulong GetValueUnsigned(DynValue dv)
+        private ulong GetValueUnsigned(LuaValue dv)
         {
             CreateUnsignedConversionFunctions();
 
@@ -174,7 +175,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <summary>
         /// Creates an enum value from a long
         /// </summary>
-        private DynValue CreateValueSigned(long value)
+        private LuaValue CreateValueSigned(long value)
         {
             CreateSignedConversionFunctions();
             return UserData.Create(_longToEnum(value), this);
@@ -183,7 +184,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <summary>
         /// Creates an enum value from a ulong
         /// </summary>
-        private DynValue CreateValueUnsigned(ulong value)
+        private LuaValue CreateValueUnsigned(ulong value)
         {
             CreateUnsignedConversionFunctions();
             return UserData.Create(_uLongToEnum(value), this);
@@ -263,11 +264,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
             }
         }
 
-        private DynValue PerformBinaryOperationS(
+        private LuaValue PerformBinaryOperationS(
             string funcName,
             ScriptExecutionContext ctx,
             CallbackArguments args,
-            Func<long, long, DynValue> operation
+            Func<long, long, LuaValue> operation
         )
         {
             if (args.Count != 2)
@@ -280,11 +281,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
             return operation(v1, v2);
         }
 
-        private DynValue PerformBinaryOperationU(
+        private LuaValue PerformBinaryOperationU(
             string funcName,
             ScriptExecutionContext ctx,
             CallbackArguments args,
-            Func<ulong, ulong, DynValue> operation
+            Func<ulong, ulong, LuaValue> operation
         )
         {
             if (args.Count != 2)
@@ -297,7 +298,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
             return operation(v1, v2);
         }
 
-        private DynValue PerformBinaryOperationS(
+        private LuaValue PerformBinaryOperationS(
             string funcName,
             ScriptExecutionContext ctx,
             CallbackArguments args,
@@ -312,7 +313,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
             );
         }
 
-        private DynValue PerformBinaryOperationU(
+        private LuaValue PerformBinaryOperationU(
             string funcName,
             ScriptExecutionContext ctx,
             CallbackArguments args,
@@ -327,7 +328,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
             );
         }
 
-        private DynValue PerformUnaryOperationS(
+        private LuaValue PerformUnaryOperationS(
             string funcName,
             ScriptExecutionContext ctx,
             CallbackArguments args,
@@ -344,7 +345,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
             return CreateValueSigned(r);
         }
 
-        private DynValue PerformUnaryOperationU(
+        private LuaValue PerformUnaryOperationU(
             string funcName,
             ScriptExecutionContext ctx,
             CallbackArguments args,
@@ -364,7 +365,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <summary>
         /// Implements bitwise OR for flags enums, returning a new enum value.
         /// </summary>
-        internal DynValue CallbackOr(ScriptExecutionContext ctx, CallbackArguments args)
+        internal LuaValue CallbackOr(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
             {
@@ -379,7 +380,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <summary>
         /// Implements bitwise AND for flags enums, returning a new enum value.
         /// </summary>
-        internal DynValue CallbackAnd(ScriptExecutionContext ctx, CallbackArguments args)
+        internal LuaValue CallbackAnd(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
             {
@@ -394,7 +395,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <summary>
         /// Implements bitwise XOR for flags enums, returning a new enum value.
         /// </summary>
-        internal DynValue CallbackXor(ScriptExecutionContext ctx, CallbackArguments args)
+        internal LuaValue CallbackXor(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
             {
@@ -409,7 +410,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <summary>
         /// Implements bitwise NOT for flags enums, returning a new enum value.
         /// </summary>
-        internal DynValue CallbackBwNot(ScriptExecutionContext ctx, CallbackArguments args)
+        internal LuaValue CallbackBwNot(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
             {
@@ -424,7 +425,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <summary>
         /// Checks whether the first enum contains all bits set in the second argument.
         /// </summary>
-        internal DynValue CallbackHasAll(ScriptExecutionContext ctx, CallbackArguments args)
+        internal LuaValue CallbackHasAll(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
             {
@@ -432,7 +433,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
                     "hasAll",
                     ctx,
                     args,
-                    (v1, v2) => DynValue.NewBoolean((v1 & v2) == v2)
+                    (v1, v2) => LuaValue.NewBoolean((v1 & v2) == v2)
                 );
             }
             else
@@ -441,7 +442,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
                     "hasAll",
                     ctx,
                     args,
-                    (v1, v2) => DynValue.NewBoolean((v1 & v2) == v2)
+                    (v1, v2) => LuaValue.NewBoolean((v1 & v2) == v2)
                 );
             }
         }
@@ -449,7 +450,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <summary>
         /// Checks whether the first enum contains any bits set in the second argument.
         /// </summary>
-        internal DynValue CallbackHasAny(ScriptExecutionContext ctx, CallbackArguments args)
+        internal LuaValue CallbackHasAny(ScriptExecutionContext ctx, CallbackArguments args)
         {
             if (IsUnsigned)
             {
@@ -457,7 +458,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
                     "hasAny",
                     ctx,
                     args,
-                    (v1, v2) => DynValue.NewBoolean((v1 & v2) != 0)
+                    (v1, v2) => LuaValue.NewBoolean((v1 & v2) != 0)
                 );
             }
             else
@@ -466,7 +467,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
                     "hasAny",
                     ctx,
                     args,
-                    (v1, v2) => DynValue.NewBoolean((v1 & v2) != 0)
+                    (v1, v2) => LuaValue.NewBoolean((v1 & v2) != 0)
                 );
             }
         }
@@ -496,14 +497,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <param name="obj"></param>
         /// <param name="metaname"></param>
         /// <returns></returns>
-        public override DynValue? MetaIndex(Script script, object obj, string metaname)
+        public override LuaValue? MetaIndex(Script script, object obj, string metaname)
         {
             if (metaname == Metamethods.Concat && IsFlags)
             {
-                return DynValue.NewCallback(script, CallbackOr);
+                return LuaValue.NewCallback(script, CallbackOr);
             }
 
-            return null;
+            return (LuaValue?)null;
         }
     }
 }

@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -19,10 +20,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task TableMoveIsUnavailableBeforeLua53(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version, CoreModulePresets.Default);
-            DynValue table = script.Globals.Get("table");
+            LuaValue table = script.Globals.Get("table");
             await Assert.That(table.Type).IsEqualTo(DataType.Table);
-            DynValue move = table.Table.Get("move");
-            await Assert.That(move.IsNil()).IsTrue();
+            LuaValue move = table.Table.Get("move");
+            await Assert.That(move.IsNil).IsTrue();
         }
 
         [Test]
@@ -30,7 +31,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task TableMoveReturnsDestinationTable(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Default);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local src = { 'a', 'b', 'c' }
                 local dest = {}
@@ -50,7 +51,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task TableMoveHandlesOverlappingRanges(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Default);
-            DynValue snapshot = script.DoString(
+            LuaValue snapshot = script.DoString(
                 @"
                 local values = { 1, 2, 3, 4 }
                 table.move(values, 1, 3, 2)
@@ -66,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task TableMoveDefaultsDestinationToSource(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Default);
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local values = { 0, 0, 3, 4 }
                 table.move(values, 3, 4, 1)

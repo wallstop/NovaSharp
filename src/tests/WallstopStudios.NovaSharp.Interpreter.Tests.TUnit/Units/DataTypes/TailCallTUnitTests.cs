@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -18,7 +19,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task TailRecursionHandlesThousandsOfFrames(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function accumulate(n, acc)
                     if n == 0 then
@@ -40,7 +41,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task TailCallPreservesMultipleReturnValues(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function id(a, b, c)
                     return a, b, c
@@ -66,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task RecursiveSumMatchesArithmeticBaseline(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function recsum(n, partial)
                     if n == 0 then
@@ -88,7 +89,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task RecursiveSumHandlesVeryDeepTailRecursion(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function recsum(n, partial)
                     if n == 0 then
@@ -110,7 +111,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task TailRecursionDoesNotGrowDebugStack(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModules.Debug);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local max_depth = 0
 
@@ -147,7 +148,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task DebugGetInfoReportsTailCallFrames(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModules.Debug);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function target()
                     return debug.getinfo(1, 't').istailcall
@@ -170,7 +171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task DebugGetInfoDefaultIncludesTailCallFlag(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModules.Debug);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function target()
                     return debug.getinfo(1).istailcall
@@ -193,7 +194,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task DebugGetInfoOmitsNameForTailCalledFrames(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModules.Debug);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function target()
                     local info = debug.getinfo(1, 'nSt')
@@ -222,7 +223,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version, CoreModules.Debug);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function caller()
                     return debug.getinfo(0, 't').istailcall
@@ -243,7 +244,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version, CoreModules.Debug);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function caller()
                     return debug.getinfo(0).istailcall
@@ -262,7 +263,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task DebugGetInfoReportsFalseForNonTailCalls(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModules.Debug);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function target()
                     return debug.getinfo(1, 't').istailcall
@@ -288,7 +289,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version, CoreModules.Debug);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function target()
                 end
@@ -324,7 +325,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task DebugGetInfoDefaultOmitsTailCallFlagInLua51()
         {
             Script script = new(LuaCompatibilityVersion.Lua51, CoreModules.Debug);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local info = debug.getinfo(1)
                 return info.istailcall == nil
@@ -340,7 +341,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task TailCallPreservesCapturedUpvalues(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local saved
 
@@ -373,7 +374,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 version,
                 CoreModules.Basic | CoreModules.Debug | CoreModules.Metatables
             );
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local callable = setmetatable({}, {
                     __call = function()
@@ -398,7 +399,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task PcallTargetTailCallReportsTailCallFrame(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function target()
                     return debug.getinfo(1, 't').istailcall
@@ -423,7 +424,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task XpcallTargetTailCallReportsTailCallFrame(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function target()
                     return debug.getinfo(1, 't').istailcall
@@ -450,7 +451,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task XpcallTargetTailCallPreservesErrorHandler(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function target()
                     error('tail boom', 0)
@@ -505,7 +506,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             );
             script.Options.Sandbox.MaxCallStackDepth = 1;
 
-            DynValue result = script.Call(script.Globals.Get("run_callable_tail_recursion"));
+            LuaValue result = script.Call(script.Globals.Get("run_callable_tail_recursion"));
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(result.Number).IsEqualTo(100).ConfigureAwait(false);
@@ -521,7 +522,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 Sandbox = new SandboxOptions { MaxCallStackDepth = 5 },
             };
             Script script = new(options);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function recur(n, acc)
                     if n == 0 then
@@ -546,7 +547,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local closed = 0
                 local mt = {
@@ -585,7 +586,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 version,
                 CoreModules.Basic | CoreModules.Debug | CoreModules.Metatables
             );
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local mt = {
                     __close = function()
@@ -616,7 +617,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local closed_with_error = false
                 local mt = {
@@ -651,17 +652,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Script script = new(version);
             script.Globals.Set(
                 "clrtail",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (context, args) =>
                     {
-                        DynValue function = script.Globals.Get("getResult");
-                        DynValue adjusted = DynValue.NewNumber(args[0].Number / 3);
-                        return DynValue.NewTailCallReq(function, adjusted);
+                        LuaValue function = script.Globals.Get("getResult");
+                        LuaValue adjusted = LuaValue.NewNumber(args[0].Number / 3);
+                        return LuaValue.NewTailCallReq(function, adjusted);
                     }
                 )
             );
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 function getResult(x)
                     return 156 * x
@@ -689,25 +690,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             CallbackFunction continuation = CallbackFunction.FromArgumentView(
                 (_, args) =>
                 {
-                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
                     spanLength = span.Length;
                     spanValue = spanAvailable && span.Length == 1 ? span[0].Number : -1d;
-                    return DynValue.NewNumber(args[0].Number + 1d);
+                    return LuaValue.NewNumber(args[0].Number + 1d);
                 },
                 "span-continuation"
             );
 
             script.Globals.Set(
                 "clrtail",
-                DynValue.NewCallback(
+                LuaValue.NewCallback(
                     (_, _) =>
                     {
-                        DynValue function = script.Globals.Get("returnValue");
-                        return DynValue.NewTailCallReq(
+                        LuaValue function = script.Globals.Get("returnValue");
+                        return LuaValue.NewTailCallReq(
                             new TailCallData
                             {
                                 Function = function,
-                                Args = Array.Empty<DynValue>(),
+                                Args = Array.Empty<LuaValue>(),
                                 Continuation = continuation,
                             }
                         );
@@ -715,7 +716,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 )
             );
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 function returnValue()
                     return 41
@@ -737,7 +738,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task BasicModuleToStringConvertsNumbers(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModules.Basic);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 return tostring(9)
             "
@@ -752,7 +753,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task TostringUsesMetamethodsWhenAvailable(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local target = {}
                 local meta = {

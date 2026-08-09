@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -16,7 +17,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task TableAccessAndEmptyCtor(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("a = {} a[1] = 1 return a[1]");
+            LuaValue result = script.DoString("a = {} a[1] = 1 return a[1]");
             await EndToEndDynValueAssert.ExpectAsync(result, 1).ConfigureAwait(false);
         }
 
@@ -30,7 +31,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 + "return a[1], a[2], a[3], a['ciao'], a.hello, a.aurevoir, a[false]";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await EndToEndDynValueAssert
                 .ExpectAsync(result, 1, 2, 3, 4, 5, 6, 7)
                 .ConfigureAwait(false);
@@ -41,7 +42,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task TableMethod1(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "x = 0 a = { value = 1912, val = function(self, num) x = self.value + num end } "
                     + "a.val(a, 82) return x"
             );
@@ -53,7 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task TableMethod2(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "x = 0 a = { value = 1912, val = function(self, num) x = self.value + num end } "
                     + "a:val(82) return x"
             );
@@ -65,7 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task TableMethod3(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "x = 0 a = { value = 1912 } function a.val(self, num) x = self.value + num end "
                     + "a:val(82) return x"
             );
@@ -77,7 +78,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task TableMethod4(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "x = 0 local a = { value = 1912 } function a:val(num) x = self.value + num end "
                     + "a:val(82) return x"
             );
@@ -89,7 +90,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task TableMethod5AllowsNestedPointerSyntax(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "x = 0 a = { value = 1912 } b = { tb = a } c = { tb = b } "
                     + "function c.tb.tb:val(num) x = self.value + num end "
                     + "a:val(82) return x"
@@ -102,7 +103,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task TableMethodChainingReturnsSelf(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "return (function() local a = {x=0} "
                     + "function a:add(x) self.x, a.y = self.x + x, 20; return self end "
                     + "return (a:add(10):add(20):add(30).x == 60 and a.y == 20) end)()"
@@ -128,7 +129,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, "1|2|3|4|5").ConfigureAwait(false);
         }
 
@@ -149,7 +150,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await Assert.That(result.Tuple[0].String.Length).IsEqualTo(5).ConfigureAwait(false);
             await Assert.That(result.Tuple[1].Number).IsEqualTo(15).ConfigureAwait(false);
         }
@@ -201,7 +202,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(setup + "\nreturn #t");
+            LuaValue result = script.DoString(setup + "\nreturn #t");
             int expected =
                 version == LuaCompatibilityVersion.Lua55 ? lua55Expected
                 : version == LuaCompatibilityVersion.Lua54 ? lua54Expected
@@ -217,10 +218,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         )
         {
             Script scriptA = new Script(version, CoreModulePresets.Complete);
-            DynValue foreignTable = scriptA.DoString("return {}");
+            LuaValue foreignTable = scriptA.DoString("return {}");
 
             Script scriptB = new Script(version, CoreModulePresets.Complete);
-            scriptB.Globals["foreign"] = DynValue.NewCallback((_, _) => foreignTable);
+            scriptB.Globals["foreign"] = LuaValue.NewCallback((_, _) => foreignTable);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 scriptB.DoString("return { foreign() }")
@@ -249,7 +250,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 6, 12).ConfigureAwait(false);
         }
 
@@ -270,8 +271,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            LuaValue result = script.DoString(code);
+            await Assert.That(result.Tuple[0].IsNil).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(result.Tuple[1].Type)
                 .IsEqualTo(DataType.String)
@@ -283,16 +284,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task TableSimplifiedAccesses(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue table = script.DoString("t = { ciao = 'hello' } return t");
+            LuaValue table = script.DoString("t = { ciao = 'hello' } return t");
             await Assert.That(table.Table["ciao"]).IsEqualTo("hello").ConfigureAwait(false);
 
             Script scriptWithGlobal = new Script(version, CoreModulePresets.Complete);
             scriptWithGlobal.Globals["x"] = "hello";
-            DynValue tableWithRef = scriptWithGlobal.DoString("t = { ciao = x } return t");
+            LuaValue tableWithRef = scriptWithGlobal.DoString("t = { ciao = x } return t");
             await Assert.That(tableWithRef.Table["ciao"]).IsEqualTo("hello").ConfigureAwait(false);
 
             Script empty = new Script(version, CoreModulePresets.Complete);
-            DynValue created = empty.DoString("t = {} return t");
+            LuaValue created = empty.DoString("t = {} return t");
             empty.Globals["t", "ciao"] = "hello";
             await Assert.That(created.Table["ciao"]).IsEqualTo("hello").ConfigureAwait(false);
 
@@ -341,7 +342,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, "id$$").ConfigureAwait(false);
         }
 
@@ -354,7 +355,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task TableUnpackReturnsTuple(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return table.unpack({3,4})");
+            LuaValue result = script.DoString("return table.unpack({3,4})");
             await EndToEndDynValueAssert.ExpectAsync(result, 3, 4).ConfigureAwait(false);
         }
 
@@ -390,27 +391,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Table table = new(null);
 
             await Assert.That(table.Length).IsEqualTo(0).ConfigureAwait(false);
-            table.Set(1, DynValue.True);
+            table.Set(1, LuaValue.True);
             await Assert.That(table.Length).IsEqualTo(1).ConfigureAwait(false);
 
-            table.Set(2, DynValue.True);
-            table.Set(3, DynValue.True);
-            table.Set(4, DynValue.True);
+            table.Set(2, LuaValue.True);
+            table.Set(3, LuaValue.True);
+            table.Set(4, LuaValue.True);
             await Assert.That(table.Length).IsEqualTo(4).ConfigureAwait(false);
 
-            table.Set(3, DynValue.Nil);
+            table.Set(3, LuaValue.Nil);
             await Assert.That(table.Length).IsEqualTo(2).ConfigureAwait(false);
 
-            table.Set(3, DynValue.True);
+            table.Set(3, LuaValue.True);
             await Assert.That(table.Length).IsEqualTo(4).ConfigureAwait(false);
 
-            table.Set(3, DynValue.Nil);
+            table.Set(3, LuaValue.Nil);
             await Assert.That(table.Length).IsEqualTo(2).ConfigureAwait(false);
 
-            table.Append(DynValue.True);
+            table.Append(LuaValue.True);
             await Assert.That(table.Length).IsEqualTo(4).ConfigureAwait(false);
 
-            table.Append(DynValue.True);
+            table.Append(LuaValue.True);
             await Assert.That(table.Length).IsEqualTo(5).ConfigureAwait(false);
         }
     }

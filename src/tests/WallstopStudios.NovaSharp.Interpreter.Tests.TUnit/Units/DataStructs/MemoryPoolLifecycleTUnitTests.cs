@@ -392,11 +392,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task DynValueArrayPoolCriticalTrimClearsSmallBucket()
         {
-            DynValue[] first = DynValueArrayPool.Rent(3);
+            LuaValue[] first = DynValueArrayPool.Rent(3);
             DynValueArrayPool.Return(first);
 
             DynValueArrayPool.Trim(PoolTrimLevel.Critical);
-            DynValue[] second = DynValueArrayPool.Rent(3);
+            LuaValue[] second = DynValueArrayPool.Rent(3);
             using DeferredActionScope cleanup = DeferredActionScope.Run(() =>
                 DynValueArrayPool.Return(second)
             );
@@ -425,9 +425,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             DynValueArrayPool.Trim(PoolTrimLevel.Critical);
             ObjectArrayPool.Trim(PoolTrimLevel.Critical);
 
-            DynValueArrayPool.Return(new DynValue[3]);
-            DynValueArrayPool.Return(new DynValue[3]);
-            DynValueArrayPool.Return(new DynValue[4]);
+            DynValueArrayPool.Return(new LuaValue[3]);
+            DynValueArrayPool.Return(new LuaValue[3]);
+            DynValueArrayPool.Return(new LuaValue[4]);
 
             ObjectArrayPool.Return(new object[3]);
             ObjectArrayPool.Return(new object[3]);
@@ -451,8 +451,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         {
             using ManualResetEventSlim returned = new(false);
             using ManualResetEventSlim trimmed = new(false);
-            DynValue[] first = null;
-            DynValue[] second = null;
+            LuaValue[] first = null;
+            LuaValue[] second = null;
 
             Task worker = Task.Run(() =>
             {
@@ -486,7 +486,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             CallStackItemPool.Trim(PoolTrimLevel.Critical);
             CallStackItem first = CallStackItemPool.Rent();
             CallStackItem second = CallStackItemPool.Rent();
-            first.SetErrorHandlerBeforeUnwind(DynValue.Void, hasHandler: true);
+            first.SetErrorHandlerBeforeUnwind(LuaValue.Void, hasHandler: true);
             bool hadHandlerBeforeReturn = first.HasErrorHandlerBeforeUnwind;
             CallStackItemPool.Return(first);
             bool hasHandlerAfterReturn = first.HasErrorHandlerBeforeUnwind;
@@ -629,7 +629,7 @@ return recurse(80)
         public async Task CoroutineMemoryStatisticsTrackingPrunesDeadReferencesOnRegistration()
         {
             Script script = new();
-            DynValue function = script.LoadFunction(
+            LuaValue function = script.LoadFunction(
                 "function() return 1 end",
                 funcFriendlyName: "coroutine_ref"
             );
@@ -637,10 +637,10 @@ return recurse(80)
             // Hold the first batch strongly alive so the tracked count reflects every one of them,
             // independent of GC timing. Transient coroutines can be collected (and pruned) mid-creation,
             // which made the "before" count nondeterministic and this test flaky on some runners.
-            DynValue[] retained = new DynValue[300];
+            LuaValue[] retained = new LuaValue[300];
             for (int i = 0; i < retained.Length; i++)
             {
-                retained[i] = script.CreateCoroutine(function);
+                retained[i] = script.CreateCoroutineValue(function);
             }
             int before = script.GetTrackedCoroutineCountForMemoryStatisticsForTests();
 
@@ -661,13 +661,13 @@ return recurse(80)
         public async Task ScriptLocalMemoryStatisticsIncludeCoroutineStackRetention()
         {
             Script script = new();
-            DynValue function = script.LoadFunction(
+            LuaValue function = script.LoadFunction(
                 "function() coroutine.yield(1); return 2 end",
                 funcFriendlyName: "coroutine_stack"
             );
 
             long before = script.GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests();
-            DynValue coroutineValue = script.CreateCoroutine(function);
+            LuaValue coroutineValue = script.CreateCoroutineValue(function);
             long afterCreate = script.GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests();
 
             coroutineValue.Coroutine.Resume();
@@ -679,11 +679,11 @@ return recurse(80)
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void CreateTransientCoroutines(Script script, DynValue function, int count)
+        private static void CreateTransientCoroutines(Script script, LuaValue function, int count)
         {
             for (int i = 0; i < count; i++)
             {
-                DynValue coroutine = script.CreateCoroutine(function);
+                LuaValue coroutine = script.CreateCoroutineValue(function);
                 GC.KeepAlive(coroutine);
             }
         }

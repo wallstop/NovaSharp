@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
 {
     using System;
     using System.Globalization;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -36,11 +37,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         internal const int WeightVarArgsEmpty = 40;
 
         /// <summary>
-        /// Converts a DynValue to a CLR object [simple conversion]
+        /// Converts a LuaValue to a CLR object [simple conversion]
         /// </summary>
-        internal static object DynValueToObject(DynValue value)
+        internal static object DynValueToObject(LuaValue value)
         {
-            Func<DynValue, object> converter =
+            Func<LuaValue, object> converter =
                 Script.GlobalOptions.CustomConverters.GetScriptToClrCustomConversion(
                     value.Type,
                     typeof(Object)
@@ -97,10 +98,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         }
 
         /// <summary>
-        /// Converts a DynValue to a CLR object of a specific type
+        /// Converts a LuaValue to a CLR object of a specific type
         /// </summary>
         internal static object DynValueToObjectOfType(
-            DynValue value,
+            LuaValue value,
             Type desiredType,
             object defaultValue,
             bool isOptional
@@ -111,7 +112,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 desiredType = desiredType.GetElementType();
             }
 
-            Func<DynValue, object> converter =
+            Func<LuaValue, object> converter =
                 Script.GlobalOptions.CustomConverters.GetScriptToClrCustomConversion(
                     value.Type,
                     desiredType
@@ -125,7 +126,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 }
             }
 
-            if (desiredType == typeof(DynValue))
+            if (desiredType == typeof(LuaValue))
             {
                 return value;
             }
@@ -254,7 +255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                     }
                     else if (
                         desiredType
-                        == typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>)
+                        == typeof(Func<ScriptExecutionContext, CallbackArguments, LuaValue>)
                     )
                     {
                         return value.Callback.ClrCallback;
@@ -307,7 +308,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
             throw ScriptRuntimeException.ConvertObjectFailed(value.Type, desiredType);
         }
 
-        internal static T DynValueToObjectOfType<T>(DynValue value, T defaultValue, bool isOptional)
+        internal static T DynValueToObjectOfType<T>(LuaValue value, T defaultValue, bool isOptional)
         {
             object result = DynValueToObjectOfType(value, typeof(T), defaultValue, isOptional);
 
@@ -319,12 +320,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
             return (T)result;
         }
 
-        internal static T DynValueToObjectOfType<T>(DynValue value, bool isOptional)
+        internal static T DynValueToObjectOfType<T>(LuaValue value, bool isOptional)
         {
             return DynValueToObjectOfType(value, default(T), isOptional);
         }
 
-        internal static T DynValueToObjectOfType<T>(DynValue value)
+        internal static T DynValueToObjectOfType<T>(LuaValue value)
         {
             return DynValueToObjectOfType(value, default(T), false);
         }
@@ -335,7 +336,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         /// However here we are in perf-sensitive path.. TODO : double-check the gain and see if a DRY impl is better.
         /// </summary>
         internal static int DynValueToObjectOfTypeWeight(
-            DynValue value,
+            LuaValue value,
             Type desiredType,
             bool isOptional
         )
@@ -345,7 +346,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 desiredType = desiredType.GetElementType();
             }
 
-            Func<DynValue, object> customConverter =
+            Func<LuaValue, object> customConverter =
                 Script.GlobalOptions.CustomConverters.GetScriptToClrCustomConversion(
                     value.Type,
                     desiredType
@@ -355,7 +356,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 return WeightCustomConverterMatch;
             }
 
-            if (desiredType == typeof(DynValue))
+            if (desiredType == typeof(LuaValue))
             {
                 return WeightExactMatch;
             }
@@ -470,7 +471,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                     }
                     else if (
                         desiredType
-                        == typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>)
+                        == typeof(Func<ScriptExecutionContext, CallbackArguments, LuaValue>)
                     )
                     {
                         return WeightExactMatch;

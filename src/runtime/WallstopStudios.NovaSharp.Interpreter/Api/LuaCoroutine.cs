@@ -2,7 +2,6 @@ namespace NovaSharp
 {
     using System;
     using WallstopStudios.NovaSharp.Interpreter;
-    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -13,9 +12,9 @@ namespace NovaSharp
     public sealed class LuaCoroutine
     {
         private readonly Script _script;
-        private readonly DynValue _coroutineValue;
+        private readonly LuaValue _coroutineValue;
 
-        internal LuaCoroutine(Script script, DynValue coroutineValue)
+        internal LuaCoroutine(Script script, LuaValue coroutineValue)
         {
             _script = script ?? throw new ArgumentNullException(nameof(script));
             _coroutineValue = coroutineValue;
@@ -59,7 +58,7 @@ namespace NovaSharp
             {
                 return LuaValue.WrapResult(
                     _script,
-                    _coroutineValue.Coroutine.Resume(arg0.ToDynValue(_script))
+                    _coroutineValue.Coroutine.ResumeValues(arg0.ToDynValue(_script))
                 );
             }
             catch (InterpreterException exception)
@@ -78,7 +77,7 @@ namespace NovaSharp
             {
                 return LuaValue.WrapResult(
                     _script,
-                    _coroutineValue.Coroutine.Resume(
+                    _coroutineValue.Coroutine.ResumeValues(
                         arg0.ToDynValue(_script),
                         arg1.ToDynValue(_script)
                     )
@@ -103,19 +102,12 @@ namespace NovaSharp
                     return LuaValue.WrapResult(_script, _coroutineValue.Coroutine.Resume());
                 }
 
-                using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
-                    args.Length,
-                    out DynValue[] converted
-                );
                 for (int i = 0; i < args.Length; i++)
                 {
-                    converted[i] = args[i].ToDynValue(_script);
+                    args[i].ToDynValue(_script);
                 }
 
-                return LuaValue.WrapResult(
-                    _script,
-                    _coroutineValue.Coroutine.Resume(converted.AsSpan(0, args.Length))
-                );
+                return LuaValue.WrapResult(_script, _coroutineValue.Coroutine.ResumeValues(args));
             }
             catch (InterpreterException exception)
             {

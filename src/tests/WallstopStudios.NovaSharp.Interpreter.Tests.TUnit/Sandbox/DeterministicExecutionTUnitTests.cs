@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
@@ -299,9 +300,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 new ScriptOptions(options) { CompatibilityVersion = version }
             );
 
-            DataTypes.DynValue result1 = script1.DoString("return math.random()");
+            LuaValue result1 = script1.DoString("return math.random()");
             provider.SetSeed(12345); // Reset to same seed
-            DataTypes.DynValue result2 = script2.DoString("return math.random()");
+            LuaValue result2 = script2.DoString("return math.random()");
 
             await Assert.That(result1.Number).IsEqualTo(result2.Number).ConfigureAwait(false);
         }
@@ -353,7 +354,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 new ScriptOptions(options) { CompatibilityVersion = version }
             );
 
-            DataTypes.DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local values = {}
                 for i = 1, 10 do
@@ -370,7 +371,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 CoreModulePresets.Default,
                 new ScriptOptions(options) { CompatibilityVersion = version }
             );
-            DataTypes.DynValue result2 = script2.DoString(
+            LuaValue result2 = script2.DoString(
                 @"
                 local values = {}
                 for i = 1, 10 do
@@ -421,7 +422,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             // os.clock returns time since script start, so advance by a known amount
             provider.AdvanceSeconds(5.5);
 
-            DataTypes.DynValue result = script.DoString("return os.clock()");
+            LuaValue result = script.DoString("return os.clock()");
 
             // Should be approximately 5.5 seconds
             await Assert.That(result.Number).IsGreaterThanOrEqualTo(5.4).ConfigureAwait(false);
@@ -443,7 +444,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 new ScriptOptions(options) { CompatibilityVersion = version }
             );
 
-            DataTypes.DynValue result = script.DoString("return os.time()");
+            LuaValue result = script.DoString("return os.time()");
 
             // Unix timestamp for 2020-06-15 12:00:00 UTC
             double expectedTimestamp = (
@@ -498,8 +499,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 return table.concat(results, '|')
             ";
 
-            DataTypes.DynValue result1 = script1.DoString(luaCode);
-            DataTypes.DynValue result2 = script2.DoString(luaCode);
+            LuaValue result1 = script1.DoString(luaCode);
+            LuaValue result2 = script2.DoString(luaCode);
 
             await Assert.That(result1.String).IsEqualTo(result2.String).ConfigureAwait(false);
         }
@@ -527,8 +528,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 new ScriptOptions(options) { CompatibilityVersion = version }
             );
 
-            DataTypes.DynValue r1 = script1.DoString("return math.random()");
-            DataTypes.DynValue r2 = script2.DoString("return math.random()");
+            LuaValue r1 = script1.DoString("return math.random()");
+            LuaValue r2 = script2.DoString("return math.random()");
 
             // They should get different values since they're advancing the same sequence
             await Assert.That(r1.Number).IsNotEqualTo(r2.Number).ConfigureAwait(false);
@@ -544,8 +545,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 new ScriptOptions(options) { CompatibilityVersion = version }
             );
 
-            DataTypes.DynValue r3 = script3.DoString("return math.random()");
-            DataTypes.DynValue r4 = script4.DoString("return math.random()");
+            LuaValue r3 = script3.DoString("return math.random()");
+            LuaValue r4 = script4.DoString("return math.random()");
 
             await Assert.That(r1.Number).IsEqualTo(r3.Number).ConfigureAwait(false);
             await Assert.That(r2.Number).IsEqualTo(r4.Number).ConfigureAwait(false);

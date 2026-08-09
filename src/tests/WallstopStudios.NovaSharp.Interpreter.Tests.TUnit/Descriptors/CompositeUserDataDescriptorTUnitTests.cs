@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -17,13 +18,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [AllLuaVersions]
         public async Task IndexReturnsFirstNonNullValue(LuaCompatibilityVersion version)
         {
-            DynValue expected = DynValue.NewString("hit");
+            LuaValue expected = LuaValue.NewString("hit");
             StubDescriptor first = new(indexResult: null);
             StubDescriptor second = new(indexResult: expected);
             CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
-            DynValue value = descriptor
-                .Index(new Script(version), new object(), DynValue.NewString("name"), true)
+            LuaValue value = descriptor
+                .Index(new Script(version), new object(), LuaValue.NewString("name"), true)
                 .Value;
 
             await Assert.That(value).IsEqualTo(expected);
@@ -35,20 +36,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [AllLuaVersions]
         public async Task IndexStopsIteratingAfterMatch(LuaCompatibilityVersion version)
         {
-            StubDescriptor first = new(indexResult: DynValue.Nil);
-            StubDescriptor second = new(indexResult: DynValue.Nil);
+            StubDescriptor first = new(indexResult: LuaValue.Nil);
+            StubDescriptor second = new(indexResult: LuaValue.Nil);
             CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
-            DynValue value = descriptor
+            LuaValue value = descriptor
                 .Index(
                     new Script(version),
                     new object(),
-                    DynValue.NewString("name"),
+                    LuaValue.NewString("name"),
                     isDirectIndexing: true
                 )
                 .Value;
 
-            await Assert.That(value.IsNil()).IsTrue();
+            await Assert.That(value.IsNil).IsTrue();
             await Assert.That(first.IndexCallCount).IsEqualTo(1);
             await Assert.That(second.IndexCallCount).IsEqualTo(0);
         }
@@ -62,23 +63,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new StubDescriptor(indexResult: null)
             );
 
-            DynValue? value = descriptor.Index(
+            LuaValue? value = descriptor.Index(
                 new Script(version),
                 new object(),
-                DynValue.NewString("missing"),
+                LuaValue.NewString("missing"),
                 true
             );
             bool found = descriptor.TryIndex(
                 new Script(version),
                 new object(),
-                DynValue.NewString("missing"),
+                LuaValue.NewString("missing"),
                 true,
-                out DynValue missing
+                out LuaValue missing
             );
 
             await Assert.That(value).IsNull();
             await Assert.That(found).IsFalse();
-            await Assert.That(missing.IsNil()).IsTrue();
+            await Assert.That(missing.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -92,8 +93,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             bool handled = descriptor.SetIndex(
                 new Script(version),
                 new object(),
-                DynValue.NewString("k"),
-                DynValue.True,
+                LuaValue.NewString("k"),
+                LuaValue.True,
                 true
             );
 
@@ -116,8 +117,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             bool handled = descriptor.SetIndex(
                 new Script(version),
                 new object(),
-                DynValue.NewString("k"),
-                DynValue.True,
+                LuaValue.NewString("k"),
+                LuaValue.True,
                 true
             );
 
@@ -128,12 +129,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [AllLuaVersions]
         public async Task MetaIndexReturnsFirstNonNullValue(LuaCompatibilityVersion version)
         {
-            DynValue expected = DynValue.Void;
+            LuaValue expected = LuaValue.Void;
             StubDescriptor first = new(indexResult: null, metaResult: null);
             StubDescriptor second = new(indexResult: null, metaResult: expected);
             CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
-            DynValue value = descriptor
+            LuaValue value = descriptor
                 .MetaIndex(new Script(version), new object(), "__call")
                 .Value;
 
@@ -153,7 +154,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 new StubDescriptor(indexResult: null, metaResult: null)
             );
 
-            DynValue? value = descriptor.MetaIndex(new Script(version), new object(), "__add");
+            LuaValue? value = descriptor.MetaIndex(new Script(version), new object(), "__add");
 
             await Assert.That(value).IsNull();
         }
@@ -163,12 +164,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         public async Task DescriptorsPropertyIsMutable(LuaCompatibilityVersion version)
         {
             CompositeUserDataDescriptor descriptor = CreateComposite();
-            DynValue expected = DynValue.NewNumber(5);
+            LuaValue expected = LuaValue.NewNumber(5);
 
             descriptor.Descriptors.Add(new StubDescriptor(indexResult: expected));
 
-            DynValue value = descriptor
-                .Index(new Script(version), new object(), DynValue.NewString("value"), true)
+            LuaValue value = descriptor
+                .Index(new Script(version), new object(), LuaValue.NewString("value"), true)
                 .Value;
 
             await Assert.That(value).IsEqualTo(expected);
@@ -265,14 +266,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
         private sealed class StubDescriptor : IUserDataDescriptor
         {
-            private readonly DynValue? _indexResult;
+            private readonly LuaValue? _indexResult;
             private readonly bool _setResult;
-            private readonly DynValue? _metaResult;
+            private readonly LuaValue? _metaResult;
 
             public StubDescriptor(
-                DynValue? indexResult,
+                LuaValue? indexResult,
                 bool setResult = false,
-                DynValue? metaResult = null
+                LuaValue? metaResult = default
             )
             {
                 _indexResult = indexResult;
@@ -291,9 +292,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             public bool TryIndex(
                 Script script,
                 object obj,
-                DynValue index,
+                LuaValue index,
                 bool isDirectIndexing,
-                out DynValue value
+                out LuaValue value
             )
             {
                 IndexCallCount++;
@@ -304,8 +305,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             public bool SetIndex(
                 Script script,
                 object obj,
-                DynValue index,
-                DynValue value,
+                LuaValue index,
+                LuaValue value,
                 bool isDirectIndexing
             )
             {
@@ -318,7 +319,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 return obj?.ToString();
             }
 
-            public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+            public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
             {
                 MetaCallCount++;
                 value = _metaResult.GetValueOrDefault();

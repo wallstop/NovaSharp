@@ -188,7 +188,7 @@ namespace NovaSharp
             _script.ThrowIfDisposed();
             try
             {
-                return LuaValue.Wrap(_script, DynValue.NewTable(_table));
+                return LuaValue.Wrap(_script, LuaValue.NewTable(_table));
             }
             catch (InterpreterException exception)
             {

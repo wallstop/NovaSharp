@@ -2,7 +2,6 @@ namespace NovaSharp
 {
     using System;
     using WallstopStudios.NovaSharp.Interpreter;
-    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
@@ -44,7 +43,10 @@ namespace NovaSharp
             _script.ThrowIfDisposed();
             try
             {
-                return LuaValue.WrapResult(_script, _compiled.Execute(arg0.ToDynValue(_script)));
+                return LuaValue.WrapResult(
+                    _script,
+                    _compiled.ExecuteValues(arg0.ToDynValue(_script))
+                );
             }
             catch (InterpreterException exception)
             {
@@ -62,7 +64,7 @@ namespace NovaSharp
             {
                 return LuaValue.WrapResult(
                     _script,
-                    _compiled.Execute(arg0.ToDynValue(_script), arg1.ToDynValue(_script))
+                    _compiled.ExecuteValues(arg0.ToDynValue(_script), arg1.ToDynValue(_script))
                 );
             }
             catch (InterpreterException exception)
@@ -81,7 +83,7 @@ namespace NovaSharp
             {
                 return LuaValue.WrapResult(
                     _script,
-                    _compiled.Execute(
+                    _compiled.ExecuteValues(
                         arg0.ToDynValue(_script),
                         arg1.ToDynValue(_script),
                         arg2.ToDynValue(_script)
@@ -107,19 +109,12 @@ namespace NovaSharp
                     return LuaValue.WrapResult(_script, _compiled.Execute());
                 }
 
-                using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
-                    args.Length,
-                    out DynValue[] converted
-                );
                 for (int i = 0; i < args.Length; i++)
                 {
-                    converted[i] = args[i].ToDynValue(_script);
+                    args[i].ToDynValue(_script);
                 }
 
-                return LuaValue.WrapResult(
-                    _script,
-                    _compiled.Execute(converted.AsSpan(0, args.Length))
-                );
+                return LuaValue.WrapResult(_script, _compiled.Execute(args));
             }
             catch (InterpreterException exception)
             {

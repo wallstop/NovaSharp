@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -49,11 +50,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             script.Globals.Set("o", UserData.Create(obj).Value);
 
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
 
             return VerifyAsync(result);
 
-            async Task VerifyAsync(DynValue value)
+            async Task VerifyAsync(LuaValue value)
             {
                 await Assert.That(value.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
                 await Assert.That(value.Number).IsEqualTo(expected).ConfigureAwait(false);

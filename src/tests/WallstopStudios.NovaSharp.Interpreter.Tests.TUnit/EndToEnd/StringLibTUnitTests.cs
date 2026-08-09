@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -28,7 +29,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await Assert.That(result.Type).IsEqualTo(DataType.String);
             await Assert.That(result.String).IsEqualTo("HelloLuauser");
         }
@@ -38,7 +39,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public Task StringFindReturnsMatchStartAndEnd(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return string.find('Hello Lua user', 'Lua');");
+            LuaValue result = script.DoString("return string.find('Hello Lua user', 'Lua');");
             return EndToEndDynValueAssert.ExpectAsync(result, 7, 9);
         }
 
@@ -47,7 +48,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public Task StringFindReturnsNilWhenPatternMissing(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return string.find('Hello Lua user', 'banana');");
+            LuaValue result = script.DoString("return string.find('Hello Lua user', 'banana');");
             return EndToEndDynValueAssert.ExpectAsync(result, null);
         }
 
@@ -56,7 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public Task StringFindRespectsStartIndex(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return string.find('Hello Lua user', 'Lua', 1);");
+            LuaValue result = script.DoString("return string.find('Hello Lua user', 'Lua', 1);");
             return EndToEndDynValueAssert.ExpectAsync(result, 7, 9);
         }
 
@@ -65,7 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public Task StringFindRespectsStartIndexBeyondMatch(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return string.find('Hello Lua user', 'Lua', 8);");
+            LuaValue result = script.DoString("return string.find('Hello Lua user', 'Lua', 8);");
             return EndToEndDynValueAssert.ExpectAsync(result, null);
         }
 
@@ -74,7 +75,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public Task StringFindSupportsNegativeStartIndices(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return string.find('Hello Lua user', 'e', -5);");
+            LuaValue result = script.DoString("return string.find('Hello Lua user', 'e', -5);");
             return EndToEndDynValueAssert.ExpectAsync(result, 13, 13);
         }
 
@@ -83,7 +84,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public Task StringFindMatchesPatternsWithoutStart(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return string.find('Hello Lua user', '%su');");
+            LuaValue result = script.DoString("return string.find('Hello Lua user', '%su');");
             return EndToEndDynValueAssert.ExpectAsync(result, 10, 11);
         }
 
@@ -92,7 +93,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public Task StringFindMatchesPatternsWithStart(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return string.find('Hello Lua user', '%su', 1);");
+            LuaValue result = script.DoString("return string.find('Hello Lua user', '%su', 1);");
             return EndToEndDynValueAssert.ExpectAsync(result, 10, 11);
         }
 
@@ -101,7 +102,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public Task StringFindHonorsPlainSearchFlag(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "return string.find('Hello Lua user', '%su', 1, true);"
             );
             return EndToEndDynValueAssert.ExpectAsync(result, null);
@@ -119,7 +120,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             return EndToEndDynValueAssert.ExpectAsync(result, "30/05/1999");
         }
 
@@ -135,7 +136,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             return EndToEndDynValueAssert.ExpectAsync(result, "30/05/1999");
         }
 
@@ -153,7 +154,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             return EndToEndDynValueAssert.ExpectAsync(result, null);
         }
 
@@ -168,7 +169,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             return EndToEndDynValueAssert.ExpectAsync(result, "05/11/1990");
         }
 
@@ -183,7 +184,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             return EndToEndDynValueAssert.ExpectAsync(result, "hello hello world world", true);
         }
 
@@ -198,7 +199,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             string printed = null;
             Script scriptHost = new Script(version, CoreModulePresets.Complete);
-            DynValue chunk = scriptHost.LoadString(code);
+            LuaValue chunk = scriptHost.LoadString(code);
             scriptHost.Options.DebugPrint = s => printed = s;
             scriptHost.Call(chunk);
 
@@ -226,7 +227,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             string printed = null;
             Script scriptHost = new Script(version, CoreModulePresets.Complete);
-            DynValue chunk = scriptHost.LoadString(code);
+            LuaValue chunk = scriptHost.LoadString(code);
             scriptHost.Options.DebugPrint = s => printed = s;
             scriptHost.Call(chunk);
 
@@ -249,7 +250,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             return EndToEndDynValueAssert.ExpectAsync(result, DataType.Void, "yup");
         }
 
@@ -320,7 +321,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await Assert.That(result.Type).IsEqualTo(DataType.Number);
             await Assert.That(result.Number).IsEqualTo(42);
         }
@@ -340,7 +341,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
             await Assert.That(result.Type).IsEqualTo(DataType.String);
             await Assert.That(result.String).IsEqualTo("custom_tostring");
         }
@@ -387,8 +388,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
-            await Assert.That(result.IsNil()).IsTrue();
+            LuaValue result = script.DoString(code);
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -422,7 +423,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             ";
 
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2);
             await Assert.That(result.Tuple[0].String).IsEqualTo("e e");
@@ -439,7 +440,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     doesn't match '^[^:]+:%d+: bad argument #1 to 'date' %(invalid conversion specifier '%%Ja'%)'";
 
             string lua = "return string.gsub(a, '\\n', '\\n #')";
-            DynValue result = script.DoString(lua);
+            LuaValue result = script.DoString(lua);
 
             string original = script.Globals.Get("a").String;
             string expected = original.Replace("\n", "\n #", StringComparison.Ordinal);
@@ -465,9 +466,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script script = new Script(version, CoreModules.StringLib);
             script.Globals["s"] = source;
             script.Globals["p"] = pattern;
-            DynValue result = script.DoString("return string.match(s, p)");
+            LuaValue result = script.DoString("return string.match(s, p)");
 
-            await Assert.That(!result.IsNil()).IsEqualTo(expectedMatch);
+            await Assert.That(!result.IsNil).IsEqualTo(expectedMatch);
         }
     }
 }

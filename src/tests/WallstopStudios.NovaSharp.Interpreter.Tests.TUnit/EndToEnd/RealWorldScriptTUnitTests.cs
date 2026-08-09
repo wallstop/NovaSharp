@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System;
     using System.IO;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -43,7 +44,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         private static async Task ExecuteFixtureAsync(
             LuaCompatibilityVersion version,
             string relativePath,
-            Func<Script, DynValue, Task> exercise
+            Func<Script, LuaValue, Task> exercise
         )
         {
             ArgumentNullException.ThrowIfNull(exercise);
@@ -56,27 +57,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             string source = await File.ReadAllTextAsync(scriptPath).ConfigureAwait(false);
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue moduleValue = script.DoString(source);
+            LuaValue moduleValue = script.DoString(source);
 
-            await Assert.That(moduleValue.IsNil()).IsFalse().ConfigureAwait(false);
+            await Assert.That(moduleValue.IsNil).IsFalse().ConfigureAwait(false);
             await exercise(script, moduleValue).ConfigureAwait(false);
         }
 
-        private static async Task ExerciseRxiJsonAsync(Script script, DynValue moduleValue)
+        private static async Task ExerciseRxiJsonAsync(Script script, LuaValue moduleValue)
         {
             await Assert.That(moduleValue.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
 
-            DynValue version = moduleValue.Table.Get("_version");
+            LuaValue version = moduleValue.Table.Get("_version");
             await Assert.That(version.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(version.String).IsEqualTo("0.1.2").ConfigureAwait(false);
 
-            DynValue encode = moduleValue.Table.Get("encode");
-            DynValue decode = moduleValue.Table.Get("decode");
+            LuaValue encode = moduleValue.Table.Get("encode");
+            LuaValue decode = moduleValue.Table.Get("decode");
 
             await Assert.That(encode.Type).IsEqualTo(DataType.Function).ConfigureAwait(false);
             await Assert.That(decode.Type).IsEqualTo(DataType.Function).ConfigureAwait(false);
 
-            DynValue sampleTable = script.DoString(
+            LuaValue sampleTable = script.DoString(
                 @"
                     return {
                         answer = 42,
@@ -87,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 "
             );
 
-            DynValue encoded = script.Call(encode, sampleTable);
+            LuaValue encoded = script.Call(encode, sampleTable);
             await Assert.That(encoded.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(encoded.String).Contains("\"answer\":42").ConfigureAwait(false);
             await Assert
@@ -96,7 +97,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 .ConfigureAwait(false);
             await Assert.That(encoded.String).Contains("\"nested\":[1,2,3]").ConfigureAwait(false);
 
-            DynValue decoded = script.Call(decode, encoded);
+            LuaValue decoded = script.Call(decode, encoded);
             await Assert.That(decoded.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
             await Assert
                 .That(decoded.Table.Get("answer").Number)
@@ -108,7 +109,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 .ConfigureAwait(false);
             await Assert.That(decoded.Table.Get("active").Boolean).IsTrue().ConfigureAwait(false);
 
-            DynValue nested = decoded.Table.Get("nested");
+            LuaValue nested = decoded.Table.Get("nested");
             await Assert.That(nested.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
             await Assert.That(nested.Table.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(nested.Table.Get(1).Number).IsEqualTo(1).ConfigureAwait(false);
@@ -116,18 +117,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             await Assert.That(nested.Table.Get(3).Number).IsEqualTo(3).ConfigureAwait(false);
         }
 
-        private static async Task ExerciseKikitoInspectAsync(Script script, DynValue moduleValue)
+        private static async Task ExerciseKikitoInspectAsync(Script script, LuaValue moduleValue)
         {
             await Assert.That(moduleValue.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
 
-            DynValue version = moduleValue.Table.Get("_VERSION");
+            LuaValue version = moduleValue.Table.Get("_VERSION");
             await Assert.That(version.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(version.String).IsEqualTo("inspect.lua 3.1.0").ConfigureAwait(false);
 
-            DynValue inspectFunc = moduleValue.Table.Get("inspect");
+            LuaValue inspectFunc = moduleValue.Table.Get("inspect");
             await Assert.That(inspectFunc.Type).IsEqualTo(DataType.Function).ConfigureAwait(false);
 
-            DynValue sample = script.DoString(
+            LuaValue sample = script.DoString(
                 @"
                     local ui = setmetatable(
                         { isVisible = true },
@@ -142,7 +143,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 "
             );
 
-            DynValue inspected = script.Call(inspectFunc, sample);
+            LuaValue inspected = script.Call(inspectFunc, sample);
             await Assert.That(inspected.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
 
             string output = inspected.String;

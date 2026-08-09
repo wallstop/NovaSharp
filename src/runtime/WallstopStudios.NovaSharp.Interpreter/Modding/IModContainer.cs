@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Modding
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
@@ -115,7 +116,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="codeFriendlyName">Optional friendly name for error messages.</param>
         /// <returns>The result of the execution.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
-        public DynValue DoString(string code, string codeFriendlyName = null);
+        public LuaValue DoString(string code, string codeFriendlyName = null);
 
         /// <summary>
         /// Invokes a global function defined in this mod.
@@ -125,15 +126,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <returns>The result of the function call.</returns>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="args"/> is null.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
-        public DynValue CallFunction(string functionName, params object[] args);
+        public LuaValue CallFunction(string functionName, params object[] args);
 
         /// <summary>
         /// Gets a global value from the mod's environment.
         /// </summary>
         /// <param name="name">The name of the global.</param>
-        /// <returns>The value, or <see cref="DynValue.Nil"/> if not found.</returns>
+        /// <returns>The value, or <see cref="LuaValue.Nil"/> if not found.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
-        public DynValue GetGlobal(string name);
+        public LuaValue GetGlobal(string name);
 
         /// <summary>
         /// Sets a global value in the mod's environment.
@@ -141,6 +142,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="name">The name of the global.</param>
         /// <param name="value">The value to set.</param>
         /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
-        public void SetGlobal(string name, DynValue value);
+        public void SetGlobal(string name, LuaValue value);
     }
 }

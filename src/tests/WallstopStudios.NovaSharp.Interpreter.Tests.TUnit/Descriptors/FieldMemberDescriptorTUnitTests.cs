@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.Linq.Expressions;
     using System.Reflection;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -160,7 +161,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 InteropAccessMode.Reflection
             );
 
-            DynValue value = descriptor.GetValue(CreateScript(), null);
+            LuaValue value = descriptor.GetValue(CreateScript(), null);
 
             await Assert.That(value.Type).IsEqualTo(DataType.Number);
             await Assert.That(value.Number).IsEqualTo(SampleFields.ConstValue);
@@ -209,9 +210,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             await Assert.That(descriptor.AccessMode).IsEqualTo(InteropAccessMode.LazyOptimized);
             await Assert.That(descriptor.OptimizedGetter).IsNull();
 
-            DynValue first = descriptor.GetValue(CreateScript(), null);
+            LuaValue first = descriptor.GetValue(CreateScript(), null);
             Func<object, object> optimizedGetter = descriptor.OptimizedGetter;
-            DynValue second = descriptor.GetValue(CreateScript(), null);
+            LuaValue second = descriptor.GetValue(CreateScript(), null);
 
             await Assert.That(first.Number).IsEqualTo(SampleFields.StaticValue);
             await Assert.That(optimizedGetter).IsNotNull();
@@ -232,7 +233,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 InteropAccessMode.Reflection
             );
 
-            DynValue result = descriptor.GetValue(CreateScript(), instance);
+            LuaValue result = descriptor.GetValue(CreateScript(), instance);
 
             await Assert.That(descriptor.OptimizedGetter).IsNull();
             await Assert.That(result.Type).IsEqualTo(DataType.Number);
@@ -258,7 +259,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
 
             await Assert.That(descriptor.AccessMode).IsEqualTo(InteropAccessMode.Preoptimized);
-            DynValue result = descriptor.GetValue(CreateScript(), instance);
+            LuaValue result = descriptor.GetValue(CreateScript(), instance);
 
             await Assert.That(descriptor.OptimizedGetter).IsNotNull();
             await Assert.That(result.Number).IsEqualTo(instance._instanceValue);
@@ -279,7 +280,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 InteropAccessMode.Preoptimized
             );
 
-            DynValue result = descriptor.GetValue(CreateScript(), null);
+            LuaValue result = descriptor.GetValue(CreateScript(), null);
 
             await Assert.That(descriptor.OptimizedGetter).IsNull();
             await Assert.That(result.Number).IsEqualTo(SampleFields.ConstValue);
@@ -324,7 +325,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             ((IOptimizableDescriptor)descriptor).Optimize();
 
-            DynValue value = descriptor.GetValue(CreateScript(), instance);
+            LuaValue value = descriptor.GetValue(CreateScript(), instance);
 
             await Assert.That(descriptor.OptimizedGetter).IsNotNull();
             await Assert.That(value.Number).IsEqualTo(instance._instanceValue);
@@ -348,10 +349,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
 
             ScriptRuntimeException constException = ExpectException<ScriptRuntimeException>(() =>
-                constDescriptor.SetValue(CreateScript(), null, DynValue.NewNumber(10))
+                constDescriptor.SetValue(CreateScript(), null, LuaValue.NewNumber(10))
             );
             ScriptRuntimeException readonlyException = ExpectException<ScriptRuntimeException>(() =>
-                readonlyDescriptor.SetValue(CreateScript(), null, DynValue.NewString("new"))
+                readonlyDescriptor.SetValue(CreateScript(), null, LuaValue.NewString("new"))
             );
 
             await Assert.That(constException.Message).Contains("cannot be assigned");
@@ -372,7 +373,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 InteropAccessMode.Reflection
             );
 
-            descriptor.SetValue(CreateScript(), instance, DynValue.NewNumber(5));
+            descriptor.SetValue(CreateScript(), instance, LuaValue.NewNumber(5));
 
             await Assert.That(instance._instanceValue).IsEqualTo(5);
         }
@@ -392,7 +393,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
-                descriptor.SetValue(CreateScript(), instance, DynValue.NewString("invalid"))
+                descriptor.SetValue(CreateScript(), instance, LuaValue.NewString("invalid"))
             );
 
             await Assert.That(exception.Message).Contains("cannot convert");
@@ -412,7 +413,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
-                descriptor.SetValue(CreateScript(), null, DynValue.NewNumber(1))
+                descriptor.SetValue(CreateScript(), null, LuaValue.NewNumber(1))
             );
 
             await Assert.That(exception.Message).Contains("attempt to access instance member");
@@ -434,7 +435,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
-                descriptor.SetValue(CreateScript(), new object(), DynValue.NewNumber(1))
+                descriptor.SetValue(CreateScript(), new object(), LuaValue.NewNumber(1))
             );
 
             await Assert.That(exception.Message).Contains("cannot find a conversion");
@@ -456,7 +457,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 InteropAccessMode.Reflection
             );
 
-            descriptor.SetValue(CreateScript(), instance, DynValue.NewNumber(2.5));
+            descriptor.SetValue(CreateScript(), instance, LuaValue.NewNumber(2.5));
 
             await Assert.That(instance._doubleValue).IsEqualTo(2.5d);
         }

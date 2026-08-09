@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.CodeDom;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Hardwire;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -31,16 +32,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext(logger);
             Table table = new(owner: null);
 
-            table.Set("visibility", DynValue.NewString("internal"));
+            table.Set("visibility", LuaValue.NewString("internal"));
             await Assert.That(context.IsVisibilityAccepted(table)).IsFalse().ConfigureAwait(false);
 
             context.AllowInternals = true;
             await Assert.That(context.IsVisibilityAccepted(table)).IsTrue().ConfigureAwait(false);
 
-            table.Set("visibility", DynValue.NewString("protected-internal"));
+            table.Set("visibility", LuaValue.NewString("protected-internal"));
             await Assert.That(context.IsVisibilityAccepted(table)).IsTrue().ConfigureAwait(false);
 
-            table.Set("visibility", DynValue.NewString("private"));
+            table.Set("visibility", LuaValue.NewString("private"));
             await Assert.That(context.IsVisibilityAccepted(table)).IsFalse().ConfigureAwait(false);
         }
 
@@ -52,10 +53,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             await Assert.That(context.IsVisibilityAccepted(table)).IsTrue().ConfigureAwait(false);
 
-            table.Set("visibility", DynValue.NewNumber(42));
+            table.Set("visibility", LuaValue.NewNumber(42));
             await Assert.That(context.IsVisibilityAccepted(table)).IsTrue().ConfigureAwait(false);
 
-            table.Set("visibility", DynValue.NewString("public"));
+            table.Set("visibility", LuaValue.NewString("public"));
             await Assert.That(context.IsVisibilityAccepted(table)).IsTrue().ConfigureAwait(false);
         }
 
@@ -124,8 +125,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
             Table root = new(owner: null);
             Table descriptor = new(owner: null);
-            descriptor.Set("class", DynValue.NewString(managedType));
-            root.Set("Example", DynValue.NewTable(descriptor));
+            descriptor.Set("class", LuaValue.NewString(managedType));
+            root.Set("Example", LuaValue.NewTable(descriptor));
 
             context.GenerateCode(root);
 
@@ -206,11 +207,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             Script script = new();
             Table descriptor = new(script);
-            descriptor.Set("class", DynValue.NewString(managedType));
-            descriptor.Set("skip", DynValue.True);
+            descriptor.Set("class", LuaValue.NewString(managedType));
+            descriptor.Set("skip", LuaValue.True);
 
             Table root = new(script);
-            root.Set("SkipMe", DynValue.NewTable(descriptor));
+            root.Set("SkipMe", LuaValue.NewTable(descriptor));
 
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
             context.DispatchTablePairs(root, new CodeTypeMemberCollection());
@@ -230,11 +231,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             Script script = new();
             Table descriptor = new(script);
-            descriptor.Set("class", DynValue.NewString(managedType));
-            descriptor.Set("visibility", DynValue.NewString("private"));
+            descriptor.Set("class", LuaValue.NewString(managedType));
+            descriptor.Set("visibility", LuaValue.NewString("private"));
 
             Table root = new(script);
-            root.Set("Hidden", DynValue.NewTable(descriptor));
+            root.Set("Hidden", LuaValue.NewTable(descriptor));
 
             context.DispatchTablePairs(root, new CodeTypeMemberCollection());
 
@@ -253,7 +254,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext(logger);
 
             Table root = new(new Script(version));
-            root.Set("Broken", DynValue.NewString("failure detected"));
+            root.Set("Broken", LuaValue.NewString("failure detected"));
 
             context.DispatchTablePairs(root, new CodeTypeMemberCollection());
 

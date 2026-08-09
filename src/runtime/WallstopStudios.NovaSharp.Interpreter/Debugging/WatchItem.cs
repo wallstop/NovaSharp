@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Debugging
 {
     using System.Globalization;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -35,7 +36,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
         /// Gets or sets the value of the item, or <see langword="null"/> when this watch item does
         /// not expose a value.
         /// </summary>
-        public DynValue? Value { get; set; }
+        public LuaValue? Value { get; set; }
 
         /// <summary>
         /// Gets or sets the symbol reference of the item
@@ -72,7 +73,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
                 BasePtr,
                 RetAddress,
                 Name ?? "(null)",
-                Value.HasValue ? Value.Value.ToString() : "(null)",
+                Value.HasValue ? Value.Value.ToRawString() : "(null)",
                 LValue != null ? LValue.ToString() : "(null)"
             );
         }

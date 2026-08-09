@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
 {
     using System;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
@@ -21,25 +22,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
 
         public Type Type => _inner.Type;
 
-        public DynValue? Index(Script script, object obj, DynValue index, bool isDirectIndexing)
+        public LuaValue? Index(Script script, object obj, LuaValue index, bool isDirectIndexing)
         {
-            return TryIndex(script, obj, index, isDirectIndexing, out DynValue value)
+            return TryIndex(script, obj, index, isDirectIndexing, out LuaValue value)
                 ? value
-                : null;
+                : (LuaValue?)null;
         }
 
         public bool TryIndex(
             Script script,
             object obj,
-            DynValue index,
+            LuaValue index,
             bool isDirectIndexing,
-            out DynValue value
+            out LuaValue value
         )
         {
-            DynValue scalar = index.ToScalar();
+            LuaValue scalar = index.ToScalar();
             if (scalar.Type != DataType.String)
             {
-                value = DynValue.Nil;
+                value = LuaValue.Nil;
                 return true;
             }
 
@@ -49,12 +50,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         public bool SetIndex(
             Script script,
             object obj,
-            DynValue index,
-            DynValue value,
+            LuaValue index,
+            LuaValue value,
             bool isDirectIndexing
         )
         {
-            DynValue scalar = index.ToScalar();
+            LuaValue scalar = index.ToScalar();
             if (scalar.Type != DataType.String)
             {
                 throw ScriptRuntimeException.IndexType(scalar);
@@ -68,12 +69,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
             return _inner.AsString(obj);
         }
 
-        public DynValue? MetaIndex(Script script, object obj, string metaname)
+        public LuaValue? MetaIndex(Script script, object obj, string metaname)
         {
-            return TryMetaIndex(script, obj, metaname, out DynValue value) ? value : null;
+            return TryMetaIndex(script, obj, metaname, out LuaValue value)
+                ? value
+                : (LuaValue?)null;
         }
 
-        public bool TryMetaIndex(Script script, object obj, string metaname, out DynValue value)
+        public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
         {
             return UserDataAccess.TryMetaIndex(_inner, script, obj, metaname, out value);
         }

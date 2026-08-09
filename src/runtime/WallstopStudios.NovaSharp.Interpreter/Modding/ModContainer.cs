@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -400,13 +401,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         }
 
         /// <inheritdoc/>
-        public DynValue DoString(string code, string codeFriendlyName = null)
+        public LuaValue DoString(string code, string codeFriendlyName = null)
         {
             Script script = GetLoadedScriptOrThrow();
             return script.DoString(code, null, codeFriendlyName);
         }
 
-        private DynValue GetCallableFunction(string functionName, out Script script)
+        private LuaValue GetCallableFunction(string functionName, out Script script)
         {
             if (string.IsNullOrEmpty(functionName))
             {
@@ -417,7 +418,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             }
 
             script = GetLoadedScriptOrThrow();
-            DynValue function = script.Globals.Get(functionName);
+            LuaValue function = script.Globals.Get(functionName);
 
             if (function.Type != DataType.Function)
             {
@@ -439,10 +440,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="functionName">The name of the function to call.</param>
         /// <returns>The result of the function call.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
-        public DynValue CallFunction(string functionName)
+        public LuaValue CallFunction(string functionName)
         {
-            DynValue function = GetCallableFunction(functionName, out Script script);
-            return script.Call(function);
+            LuaValue function = GetCallableFunction(functionName, out Script script);
+            return script.CallValues(function);
         }
 
         /// <summary>
@@ -452,10 +453,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="arg">The argument to pass to the function.</param>
         /// <returns>The result of the function call.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
-        public DynValue CallFunction(string functionName, object arg)
+        public LuaValue CallFunction(string functionName, object arg)
         {
-            DynValue function = GetCallableFunction(functionName, out Script script);
-            return script.Call(function, arg);
+            LuaValue function = GetCallableFunction(functionName, out Script script);
+            return script.CallObjectArgumentsCore(function, arg);
         }
 
         /// <summary>
@@ -466,10 +467,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="arg2">The second argument to pass to the function.</param>
         /// <returns>The result of the function call.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
-        public DynValue CallFunction(string functionName, object arg1, object arg2)
+        public LuaValue CallFunction(string functionName, object arg1, object arg2)
         {
-            DynValue function = GetCallableFunction(functionName, out Script script);
-            return script.Call(function, arg1, arg2);
+            LuaValue function = GetCallableFunction(functionName, out Script script);
+            return script.CallObjectArgumentsCore(function, arg1, arg2);
         }
 
         /// <summary>
@@ -481,10 +482,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="arg3">The third argument to pass to the function.</param>
         /// <returns>The result of the function call.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
-        public DynValue CallFunction(string functionName, object arg1, object arg2, object arg3)
+        public LuaValue CallFunction(string functionName, object arg1, object arg2, object arg3)
         {
-            DynValue function = GetCallableFunction(functionName, out Script script);
-            return script.Call(function, arg1, arg2, arg3);
+            LuaValue function = GetCallableFunction(functionName, out Script script);
+            return script.CallObjectArgumentsCore(function, arg1, arg2, arg3);
         }
 
         /// <summary>
@@ -497,7 +498,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="arg4">The fourth argument to pass to the function.</param>
         /// <returns>The result of the function call.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
-        public DynValue CallFunction(
+        public LuaValue CallFunction(
             string functionName,
             object arg1,
             object arg2,
@@ -505,8 +506,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             object arg4
         )
         {
-            DynValue function = GetCallableFunction(functionName, out Script script);
-            return script.Call(function, arg1, arg2, arg3, arg4);
+            LuaValue function = GetCallableFunction(functionName, out Script script);
+            return script.CallObjectArgumentsCore(function, arg1, arg2, arg3, arg4);
         }
 
         /// <summary>
@@ -520,7 +521,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="arg5">The fifth argument to pass to the function.</param>
         /// <returns>The result of the function call.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
-        public DynValue CallFunction(
+        public LuaValue CallFunction(
             string functionName,
             object arg1,
             object arg2,
@@ -529,21 +530,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             object arg5
         )
         {
-            DynValue function = GetCallableFunction(functionName, out Script script);
-            return script.Call(function, arg1, arg2, arg3, arg4, arg5);
+            LuaValue function = GetCallableFunction(functionName, out Script script);
+            return script.CallObjectArgumentsCore(function, arg1, arg2, arg3, arg4, arg5);
         }
 
         /// <inheritdoc/>
-        public DynValue CallFunction(string functionName, params object[] args)
+        public LuaValue CallFunction(string functionName, params object[] args)
         {
-            DynValue function = GetCallableFunction(functionName, out Script script);
+            LuaValue function = GetCallableFunction(functionName, out Script script);
 
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
             }
 
-            return script.Call(function, args);
+            return script.CallObjectArgumentsCore(function, args);
         }
 
         /// <summary>
@@ -559,7 +560,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// single Lua argument, use <see cref="CallFunction(string, object)" /> and cast
         /// the array to <see cref="object" />.
         /// </remarks>
-        public DynValue CallFunctionObjectArguments(string functionName, object[] args)
+        public LuaValue CallFunctionObjectArguments(string functionName, object[] args)
         {
             if (args == null)
             {
@@ -570,14 +571,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         }
 
         /// <inheritdoc/>
-        public DynValue CallFunctionObjectArguments(string functionName, ReadOnlySpan<object> args)
+        public LuaValue CallFunctionObjectArguments(string functionName, ReadOnlySpan<object> args)
         {
-            DynValue function = GetCallableFunction(functionName, out Script script);
-            return script.CallObjectArguments(function, args);
+            LuaValue function = GetCallableFunction(functionName, out Script script);
+            return script.CallObjectArgumentsCore(function, args);
         }
 
         /// <inheritdoc/>
-        public DynValue GetGlobal(string name)
+        public LuaValue GetGlobal(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -589,7 +590,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         }
 
         /// <inheritdoc/>
-        public void SetGlobal(string name, DynValue value)
+        public void SetGlobal(string name, LuaValue value)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -614,8 +615,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         private void ConfigureScript(Script script)
         {
             // Set mod metadata as globals
-            script.Globals["MOD_ID"] = DynValue.NewString(ModId);
-            script.Globals["MOD_NAME"] = DynValue.NewString(DisplayName);
+            script.Globals["MOD_ID"] = LuaValue.NewString(ModId);
+            script.Globals["MOD_NAME"] = LuaValue.NewString(DisplayName);
 
             // Allow custom configuration
             ScriptConfigurator?.Invoke(this, script);
@@ -639,12 +640,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         private void InvokeUnloadHandler(Script script)
         {
             // First try to call a Lua-side cleanup function
-            DynValue onUnload = script.Globals.Get("on_unload");
+            LuaValue onUnload = script.Globals.Get("on_unload");
             if (onUnload.Type == DataType.Function)
             {
                 try
                 {
-                    script.Call(onUnload);
+                    script.CallValues(onUnload);
                 }
                 catch
                 {

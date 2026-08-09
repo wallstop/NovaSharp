@@ -1,9 +1,10 @@
 namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System;
+    using global::NovaSharp;
 
     /// <summary>
-    /// Controls how <see cref="DynValue" /> instances validate and coerce their underlying payload.
+    /// Controls how <see cref="LuaValue" /> instances validate and coerce their underlying payload.
     /// </summary>
     [Flags]
     public enum TypeValidationOptions

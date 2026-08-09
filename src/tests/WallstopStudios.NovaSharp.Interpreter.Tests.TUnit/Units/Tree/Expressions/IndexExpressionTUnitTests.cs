@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 {
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -23,7 +24,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptLoadingContext context = CreateContext(script);
             StubExpression tableExpr = StubExpression.WithValue(
                 context,
-                DynValue.NewTable(new Table(script))
+                LuaValue.NewTable(new Table(script))
             );
             IndexExpression expression = new(tableExpr, "field", context);
 
@@ -39,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             Script script = new();
             ScriptLoadingContext context = CreateContext(script);
             IndexExpression expression = new(
-                StubExpression.WithValue(context, DynValue.NewTable(new Table(script))),
+                StubExpression.WithValue(context, LuaValue.NewTable(new Table(script))),
                 CreateLiteralExpression(context, "literal"),
                 context
             );
@@ -58,12 +59,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptLoadingContext context = CreateContext(script);
             List<Expression> list = new()
             {
-                StubExpression.WithValue(context, DynValue.NewNumber(1)),
-                StubExpression.WithValue(context, DynValue.NewNumber(2)),
+                StubExpression.WithValue(context, LuaValue.NewNumber(1)),
+                StubExpression.WithValue(context, LuaValue.NewNumber(2)),
             };
             ExprListExpression listExpression = new(list, context);
             IndexExpression expression = new(
-                StubExpression.WithValue(context, DynValue.NewTable(new Table(script))),
+                StubExpression.WithValue(context, LuaValue.NewTable(new Table(script))),
                 listExpression,
                 context
             );
@@ -80,7 +81,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             Script script = new();
             ScriptLoadingContext context = CreateContext(script);
             IndexExpression expression = new(
-                StubExpression.WithValue(context, DynValue.NewTable(new Table(script))),
+                StubExpression.WithValue(context, LuaValue.NewTable(new Table(script))),
                 "field",
                 context
             );
@@ -97,7 +98,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             Script script = new();
             ScriptLoadingContext context = CreateContext(script);
             IndexExpression expression = new(
-                StubExpression.WithValue(context, DynValue.NewTable(new Table(script))),
+                StubExpression.WithValue(context, LuaValue.NewTable(new Table(script))),
                 CreateLiteralExpression(context, "literal"),
                 context
             );
@@ -116,12 +117,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptLoadingContext context = CreateContext(script);
             List<Expression> list = new()
             {
-                StubExpression.WithValue(context, DynValue.NewString("a")),
-                StubExpression.WithValue(context, DynValue.NewString("b")),
+                StubExpression.WithValue(context, LuaValue.NewString("a")),
+                StubExpression.WithValue(context, LuaValue.NewString("b")),
             };
             ExprListExpression listExpression = new(list, context);
             IndexExpression expression = new(
-                StubExpression.WithValue(context, DynValue.NewTable(new Table(script))),
+                StubExpression.WithValue(context, LuaValue.NewTable(new Table(script))),
                 listExpression,
                 context
             );
@@ -140,8 +141,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptLoadingContext context = CreateContext(script);
 
             IndexExpression expression = new(
-                StubExpression.WithValue(context, DynValue.NewNumber(1)),
-                StubExpression.WithValue(context, DynValue.NewString("field")),
+                StubExpression.WithValue(context, LuaValue.NewNumber(1)),
+                StubExpression.WithValue(context, LuaValue.NewString("field")),
                 context
             );
 
@@ -163,8 +164,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             Table table = new(script);
 
             IndexExpression expression = new(
-                StubExpression.WithValue(context, DynValue.NewTable(table)),
-                StubExpression.WithValue(context, DynValue.Nil),
+                StubExpression.WithValue(context, LuaValue.NewTable(table)),
+                StubExpression.WithValue(context, LuaValue.Nil),
                 context
             );
 
@@ -183,13 +184,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             Table table = new(script);
 
             IndexExpression expression = new(
-                StubExpression.WithValue(context, DynValue.NewTable(table)),
-                StubExpression.WithValue(context, DynValue.NewString("missing")),
+                StubExpression.WithValue(context, LuaValue.NewTable(table)),
+                StubExpression.WithValue(context, LuaValue.NewString("missing")),
                 context
             );
 
-            DynValue result = expression.Eval(execContext);
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            LuaValue result = expression.Eval(execContext);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -199,15 +200,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptExecutionContext execContext = script.CreateDynamicExecutionContext();
             ScriptLoadingContext context = CreateContext(script);
             Table table = new(script);
-            table.Set("field", DynValue.NewNumber(42));
+            table.Set("field", LuaValue.NewNumber(42));
 
             IndexExpression expression = new(
-                StubExpression.WithValue(context, DynValue.NewTable(table)),
-                StubExpression.WithValue(context, DynValue.NewString("field")),
+                StubExpression.WithValue(context, LuaValue.NewTable(table)),
+                StubExpression.WithValue(context, LuaValue.NewString("field")),
                 context
             );
 
-            DynValue result = expression.Eval(execContext);
+            LuaValue result = expression.Eval(execContext);
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
@@ -218,15 +219,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptExecutionContext execContext = script.CreateDynamicExecutionContext();
             ScriptLoadingContext context = CreateContext(script);
             Table table = new(script);
-            table.Set("direct", DynValue.NewString("hit"));
+            table.Set("direct", LuaValue.NewString("hit"));
 
             IndexExpression expression = new(
-                StubExpression.WithValue(context, DynValue.NewTable(table)),
+                StubExpression.WithValue(context, LuaValue.NewTable(table)),
                 "direct",
                 context
             );
 
-            DynValue result = expression.Eval(execContext);
+            LuaValue result = expression.Eval(execContext);
             await Assert.That(result.String).IsEqualTo("hit").ConfigureAwait(false);
         }
 
@@ -256,15 +257,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
         private sealed class StubExpression : Expression
         {
-            private readonly DynValue _value;
+            private readonly LuaValue _value;
 
-            private StubExpression(ScriptLoadingContext context, DynValue value)
+            private StubExpression(ScriptLoadingContext context, LuaValue value)
                 : base(context)
             {
                 _value = value;
             }
 
-            public static StubExpression WithValue(ScriptLoadingContext context, DynValue value) =>
+            public static StubExpression WithValue(ScriptLoadingContext context, LuaValue value) =>
                 new(context, value);
 
             public override void Compile(ByteCode bc)
@@ -272,7 +273,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 bc.EmitNop("stub");
             }
 
-            public override DynValue Eval(ScriptExecutionContext context)
+            public override LuaValue Eval(ScriptExecutionContext context)
             {
                 return _value;
             }

@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Reflection;
     using System.Text;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
@@ -34,7 +35,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local f = file
                 f:seek('end')
@@ -57,7 +58,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local f = file
                 return f:write('boom')
@@ -65,7 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("write failure");
             await Assert.That(result.Tuple[2].Number).IsEqualTo(-1);
         }
@@ -99,10 +100,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue result = script.DoString("return file:close()");
+            LuaValue result = script.DoString("return file:close()");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("already closed");
             await Assert.That(result.Tuple[2].Number).IsEqualTo(-1);
         }
@@ -116,9 +117,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue result = script.DoString("return file:close()");
+            LuaValue result = script.DoString("return file:close()");
 
-            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[0].IsNil).IsTrue();
             await Assert.That(result.Tuple[1].String).Contains("close failure");
             await Assert.That(result.Tuple[2].Number).IsEqualTo(-1);
         }
@@ -147,7 +148,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue result = script.DoString("return file:flush()");
+            LuaValue result = script.DoString("return file:flush()");
 
             await Assert.That(result.Boolean).IsTrue();
         }
@@ -192,15 +193,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue ioTable = script.Globals.Get("io");
-            await Assert.That(ioTable.IsNil()).IsFalse();
-            await Assert.That(ioTable.Table.Get("output").IsNil()).IsFalse();
-            await Assert.That(ioTable.Table.Get("flush").IsNil()).IsFalse();
+            LuaValue ioTable = script.Globals.Get("io");
+            await Assert.That(ioTable.IsNil).IsFalse();
+            await Assert.That(ioTable.Table.Get("output").IsNil).IsFalse();
+            await Assert.That(ioTable.Table.Get("flush").IsNil).IsFalse();
             IoModule.SetDefaultFile(script, StandardFileType.StdOut, file);
 
-            DynValue pcall = script.Globals.Get("pcall");
-            DynValue flush = ioTable.Table.Get("flush");
-            DynValue tuple = script.Call(pcall, flush);
+            LuaValue pcall = script.Globals.Get("pcall");
+            LuaValue flush = ioTable.Table.Get("flush");
+            LuaValue tuple = script.Call(pcall, flush);
 
             await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple);
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
@@ -216,7 +217,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local setPos = f:seek('set', 2)
@@ -242,7 +243,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local ok, err = pcall(function()
                     return file:seek('bogus', 0)
@@ -265,7 +266,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local ok, err = pcall(function()
                     return file:seek('set', 0)
@@ -287,7 +288,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local ok, err = pcall(function()
                     return file:seek('set', 1)
@@ -311,7 +312,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             script.DoString("file:write('buffer')");
             file.TriggerStreamWriteFailure();
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local ok, err = pcall(function()
                     return file:setvbuf('line')
@@ -333,7 +334,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local f = file
                 local first = f:setvbuf('line')
@@ -356,7 +357,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 f:close()
@@ -404,7 +405,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local ok, err = pcall(function()
                     return file:setvbuf('line')
@@ -427,7 +428,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString("return file:read(), file:read('*a')");
+            LuaValue tuple = script.DoString("return file:read(), file:read('*a')");
 
             await Assert.That(tuple.Tuple[0].String).IsEqualTo("first");
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("second");
@@ -442,7 +443,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local num = f:read('*n')
@@ -467,7 +468,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local num = f:read('*n')
@@ -489,7 +490,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local num = f:read('*n')
@@ -517,7 +518,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue result = script.DoString("return file:read('*n')");
+            LuaValue result = script.DoString("return file:read('*n')");
 
             await Assert.That(result.Number).IsEqualTo(99);
         }
@@ -531,7 +532,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local number = f:read('*n')
@@ -553,7 +554,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local number = f:read('*n')
@@ -575,7 +576,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local number = f:read('*n')
@@ -584,7 +585,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].String).StartsWith("0x1p remainder");
         }
 
@@ -597,7 +598,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local number = f:read('*n')
@@ -619,7 +620,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local number = f:read('*n')
@@ -643,9 +644,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString("return file:read('*n'), file:read('*a')");
+            LuaValue tuple = script.DoString("return file:read('*n'), file:read('*a')");
 
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("x12");
         }
 
@@ -658,9 +659,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString("return file:read('*n'), file:read('*a')");
+            LuaValue tuple = script.DoString("return file:read('*n'), file:read('*a')");
 
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("+x12");
         }
 
@@ -673,7 +674,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local number = f:read('*n')
@@ -695,9 +696,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString("return file:read('*n'), file:read('*a')");
+            LuaValue tuple = script.DoString("return file:read('*n'), file:read('*a')");
 
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("0x rest");
         }
 
@@ -710,7 +711,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString("return file:read('*n'), file:read('*a')");
+            LuaValue tuple = script.DoString("return file:read('*n'), file:read('*a')");
 
             await Assert.That(tuple.Tuple[0].Number).IsEqualTo(1d);
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("garbage");
@@ -725,7 +726,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local number = f:read('*n')
@@ -747,7 +748,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local number = f:read('*n')
@@ -756,7 +757,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].String).StartsWith("+ remainder");
         }
 
@@ -769,9 +770,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString("return file:read('*n'), file:read('*l')");
+            LuaValue tuple = script.DoString("return file:read('*n'), file:read('*l')");
 
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("7");
             await Assert.That(file.ForcedReadBufferFailuresTriggered).IsEqualTo(1);
         }
@@ -785,7 +786,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local number = f:read('*n')
@@ -794,7 +795,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("+42");
             await Assert.That(file.ForcedReadBufferFailuresTriggered).IsEqualTo(1);
         }
@@ -808,7 +809,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local a = f:read('*l')
@@ -834,7 +835,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local a = f:read('*L')
@@ -856,7 +857,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local first = f:read('*l')
@@ -878,7 +879,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue result = script.DoString("return file:read('*a')");
+            LuaValue result = script.DoString("return file:read('*a')");
 
             await Assert.That(result.String).IsEqualTo(string.Empty);
         }
@@ -892,9 +893,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue result = script.DoString("return file:read('*l')");
+            LuaValue result = script.DoString("return file:read('*l')");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -906,7 +907,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local first = f:read('*n')
@@ -915,7 +916,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("abc");
         }
 
@@ -928,7 +929,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue result = script.DoString("return file:read('*n')");
+            LuaValue result = script.DoString("return file:read('*n')");
             await Assert.That(result.Number).IsEqualTo(42d);
         }
 
@@ -941,7 +942,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 "local n = file:read('*n'); return n, file:read('*l'), file:read('*l')"
             );
 
@@ -959,9 +960,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString("return file:read('*n', '*l')");
+            LuaValue tuple = script.DoString("return file:read('*n', '*l')");
 
-            await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple.Tuple[0].IsNil).IsTrue();
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("+");
         }
 
@@ -975,9 +976,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             script.Globals["file"] = UserData.Create(file);
             script.DoString("file:read('*a')");
 
-            DynValue result = script.DoString("return file:read(4)");
+            LuaValue result = script.DoString("return file:read(4)");
 
-            await Assert.That(result.IsNil()).IsTrue();
+            await Assert.That(result.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -1006,7 +1007,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 local first = f:read('*a')
@@ -1028,7 +1029,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local ok, err = pcall(function()
                     return file:read('*z')
@@ -1051,7 +1052,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local f = file
                 local output = {}
@@ -1230,7 +1231,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue result = script.DoString("return file:read('*a')");
+            LuaValue result = script.DoString("return file:read('*a')");
 
             await Assert.That(result.String).IsEqualTo("first\r\nsecond");
         }
@@ -1244,7 +1245,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString("return file:read(4), file:read('*a')");
+            LuaValue tuple = script.DoString("return file:read(4), file:read('*a')");
 
             await Assert.That(tuple.Tuple[0].String).IsEqualTo("AB\r\n");
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("CD");
@@ -1339,7 +1340,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             script.Globals["file"] = UserData.Create(file);
 
-            DynValue tuple = script.DoString(
+            LuaValue tuple = script.DoString(
                 @"
                 local f = file
                 f:seek('set', 3)

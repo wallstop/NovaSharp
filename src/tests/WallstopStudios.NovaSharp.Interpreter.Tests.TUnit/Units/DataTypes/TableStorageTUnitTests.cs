@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System.Collections.Generic;
     using System.Globalization;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -37,18 +38,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Script script = new(version);
             Table globals = script.Globals;
             Table table = new(script);
-            globals.Set("t", DynValue.FromTable(table));
+            globals.Set("t", LuaValue.FromTable(table));
 
-            table.Set(0, DynValue.NewString("zero"));
-            table.Set(-7, DynValue.NewString("minus-seven"));
+            table.Set(0, LuaValue.NewString("zero"));
+            table.Set(-7, LuaValue.NewString("minus-seven"));
 
             // The host integer overloads previously used a key space of their own, so these writes
             // were invisible to the script.
-            DynValue seen = script.DoString("return t[0] .. '/' .. t[-7]");
+            LuaValue seen = script.DoString("return t[0] .. '/' .. t[-7]");
 
             await Assert.That(seen.String).IsEqualTo("zero/minus-seven").ConfigureAwait(false);
             await Assert
-                .That(table.RawGet(DynValue.NewNumber(0)).String)
+                .That(table.RawGetValue(LuaValue.NewNumber(0)).String)
                 .IsEqualTo("zero")
                 .ConfigureAwait(false);
             await Assert.That(table.Remove(0)).IsTrue().ConfigureAwait(false);
@@ -62,11 +63,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         )
         {
             Table table = new(new Script(version));
-            table.Set("first", DynValue.NewNumber(1));
-            table.Set(1, DynValue.NewNumber(2));
-            table.Set("second", DynValue.NewNumber(3));
-            table.Set(2, DynValue.NewNumber(4));
-            table.Set("third", DynValue.NewNumber(5));
+            table.Set("first", LuaValue.NewNumber(1));
+            table.Set(1, LuaValue.NewNumber(2));
+            table.Set("second", LuaValue.NewNumber(3));
+            table.Set(2, LuaValue.NewNumber(4));
+            table.Set("third", LuaValue.NewNumber(5));
 
             List<string> order = new();
             bool arrayKeysAreIntegers = true;
@@ -117,11 +118,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             {
                 string key = "field" + i.ToString(CultureInfo.InvariantCulture);
                 expected.Add(key);
-                table.Set(key, DynValue.NewNumber(i));
+                table.Set(key, LuaValue.NewNumber(i));
             }
 
             List<string> actual = new();
-            foreach (DynValue key in table.GetKeysEnumerator())
+            foreach (LuaValue key in table.GetKeysEnumerator())
             {
                 actual.Add(key.String);
             }
@@ -137,17 +138,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task RemovedKeyIsRejectedAsATraversalCursor(LuaCompatibilityVersion version)
         {
             Table table = new(new Script(version));
-            table.Set("a", DynValue.NewNumber(1));
-            table.Set("b", DynValue.NewNumber(2));
+            table.Set("a", LuaValue.NewNumber(1));
+            table.Set("b", LuaValue.NewNumber(2));
 
-            TablePair? beforeRemoval = table.NextKey(DynValue.NewString("a"));
+            TablePair? beforeRemoval = table.NextKey(LuaValue.NewString("a"));
             await Assert.That(beforeRemoval.HasValue).IsTrue().ConfigureAwait(false);
             await Assert.That(beforeRemoval.Value.Key.String).IsEqualTo("b").ConfigureAwait(false);
 
             table.Remove("a");
 
             await Assert
-                .That(table.NextKey(DynValue.NewString("a")).HasValue)
+                .That(table.NextKey(LuaValue.NewString("a")).HasValue)
                 .IsFalse()
                 .ConfigureAwait(false);
         }
@@ -157,26 +158,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task NilledKeyRemainsAValidTraversalCursor(LuaCompatibilityVersion version)
         {
             Table table = new(new Script(version));
-            table.Set(1, DynValue.NewNumber(10));
-            table.Set(2, DynValue.NewNumber(20));
-            table.Set(3, DynValue.NewNumber(30));
+            table.Set(1, LuaValue.NewNumber(10));
+            table.Set(2, LuaValue.NewNumber(20));
+            table.Set(3, LuaValue.NewNumber(30));
 
-            table.Set(2, DynValue.Nil);
-            table.Set("hash-nil", DynValue.Nil);
+            table.Set(2, LuaValue.Nil);
+            table.Set("hash-nil", LuaValue.Nil);
 
-            TablePair? next = table.NextKey(DynValue.NewNumber(2));
-            bool foundArrayNil = table.TryRawGet(2, out DynValue arrayNil);
-            bool foundHashNil = table.TryRawGet("hash-nil", out DynValue hashNil);
-            bool foundMissing = table.TryRawGet("missing", out DynValue missing);
+            TablePair? next = table.NextKey(LuaValue.NewNumber(2));
+            bool foundArrayNil = table.TryRawGet(2, out LuaValue arrayNil);
+            bool foundHashNil = table.TryRawGet("hash-nil", out LuaValue hashNil);
+            bool foundMissing = table.TryRawGet("missing", out LuaValue missing);
 
             await Assert.That(next.HasValue).IsTrue().ConfigureAwait(false);
             await Assert.That(next.Value.Key.Number).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(foundArrayNil).IsTrue().ConfigureAwait(false);
-            await Assert.That(arrayNil.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(arrayNil.IsNil).IsTrue().ConfigureAwait(false);
             await Assert.That(foundHashNil).IsTrue().ConfigureAwait(false);
-            await Assert.That(hashNil.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(hashNil.IsNil).IsTrue().ConfigureAwait(false);
             await Assert.That(foundMissing).IsFalse().ConfigureAwait(false);
-            await Assert.That(missing.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(missing.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -188,13 +189,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(new Script(version));
             for (int i = 1; i <= 32; i++)
             {
-                table.Set(i, DynValue.NewNumber(i));
+                table.Set(i, LuaValue.NewNumber(i));
             }
 
             int[] sparse = { 1000, 250000, int.MaxValue };
             foreach (int key in sparse)
             {
-                table.Set(key, DynValue.NewNumber(key));
+                table.Set(key, LuaValue.NewNumber(key));
             }
 
             for (int i = 1; i <= 32; i++)
@@ -216,7 +217,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task RawGetOfANullStringKeyReportsAbsence(LuaCompatibilityVersion version)
         {
             Table table = new(new Script(version));
-            table.Set("present", DynValue.NewNumber(1));
+            table.Set("present", LuaValue.NewNumber(1));
 
             await Assert
                 .That(table.RawGet((string)null).Type)
@@ -237,7 +238,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             for (int i = 1; i <= 256; i++)
             {
-                table.Set(i, DynValue.NewNumber(i));
+                table.Set(i, LuaValue.NewNumber(i));
             }
 
             long filled = script.AllocationTracker.CurrentBytes;
@@ -245,7 +246,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             for (int i = 1; i <= 256; i++)
             {
-                table.Set(i, DynValue.Nil);
+                table.Set(i, LuaValue.Nil);
             }
 
             // Writing nil does not hand the storage back, so a sandbox limit must keep counting it.
@@ -275,12 +276,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             const int Entries = 4096;
             for (int i = 1; i <= Entries; i++)
             {
-                table.Set(i, DynValue.NewNumber(i));
+                table.Set(i, LuaValue.NewNumber(i));
             }
 
             long perEntry = (script.AllocationTracker.CurrentBytes - empty) / Entries;
 
-            // The array part conservatively accounts one 32-byte inline DynValue per slot plus one
+            // The array part conservatively accounts one 32-byte inline LuaValue per slot plus one
             // occupancy bit. A hash node needs two DynValues plus its hash and chain link (72 bytes).
             await Assert.That(perEntry).IsGreaterThanOrEqualTo(32).ConfigureAwait(false);
             await Assert.That(perEntry).IsLessThanOrEqualTo(40).ConfigureAwait(false);
@@ -297,9 +298,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(script);
             long empty = script.AllocationTracker.CurrentBytes;
 
-            table.Set("a", DynValue.Nil);
-            table.Set(1, DynValue.Nil);
-            table.Set(DynValue.False, DynValue.Nil);
+            table.Set("a", LuaValue.Nil);
+            table.Set(1, LuaValue.Nil);
+            table.SetValue(LuaValue.False, LuaValue.Nil);
             await Assert.That(table.Count).IsEqualTo(3).ConfigureAwait(false);
 
             table.CollectDeadKeys();
@@ -335,7 +336,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             // The model holds every key the table should report, including keys whose value is nil,
             // because writing nil creates an entry the table still counts and can traverse.
-            Dictionary<string, DynValue> model = new();
+            Dictionary<string, LuaValue> model = new();
 
             // A local xorshift keeps the sequence reproducible without System.Random, which the
             // analyzers reject even for test data.
@@ -357,7 +358,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             {
                 foreach (string dead in new List<string>(model.Keys))
                 {
-                    if (model[dead].IsNil())
+                    if (model[dead].IsNil)
                     {
                         model.Remove(dead);
                     }
@@ -368,10 +369,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             // keys by itself on the next insert of a fresh key, without the caller asking.
             bool containsNilEntries = false;
 
-            void Write(int kind, int index, DynValue value)
+            void Write(int kind, int index, LuaValue value)
             {
                 string name = KeyName(kind, index);
-                bool hadEntry = model.TryGetValue(name, out DynValue previous);
+                bool hadEntry = model.TryGetValue(name, out LuaValue previous);
 
                 if (kind == 0)
                 {
@@ -384,12 +385,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
                 model[name] = value;
 
-                if (containsNilEntries && !value.IsNil() && (!hadEntry || previous.IsNil()))
+                if (containsNilEntries && !value.IsNil && (!hadEntry || previous.IsNil))
                 {
                     DropNilEntries();
                     containsNilEntries = false;
                 }
-                else if (value.IsNil())
+                else if (value.IsNil)
                 {
                     containsNilEntries = true;
                 }
@@ -410,11 +411,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                     case 2:
                     case 3:
                     case 4:
-                        Write(kind, index, DynValue.NewNumber(step));
+                        Write(kind, index, LuaValue.NewNumber(step));
                         break;
                     case 5:
                     case 6:
-                        Write(kind, index, DynValue.Nil);
+                        Write(kind, index, LuaValue.Nil);
                         break;
                     case 7:
                     case 8:
@@ -449,7 +450,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
                 await Assert.That(table.Count).IsEqualTo(model.Count).ConfigureAwait(false);
 
-                Dictionary<string, DynValue> traversed = new();
+                Dictionary<string, LuaValue> traversed = new();
                 foreach (TablePair pair in table.GetPairsEnumerator())
                 {
                     string name =
@@ -463,7 +464,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
                 await Assert.That(traversed.Count).IsEqualTo(model.Count).ConfigureAwait(false);
 
-                foreach (KeyValuePair<string, DynValue> entry in model)
+                foreach (KeyValuePair<string, LuaValue> entry in model)
                 {
                     await Assert
                         .That(traversed.ContainsKey(entry.Key))
@@ -471,7 +472,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                         .ConfigureAwait(false);
 
                     string[] parts = entry.Key.Split(':');
-                    DynValue read =
+                    LuaValue read =
                         parts[0] == "i"
                             ? table.RawGet(int.Parse(parts[1], CultureInfo.InvariantCulture))
                             : table.RawGet("field" + parts[1]);
@@ -497,21 +498,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             // A dense prefix that lives entirely in the array part.
             for (int i = 1; i <= 8; i++)
             {
-                table.Set(i, DynValue.NewNumber(i));
+                table.Set(i, LuaValue.NewNumber(i));
             }
 
             long arrayOnly = script.AllocationTracker.CurrentBytes;
 
-            table.Set("alpha", DynValue.NewNumber(1));
-            table.Set("beta", DynValue.NewNumber(2));
+            table.Set("alpha", LuaValue.NewNumber(1));
+            table.Set("beta", LuaValue.NewNumber(2));
 
             await Assert
                 .That(script.AllocationTracker.CurrentBytes)
                 .IsGreaterThan(arrayOnly)
                 .ConfigureAwait(false);
 
-            table.Set("alpha", DynValue.Nil);
-            table.Set("beta", DynValue.Nil);
+            table.Set("alpha", LuaValue.Nil);
+            table.Set("beta", LuaValue.Nil);
             table.CollectDeadKeys();
 
             // Every hash entry is gone but the array part still holds live keys, so the table is not
@@ -527,7 +528,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .ConfigureAwait(false);
 
             // The store must still accept new hash keys afterwards.
-            table.Set("gamma", DynValue.NewNumber(3));
+            table.Set("gamma", LuaValue.NewNumber(3));
             await Assert.That(table.RawGet("gamma").Number).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(table.Count).IsEqualTo(9).ConfigureAwait(false);
         }
@@ -543,13 +544,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(new Script(version));
             for (int i = 1; i <= 6; i++)
             {
-                table.Set(i, DynValue.NewNumber(i));
+                table.Set(i, LuaValue.NewNumber(i));
             }
 
             await Assert.That(table.Length).IsEqualTo(6).ConfigureAwait(false);
 
-            table.Set(0, DynValue.NewString("zero"));
-            table.Set(-4, DynValue.NewString("negative"));
+            table.Set(0, LuaValue.NewString("zero"));
+            table.Set(-4, LuaValue.NewString("negative"));
             await Assert.That(table.Length).IsEqualTo(6).ConfigureAwait(false);
 
             await Assert.That(table.Remove(0)).IsTrue().ConfigureAwait(false);
@@ -579,14 +580,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             // No hash keys at all, so nothing on the hash side can trigger the rebuild.
             for (int i = 1; i <= 100; i++)
             {
-                table.Set(i, DynValue.NewNumber(i));
+                table.Set(i, LuaValue.NewNumber(i));
             }
 
             long filled = script.AllocationTracker.CurrentBytes;
 
             for (int i = 41; i <= 100; i++)
             {
-                table.Set(i, DynValue.Nil);
+                table.Set(i, LuaValue.Nil);
             }
 
             table.CollectDeadKeys();
@@ -608,7 +609,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             // The shrunken store must still grow again cleanly.
             for (int i = 41; i <= 120; i++)
             {
-                table.Set(i, DynValue.NewNumber(i));
+                table.Set(i, LuaValue.NewNumber(i));
             }
 
             await Assert.That(table.Length).IsEqualTo(120).ConfigureAwait(false);
@@ -629,13 +630,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             {
                 table.Set(
                     "entity_" + i.ToString(CultureInfo.InvariantCulture),
-                    DynValue.NewNumber(i)
+                    LuaValue.NewNumber(i)
                 );
             }
 
             for (int i = 0; i < Count; i++)
             {
-                DynValue value = table.RawGet("entity_" + i.ToString(CultureInfo.InvariantCulture));
+                LuaValue value = table.RawGet("entity_" + i.ToString(CultureInfo.InvariantCulture));
                 await Assert.That(value.Number).IsEqualTo(i).ConfigureAwait(false);
             }
 

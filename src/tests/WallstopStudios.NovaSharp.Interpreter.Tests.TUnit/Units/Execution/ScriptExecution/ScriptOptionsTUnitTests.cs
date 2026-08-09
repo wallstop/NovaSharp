@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using System;
     using System.IO;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -131,10 +132,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             script.PerformanceStats.Enabled = true;
 
             script.DoString("function add(a, b) return a + b end");
-            DynValue result = script.Call(
+            LuaValue result = script.Call(
                 script.Globals.Get("add"),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3)
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3)
             );
 
             await Assert.That(result.Number).IsEqualTo(5);

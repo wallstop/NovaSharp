@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
     using System.Threading;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
@@ -42,7 +43,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <value>
         /// The call back.
         /// </value>
-        public Func<ScriptExecutionContext, CallbackArguments, DynValue> ClrCallback
+        public Func<ScriptExecutionContext, CallbackArguments, LuaValue> ClrCallback
         {
             get;
             private set;
@@ -54,14 +55,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="callBack">The callback function to be called.</param>
         /// <param name="name">The callback name, used in stacktraces, debugger, etc..</param>
         public CallbackFunction(
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callBack,
+            Func<ScriptExecutionContext, CallbackArguments, LuaValue> callBack,
             string name = null
         )
             : this(null, callBack, name) { }
 
         internal CallbackFunction(
             Script ownerScript,
-            Func<ScriptExecutionContext, CallbackArguments, DynValue> callBack,
+            Func<ScriptExecutionContext, CallbackArguments, LuaValue> callBack,
             string name = null,
             SharedState sharedState = null
         )
@@ -241,9 +242,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="args">The arguments.</param>
         /// <param name="isMethodCall">if set to <c>true</c> this is a method call.</param>
         /// <returns></returns>
-        public DynValue Invoke(
+        public LuaValue Invoke(
             ScriptExecutionContext executionContext,
-            IList<DynValue> args,
+            IList<LuaValue> args,
             bool isMethodCall = false
         )
         {
@@ -260,7 +261,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 executionContext,
                 args.Count,
-                args.Count > 0 ? args[0] : DynValue.Nil,
+                args.Count > 0 ? args[0] : LuaValue.Nil,
                 isMethodCall
             );
 
@@ -279,7 +280,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Invokes the callback function, creating a dynamic context only when the callback
         /// contract requires one.
         /// </summary>
-        internal DynValue Invoke(Script script, IList<DynValue> args, bool isMethodCall = false)
+        internal LuaValue Invoke(Script script, IList<LuaValue> args, bool isMethodCall = false)
         {
             if (_argumentViewNoContextCallback == null)
             {
@@ -294,7 +295,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 script,
                 args.Count,
-                args.Count > 0 ? args[0] : DynValue.Nil,
+                args.Count > 0 ? args[0] : LuaValue.Nil,
                 isMethodCall
             );
 
@@ -304,12 +305,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with no arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             ScriptExecutionContext executionContext,
             bool isMethodCall = false
         )
         {
-            isMethodCall = NormalizeMethodCall(executionContext, 0, DynValue.Nil, isMethodCall);
+            isMethodCall = NormalizeMethodCall(executionContext, 0, LuaValue.Nil, isMethodCall);
             return InvokeArgumentViewCallback(
                 executionContext,
                 new CallbackArgumentsView(isMethodCall)
@@ -319,7 +320,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with no arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(Script script, bool isMethodCall = false)
+        internal LuaValue InvokeArgumentViewFixed(Script script, bool isMethodCall = false)
         {
             if (_argumentViewNoContextCallback == null)
             {
@@ -329,16 +330,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 );
             }
 
-            isMethodCall = NormalizeMethodCall(script, 0, DynValue.Nil, isMethodCall);
+            isMethodCall = NormalizeMethodCall(script, 0, LuaValue.Nil, isMethodCall);
             return _argumentViewNoContextCallback(new CallbackArgumentsView(isMethodCall));
         }
 
         /// <summary>
         /// Invokes an argument-view callback with one fixed argument.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg,
+            LuaValue arg,
             bool isMethodCall = false
         )
         {
@@ -352,9 +353,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with one fixed argument.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             Script script,
-            DynValue arg,
+            LuaValue arg,
             bool isMethodCall = false
         )
         {
@@ -374,10 +375,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with two fixed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg1,
-            DynValue arg2,
+            LuaValue arg1,
+            LuaValue arg2,
             bool isMethodCall = false
         )
         {
@@ -391,10 +392,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with two fixed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             Script script,
-            DynValue arg1,
-            DynValue arg2,
+            LuaValue arg1,
+            LuaValue arg2,
             bool isMethodCall = false
         )
         {
@@ -417,11 +418,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with three fixed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
             bool isMethodCall = false
         )
         {
@@ -435,11 +436,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with three fixed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             Script script,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
             bool isMethodCall = false
         )
         {
@@ -463,12 +464,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with four fixed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
             bool isMethodCall = false
         )
         {
@@ -482,12 +483,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with four fixed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             Script script,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
             bool isMethodCall = false
         )
         {
@@ -512,13 +513,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with five fixed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
             bool isMethodCall = false
         )
         {
@@ -532,13 +533,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with five fixed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             Script script,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
             bool isMethodCall = false
         )
         {
@@ -564,14 +565,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with six fixed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
             bool isMethodCall = false
         )
         {
@@ -585,14 +586,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with six fixed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             Script script,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
             bool isMethodCall = false
         )
         {
@@ -619,15 +620,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with seven fixed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7,
             bool isMethodCall = false
         )
         {
@@ -641,15 +642,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with seven fixed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewFixed(
+        internal LuaValue InvokeArgumentViewFixed(
             Script script,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7,
             bool isMethodCall = false
         )
         {
@@ -677,9 +678,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with a subrange of stack-backed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewStack(
+        internal LuaValue InvokeArgumentViewStack(
             ScriptExecutionContext executionContext,
-            IList<DynValue> args,
+            IList<LuaValue> args,
             int offset,
             int count,
             bool isMethodCall = false
@@ -708,7 +709,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 executionContext,
                 count,
-                count > 0 ? args[offset] : DynValue.Nil,
+                count > 0 ? args[offset] : LuaValue.Nil,
                 isMethodCall
             );
             return InvokeArgumentViewCallback(
@@ -720,9 +721,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with a subrange of stack-backed arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewStack(
+        internal LuaValue InvokeArgumentViewStack(
             Script script,
-            IList<DynValue> args,
+            IList<LuaValue> args,
             int offset,
             int count,
             bool isMethodCall = false
@@ -744,7 +745,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 script,
                 count,
-                count > 0 ? args[offset] : DynValue.Nil,
+                count > 0 ? args[offset] : LuaValue.Nil,
                 isMethodCall
             );
             return _argumentViewNoContextCallback(
@@ -755,9 +756,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with caller-owned contiguous arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewSpan(
+        internal LuaValue InvokeArgumentViewSpan(
             ScriptExecutionContext executionContext,
-            ReadOnlySpan<DynValue> args,
+            ReadOnlySpan<LuaValue> args,
             bool isMethodCall = false
         )
         {
@@ -769,7 +770,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 executionContext,
                 args.Length,
-                args.Length > 0 ? args[0] : DynValue.Nil,
+                args.Length > 0 ? args[0] : LuaValue.Nil,
                 isMethodCall
             );
             return InvokeArgumentViewCallback(
@@ -781,9 +782,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes an argument-view callback with caller-owned contiguous arguments.
         /// </summary>
-        internal DynValue InvokeArgumentViewSpan(
+        internal LuaValue InvokeArgumentViewSpan(
             Script script,
-            ReadOnlySpan<DynValue> args,
+            ReadOnlySpan<LuaValue> args,
             bool isMethodCall = false
         )
         {
@@ -799,7 +800,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 script,
                 args.Length,
-                args.Length > 0 ? args[0] : DynValue.Nil,
+                args.Length > 0 ? args[0] : LuaValue.Nil,
                 isMethodCall
             );
             return _argumentViewNoContextCallback(new CallbackArgumentsView(args, isMethodCall));
@@ -808,9 +809,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes a legacy callback that receives materialized <see cref="CallbackArguments"/>.
         /// </summary>
-        internal DynValue InvokeLegacy(
+        internal LuaValue InvokeLegacy(
             ScriptExecutionContext executionContext,
-            IList<DynValue> args,
+            IList<LuaValue> args,
             bool isMethodCall = false
         )
         {
@@ -827,7 +828,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(
                 executionContext,
                 args.Count,
-                args.Count > 0 ? args[0] : DynValue.Nil,
+                args.Count > 0 ? args[0] : LuaValue.Nil,
                 isMethodCall
             );
             return ClrCallback(executionContext, new CallbackArguments(args, isMethodCall));
@@ -836,21 +837,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes a legacy callback with no fixed arguments.
         /// </summary>
-        internal DynValue InvokeLegacyFixed(
+        internal LuaValue InvokeLegacyFixed(
             ScriptExecutionContext executionContext,
             bool isMethodCall = false
         )
         {
-            isMethodCall = NormalizeMethodCall(executionContext, 0, DynValue.Nil, isMethodCall);
+            isMethodCall = NormalizeMethodCall(executionContext, 0, LuaValue.Nil, isMethodCall);
             return ClrCallback(executionContext, new CallbackArguments(isMethodCall));
         }
 
         /// <summary>
         /// Invokes a legacy callback with one fixed argument.
         /// </summary>
-        internal DynValue InvokeLegacyFixed(
+        internal LuaValue InvokeLegacyFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg,
+            LuaValue arg,
             bool isMethodCall = false
         )
         {
@@ -861,10 +862,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes a legacy callback with two fixed arguments.
         /// </summary>
-        internal DynValue InvokeLegacyFixed(
+        internal LuaValue InvokeLegacyFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg1,
-            DynValue arg2,
+            LuaValue arg1,
+            LuaValue arg2,
             bool isMethodCall = false
         )
         {
@@ -875,11 +876,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes a legacy callback with three fixed arguments.
         /// </summary>
-        internal DynValue InvokeLegacyFixed(
+        internal LuaValue InvokeLegacyFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
             bool isMethodCall = false
         )
         {
@@ -893,12 +894,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes a legacy callback with four fixed arguments.
         /// </summary>
-        internal DynValue InvokeLegacyFixed(
+        internal LuaValue InvokeLegacyFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
             bool isMethodCall = false
         )
         {
@@ -912,13 +913,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes a legacy callback with five fixed arguments.
         /// </summary>
-        internal DynValue InvokeLegacyFixed(
+        internal LuaValue InvokeLegacyFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
             bool isMethodCall = false
         )
         {
@@ -932,14 +933,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes a legacy callback with six fixed arguments.
         /// </summary>
-        internal DynValue InvokeLegacyFixed(
+        internal LuaValue InvokeLegacyFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
             bool isMethodCall = false
         )
         {
@@ -953,15 +954,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Invokes a legacy callback with seven fixed arguments.
         /// </summary>
-        internal DynValue InvokeLegacyFixed(
+        internal LuaValue InvokeLegacyFixed(
             ScriptExecutionContext executionContext,
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7,
             bool isMethodCall = false
         )
         {
@@ -976,9 +977,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Invokes a legacy callback with caller-owned contiguous arguments, materializing only when
         /// the legacy callback contract requires more than fixed storage can carry.
         /// </summary>
-        internal DynValue InvokeLegacySpan(
+        internal LuaValue InvokeLegacySpan(
             ScriptExecutionContext executionContext,
-            ReadOnlySpan<DynValue> args,
+            ReadOnlySpan<LuaValue> args,
             bool isMethodCall = false
         )
         {
@@ -1041,7 +1042,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                         isMethodCall
                     );
                 default:
-                    DynValue[] copiedArgs = new DynValue[args.Length];
+                    LuaValue[] copiedArgs = new LuaValue[args.Length];
                     for (int i = 0; i < args.Length; i++)
                     {
                         copiedArgs[i] = args[i];
@@ -1051,7 +1052,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
         }
 
-        private DynValue InvokeArgumentViewCallback(
+        private LuaValue InvokeArgumentViewCallback(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -1059,7 +1060,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return InvokeArgumentViewCallback(executionContext, new CallbackArgumentsView(args));
         }
 
-        private DynValue InvokeArgumentViewCallback(
+        private LuaValue InvokeArgumentViewCallback(
             ScriptExecutionContext executionContext,
             CallbackArgumentsView args
         )
@@ -1075,7 +1076,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private bool NormalizeMethodCall(
             ScriptExecutionContext executionContext,
             int count,
-            DynValue firstArgument,
+            LuaValue firstArgument,
             bool isMethodCall
         )
         {
@@ -1102,7 +1103,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private bool NormalizeMethodCall(
             Script script,
             int count,
-            DynValue firstArgument,
+            LuaValue firstArgument,
             bool isMethodCall
         )
         {
@@ -1121,7 +1122,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private static bool NormalizeMethodCall(
             ColonOperatorBehaviour colon,
             int count,
-            DynValue firstArgument,
+            LuaValue firstArgument,
             bool isMethodCall
         )
         {
@@ -1143,7 +1144,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return isMethodCall;
         }
 
-        private static void ValidateStackRange(IList<DynValue> args, int offset, int count)
+        private static void ValidateStackRange(IList<LuaValue> args, int offset, int count)
         {
             if (args == null)
             {
@@ -1329,7 +1330,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             return pi.Length == 1
                 && pi[0].ParameterType == typeof(CallbackArgumentsView)
-                && mi.ReturnType == typeof(DynValue)
+                && mi.ReturnType == typeof(LuaValue)
                 && (requirePublicVisibility || mi.IsPublic);
         }
 
@@ -1350,7 +1351,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 pi.Length == 2
                 && pi[0].ParameterType == typeof(ScriptExecutionContext)
                 && pi[1].ParameterType == argumentsType
-                && mi.ReturnType == typeof(DynValue)
+                && mi.ReturnType == typeof(LuaValue)
                 && (requirePublicVisibility || mi.IsPublic)
             );
         }

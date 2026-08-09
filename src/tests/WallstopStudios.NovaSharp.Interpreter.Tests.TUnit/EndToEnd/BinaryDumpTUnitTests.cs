@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -19,7 +20,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task BinDumpChunkDump(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "local chunk = load('return 81;'); "
                     + "local str = string.dump(chunk); "
                     + "local fn = load(str); "
@@ -33,7 +34,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task BinDumpStringDump(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 "local str = string.dump(function(n) return n * n; end); "
                     + "local fn = load(str); "
                     + "return fn(9);"
@@ -45,7 +46,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [AllLuaVersions]
         public async Task BinDumpStandardDumpFunc(LuaCompatibilityVersion version)
         {
-            DynValue fact = ScriptLoadFunc(
+            LuaValue fact = ScriptLoadFunc(
                 @"
                 function fact(n)
                     return n * 24;
@@ -54,7 +55,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 "fact",
                 version
             );
-            DynValue result = fact.Function.Call(5);
+            LuaValue result = fact.Function.Call(5);
             await EndToEndDynValueAssert.ExpectAsync(result, 120).ConfigureAwait(false);
         }
 
@@ -62,7 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [AllLuaVersions]
         public async Task BinDumpFactorialDumpFunc(LuaCompatibilityVersion version)
         {
-            DynValue fact = ScriptLoadFunc(
+            LuaValue fact = ScriptLoadFunc(
                 @"
                 function fact(n)
                     if (n == 0) then return 1; end
@@ -73,7 +74,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 version
             );
             fact.Function.OwnerScript.Globals.Set("fact", fact);
-            DynValue result = fact.Function.Call(5);
+            LuaValue result = fact.Function.Call(5);
             await EndToEndDynValueAssert.ExpectAsync(result, 120).ConfigureAwait(false);
         }
 
@@ -81,7 +82,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [AllLuaVersions]
         public async Task BinDumpFactorialDumpFuncGlobal(LuaCompatibilityVersion version)
         {
-            DynValue fact = ScriptLoadFunc(
+            LuaValue fact = ScriptLoadFunc(
                 @"
                 x = 0
                 function fact(n)
@@ -93,8 +94,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 version
             );
             fact.Function.OwnerScript.Globals.Set("fact", fact);
-            fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
-            DynValue result = fact.Function.Call(5);
+            fact.Function.OwnerScript.Globals.Set("x", LuaValue.NewNumber(0));
+            LuaValue result = fact.Function.Call(5);
             await EndToEndDynValueAssert.ExpectAsync(result, 120).ConfigureAwait(false);
         }
 
@@ -104,7 +105,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             Assert.Throws<ArgumentException>(() =>
             {
-                DynValue fact = ScriptLoadFunc(
+                LuaValue fact = ScriptLoadFunc(
                     @"
                     local x = 0
                     function fact(n)
@@ -116,7 +117,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     version
                 );
                 fact.Function.OwnerScript.Globals.Set("fact", fact);
-                fact.Function.OwnerScript.Globals.Set("x", DynValue.NewNumber(0));
+                fact.Function.OwnerScript.Globals.Set("x", LuaValue.NewNumber(0));
                 _ = fact.Function.Call(5);
             });
             await Task.CompletedTask.ConfigureAwait(false);
@@ -126,7 +127,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [AllLuaVersions]
         public async Task BinDumpFactorialClosure(LuaCompatibilityVersion version)
         {
-            DynValue result = ScriptRunString(
+            LuaValue result = ScriptRunString(
                 @"
                 local x = 5;
                 function fact(n)
@@ -148,7 +149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [AllLuaVersions]
         public async Task BinDumpClosureOnParam(LuaCompatibilityVersion version)
         {
-            DynValue result = ScriptRunString(
+            LuaValue result = ScriptRunString(
                 @"
                 local function g(z)
                     local function f(a)
@@ -167,7 +168,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [AllLuaVersions]
         public async Task BinDumpNestedUpValues(LuaCompatibilityVersion version)
         {
-            DynValue result = ScriptRunString(
+            LuaValue result = ScriptRunString(
                 @"
                 local x = 0;
                 local m = {};
@@ -190,7 +191,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [AllLuaVersions]
         public async Task BinDumpNestedOutOfScopeUpValues(LuaCompatibilityVersion version)
         {
-            DynValue result = ScriptRunString(
+            LuaValue result = ScriptRunString(
                 @"
                 function X()
                     local x = 0;
@@ -258,21 +259,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             }
         }
 
-        private static DynValue ScriptRunString(string script, LuaCompatibilityVersion version)
+        private static LuaValue ScriptRunString(string script, LuaCompatibilityVersion version)
         {
             Script s1 = new(version);
-            DynValue proto = s1.LoadString(script);
+            LuaValue proto = s1.LoadString(script);
 
             using MemoryStream ms = new();
             s1.Dump(proto, ms);
             ms.Position = 0;
 
             Script s2 = new(version);
-            DynValue fn = s2.LoadStream(ms);
+            LuaValue fn = s2.LoadStream(ms);
             return fn.Function.Call();
         }
 
-        private static DynValue ScriptLoadFunc(
+        private static LuaValue ScriptLoadFunc(
             string script,
             string functionName,
             LuaCompatibilityVersion version
@@ -280,7 +281,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             Script s1 = new(version);
             s1.DoString(script);
-            DynValue func = s1.Globals.Get(functionName);
+            LuaValue func = s1.Globals.Get(functionName);
 
             using MemoryStream ms = new();
             s1.Dump(func, ms);

@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.IO;
     using System.Text;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib.IO;
@@ -28,11 +29,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StandardIoFileUserDataBase file = StandardIoFileUserDataBase.CreateInputStream(stream);
             ScriptExecutionContext context = CreateExecutionContext();
 
-            DynValue firstLine = file.Read(context, TestHelpers.CreateArguments());
-            DynValue eof = file.Read(context, TestHelpers.CreateArguments());
+            LuaValue firstLine = file.Read(context, TestHelpers.CreateArguments());
+            LuaValue eof = file.Read(context, TestHelpers.CreateArguments());
 
             await Assert.That(firstLine.String).IsEqualTo("first");
-            await Assert.That(eof.IsNil()).IsTrue();
+            await Assert.That(eof.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -42,16 +43,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StandardIoFileUserDataBase file = StandardIoFileUserDataBase.CreateOutputStream(stream);
             ScriptExecutionContext context = CreateExecutionContext();
 
-            DynValue closeResult = file.Close(context, TestHelpers.CreateArguments());
+            LuaValue closeResult = file.Close(context, TestHelpers.CreateArguments());
 
             await Assert.That(closeResult.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(closeResult.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(closeResult.Tuple[0].IsNil).IsTrue();
             await Assert.That(closeResult.Tuple[1].String).Contains("cannot close standard file");
             await Assert.That(closeResult.Tuple[2].Number).IsEqualTo(-1);
 
-            DynValue writeResult = file.Write(
+            LuaValue writeResult = file.Write(
                 context,
-                TestHelpers.CreateArguments(DynValue.NewString("payload"))
+                TestHelpers.CreateArguments(LuaValue.NewString("payload"))
             );
 
             await Assert.That(writeResult.Type).IsEqualTo(DataType.UserData);

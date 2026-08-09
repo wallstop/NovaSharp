@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -34,8 +35,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             string code = "return 42";
 
             // Load twice
-            DynValue result1 = script.LoadString(code);
-            DynValue result2 = script.LoadString(code);
+            LuaValue result1 = script.LoadString(code);
+            LuaValue result2 = script.LoadString(code);
 
             // Both should work
             await Assert.That(script.Call(result1).Number).IsEqualTo(42).ConfigureAwait(false);
@@ -63,8 +64,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             string code = "return 42";
 
             // Load the same script twice
-            DynValue result1 = script.LoadString(code);
-            DynValue result2 = script.LoadString(code);
+            LuaValue result1 = script.LoadString(code);
+            LuaValue result2 = script.LoadString(code);
 
             // Both should work
             await Assert.That(script.Call(result1).Number).IsEqualTo(42).ConfigureAwait(false);
@@ -89,8 +90,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             const string code = "function() return 42 end";
             int initialSourceCount = script.SourceCodeCount;
 
-            DynValue result1 = script.LoadFunction(code, funcFriendlyName: "cached_func");
-            DynValue result2 = script.LoadFunction(code, funcFriendlyName: "cached_func");
+            LuaValue result1 = script.LoadFunction(code, funcFriendlyName: "cached_func");
+            LuaValue result2 = script.LoadFunction(code, funcFriendlyName: "cached_func");
 
             await Assert.That(script.Call(result1).Number).IsEqualTo(42d).ConfigureAwait(false);
             await Assert.That(script.Call(result2).Number).IsEqualTo(42d).ConfigureAwait(false);
@@ -116,8 +117,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             const string code = "function() return 42 end";
             int initialSourceCount = script.SourceCodeCount;
 
-            DynValue result1 = script.LoadFunction(code, funcFriendlyName: "cached_func");
-            DynValue result2 = script.LoadFunction(code, funcFriendlyName: "cached_func");
+            LuaValue result1 = script.LoadFunction(code, funcFriendlyName: "cached_func");
+            LuaValue result2 = script.LoadFunction(code, funcFriendlyName: "cached_func");
 
             await Assert.That(script.Call(result1).Number).IsEqualTo(42d).ConfigureAwait(false);
             await Assert.That(script.Call(result2).Number).IsEqualTo(42d).ConfigureAwait(false);
@@ -151,8 +152,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             const string code = "function() return 42 end";
             int initialSourceCount = script.SourceCodeCount;
 
-            DynValue result1 = script.LoadFunction(code, funcFriendlyName: "first");
-            DynValue result2 = script.LoadFunction(code, funcFriendlyName: "second");
+            LuaValue result1 = script.LoadFunction(code, funcFriendlyName: "first");
+            LuaValue result2 = script.LoadFunction(code, funcFriendlyName: "second");
 
             await Assert.That(script.Call(result1).Number).IsEqualTo(42d).ConfigureAwait(false);
             await Assert.That(script.Call(result2).Number).IsEqualTo(42d).ConfigureAwait(false);
@@ -185,12 +186,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script script = new(CoreModulePresets.Complete, options);
             const string code = "function() return value end";
             Table globals1 = new(script);
-            globals1["value"] = DynValue.NewNumber(10);
+            globals1["value"] = LuaValue.NewNumber(10);
             Table globals2 = new(script);
-            globals2["value"] = DynValue.NewNumber(20);
+            globals2["value"] = LuaValue.NewNumber(20);
 
-            DynValue first = script.LoadFunction(code, globals1, "cached_env");
-            DynValue second = script.LoadFunction(code, globals2, "cached_env");
+            LuaValue first = script.LoadFunction(code, globals1, "cached_env");
+            LuaValue second = script.LoadFunction(code, globals2, "cached_env");
 
             await Assert.That(script.Call(first).Number).IsEqualTo(10d).ConfigureAwait(false);
             await Assert.That(script.Call(second).Number).IsEqualTo(20d).ConfigureAwait(false);
@@ -223,10 +224,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 end
                 """;
 
-            DynValue firstFactory = script.LoadFunction(code, funcFriendlyName: "nested_counter");
-            DynValue secondFactory = script.LoadFunction(code, funcFriendlyName: "nested_counter");
-            DynValue firstCounter = script.Call(firstFactory);
-            DynValue secondCounter = script.Call(secondFactory);
+            LuaValue firstFactory = script.LoadFunction(code, funcFriendlyName: "nested_counter");
+            LuaValue secondFactory = script.LoadFunction(code, funcFriendlyName: "nested_counter");
+            LuaValue firstCounter = script.Call(firstFactory);
+            LuaValue secondCounter = script.Call(secondFactory);
 
             await Assert
                 .That(firstFactory)
@@ -257,14 +258,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script script = new(CoreModulePresets.Complete, options);
             const string code = "function() return value end";
 
-            DynValue first = script.LoadFunction(code, funcFriendlyName: "cached_setfenv");
-            DynValue second = script.LoadFunction(code, funcFriendlyName: "cached_setfenv");
+            LuaValue first = script.LoadFunction(code, funcFriendlyName: "cached_setfenv");
+            LuaValue second = script.LoadFunction(code, funcFriendlyName: "cached_setfenv");
             await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
 
             script.Globals["first"] = first;
             script.Globals["second"] = second;
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local firstEnv = { value = 11 }
                 local secondEnv = { value = 22 }
@@ -295,8 +296,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             const string code = "function() return 42 end";
             int initialSourceCount = script.SourceCodeCount;
 
-            DynValue result1 = script.LoadFunction(code, funcFriendlyName: "zero_cache_func");
-            DynValue result2 = script.LoadFunction(code, funcFriendlyName: "zero_cache_func");
+            LuaValue result1 = script.LoadFunction(code, funcFriendlyName: "zero_cache_func");
+            LuaValue result2 = script.LoadFunction(code, funcFriendlyName: "zero_cache_func");
 
             await Assert.That(script.Call(result1).Number).IsEqualTo(42d).ConfigureAwait(false);
             await Assert.That(script.Call(result2).Number).IsEqualTo(42d).ConfigureAwait(false);
@@ -360,18 +361,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 EnableScriptCaching = true,
             };
             Script script = new(CoreModulePresets.Complete, options);
-            script.Globals["value"] = DynValue.NewNumber(20);
+            script.Globals["value"] = LuaValue.NewNumber(20);
 
-            DynValue first = script.LoadString("return value");
-            DynValue second = script.LoadString("return value");
+            LuaValue first = script.LoadString("return value");
+            LuaValue second = script.LoadString("return value");
             Table firstEnvironment = new(script);
-            firstEnvironment["value"] = DynValue.NewNumber(10);
+            firstEnvironment["value"] = LuaValue.NewNumber(10);
 
             await Assert
                 .That(first.Function.GetUpValueName(0))
                 .IsEqualTo(WellKnownSymbols.ENV)
                 .ConfigureAwait(false);
-            first.Function.SetUpValue(0, DynValue.NewTable(firstEnvironment));
+            first.Function.SetUpValue(0, LuaValue.NewTable(firstEnvironment));
 
             await Assert.That(script.Call(first).Number).IsEqualTo(10).ConfigureAwait(false);
             await Assert.That(script.Call(second).Number).IsEqualTo(20).ConfigureAwait(false);
@@ -388,13 +389,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             };
             Script script = new(CoreModulePresets.Complete, options);
 
-            DynValue first = script.LoadString("return value");
-            DynValue second = script.LoadString("return value");
+            LuaValue first = script.LoadString("return value");
+            LuaValue second = script.LoadString("return value");
 
             script.Globals["first"] = first;
             script.Globals["second"] = second;
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local firstEnv = { value = 11 }
                 local secondEnv = { value = 22 }
@@ -427,9 +428,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             };
             Script script = new(CoreModulePresets.Complete, options);
 
-            DynValue result1 = script.LoadString("return 1");
-            DynValue result2 = script.LoadString("return 2");
-            DynValue result3 = script.LoadString("return 3");
+            LuaValue result1 = script.LoadString("return 1");
+            LuaValue result2 = script.LoadString("return 2");
+            LuaValue result3 = script.LoadString("return 3");
 
             await Assert.That(script.Call(result1).Number).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(script.Call(result2).Number).IsEqualTo(2).ConfigureAwait(false);
@@ -459,8 +460,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             string code = "return 42";
             int initialSourceCount = script.SourceCodeCount;
 
-            DynValue result1 = script.LoadString(code, null, "myScript");
-            DynValue result2 = script.LoadString(code, null, "myScript");
+            LuaValue result1 = script.LoadString(code, null, "myScript");
+            LuaValue result2 = script.LoadString(code, null, "myScript");
 
             await Assert.That(script.Call(result1).Number).IsEqualTo(42).ConfigureAwait(false);
             await Assert.That(script.Call(result2).Number).IsEqualTo(42).ConfigureAwait(false);
@@ -495,8 +496,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             string code = "return 42";
             int initialSourceCount = script.SourceCodeCount;
 
-            DynValue result1 = script.LoadString(code, null, "myScript1");
-            DynValue result2 = script.LoadString(code, null, "myScript2");
+            LuaValue result1 = script.LoadString(code, null, "myScript1");
+            LuaValue result2 = script.LoadString(code, null, "myScript2");
 
             await Assert.That(script.Call(result1).Number).IsEqualTo(42).ConfigureAwait(false);
             await Assert.That(script.Call(result2).Number).IsEqualTo(42).ConfigureAwait(false);
@@ -568,11 +569,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             ";
 
             // First load - not cached
-            DynValue result1 = script.LoadString(code);
+            LuaValue result1 = script.LoadString(code);
             double value1 = script.Call(result1).Number;
 
             // Second load - cached
-            DynValue result2 = script.LoadString(code);
+            LuaValue result2 = script.LoadString(code);
             double value2 = script.Call(result2).Number;
 
             await Assert.That(value1).IsEqualTo(55).ConfigureAwait(false);
@@ -601,16 +602,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             // Create two different global tables
             Table globals1 = new(script);
-            globals1["x"] = DynValue.NewNumber(10);
-            globals1["y"] = DynValue.NewNumber(20);
+            globals1["x"] = LuaValue.NewNumber(10);
+            globals1["y"] = LuaValue.NewNumber(20);
 
             Table globals2 = new(script);
-            globals2["x"] = DynValue.NewNumber(100);
-            globals2["y"] = DynValue.NewNumber(200);
+            globals2["x"] = LuaValue.NewNumber(100);
+            globals2["y"] = LuaValue.NewNumber(200);
 
             // Load with different global tables
-            DynValue result1 = script.LoadString(code, globals1);
-            DynValue result2 = script.LoadString(code, globals2);
+            LuaValue result1 = script.LoadString(code, globals1);
+            LuaValue result2 = script.LoadString(code, globals2);
 
             // Execute with their respective environments
             double value1 = script.Call(result1).Number;
@@ -665,8 +666,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script script = new(CoreModulePresets.Complete, options);
             const string code = "return 42";
 
-            DynValue result1 = script.LoadString(code);
-            DynValue result2 = script.LoadString(code);
+            LuaValue result1 = script.LoadString(code);
+            LuaValue result2 = script.LoadString(code);
 
             await Assert.That(script.Call(result1).Number).IsEqualTo(42).ConfigureAwait(false);
             await Assert.That(script.Call(result2).Number).IsEqualTo(42).ConfigureAwait(false);
@@ -1512,7 +1513,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             const string sourceName = "clear_public_cached.lua";
 
             int initialSourceCount = script.SourceCodeCount;
-            DynValue first = script.DoString(code, codeFriendlyName: sourceName);
+            LuaValue first = script.DoString(code, codeFriendlyName: sourceName);
 
             await Assert.That(first.Number).IsEqualTo(1d).ConfigureAwait(false);
             await Assert
@@ -1525,7 +1526,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             await Assert.That(script.CompilationCacheCount).IsEqualTo(0).ConfigureAwait(false);
 
-            DynValue second = script.DoString(code, codeFriendlyName: sourceName);
+            LuaValue second = script.DoString(code, codeFriendlyName: sourceName);
 
             await Assert.That(second.Number).IsEqualTo(2d).ConfigureAwait(false);
             await Assert

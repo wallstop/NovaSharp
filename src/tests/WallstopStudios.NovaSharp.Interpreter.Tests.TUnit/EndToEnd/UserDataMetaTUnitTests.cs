@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Collections;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -212,11 +213,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             public IEnumerator Pairs()
             {
                 _ = Value;
-                List<DynValue> tuples = new()
+                List<LuaValue> tuples = new()
                 {
-                    DynValue.NewTuple(DynValue.NewString("a"), DynValue.NewString("A")),
-                    DynValue.NewTuple(DynValue.NewString("b"), DynValue.NewString("B")),
-                    DynValue.NewTuple(DynValue.NewString("c"), DynValue.NewString("C")),
+                    LuaValue.NewTuple(LuaValue.NewString("a"), LuaValue.NewString("A")),
+                    LuaValue.NewTuple(LuaValue.NewString("b"), LuaValue.NewString("B")),
+                    LuaValue.NewTuple(LuaValue.NewString("c"), LuaValue.NewString("C")),
                 };
                 return tuples.GetEnumerator();
             }
@@ -242,7 +243,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return str;
                 ";
 
-            DynValue result = script.DoString(lua);
+            LuaValue result = script.DoString(lua);
             await Assert.That(result.String).IsEqualTo("aAbBcC").ConfigureAwait(false);
         }
 
@@ -266,7 +267,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return str;
                 ";
 
-            DynValue result = script.DoString(lua);
+            LuaValue result = script.DoString(lua);
             await Assert.That(result.String).IsEqualTo("aAbBcC").ConfigureAwait(false);
         }
 
@@ -290,7 +291,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return sum;
                 ";
 
-            DynValue result = script.DoString(lua);
+            LuaValue result = script.DoString(lua);
             await Assert.That(result.Number).IsEqualTo(6).ConfigureAwait(false);
         }
 
@@ -533,7 +534,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             registrationScope.RegisterType<ArithmOperatorsTestClass>();
             script.Globals.Set("o", UserData.Create(target).Value);
 
-            DynValue result = script.DoString(code);
+            LuaValue result = script.DoString(code);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(result.Number).IsEqualTo(expected).ConfigureAwait(false);

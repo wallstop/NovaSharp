@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
@@ -27,14 +28,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets the single script intrinsically owning a value, including nested tuple members.
         /// </summary>
-        internal static Script GetOwnerScript(this DynValue value)
+        internal static Script GetOwnerScript(this LuaValue value)
         {
             if (value.Type != DataType.Tuple)
             {
                 return value.ScriptPrivateResource?.OwnerScript;
             }
 
-            DynValue[] tuple = value.Tuple;
+            LuaValue[] tuple = value.Tuple;
             if (tuple == null)
             {
                 return null;
@@ -57,17 +58,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return owner;
         }
 
-        private static Script GetNestedTupleOwner(DynValue[] root)
+        private static Script GetNestedTupleOwner(LuaValue[] root)
         {
             Script owner = null;
-            using (HashSetPool<DynValue[]>.Get(out HashSet<DynValue[]> visited))
-            using (ListPool<DynValue[]>.Get(out List<DynValue[]> pending))
+            using (HashSetPool<LuaValue[]>.Get(out HashSet<LuaValue[]> visited))
+            using (ListPool<LuaValue[]>.Get(out List<LuaValue[]> pending))
             {
                 pending.Add(root);
                 while (pending.Count > 0)
                 {
                     int last = pending.Count - 1;
-                    DynValue[] tuple = pending[last];
+                    LuaValue[] tuple = pending[last];
                     pending.RemoveAt(last);
                     if (tuple == null || !visited.Add(tuple))
                     {
@@ -76,7 +77,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
                     for (int i = 0; i < tuple.Length; i++)
                     {
-                        DynValue value = tuple[i];
+                        LuaValue value = tuple[i];
                         if (value.Type == DataType.Tuple)
                         {
                             pending.Add(value.Tuple);
@@ -92,7 +93,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return owner;
         }
 
-        private static void MergeOwner(DynValue value, ref Script owner)
+        private static void MergeOwner(LuaValue value, ref Script owner)
         {
             Script candidate = value.ScriptPrivateResource?.OwnerScript;
             if (candidate == null)
@@ -111,25 +112,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Ensures every DynValue in the array belongs to the same script as the containing resource.
+        /// Ensures every LuaValue in the array belongs to the same script as the containing resource.
         /// </summary>
         public static void CheckScriptOwnership(
             this IScriptPrivateResource containingResource,
-            DynValue[] values
+            LuaValue[] values
         )
         {
-            foreach (DynValue v in values)
+            foreach (LuaValue v in values)
             {
                 CheckScriptOwnership(containingResource, v);
             }
         }
 
         /// <summary>
-        /// Ensures every DynValue in the span belongs to the same script as the containing resource.
+        /// Ensures every LuaValue in the span belongs to the same script as the containing resource.
         /// </summary>
         public static void CheckScriptOwnership(
             this IScriptPrivateResource containingResource,
-            ReadOnlySpan<DynValue> values
+            ReadOnlySpan<LuaValue> values
         )
         {
             for (int i = 0; i < values.Length; i++)
@@ -139,11 +140,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Ensures the provided DynValue is safe to use within the containing resource's script.
+        /// Ensures the provided LuaValue is safe to use within the containing resource's script.
         /// </summary>
         public static void CheckScriptOwnership(
             this IScriptPrivateResource containingResource,
-            DynValue value
+            LuaValue value
         )
         {
             if (value.Type == DataType.Tuple)
@@ -162,7 +163,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         private static void CheckTupleOwnership(
             IScriptPrivateResource containingResource,
-            DynValue[] values
+            LuaValue[] values
         )
         {
             if (values == null)
@@ -181,7 +182,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             for (int i = 0; i < values.Length; i++)
             {
-                DynValue value = values[i];
+                LuaValue value = values[i];
                 IScriptPrivateResource otherResource = value.ScriptPrivateResource;
                 if (otherResource != null)
                 {
@@ -192,17 +193,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         private static void CheckNestedTupleOwnership(
             IScriptPrivateResource containingResource,
-            DynValue[] root
+            LuaValue[] root
         )
         {
-            using (HashSetPool<DynValue[]>.Get(out HashSet<DynValue[]> visited))
-            using (ListPool<DynValue[]>.Get(out List<DynValue[]> pending))
+            using (HashSetPool<LuaValue[]>.Get(out HashSet<LuaValue[]> visited))
+            using (ListPool<LuaValue[]>.Get(out List<LuaValue[]> pending))
             {
                 pending.Add(root);
                 while (pending.Count > 0)
                 {
                     int last = pending.Count - 1;
-                    DynValue[] values = pending[last];
+                    LuaValue[] values = pending[last];
                     pending.RemoveAt(last);
                     if (values == null || !visited.Add(values))
                     {
@@ -211,7 +212,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
                     for (int i = 0; i < values.Length; i++)
                     {
-                        DynValue value = values[i];
+                        LuaValue value = values[i];
                         if (value.Type == DataType.Tuple)
                         {
                             pending.Add(value.Tuple);

@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System.Globalization;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -15,6 +16,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Interpreter.Tests.Units;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class ProcessorCoroutineApiTUnitTests
     {
@@ -29,10 +31,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task ResumeAfterCompletionThrows(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function() return 1 end");
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue function = script.DoString("return function() return 1 end");
+            LuaValue coroutine = script.CreateCoroutineValue(function);
 
-            DynValue first = coroutine.Coroutine.Resume();
+            LuaValue first = coroutine.Coroutine.Resume();
             await Assert.That(first.Number).IsEqualTo(1d);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
@@ -50,13 +52,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task AsTypedEnumerableIteratesAllResults(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 "return function() coroutine.yield(1) coroutine.yield(2) return 3 end"
             );
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue coroutine = script.CreateCoroutineValue(function);
 
             List<int> results = new();
-            foreach (DynValue value in coroutine.Coroutine.AsTypedEnumerable())
+            foreach (LuaValue value in coroutine.Coroutine.AsTypedEnumerable())
             {
                 results.Add((int)value.Number);
             }
@@ -73,12 +75,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task AsTypedEnumerableThrowsForClrCallbacks(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.Nil);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
 
             InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
             {
-                foreach (DynValue _ in coroutine.Coroutine.AsTypedEnumerable())
+                foreach (LuaValue _ in coroutine.Coroutine.AsTypedEnumerable())
                 {
                     // Enumeration should never succeed for CLR callbacks.
                 }
@@ -95,10 +97,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task AsEnumerableReturnsObjects(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 "return function() coroutine.yield(10) coroutine.yield(20) return 30 end"
             );
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue coroutine = script.CreateCoroutineValue(function);
 
             List<object> results = coroutine.Coroutine.AsEnumerable().ToList();
 
@@ -124,10 +126,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task AsEnumerableOfTReturnsTypedScalars(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 "return function() coroutine.yield(1) coroutine.yield(2) return 3 end"
             );
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue coroutine = script.CreateCoroutineValue(function);
 
             List<int> results = coroutine.Coroutine.AsEnumerable<int>().ToList();
             await Assert.That(results.SequenceEqual(YieldedValues)).IsTrue();
@@ -142,10 +144,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task AsUnityCoroutineYieldsNullPerIteration(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 "return function() coroutine.yield('a') coroutine.yield('b') return 'c' end"
             );
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue coroutine = script.CreateCoroutineValue(function);
 
             System.Collections.IEnumerator unityCoroutine = coroutine.Coroutine.AsUnityCoroutine();
             List<object> yielded = new();
@@ -169,8 +171,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task MarkClrCallbackAsDeadTransitionsType(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.Nil);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
 
             coroutine.Coroutine.MarkClrCallbackAsDead();
 
@@ -188,8 +190,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function() return 1 end");
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue function = script.DoString("return function() return 1 end");
+            LuaValue coroutine = script.CreateCoroutineValue(function);
 
             InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
                 coroutine.Coroutine.MarkClrCallbackAsDead()
@@ -206,14 +208,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task StateTransitionsFollowCoroutineLifecycle(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 "return function() coroutine.yield(1) coroutine.yield(2) end"
             );
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue coroutine = script.CreateCoroutineValue(function);
 
             await Assert.That(coroutine.Coroutine.State).IsEqualTo(CoroutineState.NotStarted);
 
-            DynValue first = coroutine.Coroutine.Resume();
+            LuaValue first = coroutine.Coroutine.Resume();
             await Assert.That(first.Number).IsEqualTo(1d);
             await Assert.That(coroutine.Coroutine.State).IsEqualTo(CoroutineState.Suspended);
 
@@ -233,17 +235,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new(version);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            DynValue callback = DynValue.NewCallback(
+            LuaValue callback = LuaValue.NewCallback(
                 (ctx, args) =>
                 {
-                    return args.Count > 0 ? args[0] : DynValue.NewNumber(99);
+                    return args.Count > 0 ? args[0] : LuaValue.NewNumber(99);
                 }
             );
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
             coroutine.Coroutine.OwnerScript = script;
 
-            DynValue payload = DynValue.NewString("payload");
-            DynValue result = coroutine.Coroutine.Resume(context, payload);
+            LuaValue payload = LuaValue.NewString("payload");
+            LuaValue result = coroutine.Coroutine.Resume(context, payload);
 
             await Assert.That(result.String).IsEqualTo("payload");
             await Assert.That(coroutine.Coroutine.State).IsEqualTo(CoroutineState.Dead);
@@ -259,11 +261,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new(version);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            DynValue callback = DynValue.NewCallback((ctx, _) => DynValue.NewNumber(1));
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue callback = LuaValue.NewCallback((ctx, _) => LuaValue.NewNumber(1));
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
             coroutine.Coroutine.OwnerScript = script;
 
-            DynValue first = coroutine.Coroutine.Resume(context);
+            LuaValue first = coroutine.Coroutine.Resume(context);
             await Assert.That(first.Number).IsEqualTo(1d);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
@@ -283,11 +285,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function() return 5 end");
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue function = script.DoString("return function() return 5 end");
+            LuaValue coroutine = script.CreateCoroutineValue(function);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
-            DynValue result = coroutine.Coroutine.Resume(context);
+            LuaValue result = coroutine.Coroutine.Resume(context);
 
             await Assert.That(result.Number).IsEqualTo(5d);
             await Assert.That(coroutine.Coroutine.State).IsEqualTo(CoroutineState.Dead);
@@ -299,15 +301,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [ScriptGlobalOptionsIsolation]
         public async Task ResumeWithObjectArgumentsConvertsValues(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function(a, b) return a + b end");
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue function = script.DoString("return function(a, b) return a + b end");
+            LuaValue coroutine = script.CreateCoroutineValue(function);
 
-            DynValue result = coroutine.Coroutine.Resume(40, 2);
+            LuaValue result = coroutine.Coroutine.Resume(40, 2);
 
             await Assert.That(result.Number).IsEqualTo(42d);
+
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
+                registry =>
+                {
+                    registry.SetClrToScriptCustomConversion<int>(
+                        (_, value) => LuaValue.NewString("custom-int:" + value)
+                    );
+                    registry.SetClrToScriptCustomConversion<string>(
+                        (_, value) => LuaValue.NewString("custom-string:" + value)
+                    );
+                }
+            );
+            LuaValue identity = script.DoString("return function(value) return value end");
+            LuaValue integerCoroutine = script.CreateCoroutineValue(identity);
+            LuaValue stringCoroutine = script.CreateCoroutineValue(identity);
+
+            LuaValue convertedInteger = integerCoroutine.Coroutine.Resume(42);
+            LuaValue convertedString = stringCoroutine.Coroutine.Resume("value");
+
+            await Assert.That(convertedInteger.String).IsEqualTo("custom-int:42");
+            await Assert.That(convertedString.String).IsEqualTo("custom-string:value");
         }
 
         [global::TUnit.Core.Test]
@@ -321,11 +345,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function(a, b) return a + b end");
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue function = script.DoString("return function(a, b) return a + b end");
+            LuaValue coroutine = script.CreateCoroutineValue(function);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
-            DynValue result = coroutine.Coroutine.Resume(context, 30, 12);
+            LuaValue result = coroutine.Coroutine.Resume(context, 30, 12);
 
             await Assert.That(result.Number).IsEqualTo(42d);
             await Assert.That(coroutine.Coroutine.State).IsEqualTo(CoroutineState.Dead);
@@ -342,20 +366,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script script = new(version);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 "return function(a, b, c) if a ~= nil then return -1 end return b + c end"
             );
-            DynValue coroutine = script.CreateCoroutine(function);
-            DynValue[] args =
+            LuaValue coroutine = script.CreateCoroutineValue(function);
+            LuaValue[] args =
             {
-                DynValue.NewNumber(-1),
-                DynValue.Nil,
-                DynValue.NewNumber(40),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(-1),
+                LuaValue.NewNumber(-1),
+                LuaValue.Nil,
+                LuaValue.NewNumber(40),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(-1),
             };
 
-            DynValue result = ResumeSpan(coroutine.Coroutine, args, start: 1, length: 3);
+            LuaValue result = ResumeSpan(coroutine.Coroutine, args, start: 1, length: 3);
 
             await Assert.That(result.Number).IsEqualTo(42d);
             await Assert.That(coroutine.Coroutine.State).IsEqualTo(CoroutineState.Dead);
@@ -372,7 +396,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script script = new(version);
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 @"
                 return function()
                     local a, b, c = coroutine.yield('ready')
@@ -382,18 +406,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                     return b + c
                 end"
             );
-            DynValue coroutine = script.CreateCoroutine(function);
-            DynValue yielded = coroutine.Coroutine.Resume();
-            DynValue[] args =
+            LuaValue coroutine = script.CreateCoroutineValue(function);
+            LuaValue yielded = coroutine.Coroutine.Resume();
+            LuaValue[] args =
             {
-                DynValue.NewNumber(-1),
-                DynValue.Nil,
-                DynValue.NewNumber(40),
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(-1),
+                LuaValue.NewNumber(-1),
+                LuaValue.Nil,
+                LuaValue.NewNumber(40),
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(-1),
             };
 
-            DynValue result = ResumeSpan(coroutine.Coroutine, args, start: 1, length: 3);
+            LuaValue result = ResumeSpan(coroutine.Coroutine, args, start: 1, length: 3);
 
             await Assert.That(yielded.String).IsEqualTo("ready");
             await Assert.That(result.Number).IsEqualTo(42d);
@@ -411,11 +435,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script owningScript = new(version);
-            DynValue function = owningScript.DoString("return function(value) return value end");
-            DynValue coroutine = owningScript.CreateCoroutine(function);
+            LuaValue function = owningScript.DoString("return function(value) return value end");
+            LuaValue coroutine = owningScript.CreateCoroutineValue(function);
             Script foreignScript = new(version);
-            DynValue foreignResource = DynValue.NewTable(foreignScript);
-            DynValue[] args = { DynValue.Nil, foreignResource };
+            LuaValue foreignResource = LuaValue.NewTable(foreignScript);
+            LuaValue[] args = { LuaValue.Nil, foreignResource };
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 ResumeSpan(coroutine.Coroutine, args, start: 1, length: 1)
@@ -428,11 +452,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task ResumeWithDynValueSpanOnClrCallbackRejectsBeforeOwnership()
         {
             Script script = new();
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.Nil);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
             Script foreignScript = new();
-            DynValue foreignResource = DynValue.NewTable(foreignScript);
-            DynValue[] args = { foreignResource };
+            LuaValue foreignResource = LuaValue.NewTable(foreignScript);
+            LuaValue[] args = { foreignResource };
 
             InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
                 ResumeSpan(coroutine.Coroutine, args, start: 0, length: 1)
@@ -453,30 +477,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new(version);
             bool sawExpectedSpan = false;
-            DynValue callback = DynValue.NewCallbackView(
+            LuaValue callback = LuaValue.NewCallbackView(
                 (_, args) =>
                 {
-                    bool hasSpan = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    bool hasSpan = args.TryGetSpan(out ReadOnlySpan<LuaValue> span);
                     sawExpectedSpan =
                         hasSpan
                         && span.Length == 2
                         && span[0].Number == 20d
                         && span[1].Number == 22d;
-                    return DynValue.NewBoolean(sawExpectedSpan);
+                    return LuaValue.NewBoolean(sawExpectedSpan);
                 }
             );
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
             coroutine.Coroutine.OwnerScript = script;
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            DynValue[] args =
+            LuaValue[] args =
             {
-                DynValue.NewNumber(-1),
-                DynValue.NewNumber(20),
-                DynValue.NewNumber(22),
-                DynValue.NewNumber(-1),
+                LuaValue.NewNumber(-1),
+                LuaValue.NewNumber(20),
+                LuaValue.NewNumber(22),
+                LuaValue.NewNumber(-1),
             };
 
-            DynValue result = ResumeSpan(coroutine.Coroutine, context, args, start: 1, length: 2);
+            LuaValue result = ResumeSpan(coroutine.Coroutine, context, args, start: 1, length: 2);
 
             await Assert.That(result.Boolean).IsTrue();
             await Assert.That(sawExpectedSpan).IsTrue();
@@ -494,21 +518,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script script = new(version);
-            DynValue callback = DynValue.NewCallback(
-                (_, args) => DynValue.NewNumber(args[0].Number + args[1].Number)
+            LuaValue callback = LuaValue.NewCallback(
+                (_, args) => LuaValue.NewNumber(args[0].Number + args[1].Number)
             );
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
             coroutine.Coroutine.OwnerScript = script;
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
-            DynValue[] args =
+            LuaValue[] args =
             {
-                DynValue.NewNumber(-1),
-                DynValue.NewNumber(30),
-                DynValue.NewNumber(12),
-                DynValue.NewNumber(-1),
+                LuaValue.NewNumber(-1),
+                LuaValue.NewNumber(30),
+                LuaValue.NewNumber(12),
+                LuaValue.NewNumber(-1),
             };
 
-            DynValue result = ResumeSpan(coroutine.Coroutine, context, args, start: 1, length: 2);
+            LuaValue result = ResumeSpan(coroutine.Coroutine, context, args, start: 1, length: 2);
 
             await Assert.That(result.Number).IsEqualTo(42d);
             await Assert.That(coroutine.Coroutine.State).IsEqualTo(CoroutineState.Dead);
@@ -525,8 +549,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script script = new(version);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.Nil);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
 
             InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
                 coroutine.Coroutine.Resume("value")
@@ -545,8 +569,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script script = new(version);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.Nil);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
 
             InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
                 coroutine.Coroutine.Resume(new UnregisteredHostObject())
@@ -563,11 +587,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task ResumeWithDynValueArgumentsThrowsWhenNull(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function() return 1 end");
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue function = script.DoString("return function() return 1 end");
+            LuaValue coroutine = script.CreateCoroutineValue(function);
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                coroutine.Coroutine.Resume((DynValue[])null)
+                coroutine.Coroutine.Resume((LuaValue[])null)
             );
             await Assert.That(exception.ParamName).IsEqualTo("args");
         }
@@ -583,11 +607,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script script = new(version);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.Nil);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
 
             InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
-                coroutine.Coroutine.Resume(Array.Empty<DynValue>())
+                coroutine.Coroutine.Resume(Array.Empty<LuaValue>())
             );
             await Assert.That(exception.Message).Contains("Only non-CLR coroutines");
         }
@@ -596,10 +620,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task ResumeWithDynValueArrayOnClrCallbackRejectsBeforeOwnership()
         {
             Script script = new();
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.Nil);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
             Script foreignScript = new();
-            DynValue foreignResource = DynValue.NewTable(foreignScript);
+            LuaValue foreignResource = LuaValue.NewTable(foreignScript);
 
             InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
                 coroutine.Coroutine.Resume(new[] { foreignResource })
@@ -617,10 +641,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task FixedDynValueResumeOnClrCallbackRejectsBeforeOwnership(int argumentCount)
         {
             Script script = new();
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.Nil);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
             Script foreignScript = new();
-            DynValue foreignResource = DynValue.NewTable(foreignScript);
+            LuaValue foreignResource = LuaValue.NewTable(foreignScript);
 
             InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
                 ResumeFixedDynValueArguments(coroutine.Coroutine, foreignResource, argumentCount)
@@ -640,11 +664,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function() return 1 end");
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue function = script.DoString("return function() return 1 end");
+            LuaValue coroutine = script.CreateCoroutineValue(function);
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                coroutine.Coroutine.Resume(null, Array.Empty<DynValue>())
+                coroutine.Coroutine.Resume(null, Array.Empty<LuaValue>())
             );
             await Assert.That(exception.ParamName).IsEqualTo("context");
         }
@@ -658,12 +682,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task ResumeWithContextArgsThrowsWhenArgsNull(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function() return 1 end");
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue function = script.DoString("return function() return 1 end");
+            LuaValue coroutine = script.CreateCoroutineValue(function);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
-                coroutine.Coroutine.Resume(context, (DynValue[])null)
+                coroutine.Coroutine.Resume(context, (LuaValue[])null)
             );
             await Assert.That(exception.ParamName).IsEqualTo("args");
         }
@@ -677,8 +701,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task ResumeWithObjectArgsThrowsWhenArgsNull(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function() return 1 end");
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue function = script.DoString("return function() return 1 end");
+            LuaValue coroutine = script.CreateCoroutineValue(function);
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
                 coroutine.Coroutine.Resume((object[])null)
@@ -697,8 +721,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function() return 1 end");
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue function = script.DoString("return function() return 1 end");
+            LuaValue coroutine = script.CreateCoroutineValue(function);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
@@ -716,17 +740,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task AutoYieldCounterForcesSuspendUntilResumed(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function() return 42 end");
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue function = script.DoString("return function() return 42 end");
+            LuaValue coroutine = script.CreateCoroutineValue(function);
             coroutine.Coroutine.AutoYieldCounter = 1;
 
-            DynValue forced = coroutine.Coroutine.Resume();
+            LuaValue forced = coroutine.Coroutine.Resume();
             await Assert.That(forced.Type).IsEqualTo(DataType.YieldRequest);
             await Assert.That(forced.YieldRequest.Forced).IsTrue();
             await Assert.That(coroutine.Coroutine.State).IsEqualTo(CoroutineState.ForceSuspended);
 
             coroutine.Coroutine.AutoYieldCounter = 0;
-            DynValue finalResult = coroutine.Coroutine.Resume();
+            LuaValue finalResult = coroutine.Coroutine.Resume();
 
             await Assert.That(finalResult.Number).IsEqualTo(42d);
             await Assert.That(coroutine.Coroutine.State).IsEqualTo(CoroutineState.Dead);
@@ -743,8 +767,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script owningScript = new();
-            DynValue function = owningScript.DoString("return function() return 1 end");
-            DynValue coroutine = owningScript.CreateCoroutine(function);
+            LuaValue function = owningScript.DoString("return function() return 1 end");
+            LuaValue coroutine = owningScript.CreateCoroutineValue(function);
 
             Script foreignScript = new();
             ScriptExecutionContext foreignContext = TestHelpers.CreateExecutionContext(
@@ -768,8 +792,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script owningScript = new(version);
-            DynValue function = owningScript.DoString("return function(value) return value end");
-            DynValue coroutine = owningScript.CreateCoroutine(function);
+            LuaValue function = owningScript.DoString("return function(value) return value end");
+            LuaValue coroutine = owningScript.CreateCoroutineValue(function);
 
             Script foreignScript = new(version);
             ScriptExecutionContext foreignContext = TestHelpers.CreateExecutionContext(
@@ -799,11 +823,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script owningScript = new();
-            DynValue function = owningScript.DoString("return function(value) return value end");
-            DynValue coroutine = owningScript.CreateCoroutine(function);
+            LuaValue function = owningScript.DoString("return function(value) return value end");
+            LuaValue coroutine = owningScript.CreateCoroutineValue(function);
 
             Script foreignScript = new();
-            DynValue foreignResource = DynValue.NewTable(foreignScript);
+            LuaValue foreignResource = LuaValue.NewTable(foreignScript);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 coroutine.Coroutine.Resume(foreignResource)
@@ -822,17 +846,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         )
         {
             Script owningScript = new();
-            DynValue function = owningScript.DoString("return function(a, b, c, d) return d end");
-            DynValue coroutine = owningScript.CreateCoroutine(function);
+            LuaValue function = owningScript.DoString("return function(a, b, c, d) return d end");
+            LuaValue coroutine = owningScript.CreateCoroutineValue(function);
 
             Script foreignScript = new();
-            DynValue foreignResource = DynValue.NewTable(foreignScript);
+            LuaValue foreignResource = LuaValue.NewTable(foreignScript);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
-                coroutine.Coroutine.Resume(
-                    DynValue.Nil,
-                    DynValue.Nil,
-                    DynValue.Nil,
+                coroutine.Coroutine.ResumeValues(
+                    LuaValue.Nil,
+                    LuaValue.Nil,
+                    LuaValue.Nil,
                     foreignResource
                 )
             );
@@ -848,8 +872,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task AutoYieldCounterProxiesProcessorValue(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue function = script.DoString("return function() coroutine.yield(1) end");
-            DynValue coroutine = script.CreateCoroutine(function);
+            LuaValue function = script.DoString("return function() coroutine.yield(1) end");
+            LuaValue coroutine = script.CreateCoroutineValue(function);
 
             coroutine.Coroutine.AutoYieldCounter = 42;
 
@@ -865,8 +889,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task GetProcessorForTestsThrowsForClrCallbacks(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.Nil);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
 
             InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
                 coroutine.Coroutine.GetProcessorForTests()
@@ -883,8 +907,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task ForceStateForTestsThrowsForClrCallbacks(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.Nil);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
 
             InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
                 coroutine.Coroutine.ForceStateForTests(CoroutineState.Suspended)
@@ -901,10 +925,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         public async Task CloseReturnsTrueForClrCallbacks(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
-            DynValue coroutine = script.CreateCoroutine(callback);
+            LuaValue callback = LuaValue.NewCallback((_, _) => LuaValue.Nil);
+            LuaValue coroutine = script.CreateCoroutineValue(callback);
 
-            DynValue result = coroutine.Coroutine.Close();
+            LuaValue result = coroutine.Coroutine.Close();
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean);
             await Assert.That(result.Boolean).IsTrue();
@@ -923,7 +947,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         {
             Script script = new(version);
             script.Options.DebugPrint = _ => { };
-            DynValue function = script.DoString(
+            LuaValue function = script.DoString(
                 @"
                 return function()
                     local function inner()
@@ -935,8 +959,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             "
             );
 
-            DynValue coroutine = script.CreateCoroutine(function);
-            DynValue yielded = coroutine.Coroutine.Resume();
+            LuaValue coroutine = script.CreateCoroutineValue(function);
+            LuaValue yielded = coroutine.Coroutine.Resume();
             await Assert.That(yielded.ToScalar().ToObject<string>()).IsEqualTo("pause");
 
             WatchItem[] stack = coroutine.Coroutine.GetStackTrace(0, SourceRef.GetClrLocation());
@@ -960,32 +984,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             );
         }
 
-        private static DynValue ResumeFixedDynValueArguments(
+        private static LuaValue ResumeFixedDynValueArguments(
             Coroutine coroutine,
-            DynValue foreignResource,
+            LuaValue foreignResource,
             int argumentCount
         )
         {
             return argumentCount switch
             {
-                1 => coroutine.Resume(foreignResource),
-                2 => coroutine.Resume(DynValue.Nil, foreignResource),
-                3 => coroutine.Resume(DynValue.Nil, DynValue.Nil, foreignResource),
-                4 => coroutine.Resume(DynValue.Nil, DynValue.Nil, DynValue.Nil, foreignResource),
-                5 => coroutine.Resume(
-                    DynValue.Nil,
-                    DynValue.Nil,
-                    DynValue.Nil,
-                    DynValue.Nil,
+                1 => coroutine.ResumeValues(foreignResource),
+                2 => coroutine.ResumeValues(LuaValue.Nil, foreignResource),
+                3 => coroutine.ResumeValues(LuaValue.Nil, LuaValue.Nil, foreignResource),
+                4 => coroutine.ResumeValues(
+                    LuaValue.Nil,
+                    LuaValue.Nil,
+                    LuaValue.Nil,
+                    foreignResource
+                ),
+                5 => coroutine.ResumeValues(
+                    LuaValue.Nil,
+                    LuaValue.Nil,
+                    LuaValue.Nil,
+                    LuaValue.Nil,
                     foreignResource
                 ),
                 _ => throw new ArgumentOutOfRangeException(nameof(argumentCount)),
             };
         }
 
-        private static DynValue ResumeSpan(
+        private static LuaValue ResumeSpan(
             Coroutine coroutine,
-            DynValue[] args,
+            LuaValue[] args,
             int start,
             int length
         )
@@ -993,10 +1022,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             return coroutine.Resume(args.AsSpan(start, length));
         }
 
-        private static DynValue ResumeSpan(
+        private static LuaValue ResumeSpan(
             Coroutine coroutine,
             ScriptExecutionContext context,
-            DynValue[] args,
+            LuaValue[] args,
             int start,
             int length
         )

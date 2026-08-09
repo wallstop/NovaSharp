@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -25,15 +26,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             SampleUserData userdata = new();
             AutoDescribingUserDataDescriptor descriptor = new(typeof(SampleUserData), "Sample");
 
-            DynValue value = descriptor
-                .Index(script, userdata, DynValue.NewString("key"), true)
+            LuaValue value = descriptor
+                .Index(script, userdata, LuaValue.NewString("key"), true)
                 .Value;
             bool foundVoid = descriptor.TryIndex(
                 script,
                 userdata,
-                DynValue.NewString("void"),
+                LuaValue.NewString("void"),
                 true,
-                out DynValue explicitVoid
+                out LuaValue explicitVoid
             );
 
             await Assert.That(userdata.IndexInvocations).IsEqualTo(2);
@@ -52,8 +53,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             bool result = descriptor.SetIndex(
                 script,
                 new object(),
-                DynValue.NewString("key"),
-                DynValue.NewNumber(42),
+                LuaValue.NewString("key"),
+                LuaValue.NewNumber(42),
                 false
             );
 
@@ -70,8 +71,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             bool result = descriptor.SetIndex(
                 script,
                 userdata,
-                DynValue.NewString("key"),
-                DynValue.NewNumber(123),
+                LuaValue.NewString("key"),
+                LuaValue.NewNumber(123),
                 true
             );
 
@@ -87,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             SampleUserData userdata = new();
             AutoDescribingUserDataDescriptor descriptor = new(typeof(SampleUserData), "Sample");
 
-            DynValue meta = descriptor.MetaIndex(script, userdata, "__call").Value;
+            LuaValue meta = descriptor.MetaIndex(script, userdata, "__call").Value;
 
             await Assert.That(userdata.MetaIndexInvocations).IsEqualTo(1);
             await Assert.That(meta.Type).IsEqualTo(DataType.ClrFunction);
@@ -109,23 +110,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             AutoDescribingUserDataDescriptor descriptor = new(typeof(SampleUserData), "Sample");
             Script script = new();
 
-            DynValue? value = descriptor.Index(
+            LuaValue? value = descriptor.Index(
                 script,
                 new object(),
-                DynValue.NewString("key"),
+                LuaValue.NewString("key"),
                 true
             );
             bool found = descriptor.TryIndex(
                 script,
                 new object(),
-                DynValue.NewString("key"),
+                LuaValue.NewString("key"),
                 true,
-                out DynValue missing
+                out LuaValue missing
             );
 
             await Assert.That(value).IsNull();
             await Assert.That(found).IsFalse();
-            await Assert.That(missing.IsNil()).IsTrue();
+            await Assert.That(missing.IsNil).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -134,7 +135,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             AutoDescribingUserDataDescriptor descriptor = new(typeof(SampleUserData), "Sample");
             Script script = new();
 
-            DynValue? value = descriptor.MetaIndex(script, new object(), "__call");
+            LuaValue? value = descriptor.MetaIndex(script, new object(), "__call");
 
             await Assert.That(value).IsNull();
         }
@@ -154,29 +155,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             internal int MetaIndexInvocations { get; private set; }
 
-            internal DynValue LastSetIndex { get; private set; } = DynValue.Nil;
+            internal LuaValue LastSetIndex { get; private set; } = LuaValue.Nil;
 
-            internal DynValue LastSetValue { get; private set; } = DynValue.Nil;
+            internal LuaValue LastSetValue { get; private set; } = LuaValue.Nil;
 
             public bool TryIndex(
                 Script script,
-                DynValue index,
+                LuaValue index,
                 bool isDirectIndexing,
-                out DynValue value
+                out LuaValue value
             )
             {
                 IndexInvocations++;
                 value =
                     index.String == "void"
-                        ? DynValue.Void
-                        : DynValue.NewString($"indexed:{index.String}");
+                        ? LuaValue.Void
+                        : LuaValue.NewString($"indexed:{index.String}");
                 return true;
             }
 
             public bool SetIndex(
                 Script script,
-                DynValue index,
-                DynValue value,
+                LuaValue index,
+                LuaValue value,
                 bool isDirectIndexing
             )
             {
@@ -185,10 +186,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 return true;
             }
 
-            public bool TryMetaIndex(Script script, string metaname, out DynValue value)
+            public bool TryMetaIndex(Script script, string metaname, out LuaValue value)
             {
                 MetaIndexInvocations++;
-                value = DynValue.NewCallback((_, _) => DynValue.NewString($"meta:{metaname}"));
+                value = LuaValue.NewCallback((_, _) => LuaValue.NewString($"meta:{metaname}"));
                 return true;
             }
 

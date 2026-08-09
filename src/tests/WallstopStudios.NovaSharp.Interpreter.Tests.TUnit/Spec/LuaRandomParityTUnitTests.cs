@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -285,7 +286,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(version, CoreModulePresets.Default);
 
-            DynValue result = script.DoString("return math.randomseed(42)");
+            LuaValue result = script.DoString("return math.randomseed(42)");
 
             // Lua 5.4 returns the two seed components
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
@@ -298,7 +299,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(version, CoreModulePresets.Default);
 
-            DynValue result = script.DoString("return math.randomseed()");
+            LuaValue result = script.DoString("return math.randomseed()");
 
             // Lua 5.4 with no args still returns the seed tuple
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
@@ -311,7 +312,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(version, CoreModulePresets.Default);
 
-            DynValue result = script.DoString("return math.randomseed(42)");
+            LuaValue result = script.DoString("return math.randomseed(42)");
 
             // Lua 5.1-5.3 returns nothing (nil)
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
@@ -362,8 +363,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             Script script1 = new Script(CoreModulePresets.Default, options1);
             Script script2 = new Script(CoreModulePresets.Default, options2);
 
-            DynValue r1 = script1.DoString("return math.random(), math.random(), math.random()");
-            DynValue r2 = script2.DoString("return math.random(), math.random(), math.random()");
+            LuaValue r1 = script1.DoString("return math.random(), math.random(), math.random()");
+            LuaValue r2 = script2.DoString("return math.random(), math.random(), math.random()");
 
             await Assert
                 .That(r1.Tuple[0].Number)
@@ -399,8 +400,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             Script script1 = new Script(CoreModulePresets.Default, options1);
             Script script2 = new Script(CoreModulePresets.Default, options2);
 
-            DynValue r1 = script1.DoString("return math.random(), math.random(), math.random()");
-            DynValue r2 = script2.DoString("return math.random(), math.random(), math.random()");
+            LuaValue r1 = script1.DoString("return math.random(), math.random(), math.random()");
+            LuaValue r2 = script2.DoString("return math.random(), math.random(), math.random()");
 
             await Assert
                 .That(r1.Tuple[0].Number)
@@ -423,7 +424,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             Script script = new Script(version, CoreModulePresets.Default);
 
             // Test math.random(n) returns integer in [1, n]
-            DynValue result = script.DoString("return math.random(100)");
+            LuaValue result = script.DoString("return math.random(100)");
             double value = result.Number;
 
             await Assert.That(value).IsGreaterThanOrEqualTo(1).ConfigureAwait(false);
@@ -438,7 +439,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             Script script = new Script(version, CoreModulePresets.Default);
 
             // Test math.random() returns float in [0, 1)
-            DynValue result = script.DoString("return math.random()");
+            LuaValue result = script.DoString("return math.random()");
             double value = result.Number;
 
             await Assert.That(value).IsGreaterThanOrEqualTo(0.0).ConfigureAwait(false);

@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Hardwire
     using System.Collections.Generic;
     using System.Globalization;
     using System.Reflection;
+    using global::NovaSharp;
     using Languages;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -164,8 +165,8 @@ namespace WallstopStudios.NovaSharp.Hardwire
 
             foreach (TablePair pair in table.GetPairsEnumerator())
             {
-                DynValue key = pair.Key;
-                DynValue value = pair.Value;
+                LuaValue key = pair.Key;
+                LuaValue value = pair.Value;
 
                 if (value.Type == DataType.Table && value.Table.Get("error").IsNotNil())
                 {
@@ -275,7 +276,7 @@ namespace WallstopStudios.NovaSharp.Hardwire
                 throw new ArgumentNullException(nameof(members));
             }
 
-            DynValue d = table.Get("class");
+            LuaValue d = table.Get("class");
             if (d.Type != DataType.String)
             {
                 throw new ArgumentException(
@@ -287,7 +288,7 @@ namespace WallstopStudios.NovaSharp.Hardwire
 
             _nestStack.Push((key ?? d.String) ?? "(null)");
 
-            table.Set("$key", DynValue.NewString(key));
+            table.Set("$key", LuaValue.NewString(key));
 
             IHardwireGenerator gen = HardwireGeneratorRegistry.GetGenerator(d.String);
             CodeExpression[] result = gen.Generate(table, this, members);
@@ -353,7 +354,7 @@ namespace WallstopStudios.NovaSharp.Hardwire
             {
                 throw new ArgumentNullException(nameof(t));
             }
-            DynValue dv = t.Get("visibility");
+            LuaValue dv = t.Get("visibility");
 
             if (dv.Type != DataType.String)
             {

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
     using System;
     using System.Buffers;
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -61,7 +62,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
         /// Available in Lua 5.3+.
         /// </summary>
         [NovaSharpModuleMethod(Name = "pack")]
-        public static DynValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
+        public static LuaValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
         {
             LuaVersionGuard.ThrowIfUnavailable(
                 executionContext.Script.CompatibilityVersion,
@@ -69,7 +70,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                 "string.pack"
             );
 
-            DynValue fmtArg = args.AsType(0, "pack", DataType.String, false);
+            LuaValue fmtArg = args.AsType(0, "pack", DataType.String, false);
             string fmt = fmtArg.String;
 
             // Estimate buffer size based on format string
@@ -320,7 +321,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
             }
 
             // Convert bytes to a Lua string (ISO-8859-1 encoding where each byte = one char)
-            return DynValue.NewString(BytesToLuaString(buffer, writePos));
+            return LuaValue.NewString(BytesToLuaString(buffer, writePos));
         }
 
         /// <summary>
@@ -328,7 +329,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
         /// Available in Lua 5.3+.
         /// </summary>
         [NovaSharpModuleMethod(Name = "unpack")]
-        public static DynValue Unpack(
+        public static LuaValue Unpack(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -339,24 +340,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                 "string.unpack"
             );
 
-            DynValue fmtArg = args.AsType(0, "unpack", DataType.String, false);
-            DynValue dataArg = args.AsType(1, "unpack", DataType.String, false);
-            DynValue posArg = args.AsType(2, "unpack", DataType.Number, true);
+            LuaValue fmtArg = args.AsType(0, "unpack", DataType.String, false);
+            LuaValue dataArg = args.AsType(1, "unpack", DataType.String, false);
+            LuaValue posArg = args.AsType(2, "unpack", DataType.Number, true);
 
             string fmt = fmtArg.String;
             string data = dataArg.String;
-            int pos = posArg.IsNil() ? 0 : (int)posArg.Number - 1; // Lua uses 1-based indexing
+            int pos = posArg.IsNil ? 0 : (int)posArg.Number - 1; // Lua uses 1-based indexing
 
             if (pos < 0 || pos > data.Length)
             {
                 throw new ScriptRuntimeException("initial position out of string");
             }
 
-            // Estimate result count based on format - use pooled DynValue array
+            // Estimate result count based on format - use pooled LuaValue array
             int estimatedResults = EstimateResultCount(fmt);
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 Math.Max(estimatedResults + 1, MaxResultsCapacity),
-                out DynValue[] resultsBuffer
+                out LuaValue[] resultsBuffer
             );
             int resultCount = 0;
             int resultsCapacity = resultsBuffer.Length;
@@ -389,19 +390,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                     case 'b': // Signed byte
                         CheckAvailable(data, pos, 1);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewNumber((sbyte)data[pos++]);
+                        resultsBuffer[resultCount++] = LuaValue.NewNumber((sbyte)data[pos++]);
                         break;
 
                     case 'B': // Unsigned byte
                         CheckAvailable(data, pos, 1);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewNumber((byte)data[pos++]);
+                        resultsBuffer[resultCount++] = LuaValue.NewNumber((byte)data[pos++]);
                         break;
 
                     case 'h': // Signed short
                         CheckAvailable(data, pos, NativeShortSize);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewNumber(
+                        resultsBuffer[resultCount++] = LuaValue.NewNumber(
                             ReadSignedInteger(data, ref pos, NativeShortSize, littleEndian)
                         );
                         break;
@@ -409,7 +410,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                     case 'H': // Unsigned short
                         CheckAvailable(data, pos, NativeShortSize);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewNumber(
+                        resultsBuffer[resultCount++] = LuaValue.NewNumber(
                             ReadUnsignedInteger(data, ref pos, NativeShortSize, littleEndian)
                         );
                         break;
@@ -417,7 +418,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                     case 'l': // Signed long
                         CheckAvailable(data, pos, NativeLongSize);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewNumber(
+                        resultsBuffer[resultCount++] = LuaValue.NewNumber(
                             ReadSignedInteger(data, ref pos, NativeLongSize, littleEndian)
                         );
                         break;
@@ -425,7 +426,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                     case 'L': // Unsigned long
                         CheckAvailable(data, pos, NativeLongSize);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewNumber(
+                        resultsBuffer[resultCount++] = LuaValue.NewNumber(
                             ReadUnsignedInteger(data, ref pos, NativeLongSize, littleEndian)
                         );
                         break;
@@ -433,7 +434,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                     case 'j': // lua_Integer
                         CheckAvailable(data, pos, LuaIntegerSize);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewNumber(
+                        resultsBuffer[resultCount++] = LuaValue.NewNumber(
                             ReadSignedInteger(data, ref pos, LuaIntegerSize, littleEndian)
                         );
                         break;
@@ -441,7 +442,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                     case 'J': // lua_Unsigned
                         CheckAvailable(data, pos, LuaIntegerSize);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewNumber(
+                        resultsBuffer[resultCount++] = LuaValue.NewNumber(
                             ReadUnsignedInteger(data, ref pos, LuaIntegerSize, littleEndian)
                         );
                         break;
@@ -449,7 +450,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                     case 'T': // size_t
                         CheckAvailable(data, pos, NativeSizeT);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewNumber(
+                        resultsBuffer[resultCount++] = LuaValue.NewNumber(
                             ReadUnsignedInteger(data, ref pos, NativeSizeT, littleEndian)
                         );
                         break;
@@ -460,7 +461,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                         ValidateIntegerSize(size);
                         CheckAvailable(data, pos, size);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewNumber(
+                        resultsBuffer[resultCount++] = LuaValue.NewNumber(
                             ReadSignedInteger(data, ref pos, size, littleEndian)
                         );
                         break;
@@ -472,7 +473,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                         ValidateIntegerSize(size);
                         CheckAvailable(data, pos, size);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewNumber(
+                        resultsBuffer[resultCount++] = LuaValue.NewNumber(
                             ReadUnsignedInteger(data, ref pos, size, littleEndian)
                         );
                         break;
@@ -481,7 +482,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                     case 'f': // Float
                         CheckAvailable(data, pos, 4);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewNumber(
+                        resultsBuffer[resultCount++] = LuaValue.NewNumber(
                             ReadFloat(data, ref pos, littleEndian)
                         );
                         break;
@@ -490,7 +491,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                     case 'n': // lua_Number
                         CheckAvailable(data, pos, 8);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewNumber(
+                        resultsBuffer[resultCount++] = LuaValue.NewNumber(
                             ReadDouble(data, ref pos, littleEndian)
                         );
                         break;
@@ -500,7 +501,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                         int size = ParseRequiredSize(fmt, ref i, "unpack");
                         CheckAvailable(data, pos, size);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewString(
+                        resultsBuffer[resultCount++] = LuaValue.NewString(
                             data.Substring(pos, size)
                         );
                         pos += size;
@@ -515,7 +516,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                             throw new ScriptRuntimeException("unfinished string for format 'z'");
                         }
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewString(
+                        resultsBuffer[resultCount++] = LuaValue.NewString(
                             data.Substring(pos, nullPos - pos)
                         );
                         pos = nullPos + 1;
@@ -534,7 +535,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                         }
                         CheckAvailable(data, pos, (int)length);
                         EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-                        resultsBuffer[resultCount++] = DynValue.NewString(
+                        resultsBuffer[resultCount++] = LuaValue.NewString(
                             data.Substring(pos, (int)length)
                         );
                         pos += (int)length;
@@ -574,12 +575,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
 
             // Add the final position (1-based)
             EnsureResultsCapacity(ref resultsBuffer, resultCount, ref resultsCapacity);
-            resultsBuffer[resultCount++] = DynValue.NewNumber(pos + 1);
+            resultsBuffer[resultCount++] = LuaValue.NewNumber(pos + 1);
 
             // Create final results array
-            DynValue[] finalResults = new DynValue[resultCount];
+            LuaValue[] finalResults = new LuaValue[resultCount];
             Array.Copy(resultsBuffer, finalResults, resultCount);
-            return DynValue.NewTuple(finalResults);
+            return LuaValue.NewTuple(finalResults);
         }
 
         /// <summary>
@@ -587,7 +588,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
         /// Available in Lua 5.3+.
         /// </summary>
         [NovaSharpModuleMethod(Name = "packsize")]
-        public static DynValue PackSize(
+        public static LuaValue PackSize(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
@@ -598,7 +599,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                 "string.packsize"
             );
 
-            DynValue fmtArg = args.AsType(0, "packsize", DataType.String, false);
+            LuaValue fmtArg = args.AsType(0, "packsize", DataType.String, false);
             string fmt = fmtArg.String;
 
             int size = 0;
@@ -702,7 +703,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                 }
             }
 
-            return DynValue.NewNumber(size);
+            return LuaValue.NewNumber(size);
         }
 
         #region Helper Methods
@@ -787,7 +788,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void EnsureResultsCapacity(
-            ref DynValue[] results,
+            ref LuaValue[] results,
             int count,
             ref int capacity
         )
@@ -799,7 +800,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
 
             // Need to grow - allocate a larger array
             int newSize = capacity * 2;
-            DynValue[] newResults = new DynValue[newSize];
+            LuaValue[] newResults = new LuaValue[newSize];
             Array.Copy(results, newResults, count);
             results = newResults;
             capacity = newSize;
@@ -884,7 +885,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
 
         private static long GetIntegerArg(CallbackArguments args, int index, string funcName)
         {
-            DynValue arg = args.AsType(index, funcName, DataType.Number, false);
+            LuaValue arg = args.AsType(index, funcName, DataType.Number, false);
             LuaNumber num = arg.LuaNumber;
 
             // Integer subtype always has integer representation
@@ -946,14 +947,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static double GetNumberArg(CallbackArguments args, int index, string funcName)
         {
-            DynValue arg = args.AsType(index, funcName, DataType.Number, false);
+            LuaValue arg = args.AsType(index, funcName, DataType.Number, false);
             return arg.Number;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string GetStringArg(CallbackArguments args, int index, string funcName)
         {
-            DynValue arg = args.AsType(index, funcName, DataType.String, false);
+            LuaValue arg = args.AsType(index, funcName, DataType.String, false);
             return arg.String;
         }
 

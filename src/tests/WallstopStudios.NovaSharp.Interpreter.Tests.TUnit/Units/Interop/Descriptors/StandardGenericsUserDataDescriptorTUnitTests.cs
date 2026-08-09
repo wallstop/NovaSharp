@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -75,10 +76,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             );
 
             Script script = new();
-            DynValue? indexResult = descriptor.Index(
+            LuaValue? indexResult = descriptor.Index(
                 script,
                 null,
-                DynValue.NewString("anything"),
+                LuaValue.NewString("anything"),
                 true
             );
 
@@ -86,8 +87,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             bool setResult = descriptor.SetIndex(
                 script,
                 null,
-                DynValue.NewString("anything"),
-                DynValue.NewNumber(1),
+                LuaValue.NewString("anything"),
+                LuaValue.NewNumber(1),
                 true
             );
             await Assert.That(setResult).IsFalse().ConfigureAwait(false);
@@ -98,20 +99,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             bool foundIndex = descriptor.TryIndex(
                 script,
                 null,
-                DynValue.NewString("anything"),
+                LuaValue.NewString("anything"),
                 true,
-                out DynValue missingIndex
+                out LuaValue missingIndex
             );
             bool foundMeta = descriptor.TryMetaIndex(
                 script,
                 null,
                 "__add",
-                out DynValue missingMeta
+                out LuaValue missingMeta
             );
             await Assert.That(foundIndex).IsFalse().ConfigureAwait(false);
-            await Assert.That(missingIndex.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(missingIndex.IsNil).IsTrue().ConfigureAwait(false);
             await Assert.That(foundMeta).IsFalse().ConfigureAwait(false);
-            await Assert.That(missingMeta.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(missingMeta.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

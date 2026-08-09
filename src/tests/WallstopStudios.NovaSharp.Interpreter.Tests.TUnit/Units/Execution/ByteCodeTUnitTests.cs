@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -211,9 +212,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             ByteCode byteCode = new(new Script());
 
-            Instruction instruction = byteCode.EmitLiteral(DynValue.Nil);
+            Instruction instruction = byteCode.EmitLiteral(LuaValue.Nil);
 
-            await Assert.That(instruction.Value.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(instruction.Value.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -225,11 +226,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task EmitIndexCarriesIndexValue(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script(version));
-            DynValue index = DynValue.NewString("before");
+            LuaValue index = LuaValue.NewString("before");
 
             Instruction instruction = byteCode.EmitIndex(index);
             Instruction absent = byteCode.EmitIndex();
-            Instruction explicitNil = byteCode.EmitIndex(DynValue.Nil);
+            Instruction explicitNil = byteCode.EmitIndex(LuaValue.Nil);
 
             await Assert.That(instruction.HasValue).IsTrue().ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
@@ -248,14 +249,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task EmitIndexSetCarriesIndexValue(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script(version));
-            DynValue index = DynValue.NewString("before");
+            LuaValue index = LuaValue.NewString("before");
 
             Instruction instruction = byteCode.EmitIndexSet(stackofs: 0, tupleidx: 0, index: index);
             Instruction absent = byteCode.EmitIndexSet(stackofs: 0, tupleidx: 0);
             Instruction explicitNil = byteCode.EmitIndexSet(
                 stackofs: 0,
                 tupleidx: 0,
-                index: DynValue.Nil
+                index: LuaValue.Nil
             );
 
             await Assert.That(instruction.HasValue).IsTrue().ConfigureAwait(false);
@@ -274,7 +275,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task EmitMetaCarriesPayloadValue(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script(version));
-            DynValue payload = DynValue.NewString("before");
+            LuaValue payload = LuaValue.NewString("before");
 
             Instruction instruction = byteCode.EmitMeta(
                 "chunk",
@@ -285,12 +286,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Instruction explicitNil = byteCode.EmitMeta(
                 "chunk",
                 OpCodeMetadataType.ChunkEntrypoint,
-                DynValue.Nil
+                LuaValue.Nil
             );
             Instruction explicitVoid = byteCode.EmitMeta(
                 "chunk",
                 OpCodeMetadataType.ChunkEntrypoint,
-                DynValue.Void
+                LuaValue.Void
             );
 
             await Assert.That(instruction.HasValue).IsTrue().ConfigureAwait(false);
@@ -610,7 +611,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             ByteCode byteCode = new(new Script());
             Instruction instruction = byteCode.EmitIndex(
-                DynValue.NewString("name"),
+                LuaValue.NewString("name"),
                 isNameIndex,
                 isExpList
             );
@@ -629,7 +630,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Instruction instruction = byteCode.EmitIndexSet(
                 stackofs: 1,
                 tupleidx: 2,
-                index: DynValue.NewString("idx"),
+                index: LuaValue.NewString("idx"),
                 isNameIndex: isNameIndex,
                 isExpList: isExpList
             );

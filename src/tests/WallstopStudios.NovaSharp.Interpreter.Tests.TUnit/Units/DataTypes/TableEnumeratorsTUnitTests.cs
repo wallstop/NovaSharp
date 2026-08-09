@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -20,9 +21,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
-            table.Set("b", DynValue.NewNumber(2));
-            table.Set("c", DynValue.NewNumber(3));
+            table.Set("a", LuaValue.NewNumber(1));
+            table.Set("b", LuaValue.NewNumber(2));
+            table.Set("c", LuaValue.NewNumber(3));
 
             List<TablePair> pairs = new();
             foreach (TablePair pair in table.GetPairsEnumerator())
@@ -53,8 +54,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("x", DynValue.NewNumber(10));
-            table.Set("y", DynValue.NewNumber(20));
+            table.Set("x", LuaValue.NewNumber(10));
+            table.Set("y", LuaValue.NewNumber(20));
 
             TablePairsEnumerator enumerator = table.GetPairsEnumerator();
 
@@ -82,7 +83,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("key", DynValue.NewNumber(42));
+            table.Set("key", LuaValue.NewNumber(42));
 
             TablePairsEnumerator enumerator = table.GetPairsEnumerator();
             enumerator.MoveNext();
@@ -96,7 +97,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
+            table.Set("a", LuaValue.NewNumber(1));
 
             TablePairsEnumerator enumerator = table.GetPairsEnumerator();
             TablePairsEnumerator fromMethod = enumerator.GetEnumerator();
@@ -119,11 +120,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("one", DynValue.NewNumber(1));
-            table.Set("two", DynValue.NewNumber(2));
+            table.Set("one", LuaValue.NewNumber(1));
+            table.Set("two", LuaValue.NewNumber(2));
 
             List<string> keys = new();
-            foreach (DynValue key in table.GetKeysEnumerator())
+            foreach (LuaValue key in table.GetKeysEnumerator())
             {
                 keys.Add(key.String);
             }
@@ -140,7 +141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(script);
 
             int count = 0;
-            foreach (DynValue _ in table.GetKeysEnumerator())
+            foreach (LuaValue _ in table.GetKeysEnumerator())
             {
                 count++;
             }
@@ -153,7 +154,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
+            table.Set("a", LuaValue.NewNumber(1));
 
             TableKeysEnumerator enumerator = table.GetKeysEnumerator();
             enumerator.MoveNext();
@@ -172,12 +173,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(10));
-            table.Set("b", DynValue.NewNumber(20));
-            table.Set("c", DynValue.NewNumber(30));
+            table.Set("a", LuaValue.NewNumber(10));
+            table.Set("b", LuaValue.NewNumber(20));
+            table.Set("c", LuaValue.NewNumber(30));
 
             List<double> values = new();
-            foreach (DynValue value in table.GetValuesEnumerator())
+            foreach (LuaValue value in table.GetValuesEnumerator())
             {
                 values.Add(value.Number);
             }
@@ -195,7 +196,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             Table table = new(script);
 
             int count = 0;
-            foreach (DynValue _ in table.GetValuesEnumerator())
+            foreach (LuaValue _ in table.GetValuesEnumerator())
             {
                 count++;
             }
@@ -208,7 +209,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("x", DynValue.NewNumber(99));
+            table.Set("x", LuaValue.NewNumber(99));
 
             TableValuesEnumerator enumerator = table.GetValuesEnumerator();
             enumerator.MoveNext();
@@ -227,9 +228,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.NewNumber(1));
-            table.Set("b", DynValue.Nil);
-            table.Set("c", DynValue.NewNumber(3));
+            table.Set("a", LuaValue.NewNumber(1));
+            table.Set("b", LuaValue.Nil);
+            table.Set("c", LuaValue.NewNumber(3));
 
             List<TablePair> pairs = new();
             foreach (TablePair pair in table.GetNonNilPairsEnumerator())
@@ -245,8 +246,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("a", DynValue.Nil);
-            table.Set("b", DynValue.Nil);
+            table.Set("a", LuaValue.Nil);
+            table.Set("b", LuaValue.Nil);
 
             int count = 0;
             foreach (TablePair _ in table.GetNonNilPairsEnumerator())
@@ -277,7 +278,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new();
             Table table = new(script);
-            table.Set("x", DynValue.NewNumber(5));
+            table.Set("x", LuaValue.NewNumber(5));
 
             TableNonNilPairsEnumerator enumerator = table.GetNonNilPairsEnumerator();
 

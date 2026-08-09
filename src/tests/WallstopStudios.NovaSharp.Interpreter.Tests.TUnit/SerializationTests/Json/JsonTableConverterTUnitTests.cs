@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.SerializationTests.J
     using System.Collections.Generic;
     using System.Globalization;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -15,9 +16,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.SerializationTests.J
         public async Task TableToJsonSkipsIncompatibleObjectEntries()
         {
             Table table = new(null);
-            table.Set("valid", DynValue.NewString("value"));
+            table.Set("valid", LuaValue.NewString("value"));
             table.Set("nullEntry", JsonNull.Create());
-            table.Set("unsupported", DynValue.NewCallback((_, _) => DynValue.True));
+            table.Set("unsupported", LuaValue.NewCallback((_, _) => LuaValue.True));
 
             string json = JsonTableConverter.TableToJson(table);
             Table roundTrip = JsonTableConverter.JsonToTable(json);
@@ -31,15 +32,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.SerializationTests.J
                 .That(JsonNull.IsJsonNull(roundTrip.Get("nullEntry")))
                 .IsTrue()
                 .ConfigureAwait(false);
-            await Assert.That(roundTrip.Get("unsupported").IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(roundTrip.Get("unsupported").IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task TableToJsonSkipsIncompatibleArrayEntries()
         {
             Table array = new(null);
-            array.Append(DynValue.NewNumber(1));
-            array.Append(DynValue.NewCallback((_, _) => DynValue.Nil));
+            array.Append(LuaValue.NewNumber(1));
+            array.Append(LuaValue.NewCallback((_, _) => LuaValue.Nil));
             array.Append(JsonNull.Create());
 
             string json = JsonTableConverter.TableToJson(array);
@@ -101,8 +102,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.SerializationTests.J
         {
             // Arrange: Create a table with integer values (using NewInteger)
             Table table = new(null);
-            table.Set("integer", DynValue.NewInteger(42));
-            table.Set("large", DynValue.NewInteger(9007199254740993L)); // 2^53 + 1 - beyond double precision
+            table.Set("integer", LuaValue.NewInteger(42));
+            table.Set("large", LuaValue.NewInteger(9007199254740993L)); // 2^53 + 1 - beyond double precision
 
             // Act: Serialize to JSON
             string json = table.TableToJson();
@@ -121,8 +122,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.SerializationTests.J
         {
             // Arrange: Create a table with float values (using NewFloat)
             Table table = new(null);
-            table.Set("pi", DynValue.NewFloat(3.14159));
-            table.Set("zero", DynValue.NewFloat(0.0));
+            table.Set("pi", LuaValue.NewFloat(3.14159));
+            table.Set("zero", LuaValue.NewFloat(0.0));
 
             // Act: Serialize to JSON
             string json = table.TableToJson();
@@ -138,9 +139,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.SerializationTests.J
         {
             // Arrange: Create an array with integer values
             Table array = new(null);
-            array.Append(DynValue.NewInteger(1));
-            array.Append(DynValue.NewInteger(2));
-            array.Append(DynValue.NewInteger(3));
+            array.Append(LuaValue.NewInteger(1));
+            array.Append(LuaValue.NewInteger(2));
+            array.Append(LuaValue.NewInteger(3));
 
             // Act: Serialize to JSON
             string json = array.TableToJson();
@@ -155,13 +156,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.SerializationTests.J
             // Arrange: Create a table with large integers at precision boundaries
             Table table = new(null);
             // 2^53 = 9007199254740992 - largest integer exactly representable as double
-            table.Set("maxSafeInt", DynValue.NewInteger(9007199254740992L));
+            table.Set("maxSafeInt", LuaValue.NewInteger(9007199254740992L));
             // 2^53 + 1 = 9007199254740993 - NOT exactly representable as double
-            table.Set("beyondPrecision", DynValue.NewInteger(9007199254740993L));
+            table.Set("beyondPrecision", LuaValue.NewInteger(9007199254740993L));
             // Max long value
-            table.Set("maxLong", DynValue.NewInteger(long.MaxValue));
+            table.Set("maxLong", LuaValue.NewInteger(long.MaxValue));
             // Min long value
-            table.Set("minLong", DynValue.NewInteger(long.MinValue));
+            table.Set("minLong", LuaValue.NewInteger(long.MinValue));
 
             // Act: Serialize to JSON
             string json = table.TableToJson();

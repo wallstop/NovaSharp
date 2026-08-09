@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -59,11 +60,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
                     SomeClass obj = new();
                     script.Globals["myobj"] = obj;
-                    script.Globals["ext"] = DynValue.NewCallback(
+                    script.Globals["ext"] = LuaValue.NewCallback(
                         (c, a) =>
                         {
                             invocationCount += 1;
-                            return DynValue.Void;
+                            return LuaValue.Void;
                         }
                     );
 
@@ -97,11 +98,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     SomeClass obj2 = new();
                     script.Globals["myobj"] = obj;
                     script.Globals["myobj2"] = obj2;
-                    script.Globals["ext"] = DynValue.NewCallback(
+                    script.Globals["ext"] = LuaValue.NewCallback(
                         (c, a) =>
                         {
                             invocationCount += 1;
-                            return DynValue.Void;
+                            return LuaValue.Void;
                         }
                     );
 
@@ -134,11 +135,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
                     SomeClass obj = new();
                     script.Globals["myobj"] = obj;
-                    script.Globals["ext"] = DynValue.NewCallback(
+                    script.Globals["ext"] = LuaValue.NewCallback(
                         (c, a) =>
                         {
                             invocationCount += 1;
-                            return DynValue.Void;
+                            return LuaValue.Void;
                         }
                     );
 
@@ -170,7 +171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
                     SomeClass obj = new();
                     script.Globals["myobj"] = obj;
-                    DynValue result = script.DoString(
+                    LuaValue result = script.DoString(
                         @"
                     local invocationCount = 0
                     function handler(o, a)
@@ -201,7 +202,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
                     SomeClass obj = new();
                     script.Globals["myobj"] = obj;
-                    DynValue result = script.DoString(
+                    LuaValue result = script.DoString(
                         @"
                     local invocationCount = 0
                     function handler(o, a)
@@ -237,11 +238,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                         Globals =
                         {
                             ["myobj"] = typeof(SomeClass),
-                            ["ext"] = DynValue.NewCallback(
+                            ["ext"] = LuaValue.NewCallback(
                                 (c, a) =>
                                 {
                                     invocationCount += 1;
-                                    return DynValue.Void;
+                                    return LuaValue.Void;
                                 }
                             ),
                         },
@@ -300,11 +301,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                         Globals =
                         {
                             ["myobj"] = typeof(SomeClass),
-                            ["ext"] = DynValue.NewCallback(
+                            ["ext"] = LuaValue.NewCallback(
                                 (c, a) =>
                                 {
                                     invocationCount += 1;
-                                    return DynValue.Void;
+                                    return LuaValue.Void;
                                 }
                             ),
                         },

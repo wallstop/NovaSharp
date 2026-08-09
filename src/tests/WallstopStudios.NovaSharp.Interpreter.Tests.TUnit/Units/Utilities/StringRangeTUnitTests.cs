@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -10,7 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
         [global::TUnit.Core.Test]
         public async Task FromLuaRangeDefaultsStartAndEndWhenNil()
         {
-            StringRange range = StringRange.FromLuaRange(DynValue.Nil, DynValue.Nil, 5);
+            StringRange range = StringRange.FromLuaRange(LuaValue.Nil, LuaValue.Nil, 5);
 
             await Assert.That(range.Start).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(range.End).IsEqualTo(5).ConfigureAwait(false);
@@ -19,7 +20,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
         [global::TUnit.Core.Test]
         public async Task FromLuaRangeUsesStartWhenEndMissing()
         {
-            StringRange range = StringRange.FromLuaRange(DynValue.NewNumber(3), DynValue.Nil);
+            StringRange range = StringRange.FromLuaRange(LuaValue.NewNumber(3), LuaValue.Nil);
 
             await Assert.That(range.Start).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(range.End).IsEqualTo(3).ConfigureAwait(false);
@@ -29,8 +30,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
         public async Task ApplyToStringSupportsNegativeIndices()
         {
             StringRange range = StringRange.FromLuaRange(
-                DynValue.NewNumber(-5),
-                DynValue.NewNumber(-2)
+                LuaValue.NewNumber(-5),
+                LuaValue.NewNumber(-2)
             );
 
             string result = range.ApplyToString("NovaSharp");

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -59,7 +60,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         public async Task RequireArgumentsReturnsProvidedArguments()
         {
             CallbackArguments arguments = new(
-                new List<DynValue> { DynValue.NewNumber(42) },
+                new List<LuaValue> { LuaValue.NewNumber(42) },
                 isMethodCall: false
             );
 

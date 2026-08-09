@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -193,7 +194,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             );
 
             // Lua 5.4+ math.randomseed returns the seed tuple
-            DynValue result = script.DoString("return math.randomseed(12345)");
+            LuaValue result = script.DoString("return math.randomseed(12345)");
 
             // Should return a tuple (5.4+ behavior)
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
@@ -276,8 +277,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             script1.DoString($"math.randomseed({seed})");
             script2.DoString($"math.randomseed({seed})");
 
-            DynValue rand1 = script1.DoString("return math.random()");
-            DynValue rand2 = script2.DoString("return math.random()");
+            LuaValue rand1 = script1.DoString("return math.random()");
+            LuaValue rand2 = script2.DoString("return math.random()");
 
             await Assert.That(rand1.Number).IsEqualTo(rand2.Number).ConfigureAwait(false);
         }

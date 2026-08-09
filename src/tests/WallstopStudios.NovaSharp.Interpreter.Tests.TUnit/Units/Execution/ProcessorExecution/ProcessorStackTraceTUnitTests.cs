@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System;
     using System.Linq;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -37,7 +38,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("level1"));
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("level1"));
 
             coroutineValue.Coroutine.Resume();
             await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Suspended);

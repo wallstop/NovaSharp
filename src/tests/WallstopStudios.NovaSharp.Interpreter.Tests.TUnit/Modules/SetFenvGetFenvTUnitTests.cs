@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -33,7 +34,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return type(getfenv)");
+            LuaValue result = script.DoString("return type(getfenv)");
 
             await Assert.That(result.String).IsEqualTo("function").ConfigureAwait(false);
         }
@@ -44,7 +45,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return type(setfenv)");
+            LuaValue result = script.DoString("return type(setfenv)");
 
             await Assert.That(result.String).IsEqualTo("function").ConfigureAwait(false);
         }
@@ -55,9 +56,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return getfenv");
+            LuaValue result = script.DoString("return getfenv");
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
@@ -66,9 +67,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return setfenv");
+            LuaValue result = script.DoString("return setfenv");
 
-            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
@@ -77,7 +78,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return getfenv() == _G");
+            LuaValue result = script.DoString("return getfenv() == _G");
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -88,7 +89,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return getfenv(0) == _G");
+            LuaValue result = script.DoString("return getfenv(0) == _G");
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -99,7 +100,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return getfenv(1) == _G");
+            LuaValue result = script.DoString("return getfenv(1) == _G");
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -110,7 +111,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function f() return 1 end
                 return getfenv(f) == _G
@@ -126,7 +127,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function f() return x end
                 local env = { x = 42 }
@@ -145,7 +146,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function f() return 1 end
                 local returned = setfenv(f, _G)
@@ -162,7 +163,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function f() return 1 end
                 local env = { custom = true }
@@ -259,7 +260,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString("return getfenv(print) == _G");
+            LuaValue result = script.DoString("return getfenv(print) == _G");
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
@@ -270,7 +271,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local result = nil
                 local function test_level()

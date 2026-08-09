@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Runtime.InteropServices;
+    using global::NovaSharp;
 
     /// <summary>
     /// Class used to support "tail" continuations - a way for C# / Lua interaction which supports
@@ -9,18 +10,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// </summary>
     public class TailCallData
     {
-        private DynValue[] _args = Array.Empty<DynValue>();
-        private DynValue _errorHandlerBeforeUnwind = DynValue.Nil;
+        private LuaValue[] _args = Array.Empty<LuaValue>();
+        private LuaValue _errorHandlerBeforeUnwind = LuaValue.Nil;
 
         /// <summary>
         /// Gets or sets the function to call
         /// </summary>
-        public DynValue Function { get; set; }
+        public LuaValue Function { get; set; }
 
         /// <summary>
         /// Gets the arguments to the function as a read-only memory block.
         /// </summary>
-        public ReadOnlyMemory<DynValue> Args
+        public ReadOnlyMemory<LuaValue> Args
         {
             get { return _args; }
             internal set { _args = ExtractBackingArray(value); }
@@ -29,25 +30,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Provides a span view over the argument buffer for callers that need indexed access.
         /// </summary>
-        internal ReadOnlySpan<DynValue> ArgsSpan => _args;
+        internal ReadOnlySpan<LuaValue> ArgsSpan => _args;
 
         /// <summary>
         /// Exposes the underlying argument buffer so VM internals can reuse it without allocating.
         /// </summary>
-        internal DynValue[] BorrowArgsBuffer()
+        internal LuaValue[] BorrowArgsBuffer()
         {
             return _args;
         }
 
-        private static DynValue[] ExtractBackingArray(ReadOnlyMemory<DynValue> value)
+        private static LuaValue[] ExtractBackingArray(ReadOnlyMemory<LuaValue> value)
         {
             if (value.IsEmpty)
             {
-                return Array.Empty<DynValue>();
+                return Array.Empty<LuaValue>();
             }
 
             if (
-                MemoryMarshal.TryGetArray(value, out ArraySegment<DynValue> segment)
+                MemoryMarshal.TryGetArray(value, out ArraySegment<LuaValue> segment)
                 && segment.Array != null
                 && segment.Offset == 0
                 && segment.Count == segment.Array.Length
@@ -72,17 +73,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets or sets the error handler to be called before stack unwinding
         /// </summary>
-        public DynValue? ErrorHandlerBeforeUnwind
+        public LuaValue? ErrorHandlerBeforeUnwind
         {
             get
             {
-                return HasErrorHandlerBeforeUnwind ? _errorHandlerBeforeUnwind : (DynValue?)null;
+                return HasErrorHandlerBeforeUnwind ? _errorHandlerBeforeUnwind : (LuaValue?)null;
             }
             set
             {
                 if (!value.HasValue)
                 {
-                    _errorHandlerBeforeUnwind = DynValue.Nil;
+                    _errorHandlerBeforeUnwind = LuaValue.Nil;
                     HasErrorHandlerBeforeUnwind = false;
                     return;
                 }
@@ -101,6 +102,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets the non-null VM representation of the optional pre-unwind error handler.
         /// </summary>
-        internal DynValue ErrorHandlerBeforeUnwindValue => _errorHandlerBeforeUnwind;
+        internal LuaValue ErrorHandlerBeforeUnwindValue => _errorHandlerBeforeUnwind;
     }
 }

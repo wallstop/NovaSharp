@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -97,7 +98,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Reuses this coroutine's processor for a new closure, returning the recycled coroutine result.
         /// </summary>
-        internal DynValue Recycle(Processor mainProcessor, Closure closure)
+        internal LuaValue Recycle(Processor mainProcessor, Closure closure)
         {
             Type = CoroutineType.Recycled;
             return _processor.RecycleCoroutine(mainProcessor, closure);
@@ -105,11 +106,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Gets this coroutine as a typed enumerable which can be looped over for resuming.
-        /// Returns its result as DynValue(s)
+        /// Returns its result as LuaValue(s)
         /// </summary>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
-        public IEnumerable<DynValue> AsTypedEnumerable()
+        public IEnumerable<LuaValue> AsTypedEnumerable()
         {
             if (Type != CoroutineType.Coroutine)
             {
@@ -137,7 +138,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
         public IEnumerable<object> AsEnumerable()
         {
-            foreach (DynValue v in AsTypedEnumerable())
+            foreach (LuaValue v in AsTypedEnumerable())
             {
                 yield return v.ToScalar().ToObject();
             }
@@ -152,7 +153,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
         public IEnumerable<T> AsEnumerable<T>()
         {
-            foreach (DynValue v in AsTypedEnumerable())
+            foreach (LuaValue v in AsTypedEnumerable())
             {
                 yield return v.ToScalar().ToObject<T>();
             }
@@ -168,7 +169,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
         public System.Collections.IEnumerator AsUnityCoroutine()
         {
-            foreach (DynValue _ in AsTypedEnumerable())
+            foreach (LuaValue _ in AsTypedEnumerable())
             {
                 yield return null;
             }
@@ -181,22 +182,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
-        public DynValue Resume(params DynValue[] args)
+        public LuaValue Resume(LuaValue[] args)
         {
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
             }
 
-            if (Type != CoroutineType.Coroutine)
-            {
-                throw new InvalidOperationException(
-                    "Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead"
-                );
-            }
-
-            this.CheckScriptOwnership(args);
-            return _processor.ResumeCoroutine(args);
+            return ResumeValues(args.AsSpan());
         }
 
         /// <summary>
@@ -206,7 +199,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
-        public DynValue Resume(ReadOnlySpan<DynValue> args)
+        public LuaValue Resume(ReadOnlySpan<LuaValue> args)
+        {
+            return ResumeValues(args);
+        }
+
+        internal LuaValue ResumeValues(ReadOnlySpan<LuaValue> args)
         {
             if (Type != CoroutineType.Coroutine)
             {
@@ -226,7 +224,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg">The argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
-        public DynValue Resume(DynValue arg)
+        internal LuaValue ResumeValues(LuaValue arg)
         {
             if (Type != CoroutineType.Coroutine)
             {
@@ -247,7 +245,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg2">The second argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
-        public DynValue Resume(DynValue arg1, DynValue arg2)
+        internal LuaValue ResumeValues(LuaValue arg1, LuaValue arg2)
         {
             if (Type != CoroutineType.Coroutine)
             {
@@ -270,7 +268,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg3">The third argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
-        public DynValue Resume(DynValue arg1, DynValue arg2, DynValue arg3)
+        internal LuaValue ResumeValues(LuaValue arg1, LuaValue arg2, LuaValue arg3)
         {
             if (Type != CoroutineType.Coroutine)
             {
@@ -295,7 +293,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg4">The fourth argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
-        public DynValue Resume(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+        internal LuaValue ResumeValues(LuaValue arg1, LuaValue arg2, LuaValue arg3, LuaValue arg4)
         {
             if (Type != CoroutineType.Coroutine)
             {
@@ -322,12 +320,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg5">The fifth argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
-        public DynValue Resume(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5
+        internal LuaValue ResumeValues(
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5
         )
         {
             if (Type != CoroutineType.Coroutine)
@@ -357,13 +355,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg6">The sixth argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
-        public DynValue Resume(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6
+        internal LuaValue ResumeValues(
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6
         )
         {
             if (Type != CoroutineType.Coroutine)
@@ -395,14 +393,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg7">The seventh argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
-        public DynValue Resume(
-            DynValue arg1,
-            DynValue arg2,
-            DynValue arg3,
-            DynValue arg4,
-            DynValue arg5,
-            DynValue arg6,
-            DynValue arg7
+        internal LuaValue ResumeValues(
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4,
+            LuaValue arg5,
+            LuaValue arg6,
+            LuaValue arg7
         )
         {
             if (Type != CoroutineType.Coroutine)
@@ -428,7 +426,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="context">The ScriptExecutionContext.</param>
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
-        public DynValue Resume(ScriptExecutionContext context, params DynValue[] args)
+        public LuaValue Resume(ScriptExecutionContext context, LuaValue[] args)
         {
             if (context == null)
             {
@@ -440,23 +438,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(args));
             }
 
-            this.CheckScriptOwnership(context);
-            this.CheckScriptOwnership(args);
-
-            if (Type == CoroutineType.Coroutine)
-            {
-                return _processor.ResumeCoroutine(args);
-            }
-            else if (Type == CoroutineType.ClrCallback)
-            {
-                DynValue ret = _clrCallback.Invoke(context, args);
-                MarkClrCallbackAsDead();
-                return ret;
-            }
-            else
-            {
-                throw ScriptRuntimeException.CannotResumeNotSuspended(CoroutineState.Dead);
-            }
+            return ResumeValues(context, args.AsSpan());
         }
 
         /// <summary>
@@ -465,7 +447,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="context">The ScriptExecutionContext.</param>
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
-        public DynValue Resume(ScriptExecutionContext context, ReadOnlySpan<DynValue> args)
+        public LuaValue Resume(ScriptExecutionContext context, ReadOnlySpan<LuaValue> args)
+        {
+            return ResumeValues(context, args);
+        }
+
+        internal LuaValue ResumeValues(ScriptExecutionContext context, ReadOnlySpan<LuaValue> args)
         {
             if (context == null)
             {
@@ -481,7 +468,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
             else if (Type == CoroutineType.ClrCallback)
             {
-                DynValue ret = _clrCallback.HasArgumentViewCallback
+                LuaValue ret = _clrCallback.HasArgumentViewCallback
                     ? _clrCallback.InvokeArgumentViewSpan(context, args)
                     : _clrCallback.InvokeLegacySpan(context, args);
                 MarkClrCallbackAsDead();
@@ -499,9 +486,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
-        public DynValue Resume()
+        public LuaValue Resume()
         {
-            return Resume(Array.Empty<DynValue>());
+            return ResumeValues(Array.Empty<LuaValue>());
         }
 
         /// <summary>
@@ -509,14 +496,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="context">The ScriptExecutionContext.</param>
         /// <returns></returns>
-        public DynValue Resume(ScriptExecutionContext context)
+        public LuaValue Resume(ScriptExecutionContext context)
         {
             if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
             }
 
-            return Resume(context, Array.Empty<DynValue>());
+            return ResumeValues(context, Array.Empty<LuaValue>());
         }
 
         /// <summary>
@@ -526,7 +513,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
-        public DynValue Resume(params object[] args)
+        public LuaValue Resume(params object[] args)
         {
             if (args == null)
             {
@@ -543,7 +530,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
-        public DynValue ResumeObjectArguments(object[] args)
+        public LuaValue ResumeObjectArguments(object[] args)
         {
             if (args == null)
             {
@@ -560,7 +547,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
-        public DynValue ResumeObjectArguments(ReadOnlySpan<object> args)
+        public LuaValue ResumeObjectArguments(ReadOnlySpan<object> args)
         {
             if (Type != CoroutineType.Coroutine)
             {
@@ -572,71 +559,71 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return ResumeConvertedObjectArguments(OwnerScript, args);
         }
 
-        private DynValue ResumeConvertedObjectArguments(Script script, ReadOnlySpan<object> args)
+        private LuaValue ResumeConvertedObjectArguments(Script script, ReadOnlySpan<object> args)
         {
             switch (args.Length)
             {
                 case 0:
                     return Resume();
                 case 1:
-                    return Resume(DynValue.FromObject(script, args[0]));
+                    return ResumeValues(LuaValue.FromObject(script, args[0]));
                 case 2:
-                    return Resume(
-                        DynValue.FromObject(script, args[0]),
-                        DynValue.FromObject(script, args[1])
+                    return ResumeValues(
+                        LuaValue.FromObject(script, args[0]),
+                        LuaValue.FromObject(script, args[1])
                     );
                 case 3:
-                    return Resume(
-                        DynValue.FromObject(script, args[0]),
-                        DynValue.FromObject(script, args[1]),
-                        DynValue.FromObject(script, args[2])
+                    return ResumeValues(
+                        LuaValue.FromObject(script, args[0]),
+                        LuaValue.FromObject(script, args[1]),
+                        LuaValue.FromObject(script, args[2])
                     );
                 case 4:
-                    return Resume(
-                        DynValue.FromObject(script, args[0]),
-                        DynValue.FromObject(script, args[1]),
-                        DynValue.FromObject(script, args[2]),
-                        DynValue.FromObject(script, args[3])
+                    return ResumeValues(
+                        LuaValue.FromObject(script, args[0]),
+                        LuaValue.FromObject(script, args[1]),
+                        LuaValue.FromObject(script, args[2]),
+                        LuaValue.FromObject(script, args[3])
                     );
                 case 5:
-                    return Resume(
-                        DynValue.FromObject(script, args[0]),
-                        DynValue.FromObject(script, args[1]),
-                        DynValue.FromObject(script, args[2]),
-                        DynValue.FromObject(script, args[3]),
-                        DynValue.FromObject(script, args[4])
+                    return ResumeValues(
+                        LuaValue.FromObject(script, args[0]),
+                        LuaValue.FromObject(script, args[1]),
+                        LuaValue.FromObject(script, args[2]),
+                        LuaValue.FromObject(script, args[3]),
+                        LuaValue.FromObject(script, args[4])
                     );
                 case 6:
-                    return Resume(
-                        DynValue.FromObject(script, args[0]),
-                        DynValue.FromObject(script, args[1]),
-                        DynValue.FromObject(script, args[2]),
-                        DynValue.FromObject(script, args[3]),
-                        DynValue.FromObject(script, args[4]),
-                        DynValue.FromObject(script, args[5])
+                    return ResumeValues(
+                        LuaValue.FromObject(script, args[0]),
+                        LuaValue.FromObject(script, args[1]),
+                        LuaValue.FromObject(script, args[2]),
+                        LuaValue.FromObject(script, args[3]),
+                        LuaValue.FromObject(script, args[4]),
+                        LuaValue.FromObject(script, args[5])
                     );
                 case 7:
-                    return Resume(
-                        DynValue.FromObject(script, args[0]),
-                        DynValue.FromObject(script, args[1]),
-                        DynValue.FromObject(script, args[2]),
-                        DynValue.FromObject(script, args[3]),
-                        DynValue.FromObject(script, args[4]),
-                        DynValue.FromObject(script, args[5]),
-                        DynValue.FromObject(script, args[6])
+                    return ResumeValues(
+                        LuaValue.FromObject(script, args[0]),
+                        LuaValue.FromObject(script, args[1]),
+                        LuaValue.FromObject(script, args[2]),
+                        LuaValue.FromObject(script, args[3]),
+                        LuaValue.FromObject(script, args[4]),
+                        LuaValue.FromObject(script, args[5]),
+                        LuaValue.FromObject(script, args[6])
                     );
             }
 
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 args.Length,
-                out DynValue[] convertedArgs
+                out LuaValue[] convertedArgs
             );
             for (int i = 0; i < args.Length; i++)
             {
-                convertedArgs[i] = DynValue.FromObject(script, args[i]);
+                convertedArgs[i] = LuaValue.FromObject(script, args[i]);
             }
 
-            return Resume(convertedArgs.AsSpan(0, args.Length));
+            return ResumeValues(convertedArgs.AsSpan(0, args.Length));
         }
 
         /// <summary>
@@ -646,7 +633,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg">The argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
-        public DynValue Resume(object arg)
+        public LuaValue Resume(object arg)
         {
             if (Type != CoroutineType.Coroutine)
             {
@@ -655,7 +642,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 );
             }
 
-            return Resume(DynValue.FromObject(OwnerScript, arg));
+            return ResumeValues(LuaValue.FromObject(OwnerScript, arg));
         }
 
         /// <summary>
@@ -666,7 +653,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg2">The second argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
-        public DynValue Resume(object arg1, object arg2)
+        public LuaValue Resume(object arg1, object arg2)
         {
             if (Type != CoroutineType.Coroutine)
             {
@@ -675,9 +662,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 );
             }
 
-            return Resume(
-                DynValue.FromObject(OwnerScript, arg1),
-                DynValue.FromObject(OwnerScript, arg2)
+            return ResumeValues(
+                LuaValue.FromObject(OwnerScript, arg1),
+                LuaValue.FromObject(OwnerScript, arg2)
             );
         }
 
@@ -690,7 +677,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg3">The third argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
-        public DynValue Resume(object arg1, object arg2, object arg3)
+        public LuaValue Resume(object arg1, object arg2, object arg3)
         {
             if (Type != CoroutineType.Coroutine)
             {
@@ -699,10 +686,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 );
             }
 
-            return Resume(
-                DynValue.FromObject(OwnerScript, arg1),
-                DynValue.FromObject(OwnerScript, arg2),
-                DynValue.FromObject(OwnerScript, arg3)
+            return ResumeValues(
+                LuaValue.FromObject(OwnerScript, arg1),
+                LuaValue.FromObject(OwnerScript, arg2),
+                LuaValue.FromObject(OwnerScript, arg3)
             );
         }
 
@@ -716,7 +703,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg4">The fourth argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
-        public DynValue Resume(object arg1, object arg2, object arg3, object arg4)
+        public LuaValue Resume(object arg1, object arg2, object arg3, object arg4)
         {
             if (Type != CoroutineType.Coroutine)
             {
@@ -725,11 +712,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 );
             }
 
-            return Resume(
-                DynValue.FromObject(OwnerScript, arg1),
-                DynValue.FromObject(OwnerScript, arg2),
-                DynValue.FromObject(OwnerScript, arg3),
-                DynValue.FromObject(OwnerScript, arg4)
+            return ResumeValues(
+                LuaValue.FromObject(OwnerScript, arg1),
+                LuaValue.FromObject(OwnerScript, arg2),
+                LuaValue.FromObject(OwnerScript, arg3),
+                LuaValue.FromObject(OwnerScript, arg4)
             );
         }
 
@@ -744,7 +731,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg5">The fifth argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
-        public DynValue Resume(object arg1, object arg2, object arg3, object arg4, object arg5)
+        public LuaValue Resume(object arg1, object arg2, object arg3, object arg4, object arg5)
         {
             if (Type != CoroutineType.Coroutine)
             {
@@ -753,12 +740,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 );
             }
 
-            return Resume(
-                DynValue.FromObject(OwnerScript, arg1),
-                DynValue.FromObject(OwnerScript, arg2),
-                DynValue.FromObject(OwnerScript, arg3),
-                DynValue.FromObject(OwnerScript, arg4),
-                DynValue.FromObject(OwnerScript, arg5)
+            return ResumeValues(
+                LuaValue.FromObject(OwnerScript, arg1),
+                LuaValue.FromObject(OwnerScript, arg2),
+                LuaValue.FromObject(OwnerScript, arg3),
+                LuaValue.FromObject(OwnerScript, arg4),
+                LuaValue.FromObject(OwnerScript, arg5)
             );
         }
 
@@ -774,7 +761,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg6">The sixth argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
-        public DynValue Resume(
+        public LuaValue Resume(
             object arg1,
             object arg2,
             object arg3,
@@ -790,13 +777,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 );
             }
 
-            return Resume(
-                DynValue.FromObject(OwnerScript, arg1),
-                DynValue.FromObject(OwnerScript, arg2),
-                DynValue.FromObject(OwnerScript, arg3),
-                DynValue.FromObject(OwnerScript, arg4),
-                DynValue.FromObject(OwnerScript, arg5),
-                DynValue.FromObject(OwnerScript, arg6)
+            return ResumeValues(
+                LuaValue.FromObject(OwnerScript, arg1),
+                LuaValue.FromObject(OwnerScript, arg2),
+                LuaValue.FromObject(OwnerScript, arg3),
+                LuaValue.FromObject(OwnerScript, arg4),
+                LuaValue.FromObject(OwnerScript, arg5),
+                LuaValue.FromObject(OwnerScript, arg6)
             );
         }
 
@@ -813,7 +800,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="arg7">The seventh argument.</param>
         /// <returns></returns>
         /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
-        public DynValue Resume(
+        public LuaValue Resume(
             object arg1,
             object arg2,
             object arg3,
@@ -830,14 +817,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 );
             }
 
-            return Resume(
-                DynValue.FromObject(OwnerScript, arg1),
-                DynValue.FromObject(OwnerScript, arg2),
-                DynValue.FromObject(OwnerScript, arg3),
-                DynValue.FromObject(OwnerScript, arg4),
-                DynValue.FromObject(OwnerScript, arg5),
-                DynValue.FromObject(OwnerScript, arg6),
-                DynValue.FromObject(OwnerScript, arg7)
+            return ResumeValues(
+                LuaValue.FromObject(OwnerScript, arg1),
+                LuaValue.FromObject(OwnerScript, arg2),
+                LuaValue.FromObject(OwnerScript, arg3),
+                LuaValue.FromObject(OwnerScript, arg4),
+                LuaValue.FromObject(OwnerScript, arg5),
+                LuaValue.FromObject(OwnerScript, arg6),
+                LuaValue.FromObject(OwnerScript, arg7)
             );
         }
 
@@ -847,7 +834,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="context">The ScriptExecutionContext.</param>
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
-        public DynValue Resume(ScriptExecutionContext context, params object[] args)
+        public LuaValue Resume(ScriptExecutionContext context, params object[] args)
         {
             if (context == null)
             {
@@ -868,7 +855,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="context">The ScriptExecutionContext.</param>
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
-        public DynValue ResumeObjectArguments(ScriptExecutionContext context, object[] args)
+        public LuaValue ResumeObjectArguments(ScriptExecutionContext context, object[] args)
         {
             if (context == null)
             {
@@ -889,7 +876,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="context">The ScriptExecutionContext.</param>
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
-        public DynValue ResumeObjectArguments(
+        public LuaValue ResumeObjectArguments(
             ScriptExecutionContext context,
             ReadOnlySpan<object> args
         )
@@ -906,16 +893,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return ResumeConvertedObjectArguments(context.Script, args);
             }
 
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
                 args.Length,
-                out DynValue[] convertedArgs
+                out LuaValue[] convertedArgs
             );
             for (int i = 0; i < args.Length; i++)
             {
-                convertedArgs[i] = DynValue.FromObject(context.Script, args[i]);
+                convertedArgs[i] = LuaValue.FromObject(context.Script, args[i]);
             }
 
-            return Resume(context, convertedArgs.AsSpan(0, args.Length));
+            return ResumeValues(context, convertedArgs.AsSpan(0, args.Length));
         }
 
         /// <summary>
@@ -999,11 +986,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Closes the coroutine by running the underlying processor's cleanup logic (Lua 5.4 close semantics).
         /// CLR callback coroutines no-op and return true to mirror Lua's behaviour for already-finished threads.
         /// </summary>
-        public DynValue Close()
+        public LuaValue Close()
         {
             if (Type != CoroutineType.Coroutine)
             {
-                return DynValue.True;
+                return LuaValue.True;
             }
 
             return _processor.CloseCoroutine();

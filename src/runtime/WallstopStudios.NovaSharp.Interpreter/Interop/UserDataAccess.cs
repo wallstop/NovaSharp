@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop
 {
     using System.Runtime.CompilerServices;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -13,9 +14,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
             IUserDataDescriptor descriptor,
             Script script,
             object obj,
-            DynValue index,
+            LuaValue index,
             bool isDirectIndexing,
-            out DynValue value
+            out LuaValue value
         )
         {
             if (descriptor.TryIndex(script, obj, index, isDirectIndexing, out value))
@@ -23,7 +24,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
                 return true;
             }
 
-            value = DynValue.Nil;
+            value = LuaValue.Nil;
             return false;
         }
 
@@ -33,7 +34,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
             Script script,
             object obj,
             string metaname,
-            out DynValue value
+            out LuaValue value
         )
         {
             if (descriptor.TryMetaIndex(script, obj, metaname, out value))
@@ -41,7 +42,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
                 return true;
             }
 
-            value = DynValue.Nil;
+            value = LuaValue.Nil;
             return false;
         }
 
@@ -49,9 +50,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         internal static bool TryIndex(
             IUserDataType userData,
             Script script,
-            DynValue index,
+            LuaValue index,
             bool isDirectIndexing,
-            out DynValue value
+            out LuaValue value
         )
         {
             if (userData.TryIndex(script, index, isDirectIndexing, out value))
@@ -59,7 +60,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
                 return true;
             }
 
-            value = DynValue.Nil;
+            value = LuaValue.Nil;
             return false;
         }
 
@@ -68,7 +69,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
             IUserDataType userData,
             Script script,
             string metaname,
-            out DynValue value
+            out LuaValue value
         )
         {
             if (userData.TryMetaIndex(script, metaname, out value))
@@ -76,7 +77,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
                 return true;
             }
 
-            value = DynValue.Nil;
+            value = LuaValue.Nil;
             return false;
         }
     }

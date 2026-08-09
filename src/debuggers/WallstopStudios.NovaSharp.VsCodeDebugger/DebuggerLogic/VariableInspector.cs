@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
 {
+    using global::NovaSharp;
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE)
 
     using System.Collections.Generic;
@@ -9,7 +10,7 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
     using SDK;
 
     /// <summary>
-    /// Helpers that expand <see cref="DynValue"/> instances into VS Code variable payloads.
+    /// Helpers that expand <see cref="LuaValue"/> instances into VS Code variable payloads.
     /// </summary>
     internal static class VariableInspector
     {
@@ -18,7 +19,7 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
         /// </summary>
         /// <param name="v">Lua value to inspect.</param>
         /// <param name="variables">Collection receiving formatted entries.</param>
-        internal static void InspectVariable(DynValue v, List<Variable> variables)
+        internal static void InspectVariable(LuaValue v, List<Variable> variables)
         {
             variables.Add(new Variable("(value)", v.ToPrintString()));
             variables.Add(new Variable("(type)", v.Type.ToLuaDebuggerString()));
@@ -157,7 +158,7 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
             }
         }
 
-        private static int GetValueIdentity(DynValue value)
+        private static int GetValueIdentity(LuaValue value)
         {
             return value.GetHashCode();
         }

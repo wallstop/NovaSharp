@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Runtime.InteropServices;
     using System.Threading;
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using global::TUnit.Assertions;
     using NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -62,15 +63,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task RunningFromMainReturnsMainCoroutine(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue runningFunc = script.Globals.Get("coroutine").Table.Get("running");
+            LuaValue runningFunc = script.Globals.Get("coroutine").Table.Get("running");
 
-            DynValue result = script.Call(runningFunc);
+            LuaValue result = script.Call(runningFunc);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple.Length).IsGreaterThanOrEqualTo(2).ConfigureAwait(false);
 
-            DynValue coroutineValue = result.Tuple[0];
-            DynValue isMain = result.Tuple[1];
+            LuaValue coroutineValue = result.Tuple[0];
+            LuaValue isMain = result.Tuple[1];
 
             await Assert.That(coroutineValue.Type).IsEqualTo(DataType.Thread).ConfigureAwait(false);
             await Assert
@@ -98,8 +99,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("runningCheck"));
-            DynValue result = coroutineValue.Coroutine.Resume();
+            LuaValue coroutineValue = script.CreateCoroutineValue(
+                script.Globals.Get("runningCheck")
+            );
+            LuaValue result = coroutineValue.Coroutine.Resume();
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
@@ -128,25 +131,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue statusFunc = script.Globals.Get("coroutine").Table.Get("status");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("compute"));
+            LuaValue statusFunc = script.Globals.Get("coroutine").Table.Get("status");
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("compute"));
 
-            DynValue initialStatus = script.Call(statusFunc, coroutineValue);
+            LuaValue initialStatus = script.Call(statusFunc, coroutineValue);
             await Assert.That(initialStatus.String).IsEqualTo("suspended").ConfigureAwait(false);
 
             coroutineValue.Coroutine.AutoYieldCounter = 1;
-            DynValue forced = coroutineValue.Coroutine.Resume();
+            LuaValue forced = coroutineValue.Coroutine.Resume();
             await Assert.That(forced.Type).IsEqualTo(DataType.YieldRequest).ConfigureAwait(false);
             await Assert.That(forced.YieldRequest.Forced).IsTrue().ConfigureAwait(false);
 
-            DynValue suspendedStatus = script.Call(statusFunc, coroutineValue);
+            LuaValue suspendedStatus = script.Call(statusFunc, coroutineValue);
             await Assert.That(suspendedStatus.String).IsEqualTo("suspended").ConfigureAwait(false);
 
             coroutineValue.Coroutine.AutoYieldCounter = 0;
-            DynValue final = coroutineValue.Coroutine.Resume();
+            LuaValue final = coroutineValue.Coroutine.Resume();
             await Assert.That(final.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
 
-            DynValue deadStatus = script.Call(statusFunc, coroutineValue);
+            LuaValue deadStatus = script.Call(statusFunc, coroutineValue);
             await Assert.That(deadStatus.String).IsEqualTo("dead").ConfigureAwait(false);
         }
 
@@ -164,10 +167,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(
+            LuaValue coroutineValue = script.CreateCoroutineValue(
                 script.Globals.Get("queryRunningStatus")
             );
-            DynValue result = coroutineValue.Coroutine.Resume();
+            LuaValue result = coroutineValue.Coroutine.Resume();
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("running").ConfigureAwait(false);
@@ -194,8 +197,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("queryMainStatus"));
-            DynValue result = coroutineValue.Coroutine.Resume();
+            LuaValue coroutineValue = script.CreateCoroutineValue(
+                script.Globals.Get("queryMainStatus")
+            );
+            LuaValue result = coroutineValue.Coroutine.Resume();
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("normal").ConfigureAwait(false);
@@ -214,8 +219,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue statusFunc = script.Globals.Get("coroutine").Table.Get("status");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("idle"));
+            LuaValue statusFunc = script.Globals.Get("coroutine").Table.Get("status");
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("idle"));
 
             coroutineValue.Coroutine.ForceStateForTests((CoroutineState)0);
 
@@ -238,10 +243,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task WrapRequiresFunctionArgument(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue wrapFunc = script.Globals.Get("coroutine").Table.Get("wrap");
+            LuaValue wrapFunc = script.Globals.Get("coroutine").Table.Get("wrap");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.Call(wrapFunc, DynValue.NewNumber(1))
+                script.Call(wrapFunc, LuaValue.NewNumber(1))
             );
 
             await Assert
@@ -255,10 +260,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task CreateRequiresFunctionArgument(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue createFunc = script.Globals.Get("coroutine").Table.Get("create");
+            LuaValue createFunc = script.Globals.Get("coroutine").Table.Get("create");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.Call(createFunc, DynValue.NewString("oops"))
+                script.Call(createFunc, LuaValue.NewString("oops"))
             );
 
             await Assert
@@ -285,13 +290,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue wrapper = script.Call(script.Globals.Get("buildWrapper"));
+            LuaValue wrapper = script.Call(script.Globals.Get("buildWrapper"));
             await Assert.That(wrapper.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
 
-            DynValue first = script.Call(wrapper);
-            DynValue second = script.Call(wrapper);
-            DynValue third = script.Call(wrapper);
-            DynValue final = script.Call(wrapper);
+            LuaValue first = script.Call(wrapper);
+            LuaValue second = script.Call(wrapper);
+            LuaValue third = script.Call(wrapper);
+            LuaValue final = script.Call(wrapper);
 
             await Assert.That(first.Number).IsEqualTo(1d).ConfigureAwait(false);
             await Assert.That(second.Number).IsEqualTo(2d).ConfigureAwait(false);
@@ -317,17 +322,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("generator"));
+            LuaValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("generator"));
 
-            DynValue first = script.Call(resumeFunc, coroutineValue);
+            LuaValue first = script.Call(resumeFunc, coroutineValue);
             await Assert.That(first.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(first.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(first.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(first.Tuple[1].String).IsEqualTo("yielded").ConfigureAwait(false);
             await Assert.That(first.Tuple[2].Number).IsEqualTo(42d).ConfigureAwait(false);
 
-            DynValue second = script.Call(resumeFunc, coroutineValue);
+            LuaValue second = script.Call(resumeFunc, coroutineValue);
             await Assert.That(second.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(second.Tuple[1].Number).IsEqualTo(7d).ConfigureAwait(false);
             await Assert.That(second.Tuple[2].Number).IsEqualTo(8d).ConfigureAwait(false);
@@ -346,10 +351,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("explode"));
+            LuaValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("explode"));
 
-            DynValue result = script.Call(resumeFunc, coroutineValue);
+            LuaValue result = script.Call(resumeFunc, coroutineValue);
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert.That(result.Tuple[1].String).Contains("boom").ConfigureAwait(false);
@@ -360,10 +365,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task ResumeRequiresThreadArgument(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            LuaValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.Call(resumeFunc, DynValue.NewString("oops"))
+                script.Call(resumeFunc, LuaValue.NewString("oops"))
             );
 
             await Assert
@@ -389,10 +394,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("returningTuple"));
+            LuaValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            LuaValue coroutineValue = script.CreateCoroutineValue(
+                script.Globals.Get("returningTuple")
+            );
 
-            DynValue result = script.Call(resumeFunc, coroutineValue);
+            LuaValue result = script.Call(resumeFunc, coroutineValue);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
@@ -422,10 +429,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("returningTuple"));
+            LuaValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            LuaValue coroutineValue = script.CreateCoroutineValue(
+                script.Globals.Get("returningTuple")
+            );
 
-            DynValue result = script.Call(resumeFunc, coroutineValue);
+            LuaValue result = script.Call(resumeFunc, coroutineValue);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             // Lua 5.1: coroutine.running() returns only 1 value (the coroutine)
@@ -463,10 +472,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
-            DynValue coroutineValue = script.Call(script.Globals.Get("buildDeepCoroutine"));
+            LuaValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            LuaValue coroutineValue = script.Call(script.Globals.Get("buildDeepCoroutine"));
 
-            DynValue result = script.Call(resumeFunc, coroutineValue);
+            LuaValue result = script.Call(resumeFunc, coroutineValue);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple.Length).IsEqualTo(6).ConfigureAwait(false);
@@ -495,15 +504,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("sum"));
+            LuaValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("sum"));
 
-            DynValue result = script.Call(
+            LuaValue result = script.Call(
                 resumeFunc,
                 coroutineValue,
-                DynValue.NewNumber(2),
-                DynValue.NewNumber(3),
-                DynValue.NewNumber(5)
+                LuaValue.NewNumber(2),
+                LuaValue.NewNumber(3),
+                LuaValue.NewNumber(5)
             );
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
@@ -518,7 +527,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local co = coroutine.create(function()
                     coroutine.yield()
@@ -537,7 +546,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local wrapped = coroutine.wrap(function()
                     coroutine.yield()
@@ -579,29 +588,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             );
             MethodInfo resumeOne = RequireMethod(
                 typeof(Coroutine),
-                nameof(Coroutine.Resume),
-                typeof(DynValue)
+                nameof(Coroutine.ResumeValues),
+                typeof(LuaValue)
             );
             MethodInfo resumeTwo = RequireMethod(
                 typeof(Coroutine),
-                nameof(Coroutine.Resume),
-                typeof(DynValue),
-                typeof(DynValue)
+                nameof(Coroutine.ResumeValues),
+                typeof(LuaValue),
+                typeof(LuaValue)
             );
             MethodInfo resumeThree = RequireMethod(
                 typeof(Coroutine),
-                nameof(Coroutine.Resume),
-                typeof(DynValue),
-                typeof(DynValue),
-                typeof(DynValue)
+                nameof(Coroutine.ResumeValues),
+                typeof(LuaValue),
+                typeof(LuaValue),
+                typeof(LuaValue)
             );
             MethodInfo resumeFour = RequireMethod(
                 typeof(Coroutine),
-                nameof(Coroutine.Resume),
-                typeof(DynValue),
-                typeof(DynValue),
-                typeof(DynValue),
-                typeof(DynValue)
+                nameof(Coroutine.ResumeValues),
+                typeof(LuaValue),
+                typeof(LuaValue),
+                typeof(LuaValue),
+                typeof(LuaValue)
             );
 
             await Assert
@@ -694,14 +703,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task ResumeFlattensTrailingTupleResults(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            script.Globals["buildNestedResult"] = DynValue.NewCallback(
+            script.Globals["buildNestedResult"] = LuaValue.NewCallback(
                 (_, _) =>
                 {
-                    DynValue nested = DynValue.NewTuple(
-                        DynValue.NewString("inner-value"),
-                        DynValue.NewNumber(99)
+                    LuaValue nested = LuaValue.NewTuple(
+                        LuaValue.NewString("inner-value"),
+                        LuaValue.NewNumber(99)
                     );
-                    return DynValue.NewTuple(DynValue.NewString("outer"), nested);
+                    return LuaValue.NewTuple(LuaValue.NewString("outer"), nested);
                 }
             );
 
@@ -713,12 +722,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
-            DynValue coroutineValue = script.CreateCoroutine(
+            LuaValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            LuaValue coroutineValue = script.CreateCoroutineValue(
                 script.Globals.Get("invokeNestedBuilder")
             );
 
-            DynValue result = script.Call(resumeFunc, coroutineValue);
+            LuaValue result = script.Call(resumeFunc, coroutineValue);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
@@ -750,10 +759,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("yieldExpanded"));
+            LuaValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            LuaValue coroutineValue = script.CreateCoroutineValue(
+                script.Globals.Get("yieldExpanded")
+            );
 
-            DynValue result = script.Call(resumeFunc, coroutineValue);
+            LuaValue result = script.Call(resumeFunc, coroutineValue);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
@@ -778,12 +789,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue wrapper = script.Call(script.Globals.Get("buildConcatWrapper"));
-            DynValue result = script.Call(
+            LuaValue wrapper = script.Call(script.Globals.Get("buildConcatWrapper"));
+            LuaValue result = script.Call(
                 wrapper,
-                DynValue.NewString("alpha"),
-                DynValue.NewString("beta"),
-                DynValue.NewString("gamma")
+                LuaValue.NewString("alpha"),
+                LuaValue.NewString("beta"),
+                LuaValue.NewString("gamma")
             );
 
             await Assert.That(result.String).IsEqualTo("alpha-beta-gamma").ConfigureAwait(false);
@@ -936,9 +947,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task IsYieldableReturnsFalseOnMainCoroutine(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue isYieldableFunc = script.Globals.Get("coroutine").Table.Get("isyieldable");
+            LuaValue isYieldableFunc = script.Globals.Get("coroutine").Table.Get("isyieldable");
 
-            DynValue result = script.Call(isYieldableFunc);
+            LuaValue result = script.Call(isYieldableFunc);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
@@ -952,9 +963,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task IsYieldableShouldBeNilInPreLua53(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue isYieldableFunc = script.Globals.Get("coroutine").Table.Get("isyieldable");
+            LuaValue isYieldableFunc = script.Globals.Get("coroutine").Table.Get("isyieldable");
 
-            await Assert.That(isYieldableFunc.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(isYieldableFunc.IsNil).IsTrue().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -976,9 +987,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue wrapperBuilder = script.Globals.Get("buildYieldableChecker");
-            DynValue wrapper = script.Call(wrapperBuilder);
-            DynValue result = script.Call(wrapper);
+            LuaValue wrapperBuilder = script.Globals.Get("buildYieldableChecker");
+            LuaValue wrapper = script.Call(wrapperBuilder);
+            LuaValue result = script.Call(wrapper);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
@@ -1003,7 +1014,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue wrapper = script.Call(script.Globals.Get("buildErrorWrapper"));
+            LuaValue wrapper = script.Call(script.Globals.Get("buildErrorWrapper"));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.Call(wrapper)
@@ -1028,8 +1039,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue wrapper = script.Call(script.Globals.Get("buildDelayedErrorWrapper"));
-            DynValue first = script.Call(wrapper);
+            LuaValue wrapper = script.Call(script.Globals.Get("buildDelayedErrorWrapper"));
+            LuaValue first = script.Call(wrapper);
 
             await Assert.That(first.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(first.String).IsEqualTo("first").ConfigureAwait(false);
@@ -1068,11 +1079,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("heavy"));
+            LuaValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("heavy"));
             coroutineValue.Coroutine.AutoYieldCounter = 1;
 
-            DynValue first = script.Call(resumeFunc, coroutineValue);
+            LuaValue first = script.Call(resumeFunc, coroutineValue);
             await Assert.That(first.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(first.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert
@@ -1082,7 +1093,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(first.Tuple[1].YieldRequest.Forced).IsTrue().ConfigureAwait(false);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
-                script.Call(resumeFunc, coroutineValue, DynValue.NewNumber(42))
+                script.Call(resumeFunc, coroutineValue, LuaValue.NewNumber(42))
             );
 
             await Assert
@@ -1102,12 +1113,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task IsYieldableReturnsFalseInsideClrCallback(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue isYieldableFunc = script.Globals.Get("coroutine").Table.Get("isyieldable");
+            LuaValue isYieldableFunc = script.Globals.Get("coroutine").Table.Get("isyieldable");
 
-            script.Globals["clrCheck"] = DynValue.NewCallback(
+            script.Globals["clrCheck"] = LuaValue.NewCallback(
                 (context, _) =>
                 {
-                    DynValue value = context.Call(isYieldableFunc);
+                    LuaValue value = context.Call(isYieldableFunc);
                     return value;
                 }
             );
@@ -1120,7 +1131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue result = script.Call(script.Globals.Get("invokeClrCheck"));
+            LuaValue result = script.Call(script.Globals.Get("invokeClrCheck"));
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
@@ -1145,9 +1156,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue wrapper = script.Call(script.Globals.Get("buildPcallWrapper"));
-            DynValue pcall = script.Globals.Get("pcall");
-            DynValue result = script.Call(pcall, wrapper);
+            LuaValue wrapper = script.Call(script.Globals.Get("buildPcallWrapper"));
+            LuaValue pcall = script.Globals.Get("pcall");
+            LuaValue result = script.Call(pcall, wrapper);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple.Length).IsGreaterThanOrEqualTo(2).ConfigureAwait(false);
@@ -1176,14 +1187,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue wrapper = script.Call(script.Globals.Get("buildYieldingWrapper"));
-            DynValue pcall = script.Globals.Get("pcall");
+            LuaValue wrapper = script.Call(script.Globals.Get("buildYieldingWrapper"));
+            LuaValue pcall = script.Globals.Get("pcall");
 
-            DynValue first = script.Call(pcall, wrapper);
+            LuaValue first = script.Call(pcall, wrapper);
             await Assert.That(first.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(first.Tuple[1].String).IsEqualTo("first").ConfigureAwait(false);
 
-            DynValue second = script.Call(pcall, wrapper);
+            LuaValue second = script.Call(pcall, wrapper);
             await Assert.That(second.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(second.Tuple[1].String).IsEqualTo("complete").ConfigureAwait(false);
             await Assert.That(second.Tuple[2].Number).IsEqualTo(1d).ConfigureAwait(false);
@@ -1211,10 +1222,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue coroutineValue = script.CreateCoroutine(
+            LuaValue coroutineValue = script.CreateCoroutineValue(
                 script.Globals.Get("run_pcall_inside_coroutine")
             );
-            DynValue result = coroutineValue.Coroutine.Resume();
+            LuaValue result = coroutineValue.Coroutine.Resume();
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
@@ -1244,14 +1255,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue wrapper = script.Call(script.Globals.Get("build_tail_wrapper"));
-            DynValue pcall = script.Globals.Get("pcall");
+            LuaValue wrapper = script.Call(script.Globals.Get("build_tail_wrapper"));
+            LuaValue pcall = script.Globals.Get("pcall");
 
-            DynValue result = script.Call(
+            LuaValue result = script.Call(
                 pcall,
                 wrapper,
-                DynValue.NewString("alpha"),
-                DynValue.NewNumber(42)
+                LuaValue.NewString("alpha"),
+                LuaValue.NewNumber(42)
             );
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
@@ -1289,20 +1300,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue statusFunc = script.Globals.Get("coroutine").Table.Get("status");
-            DynValue coroutineValue = script.CreateCoroutine(
+            LuaValue statusFunc = script.Globals.Get("coroutine").Table.Get("status");
+            LuaValue coroutineValue = script.CreateCoroutineValue(
                 script.Globals.Get("run_xpcall_inside_coroutine")
             );
 
-            DynValue result = coroutineValue.Coroutine.Resume();
+            LuaValue result = coroutineValue.Coroutine.Resume();
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert.That(result.Tuple[1].String).Contains("boom").ConfigureAwait(false);
 
-            DynValue status = script.Call(statusFunc, coroutineValue);
+            LuaValue status = script.Call(statusFunc, coroutineValue);
             await Assert.That(status.String).IsEqualTo("dead").ConfigureAwait(false);
 
-            DynValue handlerYieldable = script.Globals.Get("handlerYieldable");
+            LuaValue handlerYieldable = script.Globals.Get("handlerYieldable");
             await Assert
                 .That(handlerYieldable.Type)
                 .IsEqualTo(DataType.Boolean)
@@ -1342,30 +1353,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue statusFunc = script.Globals.Get("coroutine").Table.Get("status");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("outerCoroutine"));
+            LuaValue statusFunc = script.Globals.Get("coroutine").Table.Get("status");
+            LuaValue coroutineValue = script.CreateCoroutineValue(
+                script.Globals.Get("outerCoroutine")
+            );
 
-            DynValue firstYield = coroutineValue.Coroutine.Resume();
+            LuaValue firstYield = coroutineValue.Coroutine.Resume();
             await Assert.That(firstYield.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(firstYield.String).IsEqualTo("outer-yield").ConfigureAwait(false);
 
-            DynValue outerStatusAfterYield = script.Call(statusFunc, coroutineValue);
+            LuaValue outerStatusAfterYield = script.Call(statusFunc, coroutineValue);
             await Assert
                 .That(outerStatusAfterYield.String)
                 .IsEqualTo("suspended")
                 .ConfigureAwait(false);
 
-            DynValue secondResume = coroutineValue.Coroutine.Resume();
+            LuaValue secondResume = coroutineValue.Coroutine.Resume();
             await Assert.That(secondResume.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(secondResume.String).IsEqualTo("inner-done").ConfigureAwait(false);
 
-            DynValue outerStatusAfterCompletion = script.Call(statusFunc, coroutineValue);
+            LuaValue outerStatusAfterCompletion = script.Call(statusFunc, coroutineValue);
             await Assert
                 .That(outerStatusAfterCompletion.String)
                 .IsEqualTo("dead")
                 .ConfigureAwait(false);
 
-            DynValue loggedStatuses = script.Globals.Get("loggedStatuses");
+            LuaValue loggedStatuses = script.Globals.Get("loggedStatuses");
             await Assert.That(loggedStatuses.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
             await Assert.That(loggedStatuses.Table.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert
@@ -1407,13 +1420,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            script.Globals["waitForSignal"] = DynValue.NewCallback(
+            script.Globals["waitForSignal"] = LuaValue.NewCallback(
                 (_, _) =>
                 {
                     callbackEntered.TrySetResult(true);
                     // Block until we're allowed to complete
                     allowCompletion.Task.GetAwaiter().GetResult();
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
 
@@ -1426,11 +1439,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("pause"));
+            LuaValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("pause"));
 
             // Start background task - use ConfigureAwait(false) to ensure continuation runs on thread pool
-            Task<DynValue> background = Task.Run(() => script.Call(resumeFunc, coroutineValue));
+            Task<LuaValue> background = Task.Run(() => script.Call(resumeFunc, coroutineValue));
 
             // Wait for the callback to be invoked with timeout
             using CancellationTokenSource cts = new(TimeSpan.FromSeconds(10));
@@ -1460,7 +1473,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Allow the background task to complete
             allowCompletion.TrySetResult(true);
 
-            DynValue result = await background.ConfigureAwait(false);
+            LuaValue result = await background.ConfigureAwait(false);
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(result.Tuple[1].String).IsEqualTo("done").ConfigureAwait(false);
@@ -1498,13 +1511,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            script.Globals["waitForSignal"] = DynValue.NewCallback(
+            script.Globals["waitForSignal"] = LuaValue.NewCallback(
                 (_, _) =>
                 {
                     Interlocked.Increment(ref callbackEnterCount);
                     callbackEntered.TrySetResult(true);
                     allowCompletion.Task.GetAwaiter().GetResult();
-                    return DynValue.Nil;
+                    return LuaValue.Nil;
                 }
             );
 
@@ -1517,8 +1530,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("pause"));
+            LuaValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("pause"));
 
             Task[] tasks = new Task[ConcurrentThreads];
             for (int i = 0; i < ConcurrentThreads; i++)
@@ -1532,7 +1545,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
                     try
                     {
-                        DynValue result = script.Call(resumeFunc, coroutineValue);
+                        LuaValue result = script.Call(resumeFunc, coroutineValue);
                         Interlocked.Increment(ref successCount);
                         outcomes[taskIndex] = $"success thread={threadId} type={result.Type}";
                         Interlocked.Increment(ref completedAttempts);
@@ -1688,17 +1701,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                     try
                     {
                         Script script = new Script(version, CoreModulePresets.Complete);
-                        script.Globals["scriptIndex"] = DynValue.NewNumber(scriptIndex);
-                        script.Globals["waitForProceed"] = DynValue.NewCallback(
+                        script.Globals["scriptIndex"] = LuaValue.NewNumber(scriptIndex);
+                        script.Globals["waitForProceed"] = LuaValue.NewCallback(
                             (_, _) =>
                             {
                                 Interlocked.Increment(ref readyCount);
                                 proceedSignal.Task.GetAwaiter().GetResult();
-                                return DynValue.Nil;
+                                return LuaValue.Nil;
                             }
                         );
 
-                        DynValue result = script.DoString(
+                        LuaValue result = script.DoString(
                             @"
                             waitForProceed()
                             local sum = 0
@@ -1761,13 +1774,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
-            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
-            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("finish"));
+            LuaValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("finish"));
 
-            DynValue first = script.Call(resumeFunc, coroutineValue);
+            LuaValue first = script.Call(resumeFunc, coroutineValue);
             await Assert.That(first.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
 
-            DynValue result = script.Call(resumeFunc, coroutineValue);
+            LuaValue result = script.Call(resumeFunc, coroutineValue);
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert
@@ -1786,8 +1799,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new(CoreModulePresets.Complete);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
-            CallbackArguments noArgArguments = new(Array.Empty<DynValue>(), isMethodCall: false);
-            DynValue[] oneArgStorage = { DynValue.NewNumber(7) };
+            CallbackArguments noArgArguments = new(Array.Empty<LuaValue>(), isMethodCall: false);
+            LuaValue[] oneArgStorage = { LuaValue.NewNumber(7) };
             CallbackArguments oneArgArguments = new(oneArgStorage, isMethodCall: false);
 
             MeasureYieldAllocations(context, noArgArguments, iterations: 8);
@@ -1810,8 +1823,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(extraBytesPerYield).IsLessThan(16).ConfigureAwait(false);
 
-            DynValue result = CoroutineModule.Yield(context, oneArgArguments);
-            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+            LuaValue result = CoroutineModule.Yield(context, oneArgArguments);
+            ReadOnlyMemory<LuaValue> values = result.YieldRequest.ReturnValues;
             await Assert.That(values.Length).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(values.Span[0].Number).IsEqualTo(7d).ConfigureAwait(false);
         }
@@ -1821,24 +1834,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new(CoreModulePresets.Complete);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            CallbackArguments arguments = new(Array.Empty<DynValue>(), isMethodCall: false);
+            CallbackArguments arguments = new(Array.Empty<LuaValue>(), isMethodCall: false);
 
-            DynValue directResult = CoroutineModule.Yield(context, arguments);
-            DynValue directTuple = directResult.YieldRequest.ToTuple();
+            LuaValue directResult = CoroutineModule.Yield(context, arguments);
+            LuaValue directTuple = directResult.YieldRequest.ToTuple();
 
             await Assert
                 .That(directTuple.Tuple)
-                .IsSameReferenceAs(DynValue.EmptyTuple.Tuple)
+                .IsSameReferenceAs(LuaValue.EmptyTuple.Tuple)
                 .ConfigureAwait(false);
 
-            DynValue materializedResult = CoroutineModule.Yield(context, arguments);
-            ReadOnlyMemory<DynValue> values = materializedResult.YieldRequest.ReturnValues;
-            DynValue materializedTuple = materializedResult.YieldRequest.ToTuple();
+            LuaValue materializedResult = CoroutineModule.Yield(context, arguments);
+            ReadOnlyMemory<LuaValue> values = materializedResult.YieldRequest.ReturnValues;
+            LuaValue materializedTuple = materializedResult.YieldRequest.ToTuple();
 
             await Assert.That(values.Length).IsEqualTo(0).ConfigureAwait(false);
             await Assert
                 .That(materializedTuple.Tuple)
-                .IsSameReferenceAs(DynValue.EmptyTuple.Tuple)
+                .IsSameReferenceAs(LuaValue.EmptyTuple.Tuple)
                 .ConfigureAwait(false);
         }
 
@@ -1848,15 +1861,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = new(CoreModulePresets.Complete);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments arguments = new(
-                new[] { DynValue.NewString("alpha"), DynValue.NewNumber(2) },
+                new[] { LuaValue.NewString("alpha"), LuaValue.NewNumber(2) },
                 isMethodCall: false
             );
 
-            DynValue result = CoroutineModule.Yield(context, arguments);
-            DynValue tuple = result.YieldRequest.ToTuple();
-            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+            LuaValue result = CoroutineModule.Yield(context, arguments);
+            LuaValue tuple = result.YieldRequest.ToTuple();
+            ReadOnlyMemory<LuaValue> values = result.YieldRequest.ReturnValues;
 
-            bool hasArray = MemoryMarshal.TryGetArray(values, out ArraySegment<DynValue> segment);
+            bool hasArray = MemoryMarshal.TryGetArray(values, out ArraySegment<LuaValue> segment);
 
             await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(tuple.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -1870,16 +1883,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task YieldRequestNormalizesNullArrayReturnValuesToNil()
         {
-            DynValue[] originalValues =
+            LuaValue[] originalValues =
             {
-                DynValue.NewString("head"),
+                LuaValue.NewString("head"),
                 default,
-                DynValue.NewString("tail"),
+                LuaValue.NewString("tail"),
             };
-            DynValue result = DynValue.NewYieldReq(originalValues);
+            LuaValue result = LuaValue.NewYieldReq(originalValues);
 
-            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
-            DynValue tuple = result.YieldRequest.ToTuple();
+            ReadOnlyMemory<LuaValue> values = result.YieldRequest.ReturnValues;
+            LuaValue tuple = result.YieldRequest.ToTuple();
 
             await Assert.That(originalValues[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(values.Length).IsEqualTo(3).ConfigureAwait(false);
@@ -1893,10 +1906,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task YieldRequestNormalizesSingleFixedNullReturnValueToNil()
         {
-            DynValue result = DynValue.NewYieldReq(default(DynValue));
+            LuaValue result = LuaValue.NewYieldReq(default(LuaValue));
 
-            DynValue tuple = result.YieldRequest.ToTuple();
-            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+            LuaValue tuple = result.YieldRequest.ToTuple();
+            ReadOnlyMemory<LuaValue> values = result.YieldRequest.ReturnValues;
 
             await Assert.That(tuple.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             await Assert.That(values.Length).IsEqualTo(1).ConfigureAwait(false);
@@ -1906,14 +1919,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task YieldRequestNormalizesFixedNullReturnValuesToNil()
         {
-            DynValue result = DynValue.NewYieldReq(
-                DynValue.NewString("head"),
-                default(DynValue),
-                DynValue.NewString("tail")
+            LuaValue result = LuaValue.NewYieldReq(
+                LuaValue.NewString("head"),
+                default(LuaValue),
+                LuaValue.NewString("tail")
             );
 
-            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
-            DynValue tuple = result.YieldRequest.ToTuple();
+            ReadOnlyMemory<LuaValue> values = result.YieldRequest.ReturnValues;
+            LuaValue tuple = result.YieldRequest.ToTuple();
 
             await Assert.That(values.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(values.Span[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
@@ -1926,18 +1939,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task YieldReturnsYieldRequestWithArguments(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue yieldFunc = script.Globals.Get("coroutine").Table.Get("yield");
+            LuaValue yieldFunc = script.Globals.Get("coroutine").Table.Get("yield");
 
-            DynValue result = script.Call(
+            LuaValue result = script.Call(
                 yieldFunc,
-                DynValue.NewNumber(7),
-                DynValue.NewString("value")
+                LuaValue.NewNumber(7),
+                LuaValue.NewString("value")
             );
 
             await Assert.That(result.Type).IsEqualTo(DataType.YieldRequest).ConfigureAwait(false);
             await Assert.That(result.YieldRequest.Forced).IsFalse().ConfigureAwait(false);
 
-            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+            ReadOnlyMemory<LuaValue> values = result.YieldRequest.ReturnValues;
             await Assert.That(values.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(values.Span[0].Number).IsEqualTo(7d).ConfigureAwait(false);
             await Assert.That(values.Span[1].String).IsEqualTo("value").ConfigureAwait(false);
@@ -1953,7 +1966,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             for (int i = 0; i < iterations; i++)
             {
-                DynValue result = CoroutineModule.Yield(context, arguments);
+                LuaValue result = CoroutineModule.Yield(context, arguments);
                 if (result.Type != DataType.YieldRequest || result.YieldRequest.Forced)
                 {
                     throw new ScriptRuntimeException("coroutine.yield allocation probe failed");
@@ -1979,7 +1992,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 -- Count how many values coroutine.running returns
                 local function countReturns()
@@ -2005,7 +2018,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 -- Count how many values coroutine.running returns
                 local function countReturns()
@@ -2031,7 +2044,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function checkRunning()
                     local running = coroutine.running()
@@ -2059,7 +2072,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local function checkIsMain()
                     local _, isMain = coroutine.running()
@@ -2086,7 +2099,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            DynValue result = script.DoString(
+            LuaValue result = script.DoString(
                 @"
                 local _, isMain = coroutine.running()
                 return isMain

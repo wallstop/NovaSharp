@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
     using System.Collections.Generic;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -83,7 +84,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         {
             Expression key = new LiteralExpression(
                 lcontext,
-                DynValue.NewString(lcontext.Lexer.Current.text)
+                LuaValue.NewString(lcontext.Lexer.Current.text)
             );
             lcontext.Lexer.Next();
 
@@ -130,7 +131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// <exception cref="DynamicExpressionException">
         /// Thrown when a dynamic expression attempts to allocate a non-shared table.
         /// </exception>
-        public override DynValue Eval(ScriptExecutionContext context)
+        public override LuaValue Eval(ScriptExecutionContext context)
         {
             if (!_shared)
             {
@@ -139,7 +140,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 );
             }
 
-            DynValue tval = DynValue.NewPrimeTable();
+            LuaValue tval = LuaValue.NewPrimeTable();
             Table t = tval.Table;
 
             int idx = 0;
@@ -150,7 +151,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
             foreach (KeyValuePair<Expression, Expression> kvp in _ctorArgs)
             {
-                t.Set(kvp.Key.Eval(context), kvp.Value.Eval(context));
+                t.SetValue(kvp.Key.Eval(context), kvp.Value.Eval(context));
             }
 
             return tval;
