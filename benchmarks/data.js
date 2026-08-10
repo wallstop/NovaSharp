@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786311121888,
+  "lastUpdate": 1786320047309,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -2302,6 +2302,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
             "value": 1.189,
+            "unit": "μs",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ef0afd0ff2fd29b20901bad8a2cc94a27a07fbe9",
+          "message": "Record rejected inline frame experiment (#109)\n\n## Summary\n\n- record and reject the bounded full inline `CallStackItem` experiment\nfrom #108\n- retain a Lua 5.4+ regression for re-entrant `__close` and `xpcall`\nhandlers that grow the execution stack\n- reconcile three previously omitted comparable Lua fixtures and the\ngenerated manifest\n- keep #108 open with a compact hot/cold frame split as the next viable\ndirection\n\n## Evidence\n\n- experimental Fibonacci throughput was inconclusive at 20.20x NLua\nagainst observed main baselines of 18.97x-20.70x\n- the inline layout added exactly 9,728 B to each processor's\nconstruction allocation\n- the runtime implementation was reverted; no production runtime change\nremains\n\n## Validation\n\n- targeted re-entrancy regression: 2/2 passed\n- interpreter build: passed with zero warnings and errors\n- full TUnit suite: 15,225/15,225 passed\n- Lua 5.1-5.5 comparison enforcement: zero mismatches, one-sided\nresults, or missing outputs\n- corpus extractor dry run: 1,970 existing fixtures, zero new fixtures\n- CSharpier, Markdown formatting, repository pre-commit, and pre-push\nchecks: passed\n- independent adversarial review: approved after benchmark and manifest\nevidence corrections\n\nPost-Hanoi and post-coroutine benchmark gates were not run after the\nexperiment failed the early Fibonacci and construction-memory gates.\nThey remain required for renewed work under #108.\n\nRelates to #108\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Documentation and regression/corpus updates only; no interpreter or VM\nbehavior changes remain in the diff.\n> \n> **Overview**\n> This PR records that the **full inline `CallStackItem` struct\nexperiment** (#108) was **measured and reverted**: no repeatable\n`fib(30)` win and **+9,728 B** per processor at `new Script()`, so\nproduction VM code is unchanged.\n> \n> **Documentation** updates `PLAN.md`,\n`docs/performance/memory-cache-retention-research.md`, and new\n`progress/session-174-a5-inline-frame-experiment.md` to reject embedding\n64 full frames inline and to require a **compact hot/cold frame split**\nbefore another pool removal attempt.\n> \n> **Testing / corpus**: adds\n**`ReentrantCloseAndMessageHandlersSurviveExecutionStackGrowth`** (TUnit\n+ Lua fixture) so re-entrant `__close` and `xpcall` message handlers\nthat recurse past the initial 64-frame capacity stay correct; reconciles\n**three** previously omitted comparable Lua snippets and\n**`manifest.json`** (1,970 snippets, drops one stale entry).\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n8d19a8ec8e3d558692e4e3364603d4761c8b1f51. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-08-09T16:55:24-07:00",
+          "tree_id": "b558d743349de0931f3d2b257623f51e47c99725",
+          "url": "https://github.com/wallstop/NovaSharp/commit/ef0afd0ff2fd29b20901bad8a2cc94a27a07fbe9"
+        },
+        "date": 1786320046920,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"CoroutinePipeline\")",
+            "value": 0.817943,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"NumericLoops\")",
+            "value": 572.843,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"TableMutation\")",
+            "value": 5.912,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
+            "value": 0.9079,
             "unit": "μs",
             "extra": ""
           }
