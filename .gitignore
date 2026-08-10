@@ -140,6 +140,7 @@ src/.idea/**
 lua-comparison-*-extracted/
 
 .claude/**
+!.claude/skills
 
 # Click-Once directory
 publish/

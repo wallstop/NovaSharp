@@ -16,7 +16,7 @@ cannot be derived safely from repository evidence.
 ## 2. Investigate
 
 For defects, regressions, unexplained behavior, or uncertain causes, use
-[systematic-investigation](../skills/systematic-investigation.md). Planned
+[systematic-investigation](../skills/systematic-investigation/SKILL.md). Planned
 enhancements, architecture, and documentation work instead establish the
 observed current state, constraints, prior art, and a falsifiable acceptance
 observation. Do not manufacture a root-cause hypothesis when no defect exists.
@@ -29,7 +29,7 @@ investigation boundary, and reassess assumptions and instrumentation.
 
 ## 3. Plan and Red Gate
 
-Use [architecture-review](../skills/architecture-review.md) for material design.
+Use [architecture-review](../skills/architecture-review/SKILL.md) for material design.
 Before implementation:
 
 1. challenge whether deletion, extension, or a smaller reversible change solves
@@ -52,8 +52,8 @@ and fixes; reviewers report findings and do not silently expand scope.
 
 ## 5. Green Gate
 
-Use [change-path-verification](../skills/change-path-verification.md) and
-[deterministic-testing](../skills/deterministic-testing.md). Re-run the red
+Use [change-path-verification](../skills/change-path-verification/SKILL.md) and
+[deterministic-testing](../skills/deterministic-testing/SKILL.md). Re-run the red
 observation and prove it now passes. Run risk-selected targeted checks, then
 every applicable repository closure gate. Behavior or CI changes require the
 build, full tests, formatting, applicable reference-Lua comparison, and PR CI
@@ -75,7 +75,7 @@ Do not mark a gate verified from remembered or prior-revision output.
 
 ## 6. Independent Hardening
 
-Use [adversarial-handoff](../skills/adversarial-handoff.md). The independent
+Use [adversarial-handoff](../skills/adversarial-handoff/SKILL.md). The independent
 verifier receives acceptance criteria, base/head revisions, diff, canonical
 specifications, and commands—not the implementer's conclusions. A separate
 adversarial reviewer attacks the verified result.
@@ -87,7 +87,7 @@ correctness.
 
 ## 7. Reflect and Report
 
-Run [post-work-reflection](../skills/post-work-reflection.md). Report outcomes as
+Run [post-work-reflection](../skills/post-work-reflection/SKILL.md). Report outcomes as
 `VERIFIED`, `PARTIAL`, `UNVERIFIABLE`, or `BLOCKED`; never convert an unavailable
 mandatory check into a pass. Persist only verified, reusable lessons in the
 narrowest canonical artifact.

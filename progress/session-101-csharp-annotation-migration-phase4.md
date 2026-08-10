@@ -141,4 +141,4 @@ Phase 4 is complete. The next phases in the Lua Comparison CI/CD Failure Resolut
 
 - PLAN.md: Updated with Phase 4 completion status
 - Previous phase: [session-100-lua-fixture-range-migration.md](session-100-lua-fixture-range-migration.md)
-- Skill reference: [.llm/skills/tunit-test-writing.md](../.llm/skills/tunit-test-writing.md)
+- Skill reference: [.llm/skills/tunit-test-writing/SKILL.md](../.llm/skills/tunit-test-writing/SKILL.md)

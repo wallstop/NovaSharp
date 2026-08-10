@@ -25,4 +25,9 @@ python tools/SpellingAudit/spelling_audit.py --verify-log docs/audits/spelling_a
 
 The script supports additional arguments (e.g., extra skip globs or specific paths). Run with `--help` for the full set of options.
 
+Default scan roots come from the staged Git index. This keeps pre-commit output
+aligned with CI when a change adds a new top-level tracked directory while still
+excluding unrelated untracked files. The audit fails explicitly if the Git index
+cannot be read because a filesystem fallback cannot preserve that guarantee.
+
 Domain-specific words can be added to `allowlist.txt` (one per line, `#` comments allowed) when they are correct spellings that would otherwise trigger false positives.

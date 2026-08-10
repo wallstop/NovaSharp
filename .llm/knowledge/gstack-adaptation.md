@@ -15,8 +15,8 @@
   fresh-context adversarial handoffs.
 - **Scope:** `.llm` workflows for material repository work.
 - **Evidence:** `.llm/workflows/evidence-driven-change.md`,
-  `.llm/skills/adversarial-handoff.md`, and
-  `.llm/skills/change-path-verification.md`.
+  `.llm/skills/adversarial-handoff/SKILL.md`, and
+  `.llm/skills/change-path-verification/SKILL.md`.
 - **Implication:** Use executable evidence and semantic risk rather than agent
   confidence or diff size to satisfy gates.
 
@@ -28,8 +28,8 @@
   failing generated tests.
 - **Scope:** NovaSharp's generalized, front-end-neutral `.llm` system.
 - **Evidence:** Existing objective gates in `.llm/context.md`,
-  `.llm/skills/lua-comparison-harness.md`, and
-  `.llm/skills/test-failure-investigation.md`.
+  `.llm/skills/lua-comparison-harness/SKILL.md`, and
+  `.llm/skills/test-failure-investigation/SKILL.md`.
 - **Implication:** Preserve the reference-Lua oracle, zero-flake policy,
   multi-version/platform matrix, and mechanical CI gates as higher authorities.
 

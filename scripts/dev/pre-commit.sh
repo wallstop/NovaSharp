@@ -527,6 +527,7 @@ update_fixture_catalog() {
 
 update_spelling_audit_log() {
   log "[pre-commit] Refreshing spelling audit log..."
+  run_python tools/SpellingAudit/test_spelling_audit.py
   if run_python tools/SpellingAudit/spelling_audit.py --write-log docs/audits/spelling_audit.log 2>/dev/null; then
     if [ -f docs/audits/spelling_audit.log ]; then
       git_add_with_retry docs/audits/spelling_audit.log
@@ -569,8 +570,7 @@ check_branding() {
       scripts/dev/pre-commit.sh|scripts/dev/README.md) continue ;;  # Branding check documentation
       src/tooling/WallstopStudios.NovaSharp.Comparison*) continue ;;
       .devcontainer/devcontainer.json) continue ;;  # cSpell dictionary includes MoonSharp
-      .llm/skills/documentation-and-changelog.md) continue ;;  # Changelog example includes MoonSharp
-      .llm/skills/pre-commit-validation.md) continue ;;  # Pre-commit docs explain branding check
+      .llm/skills/documentation-and-changelog/SKILL.md) continue ;;  # Changelog example includes MoonSharp
     esac
 
     # Check staged content for MoonSharp

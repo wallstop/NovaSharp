@@ -1,119 +1,72 @@
-# LLM Skill Indexer
+# Agent Skill Indexer
 
-Scans `.llm/skills/*.md` for YAML front-matter metadata and generates a categorized `skills-index.json`.
+Scans `.llm/skills/*/SKILL.md`, validates the Agent Skills structure and
+NovaSharp metadata, and generates `.llm/skills-index.json`.
 
 ## Usage
 
 ```bash
-# Generate index (writes to .llm/skills-index.json)
+# Run focused unit tests
+python3 tools/LlmSkillIndexer/test_llm_skill_indexer.py
+
+# Validate and regenerate the committed index
 python3 tools/LlmSkillIndexer/llm_skill_indexer.py
 
-# Check mode (read-only; rejects warnings, errors, and a stale index)
-python3 tools/LlmSkillIndexer/llm_skill_indexer.py --check
-
-# Verbose output
-python3 tools/LlmSkillIndexer/llm_skill_indexer.py --verbose
-```
-
-## Integration with pre-commit.sh
-
-Generate the index explicitly after changing a skill, then stage both the skill
-and index:
-
-```bash
-python3 tools/LlmSkillIndexer/llm_skill_indexer.py
-git add .llm/skills/changed-skill.md .llm/skills-index.json
-```
-
-Pre-commit and CI use the read-only strict check:
-
-```bash
-# Validate metadata and prove the committed index is current without modifying it
+# Read-only strict check used by pre-commit and CI
 python3 tools/LlmSkillIndexer/llm_skill_indexer.py --check
 ```
 
-## YAML Front-Matter Format
+After changing a skill, regenerate and stage its complete directory with the
+index:
 
-Skills should include YAML front-matter at the start of the file:
+```bash
+python3 tools/LlmSkillIndexer/llm_skill_indexer.py
+git add .llm/skills/changed-skill .llm/skills-index.json
+```
+
+## Layout and discovery
+
+Canonical skills live only under `.llm`:
+
+```text
+.llm/skills/<skill-name>/
+├── SKILL.md
+├── references/  # optional
+├── scripts/     # optional
+└── assets/      # optional
+```
+
+The checked-in `.agents/skills` and `.claude/skills` symlinks point to
+`.llm/skills`. The indexer rejects missing or retargeted aliases so Codex, Claude
+Code, and GitHub Copilot keep discovering the same canonical skills.
+
+## Frontmatter
+
+Each `SKILL.md` requires standard `name` and `description` fields. Optional
+NovaSharp classification remains a string-to-string map under standard
+`metadata`:
 
 ```yaml
 ---
-triggers:
-  - "zero allocation"
-  - "pooling"
-  - "memory optimization"
-category: performance  # core|performance|testing|lua|workflow|meta
-related:
-  - unity-gc-patterns
-  - refactor-to-zero-alloc
-priority: core  # core|recommended|reference
+name: high-performance-csharp
+description: Implement high-performance C# for NovaSharp. Use for hot paths or allocation work.
+metadata:
+  category: performance
+  priority: core
+  related: correctness-then-performance, allocation-traps
 ---
-
-# Skill Title
-
-Content follows...
 ```
 
-## Categories
+Categories are `core`, `performance`, `testing`, `lua`, `workflow`, and `meta`.
+Priorities are `core`, `recommended`, and `reference`. Related names are
+comma-separated and must resolve to another skill.
 
-| Category      | Description                               |
-| ------------- | ----------------------------------------- |
-| `core`        | Essential guidelines for all work         |
-| `performance` | Performance optimization patterns         |
-| `testing`     | Test writing and validation               |
-| `lua`         | Lua spec, fixtures, comparison            |
-| `workflow`    | Development workflow and tools            |
-| `meta`        | Skills about skills (documentation, etc.) |
+The strict check treats files over the 150-line target as warnings and files over
+the 200-line ceiling as errors. Any warning, error, discovery-alias problem, or
+stale index fails CI.
 
-## Priorities
+## Output
 
-| Priority      | Description                    |
-| ------------- | ------------------------------ |
-| `core`        | Must-read for all contributors |
-| `recommended` | Read for relevant tasks        |
-| `reference`   | Reference when needed          |
-
-## Line Limits
-
-- **Warning**: Files over 300 lines
-- **Error**: Files over 500 lines
-
-Files exceeding limits should:
-
-1. Extract reusable code samples to `.llm/code-samples/`
-1. Split into multiple focused skills
-1. Remove redundant content
-
-## Output Format
-
-The generated `skills-index.json` contains:
-
-```json
-{
-  "version": "1.0.0",
-  "skills_count": 31,
-  "categories": {
-    "core": ["correctness-then-performance", "..."],
-    "performance": ["high-performance-csharp", "..."]
-  },
-  "skills": [
-    {
-      "name": "high-performance-csharp",
-      "file_path": ".llm/skills/high-performance-csharp.md",
-      "line_count": 1373,
-      "triggers": ["zero allocation", "pooling"],
-      "category": "performance",
-      "related": ["unity-gc-patterns"],
-      "priority": "core",
-      "has_front_matter": true,
-      "title": "High-Performance C# Coding Guidelines",
-      "validation_warnings": ["..."],
-      "validation_errors": ["..."]
-    }
-  ],
-  "validation_summary": {
-    "total_warnings": 5,
-    "total_errors": 2
-  }
-}
-```
+The version 2 index records each skill's name, description, canonical path, line
+count, category, priority, related skills, title, and validation results. The
+summary contains aggregate warning/error counts and structural errors.

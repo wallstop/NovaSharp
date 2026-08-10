@@ -136,4 +136,4 @@ ______________________________________________________________________
 
 - [Initiative 10: KopiLua Performance Hyper-Optimization](../PLAN.md#initiative-10-kopilua-performance-hyper-optimization--high-priority)
 - [Initiative 12: Deep Codebase Allocation Analysis](../PLAN.md#initiative-12-deep-codebase-allocation-analysis--reduction--high-priority)
-- [High-Performance C# Guidelines](../.llm/skills/high-performance-csharp.md)
+- [High-Performance C# Guidelines](../.llm/skills/high-performance-csharp/SKILL.md)
