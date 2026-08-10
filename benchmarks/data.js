@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786320047309,
+  "lastUpdate": 1786325477903,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -2350,6 +2350,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
             "value": 0.9079,
+            "unit": "μs",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9a53d7c4f2b0fb9b351b0cdbada04dbdd69866ca",
+          "message": "Migrate agent skills to the open standard (#110)\n\n## Summary\n\n- migrate all 31 repository skills to canonical\n`.llm/skills/<name>/SKILL.md` Agent Skills directories\n- expose the canonical tree through `.agents/skills` and\n`.claude/skills` for Codex, Claude Code, and GitHub Copilot\n- enforce standard metadata, discovery aliases, related-skill integrity,\ndeterministic indexing, and the 150/200-line limits\n- preserve long-form guidance in directly linked `references/` resources\nand update active repository links\n- record design evidence, validation, and independent review in\n`progress/session-175-standard-agent-skills.md`\n\n## Validation\n\n- `python3 tools/LlmSkillIndexer/test_llm_skill_indexer.py` — 19 passed\n- `python3 tools/LlmSkillIndexer/llm_skill_indexer.py --check` — 31\nvalid; index current\n- upstream `skills-ref validate` — all 31 valid\n- `./scripts/build/quick.sh` — passed\n- `./scripts/test/quick.sh` — 15,225 passed, 0 failed, 0 skipped\n- `bash ./scripts/dev/pre-commit.sh` — passed\n- pre-push build/format/lint gates — passed\n- live Codex discovery — all 31 canonical skills observed\n- zero-knowledge and adversarial reviews — APPROVE, zero actionable\nfindings\n\nClaude Code and GitHub Copilot runtimes were unavailable locally; their\ndiscovery paths were verified against current official documentation and\nfilesystem alias resolution.\n\nFixes #83\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Documentation and LLM tooling only; no interpreter or runtime behavior\nchanges. Risk is broken skill links or discovery if symlinks or the\nindexer drift from the canonical tree.\n> \n> **Overview**\n> **Migrates NovaSharp’s LLM guidance to the [Agent\nSkills](https://agentskills.io/specification) layout** so Codex, Claude\nCode, and Copilot discover one canonical tree instead of flat `.md`\nfiles.\n> \n> All **31 skills** move to `.llm/skills/<name>/SKILL.md` with standard\n`name` / `description` frontmatter and NovaSharp fields under `metadata`\n(category, priority, related). Long content shifts into\n**`references/REFERENCE.md`** with short `SKILL.md` bodies (indexer\nenforces line limits). **`.agents/skills`** and **`.claude/skills`**\nsymlink to `.llm/skills`; **`.gitignore`** allows `!.claude/skills`.\nRepo docs (`.cursorrules`, `.github/copilot-instructions.md`,\n`.llm/context.md`, knowledge) now link to `.../SKILL.md` paths.\n> \n> **`.llm/skills-index.json`** bumps to **v2.0.0**: per-skill\n`description`, paths under skill dirs, and **`triggers` removed** from\nthe index in favor of description-based discovery. **`adding-skills`**\ndocuments the canonical layout and indexer validation workflow.\n> \n> CI adds **`python3 tools/SpellingAudit/test_spelling_audit.py`** in\n`.github/workflows/tests.yml` before the spelling audit steps.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n6dd10bd15c28565d5d3e5b5ad410f97f4f003d3f. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-08-09T18:25:37-07:00",
+          "tree_id": "4a61250bdeb25c15c4232ccf47d7b93a9e62754f",
+          "url": "https://github.com/wallstop/NovaSharp/commit/9a53d7c4f2b0fb9b351b0cdbada04dbdd69866ca"
+        },
+        "date": 1786325477134,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"CoroutinePipeline\")",
+            "value": 1.083,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"NumericLoops\")",
+            "value": 714.722,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"TableMutation\")",
+            "value": 7.327,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
+            "value": 1.274,
             "unit": "μs",
             "extra": ""
           }
