@@ -71,7 +71,7 @@ standard `name` and `description` pair, and 16 files above 200 lines.
 | Full tests | `./scripts/test/quick.sh` | 15,225 passed; 0 failed; 0 skipped |
 | Formatting/pre-commit | `bash ./scripts/dev/pre-commit.sh` | Passed |
 | Reference Lua comparison | N/A | No Lua/runtime behavior changed |
-| PR CI | GitHub required checks | Pending |
+| PR CI | [PR #110](https://github.com/wallstop/NovaSharp/pull/110) | 22 successful; 1 expected autofix skip; 0 failures |
 
 ## Post-work reflection
 
@@ -101,4 +101,8 @@ and an unavailable Git index fails explicitly instead of falling back to
 untracked filesystem entries. A fresh verifier reproduced both original findings
 and returned `APPROVE` with zero remaining actionable findings.
 
-Final PR CI evidence remains pending.
+PR #110's post-fix run completed with all 22 required checks successful,
+one expected `lint-autofix` skip, and no failures. The generated Lua comparison
+report recorded zero unexpected deltas across Lua 5.1-5.5 on Ubuntu, macOS, and
+Windows. The feedback audit found no human reviews or review threads; the only
+conversation comments were the successful coverage and Lua comparison reports.

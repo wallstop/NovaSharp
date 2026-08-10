@@ -674,10 +674,11 @@ The "Lua Comparison CI/CD Failure Resolution" initiative recorded the following 
 
 ______________________________________________________________________
 
-### Standard Agent Skills Migration ([#83](https://github.com/wallstop/NovaSharp/issues/83)) 🟡 **IN PROGRESS**
+### Standard Agent Skills Migration ([#83](https://github.com/wallstop/NovaSharp/issues/83)) ✅ **COMPLETE**
 
-**Status**: 🟡 **IN PROGRESS** — implementation and local focused validation are
-complete; PR CI observation remains.
+**Status**: ✅ **COMPLETE** — [PR #110](https://github.com/wallstop/NovaSharp/pull/110)
+implements the migration, includes the CI-discovered spelling-audit improvement,
+and was observed passing all required checks.
 
 **Current milestone**:
 
@@ -691,7 +692,7 @@ complete; PR CI observation remains.
   reject legacy layouts, invalid standard metadata, bad related-skill names,
   discovery alias drift, files above the line limits, and stale generated output.
 - [x] Observe all 31 repository skills in Codex's local prompt-input catalog.
-- [ ] Observe the pull request's required CI checks passing.
+- [x] Observe the pull request's required CI checks passing.
 
 The prior flat-file consolidation remains documented in
 [session 098](progress/session-098-llm-consolidation.md). Current work is tracked
