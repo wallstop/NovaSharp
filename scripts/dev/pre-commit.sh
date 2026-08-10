@@ -527,6 +527,7 @@ update_fixture_catalog() {
 
 update_spelling_audit_log() {
   log "[pre-commit] Refreshing spelling audit log..."
+  run_python tools/SpellingAudit/test_spelling_audit.py
   if run_python tools/SpellingAudit/spelling_audit.py --write-log docs/audits/spelling_audit.log 2>/dev/null; then
     if [ -f docs/audits/spelling_audit.log ]; then
       git_add_with_retry docs/audits/spelling_audit.log

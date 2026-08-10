@@ -61,6 +61,7 @@ standard `name` and `description` pair, and 16 files above 200 lines.
 | Claim | Command or evidence | Result |
 | ----- | ------------------- | ------ |
 | Focused indexer behavior | `python3 tools/LlmSkillIndexer/test_llm_skill_indexer.py` | 19 tests passed |
+| Spelling-audit index discovery | `python3 tools/SpellingAudit/test_spelling_audit.py` | 3 tests passed |
 | Standard metadata and index | `python3 tools/LlmSkillIndexer/llm_skill_indexer.py --check` | 31 skills valid; index current |
 | Upstream standard validator | `skills-ref validate` from `agentskills/agentskills` for every canonical skill | All 31 skills valid |
 | Skill line target | `wc -l .llm/skills/*/SKILL.md` | 31 files; maximum 136 lines |
@@ -82,12 +83,22 @@ frontmatter, unresolved related skills, stale index output, and skills above the
 repository's line limits.
 
 A zero-knowledge verifier and a subsequent adversarial reviewer independently
-returned `APPROVE` with zero actionable findings on the staged state. They
+returned `APPROVE` with zero actionable findings on the pre-publication state. They
 rechecked schema, legacy-content preservation, links, aliases, live Codex
 discovery, determinism, line limits, and unrelated-file isolation. A separate
 forward test used the rewritten `adding-skills` guide to design a hypothetical
 cross-client skill and returned `PASS`; its independent review rejected an
-unsupported suggestion to add a redundant `.github/skills` copy. No further
-implementation defect or reusable guidance gap was found after those reviews.
+unsupported suggestion to add a redundant `.github/skills` copy.
 
-PR CI evidence remains pending publication.
+The first PR CI run found a separate integration defect: the pre-commit spelling
+audit discovered scan roots from `HEAD`, so it omitted newly staged top-level
+directories while CI included them after commit. The discovery source now uses
+the staged Git index, a focused regression test protects that behavior locally
+and in CI, and the audit receipt includes `.agents` and `.claude` without
+including the unrelated untracked package files. Fresh review then found and
+closed two edge cases in that fix: case-folded sort ties now have a total order,
+and an unavailable Git index fails explicitly instead of falling back to
+untracked filesystem entries. A fresh verifier reproduced both original findings
+and returned `APPROVE` with zero remaining actionable findings.
+
+Final PR CI evidence remains pending.

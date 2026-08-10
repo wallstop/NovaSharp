@@ -22,36 +22,41 @@ DEFAULT_ALLOWLIST = ROOT / "tools" / "SpellingAudit" / "allowlist.txt"
 TOP_LEVEL_EXCLUDES = {".git", ".vs", "artifacts"}
 
 
+class SpellingAuditError(RuntimeError):
+    """Raised when the spelling audit cannot complete."""
+
+
 def discover_default_paths() -> tuple[str, ...]:
-    """Discover scan targets from git-tracked files for deterministic output.
+    """Discover scan targets from the staged Git index for deterministic output.
 
-    Uses `git ls-tree` to get a consistent list of root-level entries that are
-    tracked in version control. This ensures the scan targets are identical
-    across different environments (local dev, CI) regardless of untracked files.
+    The index is the state a pre-commit hook is about to commit, so newly staged
+    top-level entries appear in the generated log before CI checks the resulting
+    commit. Untracked files remain excluded.
 
-    Falls back to filesystem discovery if git is unavailable.
+    Fails explicitly if the index is unavailable because filesystem discovery
+    cannot distinguish tracked content from unrelated untracked files.
     """
     try:
         proc = subprocess.run(
-            ["git", "ls-tree", "--name-only", "HEAD"],
+            ["git", "ls-files", "--cached", "-z"],
             capture_output=True,
             text=True,
             cwd=ROOT,
             check=True,
         )
         entries = sorted(
-            (line.strip() for line in proc.stdout.splitlines() if line.strip()),
-            key=str.lower,
+            {
+                path.split("/", 1)[0]
+                for path in proc.stdout.split("\0")
+                if path
+            },
+            key=lambda entry: (entry.lower(), entry),
         )
         return tuple(e for e in entries if e not in TOP_LEVEL_EXCLUDES)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        # Fallback: scan filesystem if git is unavailable
-        entries = []
-        for child in sorted(ROOT.iterdir(), key=lambda p: p.name.lower()):
-            if child.name in TOP_LEVEL_EXCLUDES:
-                continue
-            entries.append(child.name)
-        return tuple(entries)
+    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+        raise SpellingAuditError(
+            "Unable to discover tracked spelling-audit targets from the staged Git index."
+        ) from exc
 
 
 DEFAULT_PATHS = discover_default_paths()
@@ -114,10 +119,6 @@ DEFAULT_SKIP_GLOBS: tuple[str, ...] = (
     "*/packages/*",
     "*\\packages\\*",
 )
-
-
-class SpellingAuditError(RuntimeError):
-    """Raised when the spelling audit cannot complete."""
 
 
 def parse_args() -> argparse.Namespace:

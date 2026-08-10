@@ -39,6 +39,8 @@ jobs:
         run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp
       - name: Verify naming audit log
         run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp --verify-log docs/audits/naming_audit.log
+      - name: Test spelling audit discovery
+        run: python3 tools/SpellingAudit/test_spelling_audit.py
       - name: Enforce spelling conventions
         run: python3 tools/SpellingAudit/spelling_audit.py
       - name: Verify spelling audit log
