@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for LLM skill metadata and fail-closed index validation."""
+"""Tests for Agent Skills metadata and fail-closed index validation."""
 
 import tempfile
 import unittest
@@ -10,6 +10,7 @@ from llm_skill_indexer import (
     check_index,
     extract_front_matter,
     generate_index,
+    validate_discovery_aliases,
     validate_metadata,
 )
 
@@ -21,6 +22,34 @@ def make_index(warnings: int = 0, errors: int = 0) -> dict:
             "total_errors": errors,
         }
     }
+
+
+def write_skill(
+    repo_root: Path,
+    name: str,
+    *,
+    description: str = "Use when testing Agent Skills behavior.",
+    category: str = "testing",
+    priority: str = "core",
+    related: str = "",
+) -> Path:
+    skill_directory = repo_root / ".llm" / "skills" / name
+    skill_directory.mkdir(parents=True, exist_ok=True)
+    related_line = f"  related: {related}\n" if related else ""
+    skill_file = skill_directory / "SKILL.md"
+    skill_file.write_text(
+        "---\n"
+        f"name: {name}\n"
+        f"description: {description}\n"
+        "metadata:\n"
+        f"  category: {category}\n"
+        f"  priority: {priority}\n"
+        f"{related_line}"
+        "---\n"
+        f"# {name}\n",
+        encoding="utf-8",
+    )
+    return skill_file
 
 
 class CheckIndexTests(unittest.TestCase):
@@ -65,98 +94,168 @@ class CheckIndexTests(unittest.TestCase):
 
 
 class MetadataTests(unittest.TestCase):
-    def test_requires_category_and_priority(self) -> None:
+    def test_accepts_agent_skills_front_matter(self) -> None:
         metadata, _ = extract_front_matter(
-            '---\ntriggers:\n  - "test"\n---\n# Test\n'
+            "---\n"
+            "name: test-skill\n"
+            "description: Use when testing the Agent Skills layout.\n"
+            "metadata:\n"
+            "  category: testing\n"
+            "  priority: core\n"
+            "  related: deterministic-testing, change-path-verification\n"
+            "---\n"
+            "# Test Skill\n"
         )
         skill = SkillMetadata(
-            name="test",
-            file_path=".llm/skills/test.md",
-            line_count=6,
-            triggers=metadata["triggers"],
+            name="test-skill",
+            description=metadata["description"],
+            file_path=".llm/skills/test-skill/SKILL.md",
+            line_count=10,
+            category=metadata["metadata"]["category"],
+            priority=metadata["metadata"]["priority"],
+            related=["deterministic-testing", "change-path-verification"],
             has_front_matter=True,
         )
 
-        validate_metadata(skill, metadata)
+        validate_metadata(skill, metadata, "test-skill")
 
-        self.assertTrue(any("'category'" in warning for warning in skill.validation_warnings))
-        self.assertTrue(any("'priority'" in warning for warning in skill.validation_warnings))
+        self.assertEqual([], skill.validation_warnings)
+        self.assertEqual([], skill.validation_errors)
 
-    def test_rejects_empty_or_wrong_type_metadata_fields(self) -> None:
-        metadata = {
-            "triggers": [],
-            "category": [],
-            "priority": [],
-            "related": "not-a-list",
-        }
+    def test_requires_name_and_description(self) -> None:
         skill = SkillMetadata(
             name="test",
-            file_path=".llm/skills/test.md",
-            line_count=6,
-            triggers=[],
-            category=metadata["category"],
-            priority=metadata["priority"],
-            related=[metadata["related"]],
+            description="",
+            file_path=".llm/skills/test/SKILL.md",
+            line_count=4,
             has_front_matter=True,
         )
 
-        validate_metadata(skill, metadata)
+        validate_metadata(skill, {"metadata": {}}, "test")
 
-        for field in ("triggers", "category", "priority", "related"):
+        for field in ("name", "description"):
             self.assertTrue(
-                any(f"'{field}'" in warning for warning in skill.validation_warnings)
+                any(f"'{field}'" in error for error in skill.validation_errors)
             )
 
-    def test_rejects_unknown_metadata_field(self) -> None:
+    def test_rejects_unknown_front_matter_field(self) -> None:
         metadata = {
-            "triggers": ["test"],
-            "category": "core",
-            "priority": "core",
-            "relations": ["unrecognised key"],
+            "name": "test",
+            "description": "Use when testing metadata validation.",
+            "triggers": ["legacy"],
         }
         skill = SkillMetadata(
             name="test",
-            file_path=".llm/skills/test.md",
+            description=metadata["description"],
+            file_path=".llm/skills/test/SKILL.md",
             line_count=6,
-            triggers=metadata["triggers"],
-            category=metadata["category"],
-            priority=metadata["priority"],
             has_front_matter=True,
         )
 
-        validate_metadata(skill, metadata)
+        validate_metadata(skill, metadata, "test")
 
-        self.assertTrue(
-            any("'relations'" in warning for warning in skill.validation_warnings)
-        )
+        self.assertTrue(any("triggers" in error for error in skill.validation_errors))
 
     def test_rejects_malformed_front_matter(self) -> None:
-        metadata, _ = extract_front_matter("---\ntriggers:\n  - test\n# Missing close\n")
+        metadata, _ = extract_front_matter("---\nname: [broken\n---\n# Test\n")
         skill = SkillMetadata(
             name="test",
-            file_path=".llm/skills/test.md",
+            description="",
+            file_path=".llm/skills/test/SKILL.md",
             line_count=4,
         )
 
-        validate_metadata(skill, metadata)
+        validate_metadata(skill, metadata, "test")
 
-        self.assertTrue(any("front-matter" in warning for warning in skill.validation_warnings))
+        self.assertTrue(any("front-matter" in error for error in skill.validation_errors))
+
+    def test_rejects_name_that_does_not_match_parent_directory(self) -> None:
+        metadata = {
+            "name": "wrong-name",
+            "description": "Use when testing name validation.",
+        }
+        skill = SkillMetadata(
+            name="wrong-name",
+            description=metadata["description"],
+            file_path=".llm/skills/right-name/SKILL.md",
+            line_count=6,
+            has_front_matter=True,
+        )
+
+        validate_metadata(skill, metadata, "right-name")
+
+        self.assertTrue(
+            any("parent directory" in error for error in skill.validation_errors)
+        )
+
+    def test_rejects_cross_client_reserved_name(self) -> None:
+        metadata = {
+            "name": "claude-helper",
+            "description": "Use when testing cross-client name validation.",
+        }
+        skill = SkillMetadata(
+            name="claude-helper",
+            description=metadata["description"],
+            file_path=".llm/skills/claude-helper/SKILL.md",
+            line_count=6,
+            has_front_matter=True,
+        )
+
+        validate_metadata(skill, metadata, "claude-helper")
+
+        self.assertTrue(
+            any("reserved word" in error for error in skill.validation_errors)
+        )
+
+    def test_line_limits_warn_at_target_and_fail_above_maximum(self) -> None:
+        metadata = {
+            "name": "test",
+            "description": "Use when testing line limits.",
+        }
+        warning_skill = SkillMetadata(
+            name="test",
+            description=metadata["description"],
+            file_path=".llm/skills/test/SKILL.md",
+            line_count=151,
+            has_front_matter=True,
+        )
+        error_skill = SkillMetadata(
+            name="test",
+            description=metadata["description"],
+            file_path=".llm/skills/test/SKILL.md",
+            line_count=201,
+            has_front_matter=True,
+        )
+
+        validate_metadata(warning_skill, metadata, "test")
+        validate_metadata(error_skill, metadata, "test")
+
+        self.assertTrue(
+            any("150" in warning for warning in warning_skill.validation_warnings)
+        )
+        self.assertTrue(
+            any("200" in error for error in error_skill.validation_errors)
+        )
+
+    def test_generation_discovers_standard_skill_directories(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo_root = Path(temporary_directory)
+            write_skill(repo_root, "example-skill")
+
+            index = generate_index(repo_root)
+
+            (skill,) = index["skills"]
+            self.assertEqual("example-skill", skill["name"])
+            self.assertEqual(
+                ".llm/skills/example-skill/SKILL.md",
+                skill["file_path"],
+            )
 
     def test_generation_is_deterministic(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repo_root = Path(temporary_directory)
-            skills_directory = repo_root / ".llm" / "skills"
-            skills_directory.mkdir(parents=True)
-            (skills_directory / "second.md").write_text(
-                "---\ntriggers:\n  - second\ncategory: testing\npriority: core\n"
-                "---\n# Second\n",
-                encoding="utf-8",
-            )
-            (skills_directory / "first.md").write_text(
-                "---\ntriggers:\n  - first\ncategory: core\npriority: reference\n"
-                "---\n# First\n",
-                encoding="utf-8",
-            )
+            write_skill(repo_root, "second")
+            write_skill(repo_root, "first", category="core", priority="reference")
 
             first = generate_index(repo_root)
             second = generate_index(repo_root)
@@ -170,13 +269,7 @@ class MetadataTests(unittest.TestCase):
     def test_related_skills_must_resolve(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repo_root = Path(temporary_directory)
-            skills_directory = repo_root / ".llm" / "skills"
-            skills_directory.mkdir(parents=True)
-            (skills_directory / "valid.md").write_text(
-                "---\ntriggers:\n  - valid\ncategory: core\n"
-                "related:\n  - missing\npriority: core\n---\n# Valid\n",
-                encoding="utf-8",
-            )
+            write_skill(repo_root, "valid", related="missing")
 
             index = generate_index(repo_root)
 
@@ -191,60 +284,58 @@ class MetadataTests(unittest.TestCase):
     def test_related_skills_accept_existing_target(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repo_root = Path(temporary_directory)
-            skills_directory = repo_root / ".llm" / "skills"
-            skills_directory.mkdir(parents=True)
-            (skills_directory / "target.md").write_text(
-                "---\ntriggers:\n  - target\ncategory: core\npriority: core\n"
-                "---\n# Target\n",
-                encoding="utf-8",
-            )
-            (skills_directory / "source.md").write_text(
-                "---\ntriggers:\n  - source\ncategory: core\n"
-                "related:\n  - target\npriority: core\n---\n# Source\n",
-                encoding="utf-8",
-            )
+            write_skill(repo_root, "target")
+            write_skill(repo_root, "source", related="target")
 
             index = generate_index(repo_root)
 
             self.assertEqual(0, index["validation_summary"]["total_warnings"])
 
-    def test_wrong_type_category_warns_without_crashing_generation(self) -> None:
+    def test_rejects_legacy_flat_layout(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repo_root = Path(temporary_directory)
             skills_directory = repo_root / ".llm" / "skills"
             skills_directory.mkdir(parents=True)
-            (skills_directory / "invalid.md").write_text(
-                "---\ntriggers:\n  - invalid\ncategory:\n  - core\n"
-                "priority: core\n---\n# Invalid\n",
-                encoding="utf-8",
-            )
+            (skills_directory / "legacy.md").write_text("# Legacy\n", encoding="utf-8")
 
             index = generate_index(repo_root)
 
-            self.assertEqual(["invalid"], index["categories"]["uncategorized"])
-            self.assertGreater(index["validation_summary"]["total_warnings"], 0)
+            self.assertEqual(1, index["validation_summary"]["total_errors"])
+            self.assertTrue(index["validation_summary"]["structure_errors"])
 
     def test_skill_paths_use_posix_separators(self) -> None:
-        """`--check` compares the committed index byte-for-byte.
-
-        A native-separator path would make an index regenerated on Windows look
-        stale on Unix CI and vice versa.
-        """
         with tempfile.TemporaryDirectory() as temporary_directory:
             repo_root = Path(temporary_directory)
-            skills_directory = repo_root / ".llm" / "skills"
-            skills_directory.mkdir(parents=True)
-            (skills_directory / "example.md").write_text(
-                "---\ntriggers:\n  - example\ncategory: core\npriority: core\n---\n"
-                "# Example\n",
-                encoding="utf-8",
-            )
+            write_skill(repo_root, "example")
 
             index = generate_index(repo_root)
 
             (skill,) = index["skills"]
-            self.assertEqual(".llm/skills/example.md", skill["file_path"])
+            self.assertEqual(".llm/skills/example/SKILL.md", skill["file_path"])
             self.assertNotIn("\\", skill["file_path"])
+
+    def test_discovery_aliases_point_to_canonical_skills(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo_root = Path(temporary_directory)
+            (repo_root / ".llm" / "skills").mkdir(parents=True)
+            for directory in (".agents", ".claude"):
+                (repo_root / directory).mkdir()
+                (repo_root / directory / "skills").symlink_to("../.llm/skills")
+
+            self.assertEqual([], validate_discovery_aliases(repo_root))
+
+    def test_discovery_aliases_reject_missing_or_wrong_targets(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repo_root = Path(temporary_directory)
+            (repo_root / ".llm" / "skills").mkdir(parents=True)
+            (repo_root / ".agents").mkdir()
+            (repo_root / ".agents" / "skills").symlink_to("../wrong")
+
+            errors = validate_discovery_aliases(repo_root)
+
+            self.assertEqual(2, len(errors))
+            self.assertTrue(any(".agents/skills" in error for error in errors))
+            self.assertTrue(any(".claude/skills" in error for error in errors))
 
 
 if __name__ == "__main__":

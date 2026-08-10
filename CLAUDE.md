@@ -22,7 +22,7 @@
 1. **Lua Fixture Metadata** - ONLY `@lua-versions`, `@novasharp-only`, `@expects-error`
 1. **Pre-Commit Validation Allowed** - `bash ./scripts/dev/pre-commit.sh` is expected before commits and may restage files it auto-formats or regenerates.
 1. **No false green-lighting** - Only say `green`, `verified`, `passes`, or `complete` after the exact local checks and PR CI were observed passing. Otherwise report the check as `not run` or failing residual risk.
-1. **Mandatory post-work improvement gate** - After every large change or investigation, and before declaring it complete, follow [`.llm/skills/post-work-reflection.md`](.llm/skills/post-work-reflection.md). Fix discovered defects, capture reusable techniques or durable knowledge in the appropriate `.llm` artifact, and obtain an independent review when agents are available.
+1. **Mandatory post-work improvement gate** - After every large change or investigation, and before declaring it complete, follow [`.llm/skills/post-work-reflection/SKILL.md`](.llm/skills/post-work-reflection/SKILL.md). Fix discovered defects, capture reusable techniques or durable knowledge in the appropriate `.llm` artifact, and obtain an independent review when agents are available.
 
 ## Build & Test
 
@@ -43,7 +43,7 @@ Before closing behavior or CI work, run the relevant targeted tests, `./scripts/
 
 See [`.llm/skills/`](.llm/skills/) for task-specific guides:
 
-- [correctness-then-performance](.llm/skills/correctness-then-performance.md) - Priority hierarchy
-- [high-performance-csharp](.llm/skills/high-performance-csharp.md) - Zero-allocation patterns
-- [tunit-test-writing](.llm/skills/tunit-test-writing.md) - Writing tests
-- [lua-fixture-creation](.llm/skills/lua-fixture-creation.md) - Creating .lua fixtures
+- [correctness-then-performance](.llm/skills/correctness-then-performance/SKILL.md) - Priority hierarchy
+- [high-performance-csharp](.llm/skills/high-performance-csharp/SKILL.md) - Zero-allocation patterns
+- [tunit-test-writing](.llm/skills/tunit-test-writing/SKILL.md) - Writing tests
+- [lua-fixture-creation](.llm/skills/lua-fixture-creation/SKILL.md) - Creating .lua fixtures

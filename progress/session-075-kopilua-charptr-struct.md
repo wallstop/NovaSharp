@@ -172,4 +172,4 @@ ______________________________________________________________________
 
 - [Phase 1: Baseline Measurements](session-074-kopilua-optimization-phase1.md)
 - [Initiative 10 in PLAN.md](../PLAN.md#initiative-10-kopilua-performance-hyper-optimization)
-- [High-Performance C# Guidelines](../.llm/skills/high-performance-csharp.md)
+- [High-Performance C# Guidelines](../.llm/skills/high-performance-csharp/SKILL.md)

@@ -32,12 +32,12 @@ NovaSharp becomes the definitive Lua modding framework for Unity:
 
 ### The Performance Problem (measured evidence)
 
-| Workload | NovaSharp/MoonSharp lineage | NLua (native via P/Invoke) | Gap |
-| ---------------------------------- | --------------------------- | -------------------------- | ---------------------- |
-| Tower of Hanoi (pure Lua) | ~7,175 μs / 35.5 MB alloc | 430 μs / 24 B | **~15x slower** |
-| EightQueens (pure Lua) | ~978 μs / 3.5 MB | 82 μs / 24 B | **~12x** |
-| Hanoi + C# callback per step | ~600 ms | ~20,000 ms | **33x FASTER** |
-| Empty Lua fn 5,000×/frame (Unity) | MoonSharp 315 fps | 170 fps | managed wins 2x |
+| Workload                          | NovaSharp/MoonSharp lineage | NLua (native via P/Invoke) | Gap             |
+| --------------------------------- | --------------------------- | -------------------------- | --------------- |
+| Tower of Hanoi (pure Lua)         | ~7,175 μs / 35.5 MB alloc   | 430 μs / 24 B              | **~15x slower** |
+| EightQueens (pure Lua)            | ~978 μs / 3.5 MB            | 82 μs / 24 B               | **~12x**        |
+| Hanoi + C# callback per step      | ~600 ms                     | ~20,000 ms                 | **33x FASTER**  |
+| Empty Lua fn 5,000×/frame (Unity) | MoonSharp 315 fps           | 170 fps                    | managed wins 2x |
 
 Sources: `docs/Performance.md` MoonSharp baseline (2025-11-08); MoonSharp author's published Hanoi numbers; Lua-CSharp issue #156 (where Lua-CSharp v0.5, a pure-C# register VM with struct values, hit **395 fps** — beating both; single-source, one reporter on Unity Mono, treat as directional).
 
@@ -47,13 +47,13 @@ Sources: `docs/Performance.md` MoonSharp baseline (2025-11-08); MoonSharp author
 
 The Phase A0 baseline makes recursive pure-Lua compute a current allocation incident, not a cleanup footnote. `FibonacciRecursive Execute` (`fib(30)`) allocates **2,132,514,592 B/op** in NovaSharp versus **144 B/op** in NLua and **200 B/op** in Lua-CSharp. The same heap-scalar pattern appears across other compute rows:
 
-| Scenario | NovaSharp Execute | NLua Execute | Lua-CSharp Execute |
-| ------------------ | --------------------------- | ------------------------ | --------------------------- |
-| FibonacciRecursive | 1,239,599 μs / 2,132.5 MB | 189,531 μs / 144 B | 307,508 μs / 200 B |
-| TowerOfHanoi | 21,924 μs / 40.3 MB | 2,358 μs / 24 B | 3,773 μs / 144 B |
-| NumericLoops | 1,992 μs / 2.8 MB | 701 μs / 144 B | 616 μs / 0 B |
-| BinaryTrees | 53,147 μs / 83.9 MB | 17,138 μs / 144 B | 15,590 μs / 10.2 MB |
-| SpectralNorm | 44,336 μs / 77.1 MB | 4,449 μs / 144 B | 6,740 μs / 4,992 B |
+| Scenario           | NovaSharp Execute         | NLua Execute       | Lua-CSharp Execute  |
+| ------------------ | ------------------------- | ------------------ | ------------------- |
+| FibonacciRecursive | 1,239,599 μs / 2,132.5 MB | 189,531 μs / 144 B | 307,508 μs / 200 B  |
+| TowerOfHanoi       | 21,924 μs / 40.3 MB       | 2,358 μs / 24 B    | 3,773 μs / 144 B    |
+| NumericLoops       | 1,992 μs / 2.8 MB         | 701 μs / 144 B     | 616 μs / 0 B        |
+| BinaryTrees        | 53,147 μs / 83.9 MB       | 17,138 μs / 144 B  | 15,590 μs / 10.2 MB |
+| SpectralNorm       | 44,336 μs / 77.1 MB       | 4,449 μs / 144 B   | 6,740 μs / 4,992 B  |
 
 The baseline root cause was structural: every hot Lua scalar was a heap `DynValue`, arithmetic opcodes allocated fresh wrappers, and ordinary non-tail calls moved arguments and returns through heap objects. The A1c native `LuaValue` conversion, stack-window arguments, inline uncaptured locals, and contextless Math callbacks have now removed that allocation class: local measurements at commit `e5b196e8` report `fib(30)` at 192 B/op and NumericLoops at 0 B/op. Speed remains the blocking dimension: on the same runner, `fib(30)` and Hanoi are still 20.70x and 20.27x slower than NLua.
 
@@ -215,11 +215,11 @@ Review on PR #89 found four issues, every one of them about retained memory or b
 
 **Progress**: Proper Lua tail-call frame reuse and growable `FastStack` landed on 2026-07-06, with follow-up hardening for `xpcall` message-handler ordering across Lua 5.4 `<close>` errors. The first coroutine-cost stack shrink landed later on 2026-07-06: processors and execution-state snapshots now start with 512 value slots / 64 call frames and grow geometrically, with targeted coverage for main processors, child coroutine processors, deep non-tail recursion past the initial frame capacity, and large vararg calls past the initial value capacity. The configurable VM stack ceiling landed on 2026-07-16: `FastStack` growth past a per-coroutine ceiling raises a deterministic, `pcall`-catchable `stack overflow` error (matching reference Lua) instead of exhausting host memory, configured by `ScriptOptions.MaxVmValueStackSize` / `MaxVmCallStackSize` (default 1,000,000 each, `<= 0` disables) and independent of the opt-in sandbox recursion limit. At the default, runaway recursion overflows at ~250k frames — between reference Lua 5.1 and 5.4. Remaining A5 work is struct call frames and the span-based call/interop convention. See [progress/session-165-proper-tail-calls-close-errors.md](progress/session-165-proper-tail-calls-close-errors.md), [progress/session-166-a5-shrink-vm-stacks.md](progress/session-166-a5-shrink-vm-stacks.md), and [progress/session-169-a5-vm-stack-ceiling.md](progress/session-169-a5-vm-stack-ceiling.md).
 
-On 2026-08-09, stack-window argument binding and the first full CoreLib callback migration landed. The Math module now uses stack-only `CallbackArgumentsView` registrations while preserving the public legacy reflection surface; NumericLoops measures 0 B/op and 1.856 ms locally, down from 1,248,000 B/op and 1.956 ms immediately before the migration. One-argument/one-result host calls also measure 0 B, and Lua-to-CLR interop measures 540.11 ns / 0 B versus NLua at 603.53 ns / 504 B. Remaining exit failures are call speed (`fib(30)` 20.70x NLua; Hanoi 20.27x), script construction (319,436 B versus <100 KiB), and coroutine resume (592 B for fixed resume-3). These are tracked as the next A5 work rather than being hidden by the allocation wins.
+On 2026-08-09, stack-window argument binding and the first full CoreLib callback migration landed. The Math module now uses stack-only `CallbackArgumentsView` registrations while preserving the public legacy reflection surface; NumericLoops measures 0 B/op and 1.856 ms locally, down from 1,248,000 B/op and 1.956 ms immediately before the migration. One-argument/one-result host calls also measure 0 B, and Lua-to-CLR interop measures 540.11 ns / 0 B versus NLua at 603.53 ns / 504 B. Remaining exit failures are call speed (`fib(30)` 20.70x NLua; Hanoi 20.27x), script construction (319,436 B versus \<100 KiB), and coroutine resume (592 B for fixed resume-3). These are tracked as the next A5 work rather than being hidden by the allocation wins.
 
 The bounded inline-frame experiment was measured and rejected on 2026-08-09. Replacing pooled `CallStackItem` classes with the existing full frame as an inline struct did not demonstrate a repeatable `fib(30)` improvement: the experimental 20.20x NLua ratio falls between observed main baselines of 18.97x and 20.70x. It did add exactly 9,728 B to every constructed processor because the initial 64-slot execution stack embedded the full frame payload. The runtime changes were reverted; the unchecked struct-frame item and issue #108 therefore remain open. A Lua 5.4+ regression now locks down re-entrant `__close` and `xpcall` handlers that grow the execution stack past its initial capacity. Any renewed frame-layout work must first split the hot call/return fields from cold debugger, error-handler, and close-state data or prove a smaller representation before replacing the pool. See [progress/session-174-a5-inline-frame-experiment.md](progress/session-174-a5-inline-frame-experiment.md).
 
-**Exit criteria**: fib/hanoi ≤2-3x of NLua; one-arg/one-result Lua calls allocate **0 B steady-state after warmup**; vararg/tuple allocation remains only for escaped multi-return/vararg cases; **Lua→CLR interop benchmark beats NLua outright**; `new Script()` <100 KB; coroutine create/resume near-zero steady-state alloc.
+**Exit criteria**: fib/hanoi ≤2-3x of NLua; one-arg/one-result Lua calls allocate **0 B steady-state after warmup**; vararg/tuple allocation remains only for escaped multi-return/vararg cases; **Lua→CLR interop benchmark beats NLua outright**; `new Script()` \<100 KB; coroutine create/resume near-zero steady-state alloc.
 
 #### Phase A6 — Strings (~1-2 weeks)
 
@@ -254,14 +254,14 @@ Loading is 20-60x behind `luaL_loadstring`. Do NOT rewrite the parser. Profile, 
 
 Numbers are **desktop CoreCLR** targets; expect IL2CPP/AOT to land worse on compute-heavy rows (see the Performance Problem caveats). The A8 column reflects the calibrated ~1.1-1.4x register-VM delta above, not a larger multiplier.
 
-| Class | After A1-A7 (stack VM) | After A8 (register VM) | Confidence |
-| ----------------------------- | ---------------------- | ---------------------- | ------------------------------------ |
-| Numeric loops | 2.5-5x | 2-3.5x | High (Lua-CSharp precedent; WattleScript claim unverified) |
-| Call-heavy (fib/hanoi) | 3-7x | 2-4x | Medium — the register-VM fork |
-| Table-heavy | 2-4x | 2-3x | Medium-high |
-| String-heavy | 1.5-3x | same | High (BCL strings are good) |
-| Interop Lua↔CLR | **beats NLua 2-10x** | same or better | High — the structural advantage |
-| Compile (cold) | 5-15x slower | same | Medium |
+| Class                  | After A1-A7 (stack VM) | After A8 (register VM) | Confidence                                                 |
+| ---------------------- | ---------------------- | ---------------------- | ---------------------------------------------------------- |
+| Numeric loops          | 2.5-5x                 | 2-3.5x                 | High (Lua-CSharp precedent; WattleScript claim unverified) |
+| Call-heavy (fib/hanoi) | 3-7x                   | 2-4x                   | Medium — the register-VM fork                              |
+| Table-heavy            | 2-4x                   | 2-3x                   | Medium-high                                                |
+| String-heavy           | 1.5-3x                 | same                   | High (BCL strings are good)                                |
+| Interop Lua↔CLR        | **beats NLua 2-10x**   | same or better         | High — the structural advantage                            |
+| Compile (cold)         | 5-15x slower           | same                   | Medium                                                     |
 
 Total A0-A7 ≈ 14-20 engineer-weeks; A8 +6-10 if triggered. (A4.5 opcode specialization, added in the Research Review below, is a separate ~1-2 week item expected to buy 10-30% aggregate before the A8 gate is even evaluated.)
 
@@ -311,24 +311,24 @@ public delegate LuaValue LuaCallback(LuaContext ctx, ReadOnlySpan<LuaValue> args
 // }
 ```
 
-Pit-of-success targets: a sandboxed mod host in **<15 lines**; a bound game API class in **<30 lines**; per-frame `onUpdate.Call(Time.deltaTime)` with **0 B GC/frame**.
+Pit-of-success targets: a sandboxed mod host in **\<15 lines**; a bound game API class in **\<30 lines**; per-frame `onUpdate.Call(Time.deltaTime)` with **0 B GC/frame**.
 
 #### Packaging
 
-| Package | Contents |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| `NovaSharp` (core) | VM, LuaValue/LuaEngine/LuaTable/LuaFunction/LuaCoroutine, stdlib, sandbox, 5.1-5.5 profiles; `Tree/`, `Execution/`, descriptors → internal |
-| `NovaSharp.Interop.Generator` | Roslyn incremental generator + analyzers (netstandard2.0; ships as analyzer asset + raw DLL for Unity `RoslynAnalyzer` label) |
-| `NovaSharp.Interop.Reflection` | today's `UserData.RegisterType<T>` descriptor system; desktop/dev fallback; explicitly unsupported on IL2CPP; ships link.xml |
-| `NovaSharp.Modding` | ModHost, capability manifests, per-mod isolation, hot reload, EmmyLua stub emission |
-| `NovaSharp.Debugging.Dap` | current VS Code debugger retargeted to the new engine |
-| `NovaSharp.Cli` (dotnet tool) | REPL, batch runner, luac-style compile, stub dump |
+| Package                               | Contents                                                                                                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `NovaSharp` (core)                    | VM, LuaValue/LuaEngine/LuaTable/LuaFunction/LuaCoroutine, stdlib, sandbox, 5.1-5.5 profiles; `Tree/`, `Execution/`, descriptors → internal |
+| `NovaSharp.Interop.Generator`         | Roslyn incremental generator + analyzers (netstandard2.0; ships as analyzer asset + raw DLL for Unity `RoslynAnalyzer` label)              |
+| `NovaSharp.Interop.Reflection`        | today's `UserData.RegisterType<T>` descriptor system; desktop/dev fallback; explicitly unsupported on IL2CPP; ships link.xml               |
+| `NovaSharp.Modding`                   | ModHost, capability manifests, per-mod isolation, hot reload, EmmyLua stub emission                                                        |
+| `NovaSharp.Debugging.Dap`             | current VS Code debugger retargeted to the new engine                                                                                      |
+| `NovaSharp.Cli` (dotnet tool)         | REPL, batch runner, luac-style compile, stub dump                                                                                          |
 | `com.wallstopstudios.novasharp` (UPM) | asmdefs, generator DLL, `LuaAsset` ScriptedImporter, Resources/Addressables/StreamingAssets loaders, Unity struct pack, `Samples~/ModHost` |
 
 #### Phase B0 — API facade + RFC (~2-3 weeks; parallel with A1)
 
 - [x] `LuaValue`, `LuaEngine`, `LuaTable`, `LuaFunction`, `LuaCoroutine`, `LuaEngineOptions`, exception types — as a facade over the current VM (LuaValue wraps DynValue internally at first).
-- [x] Public-API baseline file (`PublicAPI.Shipped.txt` style) checked in and CI-enforced (<40 core types).
+- [x] Public-API baseline file (`PublicAPI.Shipped.txt` style) checked in and CI-enforced (\<40 core types).
 - [x] Samples compile and run: hello world, per-frame call, sandboxed host.
 
 **Exit criteria**: facade `Run`/`Call` within 5% of `Script.DoString`/`Call` on the A0 scoreboard - closed on 2026-07-04 by PR benchmark run `28696439454`.
@@ -346,7 +346,7 @@ Pit-of-success targets: a sandboxed mod host in **<15 lines**; a bound game API 
 - [ ] Deprecate the CodeDom Hardwire CLI; delete at generator parity (supersedes `docs/proposals/roslyn-hardwire-generator.md`'s keep-surface goal — the generator emits the NEW shape).
 - [ ] Bonus output: EmmyLua/LuaLS `.lua` stubs per `[LuaObject]` → modder autocomplete in the VS Code extension.
 
-**Exit criteria**: bound GameApi sample <30 lines; trimmed publish emits zero NovaSharp trim warnings; generated path verified reflection-free.
+**Exit criteria**: bound GameApi sample \<30 lines; trimmed publish emits zero NovaSharp trim warnings; generated path verified reflection-free.
 
 **Progress**: B1 started on 2026-07-05 with the public attribute contract in core: `LuaObjectAttribute`, `LuaMemberAttribute`, `LuaMetamethodAttribute`, `LuaMetamethodKind`, and `LuaIgnoreAttribute`, with public API baseline coverage and reflection smoke tests for metadata, target scopes, and invalid names. Review follow-up made the attribute target smoke test diagnostic on missing `[AttributeUsage]` metadata and pinned explicit public numeric values for every `LuaMetamethodKind` member. Also on 2026-07-05, the `WallstopStudios.NovaSharp.Interop.Generator` analyzer package was added with Roslyn diagnostics for the planned source-generator contract: `NS0001` non-partial `[LuaObject]`, `NS0002` unsupported exposed types, `NS0003` ref/out/in/pointer/open-generic signatures, `NS0004` duplicate Lua-visible names, `NS0005` async returns requiring the future adapter package, `NS0006` source-generator member attributes outside a `[LuaObject]` type, and `NS0007` invalid interop attribute arguments. Review hardening then made `LuaIgnoreAttribute` a true opt-out before `NS0006`, added accessor-level `NS0006` coverage, continued validation after ref/ref-readonly returns and invalid names, used CLR-name fallback for invalid-name collisions, aligned analyzer/test Roslyn references with Microsoft.CodeAnalysis 4.12, and kept embedded analyzer fixtures out of the namespace audit. The package is compiled and tested directly but is not yet wired into runtime projects as a live analyzer. The first generator slice now emits a deterministic companion partial manifest/dispatch shape for valid top-level `[LuaObject]` class, struct, record, and record struct inputs, including string-switch dispatch placeholders, ignored-member filtering, and referenced-enum manifest entries; golden-source generator tests lock that output. On 2026-07-05, referenced enum models started emitting a private `__NovaSharpGeneratedRegisterEnumTables(...)` helper that builds facade `LuaTable` instances with string-keyed numeric constants for signed and unsigned enum members, skips `[LuaIgnore]` enum types/members, and disambiguates table keys when enum simple names collide with each other or with exposed member names. Later on 2026-07-05, generated registration wiring made enum tables runtime-visible through the generated object table and added direct method callbacks through the root facade `LuaCallback`/`LuaContext` span API; the generator now emits typed primitive/facade argument unpacking for supported sync methods without `MethodInfo` or dictionary dispatch, escapes C# keyword method identifiers, keeps generated callback failures catchable by Lua `pcall`, and rejects `[LuaObject]`-typed member signatures until an adapter surface exists. On 2026-07-06, generated object registration added live property and field binding through generated `__index`/`__newindex` metatables, including read-only handling for init-only, readonly, and value-type-copy members, enum property round-trips, field writes, stale-snapshot regression coverage after method mutation, and analyzer rejection for static/indexer/const shapes the generator intentionally skips. Copilot review follow-up then hardened unsigned enum writes for high-value and narrow-underlying enum round trips, checked enum setter range conversions, non-string generated metatable key behavior, host-side `LuaTable.SetMetatable(...)` documentation, and enum-model handling for incomplete-compilation symbols without an underlying type. Async suspension markers and stub output remain pending. See [progress/session-150-b1-source-generator-attributes.md](progress/session-150-b1-source-generator-attributes.md), [progress/session-152-copilot-review-diagnostics.md](progress/session-152-copilot-review-diagnostics.md), [progress/session-153-metamethod-enum-contract.md](progress/session-153-metamethod-enum-contract.md), [progress/session-154-b1-analyzer-diagnostics.md](progress/session-154-b1-analyzer-diagnostics.md), [progress/session-155-b1-analyzer-review-hardening.md](progress/session-155-b1-analyzer-review-hardening.md), [progress/session-160-b1-generator-golden-tests.md](progress/session-160-b1-generator-golden-tests.md), [progress/session-161-b1-enum-table-generation.md](progress/session-161-b1-enum-table-generation.md), [progress/session-162-b1-generated-registration-callbacks.md](progress/session-162-b1-generated-registration-callbacks.md), [progress/session-163-b1-property-field-bindings.md](progress/session-163-b1-property-field-bindings.md), and [progress/session-164-b1-review-unsigned-enum-roundtrip.md](progress/session-164-b1-review-unsigned-enum-roundtrip.md).
 
@@ -393,19 +393,19 @@ ______________________________________________________________________
 
 ### Spec-Compliance Risk Register
 
-| Risk | Phase | How the harness catches it / mitigation |
-| ---------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------- |
-| `null` vs `Nil` vs `Void` conflation | A1 | Targeted fixtures added BEFORE conversion; manual audit of every `== null` site |
-| Value identity semantics (`_refId` removal) | A1 | `Table`/`Closure`/`Coroutine` stay `RefIdObject` classes; tostring/debugger fixtures |
-| Shared readonly literals in instruction stream | A1-A2 | Struct copy semantics eliminate the bug class; delete readonly machinery only after fixtures green |
-| Bytecode dump/load format break | A2 | Version-bump header; `SerializationTests/` round-trip + load-rejection test |
-| Sandbox limit granularity (per-instr → fuel) | A3 | Intentional documented change; tests assert "trips within limit + K" |
-| Auto-yield timing shift | A3 | Assert yield happens, not exact instruction index |
-| **Table iteration order change** | A4 | Fixtures compare vs reference Lua (order already differs); shuffled-iteration smoke test; `next`-contract fixtures added pre-rewrite |
-| `#`/border semantics with array part | A4 | Port PUC border search exactly; per-version `#` fixtures; fuzz vs reference lua |
-| Proper tail calls and `<close>` interaction | A5 | Tail-call tests cover stack depth, `istailcall`, sandbox depth, callable `__call`, and Lua 5.4+ close-handler exclusion |
-| CoreLib signature migration typos | A5 | One module per PR; per-module fixture gates |
-| Int/float subtype (5.3+) | all | `LuaNumber` union preserved verbatim; numeric edge-case fixtures as canary |
+| Risk                                           | Phase | How the harness catches it / mitigation                                                                                              |
+| ---------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `null` vs `Nil` vs `Void` conflation           | A1    | Targeted fixtures added BEFORE conversion; manual audit of every `== null` site                                                      |
+| Value identity semantics (`_refId` removal)    | A1    | `Table`/`Closure`/`Coroutine` stay `RefIdObject` classes; tostring/debugger fixtures                                                 |
+| Shared readonly literals in instruction stream | A1-A2 | Struct copy semantics eliminate the bug class; delete readonly machinery only after fixtures green                                   |
+| Bytecode dump/load format break                | A2    | Version-bump header; `SerializationTests/` round-trip + load-rejection test                                                          |
+| Sandbox limit granularity (per-instr → fuel)   | A3    | Intentional documented change; tests assert "trips within limit + K"                                                                 |
+| Auto-yield timing shift                        | A3    | Assert yield happens, not exact instruction index                                                                                    |
+| **Table iteration order change**               | A4    | Fixtures compare vs reference Lua (order already differs); shuffled-iteration smoke test; `next`-contract fixtures added pre-rewrite |
+| `#`/border semantics with array part           | A4    | Port PUC border search exactly; per-version `#` fixtures; fuzz vs reference lua                                                      |
+| Proper tail calls and `<close>` interaction    | A5    | Tail-call tests cover stack depth, `istailcall`, sandbox depth, callable `__call`, and Lua 5.4+ close-handler exclusion              |
+| CoreLib signature migration typos              | A5    | One module per PR; per-module fixture gates                                                                                          |
+| Int/float subtype (5.3+)                       | all   | `LuaNumber` union preserved verbatim; numeric edge-case fixtures as canary                                                           |
 
 ### Priority order (what to do next, in sequence)
 
@@ -453,15 +453,15 @@ The roadmap has no opcode specialization, inline caching, or fastcall — the si
 The plan's sandbox architecture (capability manifest → module flags, per-mod engine isolation, fuel, memory limits, consent dialogs) is directionally right and maps cleanly onto object-capability theory (Miller, "Robust Composition"; POLA). Per-mod engine isolation is the strongest single decision — it structurally avoids the shared-Lua-state capability leak that produced Minetest/Luanti's CVE-2026-40960. The following concrete gaps should be closed. Prior-art checklist to cite: **Jint's `Constraints` model** (`LimitMemory`, `TimeoutInterval`, `MaxStatements`, `LimitRecursion`, `RegexTimeout`, `CancellationToken`) is the closest .NET-interpreter analog — and its documented statement-granularity bypass (Jint #683) is direct proof that back-edge fuel alone is insufficient. Preemption bar: **Cobalt** (yield/interrupt anywhere, incl. inside native calls — powers CC:Tweaked's runaway-mod kill) and **Piccolo** (stackless fuel that covers native callbacks; drop-to-cancel).
 
 1. [ ] **Per-match pattern step limit** — Lua patterns are a backtracking matcher with quadratic/exponential blowup (PIL 20.4: an unanchored pattern on a 200 K string runs 3+ hours). Pattern matching is a builtin, so **instruction fuel at back-edges cannot see it**. Needs a dedicated per-match step counter. Neither stock Lua nor Luau ships this — it is an original requirement. **← highest-value gap.**
-2. [ ] **Explicit interpreter call-depth / recursion guard** raising a catchable Lua error before the C# stack is exhausted. .NET `StackOverflowException` is **uncatchable and terminates the process** — deep Lua recursion, `__index` chains, and recursive `pcall` all map to deep C# recursion and would crash the entire Unity process. Existential for a managed host (cf. Jint `LimitRecursion`).
-3. [ ] **Per-call wall-clock watchdog** paired with the deterministic fuel counter. Fuel/statement metering is blind to time spent inside a single long host callback or builtin (Jint #683; Lua's count-hook has the same C-function blind spot). Wasmtime pairs deterministic fuel with a non-deterministic epoch/watchdog for exactly this reason. Note the watchdog can only *signal* on Unity's main thread (see item 7).
-4. [ ] **Bytecode policy — refuse precompiled/binary chunks entirely** (equivalent to `load(..., "t")`; no `string.dump` round-trip into execution). This is the free win from being managed and should be explicit and default-on.
-5. [ ] **Interop/reflection confinement** — in a managed host the new escape surface is CLR reflection and host-object leakage. Scripts get only unforgeable, wrapped capabilities: no reflection, no raw CLR types, a **read-only string metatable** and read-only library metatables (the `getmetatable("")` escape; Luau marks all builtins read-only).
-6. [ ] **Controlled OOM & boundary-exception normalization** — the memory cap must raise a Lua error *before* the CLR throws `OutOfMemoryException` (uncontained in .NET); host exceptions crossing the script boundary must be normalized so they neither leak type/stack info nor become capabilities.
-7. [ ] **Unity main-thread cooperative yielding** — long scripts on the main thread freeze the editor/game, and Unity's API is main-thread-only, so a background watchdog can abort but cannot touch Unity objects. Fuel must support cooperative main-thread yield points.
-8. [ ] **Determinism preset expansion** (B4) — beyond the existing time/random seams, a serious `Deterministic` preset also needs: defined `pairs` iteration order **and** a fixed string-hash seed (note the tension: fixing the seed re-opens hash-flooding DoS); an FP policy for IL2CPP ARM-vs-x64 divergence (transcendentals/FMA-contraction/subnormals — Lua numbers are `double`, this is the hardest part); and suppression of GC-observable APIs (`collectgarbage("count")`, `__gc` timing) and pointer-address leaks in `tostring(table)`. Factorio's deterministic-lockstep model is the reference; "seed time + random" alone misses items here.
-9. [ ] **Hot-reload state-migration contract** — explicit `mod.save_state()`/`mod.load_state(t)` (analogous to Erlang OTP `code_change/3`), with documented dangling-reference caveats (stale closures/coroutines/timers/event subscriptions). Per-mod isolation already simplifies this (reload = fresh engine + serialized state).
-10. [ ] **Distribution / supply-chain** — the Cities:Skylines 2022 malware arrived via the *update channel and a transitive dependency* (a swapped Harmony), not the initial upload. Gate auto-update/side-load as its own capability; sign/checksum artifacts; treat transitive mod dependencies as part of the manifest. Counter permission-prompt habituation with least-privilege defaults (Noita's "unsafe mods are visibly exceptional and Workshop-barred" model).
+1. [ ] **Explicit interpreter call-depth / recursion guard** raising a catchable Lua error before the C# stack is exhausted. .NET `StackOverflowException` is **uncatchable and terminates the process** — deep Lua recursion, `__index` chains, and recursive `pcall` all map to deep C# recursion and would crash the entire Unity process. Existential for a managed host (cf. Jint `LimitRecursion`).
+1. [ ] **Per-call wall-clock watchdog** paired with the deterministic fuel counter. Fuel/statement metering is blind to time spent inside a single long host callback or builtin (Jint #683; Lua's count-hook has the same C-function blind spot). Wasmtime pairs deterministic fuel with a non-deterministic epoch/watchdog for exactly this reason. Note the watchdog can only *signal* on Unity's main thread (see item 7).
+1. [ ] **Bytecode policy — refuse precompiled/binary chunks entirely** (equivalent to `load(..., "t")`; no `string.dump` round-trip into execution). This is the free win from being managed and should be explicit and default-on.
+1. [ ] **Interop/reflection confinement** — in a managed host the new escape surface is CLR reflection and host-object leakage. Scripts get only unforgeable, wrapped capabilities: no reflection, no raw CLR types, a **read-only string metatable** and read-only library metatables (the `getmetatable("")` escape; Luau marks all builtins read-only).
+1. [ ] **Controlled OOM & boundary-exception normalization** — the memory cap must raise a Lua error *before* the CLR throws `OutOfMemoryException` (uncontained in .NET); host exceptions crossing the script boundary must be normalized so they neither leak type/stack info nor become capabilities.
+1. [ ] **Unity main-thread cooperative yielding** — long scripts on the main thread freeze the editor/game, and Unity's API is main-thread-only, so a background watchdog can abort but cannot touch Unity objects. Fuel must support cooperative main-thread yield points.
+1. [ ] **Determinism preset expansion** (B4) — beyond the existing time/random seams, a serious `Deterministic` preset also needs: defined `pairs` iteration order **and** a fixed string-hash seed (note the tension: fixing the seed re-opens hash-flooding DoS); an FP policy for IL2CPP ARM-vs-x64 divergence (transcendentals/FMA-contraction/subnormals — Lua numbers are `double`, this is the hardest part); and suppression of GC-observable APIs (`collectgarbage("count")`, `__gc` timing) and pointer-address leaks in `tostring(table)`. Factorio's deterministic-lockstep model is the reference; "seed time + random" alone misses items here.
+1. [ ] **Hot-reload state-migration contract** — explicit `mod.save_state()`/`mod.load_state(t)` (analogous to Erlang OTP `code_change/3`), with documented dangling-reference caveats (stale closures/coroutines/timers/event subscriptions). Per-mod isolation already simplifies this (reload = fresh engine + serialized state).
+1. [ ] **Distribution / supply-chain** — the Cities:Skylines 2022 malware arrived via the *update channel and a transitive dependency* (a swapped Harmony), not the initial upload. Gate auto-update/side-load as its own capability; sign/checksum artifacts; treat transitive mod dependencies as part of the manifest. Counter permission-prompt habituation with least-privilege defaults (Noita's "unsafe mods are visibly exceptional and Workshop-barred" model).
 
 ### Positioning / moat (Vision section)
 
@@ -667,39 +667,35 @@ The "Lua Comparison CI/CD Failure Resolution" initiative recorded the following 
 
 #### References
 
-- Skill: [lua-comparison-harness](.llm/skills/lua-comparison-harness.md)
-- Skill: [test-failure-investigation](.llm/skills/test-failure-investigation.md)
-- Skill: [lua-fixture-creation](.llm/skills/lua-fixture-creation.md)
+- Skill: [lua-comparison-harness](.llm/skills/lua-comparison-harness/SKILL.md)
+- Skill: [test-failure-investigation](.llm/skills/test-failure-investigation/SKILL.md)
+- Skill: [lua-fixture-creation](.llm/skills/lua-fixture-creation/SKILL.md)
 - Prior session: [session-050-fixture-comparison-version-filtering](progress/session-050-fixture-comparison-version-filtering.md)
 
 ______________________________________________________________________
 
-### LLM Context Audit & Reorganization ✅ **COMPLETE**
+### Standard Agent Skills Migration ([#83](https://github.com/wallstop/NovaSharp/issues/83)) 🟡 **IN PROGRESS**
 
-**Status**: ✅ **COMPLETE** — Full reorganization achieved.
+**Status**: 🟡 **IN PROGRESS** — implementation and local focused validation are
+complete; PR CI observation remains.
 
-**Summary**: Reduced `.llm/` documentation from ~12,339 lines across 32 files to ~4,500 lines across 25 skills + 6 code-sample files.
+**Current milestone**:
 
-**Deliverables Completed**:
+- [x] Migrate all 31 skills to `.llm/skills/<name>/SKILL.md` with required Agent
+  Skills `name` and `description` metadata.
+- [x] Keep `.llm/skills` canonical and expose it through `.agents/skills` and
+  `.claude/skills` discovery symlinks for Codex, Claude Code, and GitHub Copilot.
+- [x] Move long conditional detail into per-skill `references/` resources; every
+  `SKILL.md` is at or below the 150-line target and below the 200-line ceiling.
+- [x] Upgrade `tools/LlmSkillIndexer/` and existing pre-commit/CI integration to
+  reject legacy layouts, invalid standard metadata, bad related-skill names,
+  discovery alias drift, files above the line limits, and stale generated output.
+- [x] Observe all 31 repository skills in Codex's local prompt-input catalog.
+- [ ] Observe the pull request's required CI checks passing.
 
-| Deliverable              | Result                                                                          |
-| ------------------------ | ------------------------------------------------------------------------------- |
-| `tools/LlmSkillIndexer/` | Python script validates metadata & line counts                                  |
-| `.llm/skills-index.json` | Auto-generated with 25 skills across 6 categories                               |
-| `.llm/code-samples/`     | 6 files with extracted reusable examples                                        |
-| `.llm/skills/`           | 25 files, all \<300 lines, all with YAML metadata                               |
-| `.llm/context.md`        | 178 lines (target ~200)                                                         |
-| Agent files              | AGENTS.md (33), CLAUDE.md (45), copilot-instructions.md (35), .cursorrules (35) |
-
-**Validation Criteria (All Met)**:
-
-- [x] No `.llm/` file exceeds 500 lines
-- [x] All `.llm/skills/*.md` files have valid YAML front-matter
-- [x] All agent files point to `context.md`
-- [x] Pre-commit validates skill metadata and line counts (strict mode)
-- [x] Code samples extracted; no duplicated examples across skills
-
-**Completed**: 2026-01-02. See [progress/session-098-llm-consolidation.md](progress/session-098-llm-consolidation.md).
+The prior flat-file consolidation remains documented in
+[session 098](progress/session-098-llm-consolidation.md). Current work is tracked
+in [session 175](progress/session-175-standard-agent-skills.md).
 
 ______________________________________________________________________
 
@@ -860,13 +856,13 @@ ______________________________________________________________________
 
 #### High-Value Components to Port
 
-| Component               | Source File                                                                                                                     | Use Case in NovaSharp                                    | Priority  |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------- |
-| **Trie**                | [Trie.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/Trie.cs)                               | Lexer keyword lookup, string interning, autocomplete     | 🔴 HIGH   |
-| **LevenshteinDistance** | [StringExtensions.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/Extension/StringExtensions.cs)           | "Did you mean 'print'?" error messages                   | 🔴 HIGH   |
-| **BitSet**              | [BitSet.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/BitSet.cs)                           | Upvalue tracking, scope flags, VM state                  | 🟡 MEDIUM |
-| **Deque\<T>**           | [Deque.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/Deque.cs)                             | VM execution stack, double-ended operations              | 🟡 MEDIUM |
-| **SparseSet**           | [SparseSet.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/SparseSet.cs)                     | O(1) membership with dense iteration for active tracking | 🟢 LOW    |
+| Component               | Source File                                                                                                           | Use Case in NovaSharp                                    | Priority  |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------- |
+| **Trie**                | [Trie.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/Trie.cs)                     | Lexer keyword lookup, string interning, autocomplete     | 🔴 HIGH   |
+| **LevenshteinDistance** | [StringExtensions.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/Extension/StringExtensions.cs) | "Did you mean 'print'?" error messages                   | 🔴 HIGH   |
+| **BitSet**              | [BitSet.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/BitSet.cs)                 | Upvalue tracking, scope flags, VM state                  | 🟡 MEDIUM |
+| **Deque\<T>**           | [Deque.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/Deque.cs)                   | VM execution stack, double-ended operations              | 🟡 MEDIUM |
+| **SparseSet**           | [SparseSet.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/SparseSet.cs)           | O(1) membership with dense iteration for active tracking | 🟢 LOW    |
 
 #### Trie Details (Highest Value)
 

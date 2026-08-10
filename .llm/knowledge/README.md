@@ -7,7 +7,7 @@ but are not procedural enough to be skills and not universal enough for
 ## Admission Rules
 
 Add knowledge only through the mandatory
-[post-work reflection workflow](../skills/post-work-reflection.md). Before adding
+[post-work reflection workflow](../skills/post-work-reflection/SKILL.md). Before adding
 an entry:
 
 1. Search `.llm`, `docs/`, source, tests, and tooling for an existing canonical

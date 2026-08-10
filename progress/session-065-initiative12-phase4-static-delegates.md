@@ -220,4 +220,4 @@ ______________________________________________________________________
 - [Phase 1 Analysis](../docs/performance/allocation-analysis-initiative12-phase1.md)
 - [Phase 2 Quick Wins](session-062-initiative12-phase2-quick-wins.md)
 - [Phase 3 Value Type Migration](session-064-value-type-migration-phase3.md)
-- [High-Performance C# Guidelines](../.llm/skills/high-performance-csharp.md)
+- [High-Performance C# Guidelines](../.llm/skills/high-performance-csharp/SKILL.md)

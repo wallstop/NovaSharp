@@ -163,5 +163,5 @@ ______________________________________________________________________
 ## Related
 
 - [Initiative 10 in PLAN.md](../PLAN.md#initiative-10-kopilua-performance-hyper-optimization)
-- [High-Performance C# Guidelines](../.llm/skills/high-performance-csharp.md)
+- [High-Performance C# Guidelines](../.llm/skills/high-performance-csharp/SKILL.md)
 - [Allocation Analysis Phase 1](../docs/performance/allocation-analysis-initiative12-phase1.md)

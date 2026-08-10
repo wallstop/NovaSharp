@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "generated_by": "tools/LlmSkillIndexer/llm_skill_indexer.py",
   "skills_count": 31,
   "categories": {
@@ -50,15 +50,9 @@
   "skills": [
     {
       "name": "adding-opcodes",
-      "file_path": ".llm/skills/adding-opcodes.md",
-      "line_count": 176,
-      "triggers": [
-        "opcode",
-        "bytecode",
-        "VM instruction",
-        "add instruction",
-        "execution loop"
-      ],
+      "description": "Add or change NovaSharp VM bytecode instructions across the opcode enum, compiler, execution loop, and tests. Use when implementing opcodes, bytecode, VM instructions, or execution-loop behavior.",
+      "file_path": ".llm/skills/adding-opcodes/SKILL.md",
+      "line_count": 23,
       "category": "lua",
       "related": [
         "codebase-navigation",
@@ -73,34 +67,24 @@
     },
     {
       "name": "adding-skills",
-      "file_path": ".llm/skills/adding-skills.md",
-      "line_count": 205,
-      "triggers": [
-        "new skill",
-        "add skill",
-        "skill documentation",
-        "llm documentation"
-      ],
+      "description": "Create or update NovaSharp Agent Skills and their metadata, references, index, and discovery aliases. Use when changing LLM guidance, SKILL.md files, skill documentation, or the skills index.",
+      "file_path": ".llm/skills/adding-skills/SKILL.md",
+      "line_count": 95,
       "category": "meta",
       "related": [
         "documentation-and-changelog"
       ],
       "priority": "reference",
       "has_front_matter": true,
-      "title": "Skill: Adding New Skills",
+      "title": "Add or Update Agent Skills",
       "validation_warnings": [],
       "validation_errors": []
     },
     {
       "name": "adversarial-handoff",
-      "file_path": ".llm/skills/adversarial-handoff.md",
-      "line_count": 71,
-      "triggers": [
-        "adversarial review",
-        "zero knowledge handoff",
-        "red team review",
-        "independent verification"
-      ],
+      "description": "Run independent verification and adversarial review for material code, performance, CI, planning, investigation, or LLM-workflow changes. Use when hardening a change before completion.",
+      "file_path": ".llm/skills/adversarial-handoff/SKILL.md",
+      "line_count": 62,
       "category": "workflow",
       "related": [
         "change-path-verification",
@@ -115,15 +99,9 @@
     },
     {
       "name": "aggressive-inlining",
-      "file_path": ".llm/skills/aggressive-inlining.md",
-      "line_count": 185,
-      "triggers": [
-        "inlining",
-        "AggressiveInlining",
-        "MethodImpl",
-        "method inlining",
-        "hot path optimization"
-      ],
+      "description": "Evaluate and apply C# MethodImplOptions.AggressiveInlining on measured NovaSharp hot paths. Use for method inlining, interpreter-loop call overhead, or hot-path optimization.",
+      "file_path": ".llm/skills/aggressive-inlining/SKILL.md",
+      "line_count": 111,
       "category": "performance",
       "related": [
         "high-performance-csharp",
@@ -137,17 +115,9 @@
     },
     {
       "name": "allocation-traps",
-      "file_path": ".llm/skills/allocation-traps.md",
-      "line_count": 252,
-      "triggers": [
-        "allocation",
-        "GC pressure",
-        "memory leak",
-        "foreach allocation",
-        "delegate allocation",
-        "params allocation",
-        "closure allocation"
-      ],
+      "description": "Find and remove hidden C# allocations in NovaSharp hot paths. Use when reviewing GC pressure, closures, delegates, params arrays, foreach behavior, boxing, or unexplained allocations.",
+      "file_path": ".llm/skills/allocation-traps/SKILL.md",
+      "line_count": 119,
       "category": "performance",
       "related": [
         "high-performance-csharp",
@@ -162,14 +132,9 @@
     },
     {
       "name": "architecture-review",
-      "file_path": ".llm/skills/architecture-review.md",
-      "line_count": 62,
-      "triggers": [
-        "architecture plan",
-        "design review",
-        "technical plan",
-        "simplify design"
-      ],
+      "description": "Review a material NovaSharp design or plan through scope, invariants, testability, performance, memory, and Unity gates. Use before architecture, public API, VM/compiler, storage, CI, or cross-cutting changes.",
+      "file_path": ".llm/skills/architecture-review/SKILL.md",
+      "line_count": 53,
       "category": "workflow",
       "related": [
         "correctness-then-performance",
@@ -184,14 +149,9 @@
     },
     {
       "name": "change-path-verification",
-      "file_path": ".llm/skills/change-path-verification.md",
-      "line_count": 60,
-      "triggers": [
-        "verify changed behavior",
-        "branch path testing",
-        "red green verification",
-        "test matrix"
-      ],
+      "description": "Design red-to-green verification across every changed behavior and failure path. Use when mapping tests, edge cases, Lua-version coverage, or evidence for a code or CI change.",
+      "file_path": ".llm/skills/change-path-verification/SKILL.md",
+      "line_count": 52,
       "category": "testing",
       "related": [
         "exhaustive-test-coverage",
@@ -206,16 +166,9 @@
     },
     {
       "name": "ci-workflow",
-      "file_path": ".llm/skills/ci-workflow.md",
-      "line_count": 208,
-      "triggers": [
-        "CI",
-        "pre-commit",
-        "workflow",
-        "GitHub Actions",
-        "formatting",
-        "validation"
-      ],
+      "description": "Run and troubleshoot NovaSharp pre-commit and CI closure gates. Use before completing code changes or when modifying GitHub Actions, formatting, validation, build, test, coverage, or benchmark workflows.",
+      "file_path": ".llm/skills/ci-workflow/SKILL.md",
+      "line_count": 103,
       "category": "workflow",
       "related": [
         "tunit-test-writing",
@@ -229,16 +182,9 @@
     },
     {
       "name": "clr-interop",
-      "file_path": ".llm/skills/clr-interop.md",
-      "line_count": 296,
-      "triggers": [
-        "CLR interop",
-        "C# interop",
-        "UserData",
-        "expose C# to Lua",
-        "call Lua from C#",
-        "type registration"
-      ],
+      "description": "Implement and verify NovaSharp C# and Lua interoperability through UserData, descriptors, registration, conversions, and calls. Use when exposing C# to Lua or calling Lua from C#.",
+      "file_path": ".llm/skills/clr-interop/SKILL.md",
+      "line_count": 120,
       "category": "lua",
       "related": [
         "lua-fixture-creation",
@@ -252,16 +198,9 @@
     },
     {
       "name": "codebase-navigation",
-      "file_path": ".llm/skills/codebase-navigation.md",
-      "line_count": 220,
-      "triggers": [
-        "search codebase",
-        "find code",
-        "grep",
-        "find file",
-        "debug interpreter",
-        "pipeline"
-      ],
+      "description": "Navigate NovaSharp source, tests, fixtures, and the interpreter pipeline with repository-preferred search tools. Use when finding code, patterns, usages, ownership, or debugging locations.",
+      "file_path": ".llm/skills/codebase-navigation/SKILL.md",
+      "line_count": 124,
       "category": "workflow",
       "related": [
         "lua-spec-verification",
@@ -275,16 +214,9 @@
     },
     {
       "name": "correctness-then-performance",
-      "file_path": ".llm/skills/correctness-then-performance.md",
-      "line_count": 220,
-      "triggers": [
-        "priority",
-        "correctness",
-        "Lua spec",
-        "compliance",
-        "behavior",
-        "optimization decision"
-      ],
+      "description": "Apply NovaSharp priority order: exact Lua correctness, then speed, memory, Unity compatibility, and clarity. Use for every implementation or optimization decision, especially tradeoffs involving Lua behavior.",
+      "file_path": ".llm/skills/correctness-then-performance/SKILL.md",
+      "line_count": 123,
       "category": "core",
       "related": [
         "lua-spec-verification",
@@ -298,15 +230,9 @@
     },
     {
       "name": "coverage-analysis",
-      "file_path": ".llm/skills/coverage-analysis.md",
-      "line_count": 208,
-      "triggers": [
-        "coverage",
-        "code coverage",
-        "coverage report",
-        "test coverage",
-        "untested code"
-      ],
+      "description": "Run NovaSharp code coverage, interpret reports, and turn uncovered behavior into meaningful tests. Use for coverage reports, coverage gaps, or untested code analysis.",
+      "file_path": ".llm/skills/coverage-analysis/SKILL.md",
+      "line_count": 99,
       "category": "testing",
       "related": [
         "tunit-test-writing",
@@ -320,16 +246,9 @@
     },
     {
       "name": "data-structures",
-      "file_path": ".llm/skills/data-structures.md",
-      "line_count": 254,
-      "triggers": [
-        "data structure",
-        "collection",
-        "dictionary",
-        "list vs array",
-        "complexity",
-        "big O"
-      ],
+      "description": "Choose allocation- and performance-appropriate data structures for NovaSharp. Use when comparing arrays, lists, dictionaries, sets, queues, stacks, spans, pools, or algorithmic complexity.",
+      "file_path": ".llm/skills/data-structures/SKILL.md",
+      "line_count": 125,
       "category": "performance",
       "related": [
         "high-performance-csharp",
@@ -343,15 +262,9 @@
     },
     {
       "name": "defensive-programming",
-      "file_path": ".llm/skills/defensive-programming.md",
-      "line_count": 256,
-      "triggers": [
-        "defensive programming",
-        "error handling",
-        "robust code",
-        "graceful failure",
-        "null handling"
-      ],
+      "description": "Write robust NovaSharp production code with explicit validation, precise errors, safe resource handling, and resilient parser/interpreter boundaries. Use for production code, public APIs, or error handling.",
+      "file_path": ".llm/skills/defensive-programming/SKILL.md",
+      "line_count": 106,
       "category": "core",
       "related": [
         "high-performance-csharp",
@@ -365,15 +278,9 @@
     },
     {
       "name": "deterministic-testing",
-      "file_path": ".llm/skills/deterministic-testing.md",
-      "line_count": 54,
-      "triggers": [
-        "deterministic test",
-        "randomized test",
-        "replay seed",
-        "test ordering",
-        "timing dependent test"
-      ],
+      "description": "Make NovaSharp tests deterministic and replayable. Use for randomness, time, ordering, concurrency, localization, filesystem or environment state, repeated execution, or flaky scheduling.",
+      "file_path": ".llm/skills/deterministic-testing/SKILL.md",
+      "line_count": 44,
       "category": "testing",
       "related": [
         "exhaustive-test-coverage",
@@ -388,16 +295,9 @@
     },
     {
       "name": "documentation-and-changelog",
-      "file_path": ".llm/skills/documentation-and-changelog.md",
-      "line_count": 166,
-      "triggers": [
-        "documentation",
-        "changelog",
-        "XML docs",
-        "code comments",
-        "CHANGELOG.md",
-        "keep a changelog"
-      ],
+      "description": "Update NovaSharp documentation and changelog artifacts for user-visible features and fixes. Use after public API, behavior, workflow, or configuration changes and when writing XML docs or rationale comments.",
+      "file_path": ".llm/skills/documentation-and-changelog/SKILL.md",
+      "line_count": 127,
       "category": "workflow",
       "related": [
         "tunit-test-writing",
@@ -411,15 +311,9 @@
     },
     {
       "name": "exhaustive-test-coverage",
-      "file_path": ".llm/skills/exhaustive-test-coverage.md",
-      "line_count": 237,
-      "triggers": [
-        "test coverage",
-        "write tests",
-        "test cases",
-        "edge cases",
-        "test patterns"
-      ],
+      "description": "Design complete NovaSharp regression coverage across positive, negative, boundary, version, integration, and isolation paths. Use when testing any new feature or bug fix.",
+      "file_path": ".llm/skills/exhaustive-test-coverage/SKILL.md",
+      "line_count": 115,
       "category": "testing",
       "related": [
         "tunit-test-writing",
@@ -434,15 +328,9 @@
     },
     {
       "name": "git-safe-operations",
-      "file_path": ".llm/skills/git-safe-operations.md",
-      "line_count": 294,
-      "triggers": [
-        "git add",
-        "git index.lock",
-        "pre-commit hook",
-        "git staging",
-        "lock contention"
-      ],
+      "description": "Design scripts and hooks that modify the Git index without lock races or data loss. Use when changing git add, git reset, staging, pre-commit hooks, index.lock handling, or concurrent Git automation.",
+      "file_path": ".llm/skills/git-safe-operations/SKILL.md",
+      "line_count": 107,
       "category": "workflow",
       "related": [
         "ci-workflow"
@@ -455,17 +343,9 @@
     },
     {
       "name": "high-performance-csharp",
-      "file_path": ".llm/skills/high-performance-csharp.md",
-      "line_count": 268,
-      "triggers": [
-        "performance",
-        "allocation",
-        "zero-alloc",
-        "GC pressure",
-        "hot path",
-        "pooling",
-        "optimization"
-      ],
+      "description": "Implement high-performance C# for NovaSharp while preserving Lua correctness. Use for hot paths, zero-allocation work, pooling, GC pressure, spans, string building, or runtime optimization.",
+      "file_path": ".llm/skills/high-performance-csharp/SKILL.md",
+      "line_count": 120,
       "category": "performance",
       "related": [
         "correctness-then-performance",
@@ -481,16 +361,9 @@
     },
     {
       "name": "lua-comparison-harness",
-      "file_path": ".llm/skills/lua-comparison-harness.md",
-      "line_count": 175,
-      "triggers": [
-        "comparison harness",
-        "lua comparison",
-        "cross-interpreter",
-        "fixture verification",
-        "reference Lua",
-        "diff expected actual"
-      ],
+      "description": "Run and diagnose NovaSharp fixtures against reference Lua 5.1 through 5.5. Use for cross-interpreter comparison, corpus verification, expected-output diffs, or reference-Lua compliance checks.",
+      "file_path": ".llm/skills/lua-comparison-harness/SKILL.md",
+      "line_count": 126,
       "category": "lua",
       "related": [
         "lua-fixture-creation",
@@ -505,14 +378,9 @@
     },
     {
       "name": "lua-fixture-creation",
-      "file_path": ".llm/skills/lua-fixture-creation.md",
-      "line_count": 202,
-      "triggers": [
-        "lua fixture",
-        "lua test file",
-        "create .lua test",
-        "lua version test"
-      ],
+      "description": "Create standalone Lua fixtures and corpus metadata for cross-interpreter verification. Use when adding .lua tests, version-specific fixtures, expected errors, or NovaSharp-only interop fixtures.",
+      "file_path": ".llm/skills/lua-fixture-creation/SKILL.md",
+      "line_count": 123,
       "category": "lua",
       "related": [
         "lua-comparison-harness",
@@ -528,16 +396,9 @@
     },
     {
       "name": "lua-spec-verification",
-      "file_path": ".llm/skills/lua-spec-verification.md",
-      "line_count": 239,
-      "triggers": [
-        "Lua spec",
-        "reference Lua",
-        "spec compliance",
-        "behavior verification",
-        "lua5.4",
-        "lua5.1"
-      ],
+      "description": "Determine exact reference Lua behavior and compare NovaSharp against Lua 5.1 through 5.5. Use for spec compliance, semantic ambiguity, version differences, or behavior investigations.",
+      "file_path": ".llm/skills/lua-spec-verification/SKILL.md",
+      "line_count": 120,
       "category": "lua",
       "related": [
         "lua-fixture-creation",
@@ -552,14 +413,9 @@
     },
     {
       "name": "post-work-reflection",
-      "file_path": ".llm/skills/post-work-reflection.md",
-      "line_count": 145,
-      "triggers": [
-        "post-work reflection",
-        "large change review",
-        "root cause improvement",
-        "capture lessons learned"
-      ],
+      "description": "Run NovaSharp\u2019s mandatory post-work improvement gate after material work or investigation. Use to review evidence, fix residual defects, capture verified reusable lessons, and obtain independent approval before completion.",
+      "file_path": ".llm/skills/post-work-reflection/SKILL.md",
+      "line_count": 136,
       "category": "core",
       "related": [
         "adding-skills",
@@ -574,15 +430,9 @@
     },
     {
       "name": "refactor-to-zero-alloc",
-      "file_path": ".llm/skills/refactor-to-zero-alloc.md",
-      "line_count": 213,
-      "triggers": [
-        "refactor allocation",
-        "eliminate allocation",
-        "zero allocation",
-        "remove LINQ",
-        "closure elimination"
-      ],
+      "description": "Refactor existing NovaSharp code to eliminate measured GC allocations with pooling, loops, non-capturing patterns, spans, and zero-allocation string building. Use for allocation removal or LINQ and closure elimination.",
+      "file_path": ".llm/skills/refactor-to-zero-alloc/SKILL.md",
+      "line_count": 126,
       "category": "performance",
       "related": [
         "high-performance-csharp",
@@ -597,16 +447,9 @@
     },
     {
       "name": "span-optimization",
-      "file_path": ".llm/skills/span-optimization.md",
-      "line_count": 262,
-      "triggers": [
-        "Span",
-        "ReadOnlySpan",
-        "stackalloc",
-        "slice",
-        "no allocation string",
-        "substring"
-      ],
+      "description": "Use Span<T> and ReadOnlySpan<T> to remove avoidable arrays, substrings, and copies in NovaSharp. Use for span conversion, stackalloc, slicing, parsing, or no-allocation string work.",
+      "file_path": ".llm/skills/span-optimization/SKILL.md",
+      "line_count": 38,
       "category": "performance",
       "related": [
         "high-performance-csharp",
@@ -620,14 +463,9 @@
     },
     {
       "name": "systematic-investigation",
-      "file_path": ".llm/skills/systematic-investigation.md",
-      "line_count": 62,
-      "triggers": [
-        "root cause investigation",
-        "debug unexpected behavior",
-        "analyze failure",
-        "falsify hypothesis"
-      ],
+      "description": "Investigate NovaSharp failures through observed facts, falsifiable hypotheses, controlled experiments, and root-cause conclusions. Use for incorrect behavior, regressions, nondeterminism, performance loss, or unclear failures.",
+      "file_path": ".llm/skills/systematic-investigation/SKILL.md",
+      "line_count": 53,
       "category": "workflow",
       "related": [
         "test-failure-investigation",
@@ -642,16 +480,9 @@
     },
     {
       "name": "test-failure-investigation",
-      "file_path": ".llm/skills/test-failure-investigation.md",
-      "line_count": 258,
-      "triggers": [
-        "test failure",
-        "failing test",
-        "flaky test",
-        "test investigation",
-        "root cause",
-        "test debugging"
-      ],
+      "description": "Investigate every NovaSharp test failure to root cause under the zero-flaky policy. Use for failing, intermittent, unrelated-looking, platform-specific, or CI-only tests.",
+      "file_path": ".llm/skills/test-failure-investigation/SKILL.md",
+      "line_count": 116,
       "category": "testing",
       "related": [
         "codebase-navigation",
@@ -667,16 +498,9 @@
     },
     {
       "name": "tunit-test-writing",
-      "file_path": ".llm/skills/tunit-test-writing.md",
-      "line_count": 247,
-      "triggers": [
-        "TUnit",
-        "write test",
-        "test writing",
-        "multi-version test",
-        "AllLuaVersions",
-        "test isolation"
-      ],
+      "description": "Write or update NovaSharp TUnit tests with multi-Lua-version coverage, isolation, fixtures, and repository conventions. Use for TUnit, AllLuaVersions, test cases, or interpreter test changes.",
+      "file_path": ".llm/skills/tunit-test-writing/SKILL.md",
+      "line_count": 126,
       "category": "testing",
       "related": [
         "exhaustive-test-coverage",
@@ -692,16 +516,9 @@
     },
     {
       "name": "unity-gc-patterns",
-      "file_path": ".llm/skills/unity-gc-patterns.md",
-      "line_count": 129,
-      "triggers": [
-        "Unity",
-        "Unity GC",
-        "IL2CPP",
-        "AOT",
-        "Boehm",
-        "Unity allocation"
-      ],
+      "description": "Apply Unity-aware allocation and lifetime patterns for NovaSharp across Boehm GC, Mono, and IL2CPP/AOT. Use when writing or optimizing Unity runtime code, pools, caches, callbacks, or hot paths.",
+      "file_path": ".llm/skills/unity-gc-patterns/SKILL.md",
+      "line_count": 119,
       "category": "performance",
       "related": [
         "high-performance-csharp",
@@ -716,15 +533,9 @@
     },
     {
       "name": "use-extension-methods",
-      "file_path": ".llm/skills/use-extension-methods.md",
-      "line_count": 116,
-      "triggers": [
-        "extension method",
-        "existing utilities",
-        "helper methods",
-        "LinqHelpers",
-        "StringSpanExtensions"
-      ],
+      "description": "Reuse NovaSharp extension methods and helpers before adding duplicate utility code. Use for spans, path normalization, LuaValue conversions, table serialization, enum flags, reflection visibility, or DataType conversions.",
+      "file_path": ".llm/skills/use-extension-methods/SKILL.md",
+      "line_count": 110,
       "category": "meta",
       "related": [
         "high-performance-csharp",
@@ -738,16 +549,9 @@
     },
     {
       "name": "zstring-migration",
-      "file_path": ".llm/skills/zstring-migration.md",
-      "line_count": 245,
-      "triggers": [
-        "ZString",
-        "string building",
-        "StringBuilder",
-        "string interpolation",
-        "string concatenation",
-        "zero-alloc string"
-      ],
+      "description": "Migrate NovaSharp hot-path string construction to ZString and ZStringBuilder without changing observable text. Use for StringBuilder, interpolation, concatenation, formatting, or zero-allocation string work.",
+      "file_path": ".llm/skills/zstring-migration/SKILL.md",
+      "line_count": 81,
       "category": "performance",
       "related": [
         "high-performance-csharp",
@@ -765,6 +569,7 @@
     "total_errors": 0,
     "files_over_warning_threshold": 0,
     "files_over_error_threshold": 0,
-    "files_missing_front_matter": 0
+    "files_missing_front_matter": 0,
+    "structure_errors": []
   }
 }

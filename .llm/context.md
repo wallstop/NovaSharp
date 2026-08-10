@@ -12,7 +12,7 @@ NovaSharp follows a strict priority order. **NEVER sacrifice a higher priority f
 | **4. UNITY**       | Platform Compatibility | IL2CPP/AOT, Mono, no runtime code generation  |
 | **5. CLARITY**     | Maintainability        | Clean architecture, readability               |
 
-**The Iron Rule**: A performance optimization that breaks Lua spec compliance is REJECTED. A memory optimization that slows down hot paths is REJECTED. See [correctness-then-performance](skills/correctness-then-performance.md) for the complete decision framework.
+**The Iron Rule**: A performance optimization that breaks Lua spec compliance is REJECTED. A memory optimization that slows down hot paths is REJECTED. See [correctness-then-performance](skills/correctness-then-performance/SKILL.md) for the complete decision framework.
 
 ### ⛔ "Close Enough" is NEVER Acceptable
 
@@ -39,7 +39,7 @@ ______________________________________________________________________
 1. **Pre-Commit Validation Allowed** — Run `./scripts/dev/pre-commit.sh` after changes; it may restage files it auto-formats or regenerates.
 1. **No False Green-Light** — Only say `green`, `verified`, `passes`, or `complete` after the exact local checks and PR CI were observed passing; otherwise report `not run` or residual risk.
 1. **Evidence-Driven Material Changes** — Use the [evidence-driven change workflow](workflows/evidence-driven-change.md) for material behavior, architecture, performance, reliability, CI, or LLM-system work. Require observed red→green evidence and risk-selected gates.
-1. **Mandatory Post-Work Improvement Gate** — After every large change or investigation, complete [post-work-reflection](skills/post-work-reflection.md) before reporting completion. Resolve findings at their root, update the appropriate LLM guidance or knowledge when evidence supports a durable lesson, and independently review the result when agents are available.
+1. **Mandatory Post-Work Improvement Gate** — After every large change or investigation, complete [post-work-reflection](skills/post-work-reflection/SKILL.md) before reporting completion. Resolve findings at their root, update the appropriate LLM guidance or knowledge when evidence supports a durable lesson, and independently review the result when agents are available.
 
 See individual skills for detailed guidance.
 
@@ -71,12 +71,12 @@ ______________________________________________________________________
 | Check Lua spec                  | `docs/lua-spec/lua5X-manual.md`                     |
 | Find pooling utilities          | `src/runtime/.../DataStructs/CollectionPools.cs`    |
 | Find string building utilities  | `src/runtime/.../DataStructs/ZStringBuilder.cs`     |
-| Check/add performance patterns  | `.llm/skills/high-performance-csharp.md`            |
-| Investigate comparison failures | `.llm/skills/lua-comparison-harness.md`             |
-| Debug cross-platform issues     | `.llm/skills/test-failure-investigation.md`         |
-| Plan or review architecture     | `.llm/skills/architecture-review.md`                |
-| Verify a behavior change        | `.llm/skills/change-path-verification.md`           |
-| Run an independent hardening    | `.llm/skills/adversarial-handoff.md`                |
+| Check/add performance patterns  | `.llm/skills/high-performance-csharp/SKILL.md`      |
+| Investigate comparison failures | `.llm/skills/lua-comparison-harness/SKILL.md`       |
+| Debug cross-platform issues     | `.llm/skills/test-failure-investigation/SKILL.md`   |
+| Plan or review architecture     | `.llm/skills/architecture-review/SKILL.md`          |
+| Verify a behavior change        | `.llm/skills/change-path-verification/SKILL.md`     |
+| Run an independent hardening    | `.llm/skills/adversarial-handoff/SKILL.md`          |
 | Capture durable repository fact | `.llm/knowledge/`                                   |
 
 ### Key Files
@@ -133,7 +133,7 @@ ______________________________________________________________________
 - **Avoid closures/LINQ** — Use explicit loops in hot paths
 - **Use `HashCodeHelper.HashCode()`** — Never bespoke hash patterns
 
-See [high-performance-csharp](skills/high-performance-csharp.md) for detailed patterns.
+See [high-performance-csharp](skills/high-performance-csharp/SKILL.md) for detailed patterns.
 
 ### Shell Commands
 
@@ -158,16 +158,16 @@ Skills are in `.llm/skills/`. Run `python3 tools/LlmSkillIndexer/llm_skill_index
 
 ### Core Skills
 
-| Category         | Key Skills                                                                                                                                                                       |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Priority**     | [correctness-then-performance](skills/correctness-then-performance.md), [lua-spec-verification](skills/lua-spec-verification.md)                                                 |
-| **Performance**  | [high-performance-csharp](skills/high-performance-csharp.md), [zstring-migration](skills/zstring-migration.md), [data-structures](skills/data-structures.md)                     |
-| **Testing**      | [tunit-test-writing](skills/tunit-test-writing.md), [lua-fixture-creation](skills/lua-fixture-creation.md), [test-failure-investigation](skills/test-failure-investigation.md)   |
-| **Workflow**     | [systematic-investigation](skills/systematic-investigation.md), [architecture-review](skills/architecture-review.md), [adversarial-handoff](skills/adversarial-handoff.md)       |
-| **Verification** | [change-path-verification](skills/change-path-verification.md), [deterministic-testing](skills/deterministic-testing.md), [post-work-reflection](skills/post-work-reflection.md) |
-| **Unity**        | [unity-gc-patterns](skills/unity-gc-patterns.md), [aggressive-inlining](skills/aggressive-inlining.md)                                                                           |
-| **Lua**          | [lua-comparison-harness](skills/lua-comparison-harness.md), [adding-opcodes](skills/adding-opcodes.md)                                                                           |
-| **Quality**      | [defensive-programming](skills/defensive-programming.md), [documentation-and-changelog](skills/documentation-and-changelog.md)                                                   |
+| Category         | Key Skills                                                                                                                                                                                         |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Priority**     | [correctness-then-performance](skills/correctness-then-performance/SKILL.md), [lua-spec-verification](skills/lua-spec-verification/SKILL.md)                                                       |
+| **Performance**  | [high-performance-csharp](skills/high-performance-csharp/SKILL.md), [zstring-migration](skills/zstring-migration/SKILL.md), [data-structures](skills/data-structures/SKILL.md)                     |
+| **Testing**      | [tunit-test-writing](skills/tunit-test-writing/SKILL.md), [lua-fixture-creation](skills/lua-fixture-creation/SKILL.md), [test-failure-investigation](skills/test-failure-investigation/SKILL.md)   |
+| **Workflow**     | [systematic-investigation](skills/systematic-investigation/SKILL.md), [architecture-review](skills/architecture-review/SKILL.md), [adversarial-handoff](skills/adversarial-handoff/SKILL.md)       |
+| **Verification** | [change-path-verification](skills/change-path-verification/SKILL.md), [deterministic-testing](skills/deterministic-testing/SKILL.md), [post-work-reflection](skills/post-work-reflection/SKILL.md) |
+| **Unity**        | [unity-gc-patterns](skills/unity-gc-patterns/SKILL.md), [aggressive-inlining](skills/aggressive-inlining/SKILL.md)                                                                                 |
+| **Lua**          | [lua-comparison-harness](skills/lua-comparison-harness/SKILL.md), [adding-opcodes](skills/adding-opcodes/SKILL.md)                                                                                 |
+| **Quality**      | [defensive-programming](skills/defensive-programming/SKILL.md), [documentation-and-changelog](skills/documentation-and-changelog/SKILL.md)                                                         |
 
 ______________________________________________________________________
 
@@ -180,7 +180,7 @@ ______________________________________________________________________
 | **Enum strings** | `TokenTypeStrings.GetName(token)`         |
 | **Hash codes**   | `HashCodeHelper.HashCode(a, b, c)`        |
 
-See [use-extension-methods](skills/use-extension-methods.md) for full list.
+See [use-extension-methods](skills/use-extension-methods/SKILL.md) for full list.
 
 ______________________________________________________________________
 
