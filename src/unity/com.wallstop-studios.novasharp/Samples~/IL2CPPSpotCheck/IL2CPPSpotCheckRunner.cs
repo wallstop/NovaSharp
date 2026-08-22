@@ -1,8 +1,8 @@
 namespace WallstopStudios.NovaSharp.Unity.Samples
 {
-    using global::NovaSharp;
     using System;
     using System.Globalization;
+    using global::NovaSharp;
     using UnityEngine;
     using Stopwatch = System.Diagnostics.Stopwatch;
 
@@ -135,13 +135,7 @@ end
                 message = "<no-message>";
             }
 
-            return string.Concat(
-                FailPrefix,
-                " errorType=",
-                exceptionType,
-                " message=",
-                message
-            );
+            return string.Concat(FailPrefix, " errorType=", exceptionType, " message=", message);
         }
 
         private static string ToSingleLogLine(string value)

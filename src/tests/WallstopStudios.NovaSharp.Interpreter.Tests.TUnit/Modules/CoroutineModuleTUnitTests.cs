@@ -49,6 +49,70 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             }
         }
 
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task RegisteredCallbacksAndWrappedFunctionsUseArgumentViews(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            Table coroutineTable = script.Globals.Get("coroutine").Table;
+            List<string> callbackNames = new()
+            {
+                "create",
+                "wrap",
+                "resume",
+                "yield",
+                "running",
+                "status",
+            };
+
+            if (version >= LuaCompatibilityVersion.Lua53)
+            {
+                callbackNames.Add("isyieldable");
+            }
+
+            if (version >= LuaCompatibilityVersion.Lua54)
+            {
+                callbackNames.Add("close");
+            }
+
+            for (int i = 0; i < callbackNames.Count; i++)
+            {
+                string callbackName = callbackNames[i];
+                CallbackFunction callback = coroutineTable.Get(callbackName).Callback;
+                await Assert
+                    .That(
+                        callback.HasArgumentViewCallback
+                            || callback.HasArgumentViewNoContextCallback
+                    )
+                    .IsTrue()
+                    .Because($"coroutine.{callbackName} should use stack-only arguments")
+                    .ConfigureAwait(false);
+            }
+
+            LuaValue results = script.DoString(
+                @"
+wrapped = coroutine.wrap(function(value)
+    coroutine.yield(value)
+    return value + 1
+end)
+
+local first = wrapped(41)
+local second = wrapped(41)
+return first, second
+"
+            );
+            CallbackFunction wrapped = script.Globals.Get("wrapped").Callback;
+
+            await Assert
+                .That(wrapped.HasArgumentViewNoContextCallback)
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(results.Tuple[0].Number).IsEqualTo(41d).ConfigureAwait(false);
+            await Assert.That(results.Tuple[1].Number).IsEqualTo(42d).ConfigureAwait(false);
+        }
+
         // =====================================================
         // coroutine.running() Tests (Version-specific behavior)
         // Lua 5.1: returns only the coroutine
@@ -568,22 +632,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task ResumeAndWrapDispatchThroughFixedArityCoroutinePaths()
         {
             MethodInfo getArray = RequireMethod(
-                typeof(CallbackArguments),
-                nameof(CallbackArguments.GetArray),
+                typeof(CallbackArgumentsView),
+                nameof(CallbackArgumentsView.GetArray),
                 typeof(int)
+            );
+            MethodInfo tryGetSpan = RequireMethod(
+                typeof(CallbackArgumentsView),
+                nameof(CallbackArgumentsView.TryGetSpan),
+                typeof(ReadOnlySpan<LuaValue>).MakeByRefType()
             );
             MethodInfo moduleResume = RequireMethod(
                 typeof(CoroutineModule),
                 nameof(CoroutineModule.Resume),
-                typeof(ScriptExecutionContext),
-                typeof(CallbackArguments)
+                typeof(CallbackArgumentsView)
             );
             MethodInfo helper = RequireMethod(
                 typeof(CoroutineModule),
                 "ResumeCoroutineWithArguments",
                 BindingFlags.NonPublic | BindingFlags.Static,
                 typeof(Coroutine),
-                typeof(CallbackArguments),
+                typeof(CallbackArgumentsView),
                 typeof(int)
             );
             MethodInfo resumeOne = RequireMethod(
@@ -640,6 +708,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
             await Assert
                 .That(CountMethodCalls(helper, resumeFour))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(helper, tryGetSpan))
                 .IsEqualTo(1)
                 .ConfigureAwait(false);
 
