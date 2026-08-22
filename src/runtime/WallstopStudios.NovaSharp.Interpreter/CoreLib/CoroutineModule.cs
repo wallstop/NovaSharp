@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
+    using System;
     using System.Collections.Generic;
     using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -34,6 +35,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Create(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "create")]
+        private static LuaValue Create(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             if (args[0].Type != DataType.Function && args[0].Type != DataType.ClrFunction)
             {
                 args.AsType(0, "create", DataType.Function); // this throws
@@ -57,15 +67,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Wrap(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "wrap")]
+        private static LuaValue Wrap(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             if (args[0].Type != DataType.Function && args[0].Type != DataType.ClrFunction)
             {
                 args.AsType(0, "wrap", DataType.Function); // this throws
             }
 
             LuaValue handle = Create(executionContext, args);
-            return LuaValue.NewCallback(
+            return LuaValue.NewCallbackView(
                 executionContext.Script,
-                (ctx, callArgs) => ResumeCoroutineWithArguments(handle.Coroutine, callArgs, 0)
+                callArgs => ResumeCoroutineWithArguments(handle.Coroutine, callArgs, 0)
             );
         }
 
@@ -87,6 +106,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Resume(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "resume")]
+        private static LuaValue Resume(CallbackArgumentsView args)
+        {
             LuaValue handle = args.AsType(0, "resume", DataType.Thread);
 
             try
@@ -129,7 +154,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         private static LuaValue ResumeCoroutineWithArguments(
             Coroutine coroutine,
-            CallbackArguments args,
+            CallbackArgumentsView args,
             int skip
         )
         {
@@ -155,6 +180,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         args[skip + 3]
                     );
                 default:
+                    if (args.TryGetSpan(out ReadOnlySpan<LuaValue> span))
+                    {
+                        return coroutine.ResumeValues(span.Slice(skip));
+                    }
+
                     return coroutine.ResumeValues(args.GetArray(skip));
             }
         }
@@ -182,6 +212,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Close(new CallbackArgumentsView(args));
+        }
+
+        [LuaCompatibility(LuaCompatibilityVersion.Lua54)]
+        [NovaSharpModuleMethod(Name = "close")]
+        private static LuaValue Close(CallbackArgumentsView args)
+        {
             LuaValue handle = args.AsType(0, "close", DataType.Thread);
             return handle.Coroutine.Close();
         }
@@ -204,10 +241,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Yield(new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "yield")]
+        private static LuaValue Yield(CallbackArgumentsView args)
+        {
             return YieldWithArguments(args);
         }
 
-        private static LuaValue YieldWithArguments(CallbackArguments args)
+        private static LuaValue YieldWithArguments(CallbackArgumentsView args)
         {
             switch (args.Count)
             {
@@ -251,6 +294,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Running(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "running")]
+        private static LuaValue Running(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             Coroutine c = executionContext.CallingCoroutine;
             bool isMain = c.State == CoroutineState.Main;
 
@@ -288,6 +340,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Status(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "status")]
+        private static LuaValue Status(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue handle = args.AsType(0, "status", DataType.Thread);
             Coroutine running = executionContext.CallingCoroutine;
             CoroutineState cs = handle.Coroutine.State;
@@ -332,6 +393,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return IsYieldable(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        [NovaSharpModuleMethod(Name = "isyieldable")]
+        private static LuaValue IsYieldable(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             // Lua 5.4+ supports an optional coroutine argument
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                 executionContext.Script.CompatibilityVersion
