@@ -18,6 +18,7 @@ This session carried forward the in-progress `dev/wallstop/a5-coroutine-callback
 - Folded PR #69's intent into this PR: bumped csharpier to 1.3.0 in `.config/dotnet-tools.json` and adopted its output (CSharpier 1.3.0 adds MSBuild XML coverage). Only three files changed: `Directory.Build.props`, `Directory.Build.targets`, and the IL2CPP spot-check sample. Closes #69.
 - RCA'd and closed PR #111: ilspycmd ≥10 NuGet packages no longer contain `DotnetToolSettings.xml`, so `dotnet tool restore` cannot install them (verified locally against 11.0.0.9375 and 10.1.1.8388). The bump requires either pinning to 9.1.x or moving decompilation off the dotnet-tool manifest.
 - Closed draft PR #72 (autofix lint for #69) as superseded; it was generated against csharpier 1.2.4 output.
+- Reverted coverlet.console back to 6.0.4 after PR CI exposed that the merged #68 bump broke coverage collection: on runners with a preinstalled .NET 8 runtime, coverlet 10.x instrumentation emits `System.Runtime 9.0.0.0` references that fail to load in the net8.0 test host, every test dies during attribute resolution, TUnit's message bus wedges at "34 tests running", and the job burns to its 35-minute timeout. Local 9.x-only boxes roll forward and mask this, which is why local verification passed. Filed [#114](https://github.com/wallstop/NovaSharp/issues/114) covering the re-attempt procedure and the skipped-check validation gap for dependabot branches.
 
 ## Remaining A5 CoreLib migration
 
@@ -29,3 +30,4 @@ This session carried forward the in-progress `dev/wallstop/a5-coroutine-callback
 - `./scripts/build/quick.sh` completed successfully.
 - Full-corpus comparison against reference Lua ran locally for 5.1-5.5 with `--enforce`: 0 mismatch, 0 `lua_only`, 0 `nova_only` per version; both-error ratchet reported 0 new / 0 changed / 0 missing, plus one removed unclassified signature on 5.4 (`EvaluateSymbolByNameResolvesLocals.lua`, a strict reduction).
 - Repository pre-commit checks completed successfully, including CSharpier 1.3.0 format validation.
+- PR #112 CI was observed fully green (42 passing checks): all three OS test matrices, all 15 Lua comparison lanes, coverage (3m41s after the revert versus a 35-minute timeout before it), the full benchmark scenario matrix including the coroutine allocation gates, and the aggregate report. One transient `comparison NumericLoops` runner timeout at exactly its job timeout was cleared by a clean workflow rerun of identical content that had passed on the prior SHA.
