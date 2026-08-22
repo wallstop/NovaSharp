@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786325477903,
+  "lastUpdate": 1787428139944,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -2399,6 +2399,102 @@ window.BENCHMARK_DATA = {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
             "value": 1.274,
             "unit": "μs",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3271a339b83c217066e21f464c3888e197b5c128",
+          "message": "Bump coverlet.console from 6.0.4 to 10.0.1 (#68)\n\nUpdated\n[coverlet.console](https://github.com/coverlet-coverage/coverlet) from\n6.0.4 to 10.0.1.\n\n<details>\n<summary>Release notes</summary>\n\n_Sourced from [coverlet.console's\nreleases](https://github.com/coverlet-coverage/coverlet/releases)._\n\n## 10.0.1\n\n### Improvements\n\n- Coverlet with MTP 2 doesn't show test coverage statistic in console\n[#​1907](https://github.com/coverlet-coverage/coverlet/issues/1907)\n- Avoid unnecessary testhost restarts\n[#​1912](https://github.com/coverlet-coverage/coverlet/issues/1912) by\n<https://github.com/mawosoft>\n\n### Fixed\n\n- Fix inconsistent paths in cobertura reports\n[#​1723](https://github.com/coverlet-coverage/coverlet/issues/1723)\n- Fix when using \"is\" with \"and\" in pattern matching, branch coverage is\nlower than normal\n[#​1313](https://github.com/coverlet-coverage/coverlet/issues/1313)\n- Fix Coverlet flagging a branch for an async functions finally block\nwhere none exists\n[#​1337](https://github.com/coverlet-coverage/coverlet/issues/1337)\n- Fix Coverlet Tracker Missing CompilerGeneratedAttribute\n[#​1828](https://github.com/coverlet-coverage/coverlet/issues/1828)\n\n### Maintenance\n\n- Add architecture docs and diagrams for all integrations\n[#​1927](https://github.com/coverlet-coverage/coverlet/pull/1927)\n- Update NuGet packages and .NET SDK versions\n[#​1933](https://github.com/coverlet-coverage/coverlet/pull/1933)\n\n[Diff between 10.0.0 and\n10.0.1](https://github.com/coverlet-coverage/coverlet/compare/v10.0.0...v10.0.1)\n\n## 10.0.0\n\n## Improvements\n\n- Unique Report Filenames (coverlet.MTP and AzDO)\n[#​1866](https://github.com/coverlet-coverage/coverlet/issues/1866)\n- Add `--coverlet-file-prefix` option for unique report files\n[#​1869](https://github.com/coverlet-coverage/coverlet/pull/1869)\n- Introduce .NET 10 support\n[#​1823](https://github.com/coverlet-coverage/coverlet/pull/1823)\n\n## Fixed\n\n- Fix [BUG] Wrong branch rate on IAsyncEnumerable for generic type\n[#​1836](https://github.com/coverlet-coverage/coverlet/issues/1836)\n- Fix [BUG] Missing Coverage after moving to MTP\n[#​1843](https://github.com/coverlet-coverage/coverlet/issues/1843)\n- Fix [BUG] No coverage reported when targeting .NET Framework with\n8.0.1\n[#​1842](https://github.com/coverlet-coverage/coverlet/issues/1842)\n- Fix [BUG] Behavior changes between MTP and Legacy (msbuild)\n[#​1878](https://github.com/coverlet-coverage/coverlet/issues/1878)\n- Fix [BUG] Coverlet.MTP - Unable to load coverlet.mtp.appsettings.json\n[#​1880](https://github.com/coverlet-coverage/coverlet/issues/1880)\n- Fix [BUG] Coverlet.Collector produces empty report when\nMediator.SourceGenerator is referenced\n[#​1718](https://github.com/coverlet-coverage/coverlet/issues/1718) by\n<https://github.com/yusyd>\n- Fix [BUG] Crash during instrumentation (Methods using\nLibraryImport/DllImport have no body)\n[#​1762](https://github.com/coverlet-coverage/coverlet/issues/1762)\n\n## Maintenance\n\n- Add comprehensive async method tests and documentation for issue\n[#​1864](https://github.com/coverlet-coverage/coverlet/pull/1864)\n- Replace Tmds.ExecFunction Package in coverlet.core.coverage.tests\n[#​1833](https://github.com/coverlet-coverage/coverlet/issues/1833)\n- Add net9.0 and net10.0 targets\n[#​1822](https://github.com/coverlet-coverage/coverlet/issues/1822)\n\n[Diff between 8.0.1 and\n10.0.0](https://github.com/coverlet-coverage/coverlet/compare/v8.0.1...v10.0.0)\n\n## 8.0.1\n\n### Fixed\n- Fix [BUG] TypeInitializationException when targeting .NET Framework\n[#​1818](https://github.com/coverlet-coverage/coverlet/issues/1818)\n- Fix [BUG] coverlet.MTP build fails with CS0400 due to\ndevelopmentDependency=true\n[#​1827](https://github.com/coverlet-coverage/coverlet/issues/1827)\n\n### Improvements\n- Additional improvements needed for .NET Framework instrumentation type\nimport\n[#​1825](https://github.com/coverlet-coverage/coverlet/issues/1825)\n\n[Diff between 8.0.0 and\n8.0.1](https://github.com/coverlet-coverage/coverlet/compare/v8.0.0...v8.0.1)\n\n\n## 8.0.0\n\n**Special Thanks:** A huge thank you to\n[@​Bertk](https://github.com/Bertk) for driving the majority of the work\nin this release! 🎉\n\n### Fixed\n- Fix System.CommandLine 2.0 release is available\n[#​1776](https://github.com/coverlet-coverage/coverlet/issues/1776)\n- Fix Excluding From Coverage bad defaults from given example\n[#​1764](https://github.com/coverlet-coverage/coverlet/issues/1764)\n- Fix branchpoint exclusion for sdk 8.0.407\n[#​1741](https://github.com/coverlet-coverage/coverlet/issues/1741)\n- Fix missing copyright information in NuGet\n[#​1794](https://github.com/coverlet-coverage/coverlet/issues/1794)\n- Fix bad default values in documentation\n[#​1764](https://github.com/coverlet-coverage/coverlet/issues/1764) by\n<https://github.com/cboudereau>\n\n### Improvements\n\n- Coverlet MTP extension feature\n[#​1788](https://github.com/coverlet-coverage/coverlet/pull/1788)\n- Generate SBOM for nuget packages\n[#​1752](https://github.com/coverlet-coverage/coverlet/pull/1752)\n- Use multi targets projects for coverlet.collector,\ncoverlet.msbuild.tasks packages\n[#​1742](https://github.com/coverlet-coverage/coverlet/pull/1742)\n- Use .NET 8.0 target framework for coverlet.core and remove\nNewtonsoft.Json\n[#​1733](https://github.com/coverlet-coverage/coverlet/pull/1733)\n- Use latest System.CommandLine version\n[#​1660](https://github.com/coverlet-coverage/coverlet/pull/1660)\n- Upgraded minimum required .NET SDK and runtime to .NET 8.0 LTS (Long\nTerm Support) (**Breaking Change**)\n- Use [xunit.v3](https://xunit.net/docs/getting-started/v3/whats-new)\nfor tests and example code\n\n[Diff between 6.0.4 and\n8.0.0](https://github.com/coverlet-coverage/coverlet/compare/v6.0.4...v8.0.0)\n\nCommits viewable in [compare\nview](https://github.com/coverlet-coverage/coverlet/compare/v6.0.4...v10.0.1).\n</details>\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Single dependency pin for a dev-only coverage CLI; risk is mainly\nwhether coverage scripts still run cleanly on the repo’s .NET SDK\n(coverlet 8+ raised minimum SDK/runtime expectations).\n> \n> **Overview**\n> Bumps the **`coverlet.console`** local tool version in\n**`.config/dotnet-tools.json`** from **6.0.4** to **10.0.1**; no other\ntools or application code change in this diff.\n> \n> That tool is what **`scripts/coverage/coverage.ps1`** (and the Bash\nequivalent) invoke via `dotnet tool run coverlet` when collecting test\ncoverage in CI and locally.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n83717d15ba0a7d7749d38e4e63788468a0bd63b8. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-08-22T12:43:35-07:00",
+          "tree_id": "ccc963435a9c42091215af192bbb4b298581edeb",
+          "url": "https://github.com/wallstop/NovaSharp/commit/3271a339b83c217066e21f464c3888e197b5c128"
+        },
+        "date": 1787428139542,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 429.028,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 461.761,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 453.206,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 622.896,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 689.378,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 709.54,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 685.659,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 767.038,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 741.648,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 743.748,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 797.976,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 847.959,
+            "unit": "ns",
             "extra": ""
           }
         ]
