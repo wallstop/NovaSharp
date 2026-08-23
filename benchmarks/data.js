@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787428139944,
+  "lastUpdate": 1787443236813,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -2494,6 +2494,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 847.959,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ca18d65878622b73ce7519a9bb072cb354397d66",
+          "message": "Migrate coroutine module to stack-only argument views (A5) + csharpier 1.3.0 (#112)\n\n## Summary\n\nCarries forward the in-progress\n`dev/wallstop/a5-coroutine-callback-views` work and closes out open\ndependency PRs.\n\n### A5: coroutine module argument views\n- Every `coroutine.*` callback (`create`, `wrap`, `resume`, `yield`,\n`close` 5.4+, `running`, `status`, `isyieldable` 5.3+) now registers\nthrough the stack-only `CallbackArgumentsView` path — the second fully\nmigrated CoreLib module after Math (one-module-per-PR per Phase A5).\n- Legacy public methods remain as delegating shims; built-in\nregistration now selects only view callbacks.\n- `ResumeCoroutineWithArguments` keeps fixed-arity `ResumeValues(1-4)`\nfast paths and adds a zero-copy `TryGetSpan` slice for higher arities\ninstead of materializing arrays.\n- `coroutine.wrap`'s returned closure registers via\n`LuaValue.NewCallbackView`; the legacy-signature closure was deleted.\n- Tests: retargeted the IL-dispatch test from the retired `(Coroutine,\nCallbackArguments, int)` helper to the live registered view path (also\nasserting a single `TryGetSpan\\) reference and zero nested `GetArray`\ncalls); added an all-versions test asserting every coroutine callback\nreports `HasArgumentView*` and that wrapped functions round-trip values.\n\n### Dependencies\n- Closes #69: bump csharpier to 1.3.0 in `.config/dotnet-tools.json` and\nadopt its formatting (1.3.0 adds MSBuild XML coverage; exactly three\nfiles change).\n- Merged #68 separately (coverlet.console 10.0.1; was fully green).\n- RCA'd + closed #111 with evidence: ilspycmd ≥10 NuGet packages no\nlonger ship `DotnetToolSettings.xml`, so `dotnet tool restore` cannot\ninstall them. Closed obsolete draft #72 as superseded.\n\n## Verification\n\n- Full TUnit suite: **15,230/15,230 passed** (after migration, merge,\nand reformatting).\n- `./scripts/build/quick.sh`: success.\n- Full-corpus comparison vs reference Lua, local, all five versions,\n`--enforce`: **0 mismatch / 0 lua_only / 0 nova_only** each; ratchet **0\nnew / 0 changed / 0 missing** (one stale unclassified both-error removed\non 5.4 — a strict reduction).\n- Repository pre-commit checks green, including CSharpier 1.3.0 format\nvalidation.\n- Progress:\n[progress/session-176-a5-coroutine-callback-views.md](progress/session-176-a5-coroutine-callback-views.md);\nPLAN.md status refreshed.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Touches coroutine resume/yield/wrap dispatch, a hot\nallocation-sensitive VM path, though it follows the existing Math-module\npattern and keeps Lua-facing behavior. Tooling bumps are low risk after\nthe coverlet revert.\n> \n> **Overview**\n> Migrates every `coroutine.*` built-in (`create`, `wrap`, `resume`,\n`yield`, `close`, `running`, `status`, `isyieldable`) onto stack-only\n`CallbackArgumentsView` callbacks—the second A5 CoreLib module after\nMath. Public legacy methods stay as thin shims; registration prefers the\nview overloads.\n> \n> Resume/wrap keep the 1–4 argument `ResumeValues` fast paths and add a\nzero-copy `TryGetSpan` slice for higher arities. `coroutine.wrap` now\nreturns a `NewCallbackView` closure. Tests assert live view registration\nacross Lua 5.1–5.5, IL dispatch through `TryGetSpan`, and no nested\n`GetArray` on wrap closures.\n> \n> Also bumps csharpier to 1.3.0 (MSBuild XML formatting) and reverts\n`coverlet.console` to 6.0.4 after 10.x broke net8.0 coverage collection\non CI.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n8f04b6d258bc275fa56b09fb6c281105f2309fa3. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-08-22T16:54:55-07:00",
+          "tree_id": "27a54e962df7d2d884292040ac8a6872f0012920",
+          "url": "https://github.com/wallstop/NovaSharp/commit/ca18d65878622b73ce7519a9bb072cb354397d66"
+        },
+        "date": 1787443236052,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 403.129,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 413.231,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 410.5,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 597.319,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 652.827,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 652.141,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 632.784,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 698.597,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 692.093,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 667.713,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 737.024,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 747.896,
             "unit": "ns",
             "extra": ""
           }
