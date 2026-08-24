@@ -40,11 +40,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "type")]
         public static LuaValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            if (args == null)
-            {
-                throw new ArgumentNullException(nameof(args));
-            }
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Type(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "type")]
+        private static LuaValue Type(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             if (args.Count < 1)
             {
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "type");
@@ -69,16 +75,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            if (executionContext == null)
-            {
-                throw new ArgumentNullException(nameof(executionContext));
-            }
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            if (args == null)
-            {
-                throw new ArgumentNullException(nameof(args));
-            }
+            return Assert(executionContext, new CallbackArgumentsView(args));
+        }
 
+        [NovaSharpModuleMethod(Name = "assert")]
+        private static LuaValue Assert(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue v = args[0];
             LuaValue message = args[1];
 
@@ -109,11 +120,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            if (args == null)
-            {
-                throw new ArgumentNullException(nameof(args));
-            }
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return CollectGarbage(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "collectgarbage")]
+        private static LuaValue CollectGarbage(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue opt = args[0];
 
             string mode = opt.CastToString();
@@ -146,12 +163,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+            ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Error(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "error")]
+        private static LuaValue Error(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue message = args.AsType(0, "error", DataType.String, false);
             LuaValue level = args.AsType(1, "error", DataType.Number, true);
 
@@ -211,16 +237,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            if (executionContext == null)
-            {
-                throw new ArgumentNullException(nameof(executionContext));
-            }
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            if (args == null)
-            {
-                throw new ArgumentNullException(nameof(args));
-            }
+            return ToString(executionContext, new CallbackArgumentsView(args));
+        }
 
+        [NovaSharpModuleMethod(Name = "tostring")]
+        private static LuaValue ToString(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             if (args.Count < 1)
             {
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "tostring");
@@ -251,7 +282,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackFunction callback = ToStringContinuationCallback;
             if (callback == null)
             {
-                callback = new CallbackFunction(ToStringContinuation, Metamethods.ToStringMeta);
+                callback = CallbackFunction.FromArgumentView(
+                    ToStringContinuation,
+                    Metamethods.ToStringMeta
+                );
                 ToStringContinuationCallback = callback;
             }
 
@@ -272,17 +306,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <returns>The validated string result.</returns>
         internal static LuaValue ToStringContinuation(
             ScriptExecutionContext executionContext,
-            CallbackArguments args
+            CallbackArgumentsView args
         )
         {
             if (executionContext == null)
             {
                 throw new ArgumentNullException(nameof(executionContext));
-            }
-
-            if (args == null)
-            {
-                throw new ArgumentNullException(nameof(args));
             }
 
             LuaValue b = args[0].ToScalar();
@@ -332,12 +361,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Select(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "select")]
+        private static LuaValue Select(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             // Handle "#" case first - doesn't need executionContext
             if (args[0].Type == DataType.String && args[0].String == "#")
             {
-                if (args[^1].Type == DataType.Tuple)
+                if (args[args.Count - 1].Type == DataType.Tuple)
                 {
-                    return LuaValue.FromNumber(args.Count - 1 + args[^1].Tuple.Length);
+                    return LuaValue.FromNumber(
+                        args.Count - 1 + args[args.Count - 1].Tuple.Length
+                    );
                 }
                 else
                 {
@@ -426,12 +466,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+            ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return ToNumber(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "tonumber")]
+        private static LuaValue ToNumber(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             if (args.Count < 1)
             {
                 throw ScriptRuntimeException.BadArgumentValueExpected(0, "tonumber");
@@ -619,12 +668,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+            ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Print(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "print")]
+        private static LuaValue Print(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             Script script = executionContext.Script;
             LuaCompatibilityVersion version = script.CompatibilityVersion;
             LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
@@ -726,12 +784,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+            ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return GetFenv(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
+        [NovaSharpModuleMethod(Name = "getfenv")]
+        private static LuaValue GetFenv(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue arg = args.Count > 0 ? args[0] : LuaValue.Nil;
 
             // If no argument or nil, default to level 1 (calling function)
@@ -828,12 +896,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+            ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return SetFenv(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
+        [NovaSharpModuleMethod(Name = "setfenv")]
+        private static LuaValue SetFenv(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             if (args.Count < 2)
             {
                 throw ScriptRuntimeException.BadArgumentNoValue(1, "setfenv", DataType.Table);
@@ -1058,12 +1136,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "warn")]
         public static LuaValue Warn(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+            ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Warn(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [LuaCompatibility(LuaCompatibilityVersion.Lua54)]
+        [NovaSharpModuleMethod(Name = "warn")]
+        private static LuaValue Warn(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
 
             for (int i = 0; i < args.Count; i++)

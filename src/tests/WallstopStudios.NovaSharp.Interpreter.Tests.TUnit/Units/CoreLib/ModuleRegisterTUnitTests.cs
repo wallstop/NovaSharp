@@ -333,10 +333,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
                 .That(firstPrint.Callback)
                 .IsNotSameReferenceAs(secondPrint.Callback)
                 .ConfigureAwait(false);
-            await Assert
-                .That(firstPrint.Callback.ClrCallback)
-                .IsSameReferenceAs(secondPrint.Callback.ClrCallback)
-                .ConfigureAwait(false);
+
+            // Wrappers are per-script, but the underlying module delegate must be shared.
+            if (firstPrint.Callback.HasArgumentViewNoContextCallback)
+            {
+                await Assert
+                    .That(firstPrint.Callback.ArgumentViewNoContextCallback)
+                    .IsSameReferenceAs(secondPrint.Callback.ArgumentViewNoContextCallback)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert
+                    .That(firstPrint.Callback.ArgumentViewCallback)
+                    .IsSameReferenceAs(secondPrint.Callback.ArgumentViewCallback)
+                    .ConfigureAwait(false);
+            }
         }
 
         [global::TUnit.Core.Test]

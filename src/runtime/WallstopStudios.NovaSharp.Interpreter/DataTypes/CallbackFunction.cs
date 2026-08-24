@@ -236,6 +236,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Gets the shared context-aware argument-view delegate, or <c>null</c>. Delegates are
+        /// created once per module method and reused across every script registration.
+        /// </summary>
+        internal ScriptFunctionCallbackView ArgumentViewCallback => _argumentViewCallback;
+
+        /// <summary>
+        /// Gets the shared contextless argument-view delegate, or <c>null</c>. Delegates are
+        /// created once per module method and reused across every script registration.
+        /// </summary>
+        internal ScriptFunctionCallbackViewNoContext ArgumentViewNoContextCallback =>
+            _argumentViewNoContextCallback;
+
+        /// <summary>
         /// Invokes the callback function
         /// </summary>
         /// <param name="executionContext">The execution context.</param>
