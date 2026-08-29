@@ -7,13 +7,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
+    using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Options;
     using WallstopStudios.NovaSharp.Interpreter.Tests.Units;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class CallbackFunctionTUnitTests
     {
@@ -462,6 +465,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 )
                 .IsFalse()
                 .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ArgumentViewCountsForwardedMultiReturnsWithoutVoidSentinel(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            List<int> receivedCounts = new();
+            script.Globals["countArgs"] = LuaValue.NewCallbackView(
+                script,
+                args =>
+                {
+                    receivedCounts.Add(args.Count);
+                    return LuaValue.FromNumber(args.Count);
+                }
+            );
+
+            // values(0) returns zero results; its expansion previously leaked a trailing void
+            // sentinel into registered argument views, inflating every forwarded count by one.
+            LuaValue result = script.DoString(
+                @"
+local function values(m)
+    if m == 0 then return end
+    return m, values(m - 1)
+end
+local function nothing() end
+return countArgs(values(5)), countArgs(nothing()), countArgs(7, 8, 9)
+"
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(receivedCounts.Count).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(receivedCounts[0]).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(receivedCounts[1]).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(receivedCounts[2]).IsEqualTo(3).ConfigureAwait(false);
         }
 
         private sealed class SampleUserData

@@ -71,6 +71,6 @@ NovaSharp now exposes a version selector so applications can pin script executio
 
 - **Enable missing TAP suites**: `TestMore_308_io` and `TestMore_309_os` stay disabled until IO parity improves. Track progress in `docs/testing/real-world-scripts.md` and `docs/coverage/coverage-hotspots.md`.
 - **File follow-up issues** for every ❌ entry and link them here with IDs once created (e.g., `Fixes #1234`). Use the owner column to avoid orphaned work.
-- When introducing new Lua 5.4 features or parity fixes, add NUnit coverage and update both this matrix and `PLAN.md` so the modernization roadmap stays consistent.
+- When introducing new Lua 5.4 features or parity fixes, add TUnit and fixture coverage, update this matrix, record completed evidence in `progress/`, and retain a PLAN item only for selected follow-up.
 
 If you discover behaviour that diverges from Lua 5.4.8, open an issue, add it to the relevant table with status ❌ or 🚧, and reference any reproducing tests.

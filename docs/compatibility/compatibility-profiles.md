@@ -45,6 +45,12 @@ Every globals table now exposes `_G._NovaSharp.luacompat`, which holds the activ
 
 1. ✅ **Standard library shims** – `SupportsUtf8Library` now gates the `utf8` module (Lua 5.4 manual §6.5), `SupportsTableMove` strips `table.move` when profiles opt out (Lua 5.3 manual §6.6), `SupportsWarnFunction` removes the Lua 5.4+ `warn` helper when disabled (Lua 5.4 manual §6.1), and `SupportsBit32Library` hides the legacy `bit32` namespace unless the script targets Lua 5.2. Covered by `Utf8ModuleTests`, `CompatibilityVersionTests.TableMoveOnlyAvailableInLua53Plus`, `CompatibilityVersionTests.WarnFunctionOnlyAvailableInLua54Plus`, and `CompatibilityVersionTests.Bit32LibraryOnlyAvailableInLua52`.
 
+   In Lua 5.4+ profiles, warning output starts disabled per script. The exact single-argument
+   controls `warn("@on")` and `warn("@off")` toggle it, while normal string/number arguments
+   are concatenated without separators. Enabled warnings use `ScriptOptions.Stderr` when
+   configured and otherwise standard error; the NovaSharp-specific `_WARN` global remains an
+   optional host interception hook.
+
 1. ✅ **Documentation/diagnostics** – `InterpreterException` now appends `[compatibility: Lua X.Y]` to every decorated message so Syntax/Runtime errors cite the active profile. Guarded by `CompatibilityDiagnosticsTests`.
 
 1. ✅ **Manifest plumbing** – mod manifests now accept a `luaCompatibility` field (e.g., `"Lua54"`, `"5.4"`, `"latest"`). Hosts can parse the JSON via `ModManifest.Parse` / `ModManifest.Load` and call `manifest.ApplyCompatibility(script.Options, hostCompatibility, warning => …)` to set `ScriptOptions.CompatibilityVersion` and log if the requested version exceeds the host’s baseline. Example:
@@ -62,4 +68,4 @@ Every globals table now exposes `_G._NovaSharp.luacompat`, which holds the activ
    manifest.ApplyCompatibility(script.Options, Script.GlobalOptions.CompatibilityVersion, Console.WriteLine);
    ```
 
-Tracking progress against each flag keeps PLAN.md actionable and gives contributors a concrete checklist whenever Lua publishes a new minor release.\*\*\*
+Track the full flag matrix here and create issues for discovered gaps. Keep only the selected next compatibility task in `PLAN.md`.\*\*\*

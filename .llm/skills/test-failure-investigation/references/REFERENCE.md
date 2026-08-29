@@ -11,7 +11,8 @@ When you find the root cause, the fix must be **comprehensive**:
 1. Create `.lua` fixture verifying behavior against reference Lua
 1. Regenerate corpus: `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`
 1. Verify fix across ALL applicable Lua versions
-1. Document in `PLAN.md` if it's a spec compliance fix
+1. Record the fix and verification in the current progress session; retain a
+   PLAN item only for unresolved, selected follow-up
 
 ### For Test Bugs
 

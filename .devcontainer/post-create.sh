@@ -194,6 +194,16 @@ if NPM_VERSION="$(npm --version 2>&1)"; then
 else
     echo "   npm:               NOT FOUND"
 fi
+if NANOCODER_VERSION="$(nanocoder --version 2>&1)"; then
+    echo "   Nanocoder:         ${NANOCODER_VERSION}"
+else
+    echo "   Nanocoder:         NOT FOUND"
+fi
+if OPENCODE_VERSION="$(opencode --version 2>&1)"; then
+    echo "   OpenCode:          ${OPENCODE_VERSION}"
+else
+    echo "   OpenCode:          NOT FOUND"
+fi
 if CODEX_VERSION="$(codex --version 2>&1)"; then
     echo "   Codex CLI:         ${CODEX_VERSION}"
 else

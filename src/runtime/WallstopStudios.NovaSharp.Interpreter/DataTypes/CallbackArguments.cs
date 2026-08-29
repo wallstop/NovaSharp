@@ -526,10 +526,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(executionContext));
             }
 
+            return AsStringUsingMeta(executionContext, this[argNum], funcName);
+        }
+
+        /// <summary>
+        /// Converts a value to a string, calling the __tostring metamethod if needed, in a NON
+        /// yield-compatible way.
+        /// </summary>
+        /// <param name="executionContext">The execution context.</param>
+        /// <param name="argument">The value to convert.</param>
+        /// <param name="funcName">Name of the function.</param>
+        /// <returns></returns>
+        /// <exception cref="ScriptRuntimeException">'tostring' must return a string to '{0}'</exception>
+        internal static string AsStringUsingMeta(
+            ScriptExecutionContext executionContext,
+            LuaValue argument,
+            string funcName
+        )
+        {
             // Get the Lua version for version-aware number formatting
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
-            LuaValue argument = this[argNum];
             if ((argument.Type == DataType.Table) && (argument.Table.MetaTable != null))
             {
                 if (

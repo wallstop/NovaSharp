@@ -78,6 +78,30 @@ return x
 | `@source` | Original C# source file and line number    |
 | `@test`   | Fully qualified test class and method name |
 
+### Regenerating the Corpus
+
+Run the extractor from the repository root:
+
+```bash
+python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py
+
+# Include the complete human-triage list instead of the default preview.
+python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py --report-orphans
+```
+
+Generation is additive and non-destructive. Existing fixture bodies reserve
+their paths, and an extracted snippet with a different body receives a numeric
+suffix instead of overwriting the file. Exact duplicate snippets at the same
+logical source slot are represented once; distinct snippets that share a short
+test class and method name receive unique paths. Curated metadata follows the
+matching Lua body when a collision is disambiguated.
+
+The extractor reports existing `.lua` files that no current C# snippet owns but
+never deletes them. This is expected for standalone and file-first fixtures;
+review the report before removing anything. Existing `@source` line numbers and
+manifest order remain stable when only surrounding C# lines or extraction order
+change, keeping regeneration diffs focused on semantic corpus changes.
+
 ### Version Compatibility Detection
 
 The extractor (`tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`) automatically detects version compatibility:
@@ -277,4 +301,4 @@ The batch runner has a 5-second timeout per script. Scripts waiting for stdin or
 - [x] Phase 6: `both_error` ratchet for unclassified error parity gaps
 - [ ] Phase 7: File-first test authoring pattern (migrate existing tests)
 
-See `PLAN.md` → "Reference Lua comparison harness" for the implementation timeline.
+See the comparison-harness session records under `progress/` for implementation history and `PLAN.md` only for selected follow-up.

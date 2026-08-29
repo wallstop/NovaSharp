@@ -108,6 +108,7 @@ jobs:
           python3 tools/test_render_lua_comparison_report.py
           python3 tools/test_lua_error_ratchet.py
           python3 tools/test_lua_fixture_metadata.py
+          python3 tools/LuaCorpusExtractor/test_lua_corpus_extractor_v2.py
           python3 tools/test_run_lua_fixtures_fast.py
         shell: bash
 

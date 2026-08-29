@@ -429,4 +429,4 @@ ______________________________________________________________________
 
 - `docs/modernization/reflection-audit.md` – Reflection usage inventory
 - `docs/testing/spec-audit.md` – Specification compliance tracking
-- `PLAN.md` – Modernization roadmap
+- `docs/Modernization.md` – Modernization roadmap and pending alignments

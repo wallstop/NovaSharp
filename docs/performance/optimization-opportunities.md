@@ -1,7 +1,7 @@
 # NovaSharp Optimization Opportunities
 
 > Last updated: 2025-12-06
-> Context: Performance optimization audit for `PLAN.md` - Interpreter hot-path optimization initiative
+> Scope: Performance optimization audit. Measurements and completed outcomes belong in progress sessions; unselected candidates remain here.
 
 This document catalogs potential optimizations to reduce allocations and improve throughput in the NovaSharp interpreter. Each section prioritizes opportunities by impact and provides concrete implementation guidance.
 

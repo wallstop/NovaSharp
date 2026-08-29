@@ -4,7 +4,7 @@
 
 > **Date**: December 22, 2025\
 > **Status**: 📋 INVESTIGATION COMPLETE\
-> **Related**: [PLAN.md Initiative 18](../../PLAN.md), [Session 070 Investigation](../../progress/session-070-compiler-memory-investigation.md)
+> **Related**: [Session 070 Investigation](../../progress/session-070-compiler-memory-investigation.md)
 
 ______________________________________________________________________
 
@@ -474,7 +474,7 @@ ______________________________________________________________________
 
 ## Related Documents
 
-- [PLAN.md Initiative 18](../../PLAN.md#initiative-18-large-script-loadcompile-memory-optimization--high)
+- [Session 084 validation](../../progress/session-084-initiative18-phase3-investigation.md)
 - [Session 070: Compiler Memory Investigation](../../progress/session-070-compiler-memory-investigation.md)
 - [Initiative 12: Allocation Analysis](allocation-analysis-initiative12-phase5-validation.md)
 - [Optimization Opportunities](optimization-opportunities.md)

@@ -4,7 +4,7 @@
 
 > **Date**: December 21, 2025
 > **Status**: Analysis Complete
-> **Related**: [PLAN.md Initiative 12](../../PLAN.md), [pooling-and-allocation-audit-2025-12.md](./pooling-and-allocation-audit-2025-12.md)
+> **Related**: [pooling-and-allocation-audit-2025-12.md](./pooling-and-allocation-audit-2025-12.md)
 
 ______________________________________________________________________
 

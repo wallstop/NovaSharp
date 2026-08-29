@@ -2,7 +2,7 @@
 
 > **Status**: ✅ **AUDIT COMPLETE** (Session 052, 2025-12-20) — 0 unexpected mismatches across all Lua versions.
 >
-> **Action Plan**: See [PLAN.md §8.44](../../PLAN.md) for the **Lua Output Format Alignment** initiative to fix addressable divergences.
+> **Action tracking**: This file is authoritative for known divergences. File an issue for every addressable divergence and place only selected work in [PLAN.md](../../PLAN.md).
 
 This document catalogs known semantic differences between NovaSharp and reference Lua interpreters that cause fixtures to produce different outputs. These divergences are categorized by their nature and severity.
 

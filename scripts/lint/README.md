@@ -76,14 +76,38 @@ Incorrect pattern:
 python scripts/lint/check-shell-python-invocation.py
 ```
 
+### check-plan-hygiene.py
+
+Keeps `PLAN.md` as a lean current/future execution queue. The check rejects files
+over 120 lines, completed checkboxes, session-history links, date-led lines, and
+archive/status history shapes. Write deadlines as `Ship by YYYY-MM-DD`. Focused
+tests exercise each accepted and rejected shape.
+
+```bash
+python scripts/lint/test_plan_hygiene.py
+python scripts/lint/check-plan-hygiene.py
+```
+
 ### check-tooling-consistency.py
 
-Validates that development setup entrypoints agree on the same .NET SDK and local .NET tool model. The check fails when:
+Validates that development setup entrypoints agree on the same .NET SDK, local
+.NET tool model, npm CLI lifecycle, generated-artifact retention, and GitHub MCP
+configuration. The check fails when:
 
 - `.devcontainer/Dockerfile` does not explicitly install the SDK feature band pinned by `global.json`
 - the devcontainer installs global .NET tools or mounts over `.dotnet/tools`
 - shell entrypoints run manifest-local tools without restoring them first
 - devcontainer lifecycle scripts install unpinned dotnet template packages
+- the devcontainer stops resolving Nanocoder, OpenCode, or Codex from npm's `latest` dist-tag as the non-root user
+- container creation/startup no longer performs the configured generated-artifact cleanup
+- Codex, Claude/Copilot/Nanocoder, VS Code, or OpenCode loses its secret-free GitHub MCP definition
+
+The check also runs `test-devcontainer-lifecycle.sh`, a network-free harness that
+covers strict and offline npm failures, broken CLI fallbacks, permission checks,
+exact retention boundaries, source preservation, and the legacy build-cache
+exception. When Docker is available, `test-devcontainer-build-cache.sh` also
+performs a primed-cache rebuild and proves that Docker's no-cache option does
+not report cached steps.
 
 ```bash
 python scripts/lint/check-tooling-consistency.py

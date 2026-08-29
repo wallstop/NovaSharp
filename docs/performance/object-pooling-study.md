@@ -1,7 +1,7 @@
 # NovaSharp Allocation Reduction Study
 
 > Last updated: 2025‑11‑13\
-> Context: `PLAN.md` – Performance Optimisation Campaign, “allocation guardrails”
+> Scope: Historical allocation-reduction study. Remeasure candidates before selecting follow-up work in an issue or the execution queue.
 
 ## Goals
 
@@ -51,6 +51,6 @@
 1. Prototype `Table.FillPairs` + pooled list usage in interpreter tests; measure allocation delta.
 1. Evaluate struct-based disposable pattern compatibility (ensure existing consumers compiling against `IDisposable` continue to work).
 1. Document findings + adoption guidance in `docs/Performance.md` before rolling out API changes.
-1. Update `PLAN.md` as experiments land (per area).
+1. Record landed or rejected experiments in `progress/`; retain only the selected next experiment in `PLAN.md`.
 
 Feel free to append more ideas or link to benchmarks once experiments begin.

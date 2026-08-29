@@ -54,7 +54,7 @@ run_with_retries() {
 # ============================================================================
 # STEP 0: Pre-flight check & VS Code extension cleanup
 # ============================================================================
-echo "🔧 Step 0/3: Pre-flight check..."
+echo "🔧 Step 0/4: Pre-flight check..."
 echo "   Working directory: $(pwd)"
 
 REQUIRED_DOTNET_SDK_PREFIX="$(python3 - <<'PY'
@@ -107,42 +107,28 @@ fi
 # STEP 1: Clean stale build artifacts
 # ============================================================================
 echo ""
-echo "📦 Step 1/3: Cleaning stale build artifacts..."
-
-# Clean obj directories (NuGet restore cache with platform-specific paths)
-obj_count=0
-while IFS= read -r -d '' dir; do
-    rm -rf "$dir"
-    ((obj_count++)) || true
-done < <(find src -type d -name "obj" -print0)
-
-# Clean bin directories
-bin_count=0
-while IFS= read -r -d '' dir; do
-    rm -rf "$dir"
-    ((bin_count++)) || true
-done < <(find src -type d -name "bin" -print0)
-
-# Clean Visual Studio cache folder (contains Windows-specific paths and binary caches)
-if [ -d "src/.vs" ]; then
-    rm -rf "src/.vs"
-    echo "   Cleaned: src/.vs (Visual Studio cache)"
-fi
-
-echo "   Cleaned: ${obj_count} obj/, ${bin_count} bin/ directories"
+echo "📦 Step 1/4: Cleaning stale build artifacts..."
+bash .devcontainer/cleanup-artifacts.sh "${WORKSPACE_DIR}" --all
 
 # ============================================================================
-# STEP 2: Restore .NET tools
+# STEP 2: Refresh npm coding tools
 # ============================================================================
 echo ""
-echo "🔧 Step 2/3: Restoring .NET tools..."
+echo "🤖 Step 2/4: Refreshing npm coding tools..."
+bash .devcontainer/install-npm-tools.sh
+
+# ============================================================================
+# STEP 3: Restore .NET tools
+# ============================================================================
+echo ""
+echo "🔧 Step 3/4: Restoring .NET tools..."
 run_with_retries 5 dotnet tool restore --verbosity minimal
 
 # ============================================================================
-# STEP 3: Restore NuGet packages (CRITICAL - must complete before extensions load)
+# STEP 4: Restore NuGet packages (CRITICAL - must complete before extensions load)
 # ============================================================================
 echo ""
-echo "📥 Step 3/3: Restoring NuGet packages..."
+echo "📥 Step 4/4: Restoring NuGet packages..."
 echo "   (This must complete before C# extension activates)"
 run_with_retries 5 dotnet restore src/NovaSharp.sln --verbosity minimal
 

@@ -134,6 +134,8 @@ DocProject/Help/html
 src/.vscode/**
 src/.idea/**
 .vscode/**
+!.vscode/
+!.vscode/mcp.json
 .idea/**
 
 # Extracted lua comparison directories (generated from zip archives)

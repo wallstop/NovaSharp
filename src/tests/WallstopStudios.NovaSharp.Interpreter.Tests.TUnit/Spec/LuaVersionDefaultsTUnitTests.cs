@@ -10,7 +10,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
-    /// Tests for <see cref="LuaVersionDefaults"/> centralized version resolution (§8.23 from PLAN.md).
+    /// Tests centralized compatibility-version resolution through <see cref="LuaVersionDefaults"/>.
     /// Verifies consistent handling of <see cref="LuaCompatibilityVersion.Latest"/> across the codebase.
     /// </summary>
     public sealed class LuaVersionDefaultsTUnitTests : LuaSpecTestBase

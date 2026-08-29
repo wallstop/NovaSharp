@@ -59,7 +59,7 @@ Package description/URL metadata should reference `https://wallstop-studios.com/
 
 ### Stage 0 – Tooling & Tracking (this document)
 
-1. Check in this plan under `docs/modernization` and link it from `PLAN.md`.
+1. Keep this document authoritative for the design; add only the selected next milestone to `PLAN.md`.
 1. Extend `tools/NamingAudit/naming_audit.py` to support configurable namespace prefixes so we can measure progress (`NovaSharp.` vs `WallstopStudios.` counts).
 1. Add a `NamespaceRebrand` section in `docs/Modernization.md` pointing to this plan and enumerating affected projects.
 
@@ -122,9 +122,9 @@ Package description/URL metadata should reference `https://wallstop-studios.com/
 
 ## Immediate Next Steps
 
-1. Wire this plan into `PLAN.md` and `docs/Modernization.md`.
+1. Add the selected next milestone to `PLAN.md` and keep detailed state in this document and `docs/Modernization.md`.
 1. Extend `tools/NamingAudit` with namespace-prefix awareness so we can quantify remaining files.
 1. Draft the analyzer configuration changes (Stage 1) and land them behind an opt-in MSBuild property.
 1. Inventory all documentation (`docs/`, `README`, samples) that reference `NovaSharp.` so we know the surface area before edits begin.
 
-Track every milestone in `PLAN.md` under the “Project Structure Refactor (High Priority)” section to keep contributors aligned on progress.
+Track only the selected current/next milestone in `PLAN.md`. Record completed milestone evidence in `progress/` and maintain the full sequence in this document.

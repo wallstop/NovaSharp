@@ -1554,17 +1554,6 @@
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/CurrentGlobalEnvExposesGlobals.lua:(7,20-37): attempt to call a nil value [compatibility: Lua 5.1]"
     },
     {
-      "file": "ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua",
-      "lua_version": "5.1",
-      "classification": "unclassified",
-      "lua_rc_category": "nonzero",
-      "nova_rc_category": "nonzero",
-      "lua_error_sha256": "d508c3dc6f240fe6864fa3b6f12bf3f3b26b433c69824ec2bd1875ca1c8d0ac1",
-      "nova_error_sha256": "b135b67afc5e7fd4d0ac0274fbe1b71196754fd213be12f754389219b21e3836",
-      "lua_error_excerpt": "lua: ...extTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:<line>: attempt to call global 'assertLocal' (a nil value) | stack traceback: | \t...extTUnitTests/EvaluateSymbolByNa...",
-      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:(8,20-40): attempt to call a nil value [compatibility: Lua 5.1]"
-    },
-    {
       "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua",
       "lua_version": "5.1",
       "classification": "unclassified",
@@ -3510,17 +3499,6 @@
       "nova_error_sha256": "8f23ff32e8d3fae82e890c237deb3bab474ad78b9b9ac3de1011f03e0f7990f4",
       "lua_error_excerpt": "lua: ...tionContextTUnitTests/CurrentGlobalEnvExposesGlobals.lua:<line>: attempt to call global 'probeEnv' (a nil value) | stack traceback: | \t...tionContextTUnitTests/CurrentGl...",
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/CurrentGlobalEnvExposesGlobals.lua:(7,20-37): attempt to call a nil value [compatibility: Lua 5.2]"
-    },
-    {
-      "file": "ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua",
-      "lua_version": "5.2",
-      "classification": "unclassified",
-      "lua_rc_category": "nonzero",
-      "nova_rc_category": "nonzero",
-      "lua_error_sha256": "e9df999d71e5aa8bba87231a4b671d810b9e65e123e921ad723fddb2e52384de",
-      "nova_error_sha256": "cf4be340fc3e7582ed0bb9adad1ebb827dca99c14e4f7aeb7e7ad30609095caf",
-      "lua_error_excerpt": "lua: ...ContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:<line>: attempt to call global 'assertLocal' (a nil value) | stack traceback: | \t...ContextTUnitTests/EvaluateSy...",
-      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:(8,20-40): attempt to call a nil value [compatibility: Lua 5.2]"
     },
     {
       "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua",
@@ -5921,17 +5899,6 @@
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/CurrentGlobalEnvExposesGlobals.lua:(7,20-37): attempt to call a nil value [compatibility: Lua 5.3]"
     },
     {
-      "file": "ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua",
-      "lua_version": "5.3",
-      "classification": "unclassified",
-      "lua_rc_category": "nonzero",
-      "nova_rc_category": "nonzero",
-      "lua_error_sha256": "313a41d4d87130559bb490a47cb9b424b3cefcca5018fdcdbb10a441d6504de0",
-      "nova_error_sha256": "177c15bcc7dba9168138e2828e4b66cf233f5d32041fe10ee681226816072df6",
-      "lua_error_excerpt": "lua: ...ContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:<line>: attempt to call a nil value (global 'assertLocal') | stack traceback: | \t...ContextTUnitTests/EvaluateSy...",
-      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:(8,20-40): attempt to call a nil value [compatibility: Lua 5.3]"
-    },
-    {
       "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua",
       "lua_version": "5.3",
       "classification": "unclassified",
@@ -7516,6 +7483,28 @@
       "nova_error_excerpt": "unexpected symbol near '1'"
     },
     {
+      "file": "BasicModuleTUnitTests/WarnValidatesEveryArgumentWhileDisabled.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "a6393b97612b27be0fa2cc1879a46f77a441817a382442417858d0f25d723709",
+      "nova_error_sha256": "5ad44ab1c535d3235f10501f7d1d4a4a5c2223e65abcf3aec76c7662423960bb",
+      "lua_error_excerpt": "lua: ...leTUnitTests/WarnValidatesEveryArgumentWhileDisabled.lua:<line>: bad argument #1 to 'warn' (string expected, got no value) | stack traceback: | \t[C]: in function 'warn' ...",
+      "nova_error_excerpt": "LuaFixtures/BasicModuleTUnitTests/WarnValidatesEveryArgumentWhileDisabled.lua:(7,4-6): bad argument #1 to 'warn' (string expected, got no value) [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "BasicModuleTUnitTests/WarnValidatesEveryArgumentWhileDisabled_1.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "53ebe2b36b20972b8d767d65a4e402144c09685665cb2a7af498cb7a247c6863",
+      "nova_error_sha256": "4db942628875728842a30bad220d7535a3e5d34c38f436c96a8eb9822184613e",
+      "lua_error_excerpt": "lua: ...TUnitTests/WarnValidatesEveryArgumentWhileDisabled_1.lua:<line>: bad argument #2 to 'warn' (string expected, got boolean) | stack traceback: | \t[C]: in function 'warn' |...",
+      "nova_error_excerpt": "LuaFixtures/BasicModuleTUnitTests/WarnValidatesEveryArgumentWhileDisabled_1.lua:(7,4-19): bad argument #2 to 'warn' (string expected, got boolean) [compatibility: Lua 5.4]"
+    },
+    {
       "file": "BreakStatementTUnitTests/BreakInsideNestedFunctionDefinedInLoopCannotEscapeOuterLoop.lua",
       "lua_version": "5.4",
       "classification": "unclassified",
@@ -9054,17 +9043,6 @@
       "nova_error_sha256": "a6558758f9e9cc81fef291e41105d9bd24520e8a2facac060362355589d7093c",
       "lua_error_excerpt": "lua: ...tionContextTUnitTests/CurrentGlobalEnvExposesGlobals.lua:<line>: attempt to call a nil value (global 'probeEnv') | stack traceback: | \t...tionContextTUnitTests/CurrentGl...",
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/CurrentGlobalEnvExposesGlobals.lua:(7,20-37): attempt to call a nil value [compatibility: Lua 5.4]"
-    },
-    {
-      "file": "ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua",
-      "lua_version": "5.4",
-      "classification": "unclassified",
-      "lua_rc_category": "nonzero",
-      "nova_rc_category": "nonzero",
-      "lua_error_sha256": "313a41d4d87130559bb490a47cb9b424b3cefcca5018fdcdbb10a441d6504de0",
-      "nova_error_sha256": "5476e2dbcaa80bcacd2dca608f6980da003cc1804b328836d5a16dd9e978d541",
-      "lua_error_excerpt": "lua: ...ContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:<line>: attempt to call a nil value (global 'assertLocal') | stack traceback: | \t...ContextTUnitTests/EvaluateSy...",
-      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:(8,20-40): attempt to call a nil value [compatibility: Lua 5.4]"
     },
     {
       "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua",
@@ -10638,6 +10616,28 @@
       "nova_error_sha256": "9504b9e02d1616f3ba69cd0e400f6b9e78ad07d97343e9f3dd33ea0c2bd589ae",
       "lua_error_excerpt": "lua: ...tementTUnitTests/AssignmentRequiresWritableVariables.lua:<line>: unexpected symbol near '1'",
       "nova_error_excerpt": "unexpected symbol near '1'"
+    },
+    {
+      "file": "BasicModuleTUnitTests/WarnValidatesEveryArgumentWhileDisabled.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "5b2b77afd0699c014ef860564856bddc544e9f4054e7ddb929c10f85afc4e68a",
+      "nova_error_sha256": "b75aeb391f2af10beb08bb02866385c64b06e4e23368af19418d700d8af4a32b",
+      "lua_error_excerpt": "lua: ...leTUnitTests/WarnValidatesEveryArgumentWhileDisabled.lua:<line>: bad argument #1 to 'warn' (string expected, got no value) | stack traceback: | \t[C]: in global 'warn' | ...",
+      "nova_error_excerpt": "LuaFixtures/BasicModuleTUnitTests/WarnValidatesEveryArgumentWhileDisabled.lua:(7,4-6): bad argument #1 to 'warn' (string expected, got no value) [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "BasicModuleTUnitTests/WarnValidatesEveryArgumentWhileDisabled_1.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "3c09ba71f541273a6a7da4761e3eb49f99df3bfb8df3d4f3723caec0b567ff96",
+      "nova_error_sha256": "d52a8340ba7589639a4ccb3fd6e002dd9fbee5953fc7559529ec0eeccda8e9b2",
+      "lua_error_excerpt": "lua: ...TUnitTests/WarnValidatesEveryArgumentWhileDisabled_1.lua:<line>: bad argument #2 to 'warn' (string expected, got boolean) | stack traceback: | \t[C]: in global 'warn' | \t...",
+      "nova_error_excerpt": "LuaFixtures/BasicModuleTUnitTests/WarnValidatesEveryArgumentWhileDisabled_1.lua:(7,4-19): bad argument #2 to 'warn' (string expected, got boolean) [compatibility: Lua 5.5]"
     },
     {
       "file": "BreakStatementTUnitTests/BreakInsideNestedFunctionDefinedInLoopCannotEscapeOuterLoop.lua",
@@ -12255,17 +12255,6 @@
       "nova_error_sha256": "efa0b0d1229a08b40c85e6a18d9e0e9a7d6d0c0668cfd0267f3b2d19e36177cc",
       "lua_error_excerpt": "lua: ...tionContextTUnitTests/CurrentGlobalEnvExposesGlobals.lua:<line>: attempt to call a nil value (global 'probeEnv') | stack traceback: | \t...tionContextTUnitTests/CurrentGl...",
       "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/CurrentGlobalEnvExposesGlobals.lua:(7,20-37): attempt to call a nil value [compatibility: Lua 5.5]"
-    },
-    {
-      "file": "ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua",
-      "lua_version": "5.5",
-      "classification": "unclassified",
-      "lua_rc_category": "nonzero",
-      "nova_rc_category": "nonzero",
-      "lua_error_sha256": "313a41d4d87130559bb490a47cb9b424b3cefcca5018fdcdbb10a441d6504de0",
-      "nova_error_sha256": "2c0afd848cc0a1f957e5a8e9be1f1e858c7109e9fa28b5a6f42841ef74790351",
-      "lua_error_excerpt": "lua: ...ContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:<line>: attempt to call a nil value (global 'assertLocal') | stack traceback: | \t...ContextTUnitTests/EvaluateSy...",
-      "nova_error_excerpt": "LuaFixtures/ScriptExecutionContextTUnitTests/EvaluateSymbolByNameResolvesLocals.lua:(8,20-40): attempt to call a nil value [compatibility: Lua 5.5]"
     },
     {
       "file": "ScriptExecutionContextTUnitTests/FixedCallOverloadsInvokeCallbackViews.lua",

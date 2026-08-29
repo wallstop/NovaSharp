@@ -1,6 +1,6 @@
 # Project Structure Blueprint
 
-This document captures the current repository layout, highlights legacy or duplicated locations, and proposes a consolidated structure that aligns with the modernization guidelines in `PLAN.md`.
+This document captures the current repository layout, highlights legacy or duplicated locations, and proposes a consolidated structure that aligns with [Modernization Notes](Modernization.md).
 
 ## 1. Current State (Nov 2025, post-initial refactor)
 

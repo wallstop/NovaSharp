@@ -39,6 +39,7 @@ ______________________________________________________________________
 1. **Pre-Commit Validation Allowed** — Run `./scripts/dev/pre-commit.sh` after changes; it may restage files it auto-formats or regenerates.
 1. **No False Green-Light** — Only say `green`, `verified`, `passes`, or `complete` after the exact local checks and PR CI were observed passing; otherwise report `not run` or residual risk.
 1. **Evidence-Driven Material Changes** — Use the [evidence-driven change workflow](workflows/evidence-driven-change.md) for material behavior, architecture, performance, reliability, CI, or LLM-system work. Require observed red→green evidence and risk-selected gates.
+1. **Lean Execution Plan** — Keep `PLAN.md` limited to in-progress and intentionally queued work. Route reusable guidance to skills/workflows, stable facts to knowledge or domain docs, completed evidence to `progress/`, and unselected backlog detail to issues. Use [plan-maintenance](skills/plan-maintenance/SKILL.md) and remove completed items in the same change that records their session result.
 1. **Mandatory Post-Work Improvement Gate** — After every large change or investigation, complete [post-work-reflection](skills/post-work-reflection/SKILL.md) before reporting completion. Resolve findings at their root, update the appropriate LLM guidance or knowledge when evidence supports a durable lesson, and independently review the result when agents are available.
 
 See individual skills for detailed guidance.
@@ -78,6 +79,7 @@ ______________________________________________________________________
 | Verify a behavior change        | `.llm/skills/change-path-verification/SKILL.md`     |
 | Run an independent hardening    | `.llm/skills/adversarial-handoff/SKILL.md`          |
 | Capture durable repository fact | `.llm/knowledge/`                                   |
+| Create or maintain the plan     | `.llm/skills/plan-maintenance/SKILL.md`             |
 
 ### Key Files
 
@@ -158,16 +160,16 @@ Skills are in `.llm/skills/`. Run `python3 tools/LlmSkillIndexer/llm_skill_index
 
 ### Core Skills
 
-| Category         | Key Skills                                                                                                                                                                                         |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Priority**     | [correctness-then-performance](skills/correctness-then-performance/SKILL.md), [lua-spec-verification](skills/lua-spec-verification/SKILL.md)                                                       |
-| **Performance**  | [high-performance-csharp](skills/high-performance-csharp/SKILL.md), [zstring-migration](skills/zstring-migration/SKILL.md), [data-structures](skills/data-structures/SKILL.md)                     |
-| **Testing**      | [tunit-test-writing](skills/tunit-test-writing/SKILL.md), [lua-fixture-creation](skills/lua-fixture-creation/SKILL.md), [test-failure-investigation](skills/test-failure-investigation/SKILL.md)   |
-| **Workflow**     | [systematic-investigation](skills/systematic-investigation/SKILL.md), [architecture-review](skills/architecture-review/SKILL.md), [adversarial-handoff](skills/adversarial-handoff/SKILL.md)       |
-| **Verification** | [change-path-verification](skills/change-path-verification/SKILL.md), [deterministic-testing](skills/deterministic-testing/SKILL.md), [post-work-reflection](skills/post-work-reflection/SKILL.md) |
-| **Unity**        | [unity-gc-patterns](skills/unity-gc-patterns/SKILL.md), [aggressive-inlining](skills/aggressive-inlining/SKILL.md)                                                                                 |
-| **Lua**          | [lua-comparison-harness](skills/lua-comparison-harness/SKILL.md), [adding-opcodes](skills/adding-opcodes/SKILL.md)                                                                                 |
-| **Quality**      | [defensive-programming](skills/defensive-programming/SKILL.md), [documentation-and-changelog](skills/documentation-and-changelog/SKILL.md)                                                         |
+| Category         | Key Skills                                                                                                                                                                                                                                         |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Priority**     | [correctness-then-performance](skills/correctness-then-performance/SKILL.md), [lua-spec-verification](skills/lua-spec-verification/SKILL.md)                                                                                                       |
+| **Performance**  | [high-performance-csharp](skills/high-performance-csharp/SKILL.md), [zstring-migration](skills/zstring-migration/SKILL.md), [data-structures](skills/data-structures/SKILL.md)                                                                     |
+| **Testing**      | [tunit-test-writing](skills/tunit-test-writing/SKILL.md), [lua-fixture-creation](skills/lua-fixture-creation/SKILL.md), [test-failure-investigation](skills/test-failure-investigation/SKILL.md)                                                   |
+| **Workflow**     | [systematic-investigation](skills/systematic-investigation/SKILL.md), [architecture-review](skills/architecture-review/SKILL.md), [adversarial-handoff](skills/adversarial-handoff/SKILL.md), [plan-maintenance](skills/plan-maintenance/SKILL.md) |
+| **Verification** | [change-path-verification](skills/change-path-verification/SKILL.md), [deterministic-testing](skills/deterministic-testing/SKILL.md), [post-work-reflection](skills/post-work-reflection/SKILL.md)                                                 |
+| **Unity**        | [unity-gc-patterns](skills/unity-gc-patterns/SKILL.md), [aggressive-inlining](skills/aggressive-inlining/SKILL.md)                                                                                                                                 |
+| **Lua**          | [lua-comparison-harness](skills/lua-comparison-harness/SKILL.md), [adding-opcodes](skills/adding-opcodes/SKILL.md)                                                                                                                                 |
+| **Quality**      | [defensive-programming](skills/defensive-programming/SKILL.md), [documentation-and-changelog](skills/documentation-and-changelog/SKILL.md)                                                                                                         |
 
 ______________________________________________________________________
 
@@ -188,4 +190,4 @@ ______________________________________________________________________
 
 - [docs/lua-spec/](../docs/lua-spec/) — Local Lua specs
 - [docs/Testing.md](../docs/Testing.md) — Testing details
-- [PLAN.md](../PLAN.md) — Current plan
+- [PLAN.md](../PLAN.md) — Lean execution queue for current and intentionally queued work

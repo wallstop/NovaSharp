@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Collections.Generic;
     using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
+    using WallstopStudios.NovaSharp.Interpreter.Execution;
 
     /// <summary>
     /// Stack-only view of arguments received by an opt-in <see cref="CallbackFunction"/>.
@@ -298,21 +299,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             else
             {
                 LuaValue last = GetStoredArgument(_storedCount - 1);
-                if (last.Type == DataType.Tuple)
-                {
-                    _count = last.Tuple.Length - 1 + visibleStoredCount;
-                    _lastIsTuple = true;
-                }
-                else if (last.Type == DataType.Void)
-                {
-                    _count = visibleStoredCount - 1;
-                    _lastIsTuple = false;
-                }
-                else
-                {
-                    _count = visibleStoredCount;
-                    _lastIsTuple = false;
-                }
+                _count = ComputeExpandedCount(last, visibleStoredCount, out _lastIsTuple);
             }
         }
 
@@ -393,22 +380,50 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             else
             {
                 LuaValue last = GetStoredArgument(storedCount - 1);
-                if (last.Type == DataType.Tuple)
-                {
-                    _count = last.Tuple.Length - 1 + visibleStoredCount;
-                    _lastIsTuple = true;
-                }
-                else if (last.Type == DataType.Void)
-                {
-                    _count = visibleStoredCount - 1;
-                    _lastIsTuple = false;
-                }
-                else
-                {
-                    _count = visibleStoredCount;
-                    _lastIsTuple = false;
-                }
+                _count = ComputeExpandedCount(last, visibleStoredCount, out _lastIsTuple);
             }
+        }
+
+        /// <summary>
+        /// Computes the expanded argument count for the last stored value, applying Lua
+        /// multi-return adjustment rules.
+        /// </summary>
+        /// <remarks>
+        /// A trailing tuple expands to its elements, except that a trailing void inside it is
+        /// the zero-returns sentinel appended by multi-return expansion and contributes no
+        /// argument. This matches the legacy dispatch contract, which flattens a trailing tuple
+        /// before the same void discount is applied at top level.
+        /// </remarks>
+        private static int ComputeExpandedCount(
+            LuaValue last,
+            int visibleStoredCount,
+            out bool lastIsTuple
+        )
+        {
+            lastIsTuple = false;
+
+            if (last.Type == DataType.Tuple)
+            {
+                int tupleLength = last.Tuple.Length;
+                if (tupleLength > 0 && last.Tuple[tupleLength - 1].Type == DataType.Void)
+                {
+                    tupleLength--;
+                    if (tupleLength == 0)
+                    {
+                        return visibleStoredCount - 1;
+                    }
+                }
+
+                lastIsTuple = true;
+                return tupleLength - 1 + visibleStoredCount;
+            }
+
+            if (last.Type == DataType.Void)
+            {
+                return visibleStoredCount - 1;
+            }
+
+            return visibleStoredCount;
         }
 
         /// <summary>
@@ -536,6 +551,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             return values;
+        }
+
+        /// <summary>
+        /// Converts the specified argument to a string, calling the __tostring metamethod if needed,
+        /// in a NON yield-compatible way.
+        /// </summary>
+        /// <param name="executionContext">The execution context.</param>
+        /// <param name="argNum">The argument number.</param>
+        /// <param name="funcName">Name of the function.</param>
+        /// <returns></returns>
+        /// <exception cref="ScriptRuntimeException">'tostring' must return a string to '{0}'</exception>
+        public string AsStringUsingMeta(
+            ScriptExecutionContext executionContext,
+            int argNum,
+            string funcName
+        )
+        {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            return CallbackArguments.AsStringUsingMeta(executionContext, this[argNum], funcName);
         }
 
         /// <summary>

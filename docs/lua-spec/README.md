@@ -97,7 +97,7 @@ When working on Lua compatibility tasks:
 
 ## Related Documentation
 
-- [PLAN.md](../../PLAN.md) — Implementation roadmap with Lua parity tracking
+- [PLAN.md](../../PLAN.md) — Lean queue for selected in-progress and future work
 - [docs/LuaCompatibility.md](../LuaCompatibility.md) — NovaSharp compatibility notes
 - [docs/testing/lua-divergences.md](../testing/lua-divergences.md) — Known divergences from reference Lua
 - [docs/testing/spec-audit.md](../testing/spec-audit.md) — Feature-by-feature spec compliance audit

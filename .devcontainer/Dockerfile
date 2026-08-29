@@ -9,8 +9,6 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Architecture for downloading binaries (supports amd64 and arm64).
 ARG TARGETARCH=amd64
-# Pinned Codex CLI version for reproducible builds.
-ARG CODEX_CLI_VERSION=0.142.3
 # Pinned checksum for Microsoft package repository bootstrap package.
 ARG MS_PACKAGES_DEB_SHA256=8434dcb8c346dc95fbd63dbece056c343704590b58b6a5c323d39acf52bf0b48
 # Keep this in sync with global.json. scripts/lint/check-tooling-consistency.py enforces it.
@@ -60,9 +58,6 @@ RUN set -eux; \
         bat \
         fzf \
         zoxide \
-        # Node.js + npm for Codex CLI
-        nodejs \
-        npm \
         # Python for tooling
         python3 \
         python3-venv \
@@ -122,18 +117,6 @@ RUN set -eux; \
     install -m 0755 /tmp/actionlint /usr/local/bin/actionlint; \
     rm -f "/tmp/${actionlint_archive}" /tmp/actionlint
 
-# Install OpenAI Codex CLI from npm with conservative retry settings.
-RUN set -eux; \
-    npm config set fetch-retries 5; \
-    npm config set fetch-retry-mintimeout 20000; \
-    npm config set fetch-retry-maxtimeout 120000; \
-    npm config set fetch-timeout 300000; \
-    for attempt in 1 2 3 4 5; do \
-        npm install --global "@openai/codex@${CODEX_CLI_VERSION}" && break; \
-        if [ "$attempt" -eq 5 ]; then exit 1; fi; \
-        sleep $((attempt * 4)); \
-    done
-
 # =============================================================================
 # ENVIRONMENT CONFIGURATION
 # =============================================================================
@@ -148,7 +131,43 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true \
     DOTNET_BUILD_SERVER_SHUTDOWN_TIMEOUT=7200 \
     ROSLYNCOMMANDLINELOGFILE="" \
     MSBUILDDISABLENODEREUSE=0 \
-    MSBuildEnableWorkloadResolver=true
+    MSBuildEnableWorkloadResolver=true \
+    NVM_DIR=/usr/local/share/nvm \
+    NVM_SYMLINK_CURRENT=true \
+    NPM_CONFIG_FETCH_RETRIES=5 \
+    NPM_CONFIG_FETCH_RETRY_MINTIMEOUT=20000 \
+    NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=120000 \
+    NPM_CONFIG_FETCH_TIMEOUT=300000 \
+    NPM_CONFIG_FUND=false \
+    NPM_CONFIG_UPDATE_NOTIFIER=false \
+    PATH=/usr/local/share/nvm/current/bin:${PATH}
+
+# Install the current Node.js LTS and npm coding tools as the non-root user. The
+# base image's shared NVM directory is group-writable by the vscode/nvm user.
+COPY --chmod=0755 --chown=vscode:nvm install-npm-tools.sh /usr/local/bin/novasharp-install-npm-tools
+USER vscode
+RUN set -eux; \
+    source "${NVM_DIR}/nvm.sh"; \
+    umask 0002; \
+    nvm install --lts; \
+    nvm alias default 'lts/*'; \
+    nvm cache clear
+RUN NOVA_NPM_CLEAN_CACHE=1 novasharp-install-npm-tools
+USER root
+
+# Dev Containers may remap vscode's UID to match the host. npm stages existing
+# package contents file-by-file during replacement, so every directory in the
+# global package tree must remain writable through the stable nvm group.
+RUN set -eux; \
+    npm_prefix="$(npm prefix --global)"; \
+    chgrp nvm "${npm_prefix}" "${npm_prefix}/bin" "${npm_prefix}/lib"; \
+    chmod g+rws "${npm_prefix}" "${npm_prefix}/bin" "${npm_prefix}/lib"; \
+    find "${npm_prefix}/lib/node_modules" -type d \
+        -exec chgrp nvm {} + -exec chmod g+rws {} +; \
+    nvm_group_id="$(getent group nvm | cut -d: -f3)"; \
+    setpriv --reuid 12345 --regid 12345 --groups "${nvm_group_id}" test -w "${npm_prefix}/bin"; \
+    test -z "$(setpriv --reuid 12345 --regid 12345 --groups "${nvm_group_id}" \
+        find "${npm_prefix}/lib/node_modules" -type d ! -writable -print -quit)"
 
 # Configure Git defaults (useful for devcontainer users).
 RUN git config --system init.defaultBranch main \
@@ -184,7 +203,8 @@ RUN echo "=== Environment Verification ===" \
     && echo "--- .NET SDKs ---" && dotnet --list-sdks \
     && required_sdk_regex="^${DOTNET_SDK_MAJOR_MINOR//./\\.}\\." \
     && dotnet --version | grep -E "${required_sdk_regex}" \
-    && echo "--- Node.js Tooling ---" && node --version && npm --version && codex --version \
+    && echo "--- Node.js Tooling ---" && node --version && npm --version \
+    && nanocoder --version && opencode --version && codex --version \
     && echo "--- PowerShell ---" && pwsh --version \
     && echo "--- Lua Versions ---" \
     && lua5.1 -v && lua5.2 -v && lua5.3 -v && lua5.4 -v && lua5.5 -v \

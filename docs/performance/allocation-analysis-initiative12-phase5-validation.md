@@ -4,7 +4,7 @@
 
 > **Date**: December 22, 2025\
 > **Status**: ✅ COMPLETE\
-> **Related**: [Phase 1 Analysis](allocation-analysis-initiative12-phase1.md), [PLAN.md Initiative 12](../../PLAN.md)
+> **Related**: [Phase 1 Analysis](allocation-analysis-initiative12-phase1.md)
 
 ______________________________________________________________________
 

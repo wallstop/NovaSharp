@@ -4,17 +4,24 @@
     "name": "NovaSharp (.NET + Lua)",
     "build": {
         "dockerfile": "Dockerfile",
-        "context": "."
+        "context": ".",
+        // These CLIs intentionally follow npm's latest dist-tag. Disable the
+        // image cache so every VS Code and `devcontainer build` rebuild resolves it.
+        "options": [
+            "--no-cache"
+        ]
+    },
+    // Forward a host-provided PAT to terminal harnesses without storing it in the image.
+    // VS Code authenticates its GitHub MCP connection separately through OAuth.
+    "remoteEnv": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${localEnv:GITHUB_PERSONAL_ACCESS_TOKEN}"
     },
     // Block attach until onCreate finishes so extension activation sees a restored solution.
     "waitFor": "onCreateCommand",
     // Mount configuration for better performance
     "mounts": [
         // Cache NuGet packages in a named volume for persistence across rebuilds
-        "source=novasharp-nuget-cache,target=/home/vscode/.nuget,type=volume",
-        // Build artifact cache for faster compilation I/O
-        // Uses a named volume for build cache persistence across container rebuilds
-        "source=novasharp-build-cache,target=${containerWorkspaceFolder}/artifacts/build-cache,type=volume"
+        "source=novasharp-nuget-cache,target=/home/vscode/.nuget,type=volume"
     ],
     // VS Code customizations
     "customizations": {
@@ -203,8 +210,8 @@
     // updateContentCommand runs after git pull/clone operations
     // Re-run NuGet restore to ensure packages are up to date
     "updateContentCommand": "bash .devcontainer/update-content.sh \"${containerWorkspaceFolder}\"",
-    // postStartCommand runs after container starts
-    "postStartCommand": "echo '✅ NovaSharp dev container ready! IntelliSense will load automatically.'",
+    // Refresh moving npm CLIs and prune generated artifacts whenever the container starts.
+    "postStartCommand": "bash .devcontainer/post-start.sh \"${containerWorkspaceFolder}\"",
     // Set the default user
     "remoteUser": "vscode"
 }

@@ -46,9 +46,17 @@ See [lua-fixture-creation](../../lua-fixture-creation/SKILL.md) for complete fix
 
 Locate the relevant implementation and fix it to match reference Lua.
 
-### 6. Document in PLAN.md
+For stateful standard-library behavior, probe more than the happy path: verify
+the initial state, every control transition, unknown controls, invalid arguments
+before and after transitions, output formatting and destination, and isolation
+between separate Lua states. A function-presence check or one successful call
+cannot establish semantic parity.
 
-Add entry to §8.38 (Lua Spec Compliance Fixes).
+### 6. Record the result
+
+Put the investigation, fix, and verification receipt in the current
+`progress/session-NNN-*.md`. Keep only unresolved, selected follow-up in
+`PLAN.md`; route significant version behavior to `docs/LuaCompatibility.md`.
 
 ______________________________________________________________________
 
@@ -111,4 +119,4 @@ ______________________________________________________________________
 
 - [docs/lua-spec/](../../../../docs/lua-spec/) — Local Lua reference manuals
 - [docs/LuaCompatibility.md](../../../../docs/LuaCompatibility.md) — Version compatibility matrix
-- [PLAN.md §8.38](../../../../PLAN.md) — Compliance fix tracking
+- [plan-maintenance](../../plan-maintenance/SKILL.md) — Routing active work and completed evidence

@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "generated_by": "tools/LlmSkillIndexer/llm_skill_indexer.py",
-  "skills_count": 31,
+  "skills_count": 32,
   "categories": {
     "core": [
       "correctness-then-performance",
@@ -44,6 +44,7 @@
       "codebase-navigation",
       "documentation-and-changelog",
       "git-safe-operations",
+      "plan-maintenance",
       "systematic-investigation"
     ]
   },
@@ -398,7 +399,7 @@
       "name": "lua-spec-verification",
       "description": "Determine exact reference Lua behavior and compare NovaSharp against Lua 5.1 through 5.5. Use for spec compliance, semantic ambiguity, version differences, or behavior investigations.",
       "file_path": ".llm/skills/lua-spec-verification/SKILL.md",
-      "line_count": 120,
+      "line_count": 121,
       "category": "lua",
       "related": [
         "lua-fixture-creation",
@@ -408,6 +409,23 @@
       "priority": "core",
       "has_front_matter": true,
       "title": "Skill: Verifying Lua Spec Compliance",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "plan-maintenance",
+      "description": "Keep NovaSharp PLAN.md as a lean execution queue by auditing active and future work, routing context and history to canonical artifacts, and removing completed or obsolete entries. Use when creating, reviewing, or updating plans, roadmaps, milestones, or session progress.",
+      "file_path": ".llm/skills/plan-maintenance/SKILL.md",
+      "line_count": 67,
+      "category": "workflow",
+      "related": [
+        "systematic-investigation",
+        "post-work-reflection",
+        "documentation-and-changelog"
+      ],
+      "priority": "core",
+      "has_front_matter": true,
+      "title": "Plan Maintenance",
       "validation_warnings": [],
       "validation_errors": []
     },

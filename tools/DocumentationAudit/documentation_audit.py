@@ -3,9 +3,8 @@
 XML documentation audit helper.
 
 Scans the C# source tree and reports public/internal type declarations that do
-not carry `///` XML documentation comments. The goal is to launch the PLAN's
-documentation quality pass by providing actionable guidance before we wire the
-check into CI.
+not carry `///` XML documentation comments. It provides actionable guidance for
+the repository documentation audit before the check is wired into CI.
 """
 
 from __future__ import annotations

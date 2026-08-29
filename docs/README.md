@@ -20,11 +20,15 @@ This folder hosts the canonical documentation set for NovaSharp. Use the index b
 | Script tooling                 | `scripts/README.md`, `scripts/coverage/README.md`               | Entry point for helper scripts (build, coverage, branding guards, etc.).                                            |
 | Naming audit helper            | `tools/NamingAudit/README.md`                                   | Python-based checker that enforces PascalCase file/type names per `.editorconfig`.                                  |
 | Audit reports                  | `docs/audits/README.md`                                         | Tracked audit logs (documentation, naming, spelling) verified by CI.                                                |
+| Sandbox threat model           | `docs/security/sandbox-threat-model.md`                         | Security invariants and required controls for untrusted mods.                                                       |
+| Runtime research gates         | `docs/proposals/runtime-research-gates.md`                      | Gated stackless execution, Lua host-GC/string fidelity, and API-authority studies.                                  |
 
 ## Contributing Expectations
 
 1. **Update the index** whenever you add a new Markdown guide. Link it from the table above (or add a new section) so discoverability stays high.
 1. **Document scripts**: if you add a script under `scripts/`, extend `scripts/README.md` (and the relevant subfolder README) plus any guide that references the workflow (most commonly `docs/Testing.md` or `docs/Modernization.md`).
-1. **Cross-link related docs**: for example, when editing coverage processes, update this index, `docs/Testing.md`, and the relevant plan entries so readers land on current instructions quickly.
+1. **Cross-link related docs**: for example, when editing coverage processes,
+   update this index and `docs/Testing.md`; keep only selected execution work in
+   `PLAN.md`.
 
 Keeping the docs organized is a first-class deliverable—treat documentation edits like code changes by running spell checks, verifying links, and previewing Markdown before submitting.

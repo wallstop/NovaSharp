@@ -31,4 +31,5 @@ NovaSharp intentionally leans on host-provided abstractions (`IPlatformAccessor`
 1. **File-system provider for mods/tools** – Introduce a shared `IModFileSystem`/`IFileSystem` abstraction, update `ModManifestCompatibility`, `HardwireCommand`, and Unity tutorials to accept injected providers, and add fake providers to tests.
 1. **Portable stopwatch modernization** – Teach the portability shim to accept `ITimeProvider` (or drop it where `System.Diagnostics.Stopwatch` is available) so time-dependent diagnostics never consult `DateTime` directly.
 
-Tracking these items in PLAN keeps the dependency surface visible while we layer in the remaining abstractions.
+This document and linked issues track the full dependency surface. `PLAN.md`
+contains only the selected current/next abstraction.
