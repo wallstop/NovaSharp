@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788004685872,
+  "lastUpdate": 1788026328285,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -2686,6 +2686,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 738.002,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d683b8c83681308b6599d336d6eb4e6112597727",
+          "message": "Migrate debug callbacks to argument views (#117)\n\n## Summary\n\n- migrate all 16 exported `debug.*` built-ins to preferred\n`CallbackArgumentsView` registrations\n- retain the public `CallbackArguments` overloads as compatibility\nshims, including the historical null contracts for `SetHook` and\n`GetHook`\n- add Lua 5.1–5.5 registration, dispatch, and direct legacy-contract\ncoverage\n- regenerate the Lua fixture corpus and advance PLAN's A5 queue to\nString\n- complete the missing post-merge receipt for session 178\n- isolate the exact fallback-warning console test after hosted Windows\nCI exposed process-wide console contamination from a concurrent Unity\nloader test\n\nPart of #108.\n\n## Red → green evidence\n\n- before production changes, `RegisteredDebugCallbacksUseArgumentViews`\nfailed 5/5 because Debug callbacks used legacy registrations\n- after migration, the same test passed 5/5\n- direct public legacy contract test passed 5/5 after full rebuild\n- focused Debug module tests: 607/607\n- Debug TAP parity tests: 85/85\n- first receipt-head Windows CI failed 1 test when\n`WarnWritesToConsoleWhenNoHandlerOrConfiguredStderr(Lua54)` captured a\nconcurrent `UnityAssetsScriptLoader` diagnostic\n- keyless TUnit `NotInParallel` now runs that process-wide console\nassertion alone without weakening its exact expected output; an\nindependent adversarial reviewer approved the fix\n\n## Verification\n\n- `./scripts/build/quick.sh`\n- forced full solution/test rebuild: zero warnings and errors\n- `./scripts/test/quick.sh --full`: 15,248 passed; 0 failed; 0 skipped\n- reference Lua 5.1–5.5: new fixture exits successfully on every version\n- full Lua comparison `--enforce`, 5.1–5.5: zero mismatches, zero\none-sided failures, zero both-error ratchet changes\n- Lua corpus extractor tests: 32 passed\n- fixture metadata tests: 6 passed\n- corpus regeneration idempotent at 1,958 entries\n- `bash ./scripts/dev/pre-commit.sh`, including console-capture lint\n- pre-push formatting, Markdown, branding, namespaces, tooling,\nYAML/actionlint, and build checks\n\nDocker-backed devcontainer verification was conditionally skipped\nbecause Docker is unavailable.\n\n## Review\n\nA zero-knowledge verifier and multiple fresh adversarial reviewers\niterated on the aggregate. Two Debug contract-test false-positive gaps\nwere fixed (direct legacy shim coverage and exact nil/void/value-type\nassertions). After hosted CI exposed the unrelated console-isolation\nrace, an independent investigator and a fresh adversarial reviewer both\napproved the exact root cause and minimal keyless-`NotInParallel` fix.",
+          "timestamp": "2026-08-29T10:53:25-07:00",
+          "tree_id": "4647505832053d122e760a82a0937227f88afdd3",
+          "url": "https://github.com/wallstop/NovaSharp/commit/d683b8c83681308b6599d336d6eb4e6112597727"
+        },
+        "date": 1788026327896,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 398.463,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 426.894,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 413.71,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 618.419,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 655.195,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 634.6,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 634.88,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 692.74,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 696.604,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 661.663,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 745.305,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 752.649,
             "unit": "ns",
             "extra": ""
           }
