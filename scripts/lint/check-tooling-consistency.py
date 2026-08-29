@@ -345,6 +345,14 @@ def check_devcontainer_artifact_cleanup(violations: list[str]) -> None:
                 f"{repo_path(DEVCONTAINER_ARTIFACT_CLEANER)} does not cover generated target {target}."
             )
 
+    gnu_only_retention_markers = ("date --date", "--iso-8601", "-newermt")
+    for marker in gnu_only_retention_markers:
+        if marker in cleaner:
+            violations.append(
+                f"{repo_path(DEVCONTAINER_ARTIFACT_CLEANER)} uses GNU-only retention marker "
+                f"{marker}; documented host cleanup must work with BSD/macOS tools."
+            )
+
     if ".devcontainer/cleanup-artifacts.sh" not in on_create or "--all" not in on_create:
         violations.append(
             f"{repo_path(DEVCONTAINER_ON_CREATE)} must fully clean generated artifacts on creation."

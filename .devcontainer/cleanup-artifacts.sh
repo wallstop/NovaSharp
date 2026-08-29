@@ -14,7 +14,7 @@ fi
 
 cleanup_mode=""
 retention_days=""
-cutoff_timestamp=""
+retention_mtime_days=""
 case "${1:-}" in
     --all)
         cleanup_mode="all"
@@ -26,7 +26,9 @@ case "${1:-}" in
             usage
             exit 2
         fi
-        cutoff_timestamp="$(date --date="${retention_days} days ago" --iso-8601=seconds)"
+        # POSIX find rounds -mtime down to complete 24-hour periods. +N therefore
+        # selects ages of at least N+1 days without GNU-only date/find flags.
+        retention_mtime_days=$((retention_days - 1))
         ;;
     *)
         usage
@@ -68,7 +70,7 @@ remove_build_directories() {
             continue
         fi
 
-        if ! find "${directory}" -type f -newermt "${cutoff_timestamp}" -print -quit | IFS= read -r _; then
+        if ! find "${directory}" -type f ! -mtime "+${retention_mtime_days}" -print -quit | IFS= read -r _; then
             rm -rf -- "${directory}"
             removed=$((removed + 1))
         fi
@@ -96,15 +98,15 @@ remove_generated_root() {
     fi
 
     if [ "${root}" = "artifacts" ]; then
-        find "${root}" -type f ! -path "artifacts/build-cache/*" ! -newermt "${cutoff_timestamp}" -delete
-        find "${root}" -type l ! -path "artifacts/build-cache/*" ! -newermt "${cutoff_timestamp}" -delete
+        find "${root}" -type f ! -path "artifacts/build-cache/*" -mtime "+${retention_mtime_days}" -delete
+        find "${root}" -type l ! -path "artifacts/build-cache/*" -mtime "+${retention_mtime_days}" -delete
         find "${root}" -depth -type d ! -path "${root}" ! -path "artifacts/build-cache" \
             ! -path "artifacts/build-cache/*" -empty -delete
         return
     fi
 
-    find "${root}" -type f ! -newermt "${cutoff_timestamp}" -delete
-    find "${root}" -type l ! -newermt "${cutoff_timestamp}" -delete
+    find "${root}" -type f -mtime "+${retention_mtime_days}" -delete
+    find "${root}" -type l -mtime "+${retention_mtime_days}" -delete
     find "${root}" -depth -type d ! -path "${root}" -empty -delete
 }
 

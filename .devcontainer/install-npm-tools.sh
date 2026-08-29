@@ -55,6 +55,28 @@ run_with_retries() {
     done
 }
 
+read_installed_tree() {
+    local tree
+    local list_exit_code=0
+    tree="$(npm list --global --depth=0 --json)" || list_exit_code=$?
+
+    if ! node -e '
+        const fs = require("node:fs");
+        JSON.parse(fs.readFileSync(0, "utf8"));
+    ' validate-json <<<"${tree}" >/dev/null; then
+        echo "❌ npm list did not return a valid global dependency tree." >&2
+        if [ "${list_exit_code}" -eq 0 ]; then
+            return 1
+        fi
+        return "${list_exit_code}"
+    fi
+
+    if [ "${list_exit_code}" -ne 0 ]; then
+        echo "⚠️  npm list exited ${list_exit_code}, but its valid dependency tree will be used." >&2
+    fi
+    printf '%s\n' "${tree}"
+}
+
 if [ "$(id -u)" -eq 0 ]; then
     echo "❌ Refusing to install npm tools as root; run this script as the container user." >&2
     exit 1
@@ -104,7 +126,7 @@ done
 echo "📦 Refreshing npm coding tools from the latest dist-tag..."
 echo "   Node.js: $(node --version); npm: $(npm --version); prefix: ${npm_prefix}"
 
-installed_tree="$(npm list --global --depth=0 --json)"
+installed_tree="$(read_installed_tree)"
 packages_to_install=()
 registry_unverified=0
 clean_tool_cache=0
@@ -152,7 +174,7 @@ if [ "${#packages_to_install[@]}" -gt 0 ]; then
             exit "${install_exit_code}"
         fi
 
-        fallback_tree="$(npm list --global --depth=0 --json)"
+        fallback_tree="$(read_installed_tree)"
         for package_index in "${!NPM_TOOL_PACKAGES[@]}"; do
             package_name="${NPM_TOOL_PACKAGES[package_index]%@latest}"
             command_name="${NPM_TOOL_COMMANDS[package_index]}"

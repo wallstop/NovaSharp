@@ -163,6 +163,15 @@ same devcontainer change, use only opt-in environment references or VS Code OAut
 and contain no credential. The separate local `.nanocoder` and npm artifacts
 remain excluded.
 
+After the first pushed head passed all Tests, Benchmarks, and CSharpier workflows,
+Cursor Bugbot found two devcontainer lifecycle defects. The npm refresh now accepts
+a nonzero `npm list` diagnostic exit only when the emitted dependency tree is valid
+JSON, and both initial and post-install fallback reads share that validation. The
+retention cleanup now uses portable `find -mtime` age predicates instead of GNU-only
+`date --date`/`find -newermt`; the tooling checker prevents those host-portability
+regressions. Focused lifecycle tests reproduce the npm diagnostic-exit case and
+the 7-day cleanup boundary.
+
 ## Validation receipt before PR
 
 - Extractor regeneration is idempotent: a second full run preserved both the

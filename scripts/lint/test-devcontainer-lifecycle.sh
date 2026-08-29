@@ -24,6 +24,20 @@ assert_contains() {
         fail "expected output to contain: ${expected}"
 }
 
+set_mtime_days_ago() {
+    local path="$1"
+    local days_ago="$2"
+    python3 - "${path}" "${days_ago}" <<'PY'
+import os
+import sys
+import time
+
+path = sys.argv[1]
+timestamp = time.time() - (float(sys.argv[2]) * 24 * 60 * 60)
+os.utime(path, (timestamp, timestamp), follow_symlinks=False)
+PY
+}
+
 write_executable() {
     local path="$1"
     shift
@@ -54,6 +68,10 @@ setup_npm_fixture() {
         'if [ "${1:-}" = "--version" ]; then echo v24.0.0; exit 0; fi' \
         'if [ "${1:-}" = "-e" ]; then' \
         '  case "${2:-}" in *process.versions*) exit 0 ;; esac' \
+        '  if [ "${3:-}" = "validate-json" ]; then' \
+        '    if [ "${NOVA_TEST_SCENARIO}" = "list-invalid" ]; then exit 1; fi' \
+        '    exit 0' \
+        '  fi' \
         '  printf "%s" "$(<"${NOVA_TEST_FIXTURE}/installed-version")"' \
         '  exit 0' \
         'fi' \
@@ -66,12 +84,14 @@ setup_npm_fixture() {
         '  prefix) printf "%s\n" "${NOVA_TEST_FIXTURE}/prefix" ;;' \
         '  config) printf "%s\n" "${NOVA_TEST_FIXTURE}/cache" ;;' \
         '  list)' \
+        '    if [ "${NOVA_TEST_SCENARIO}" = "list-invalid" ]; then printf "not-json\n"; exit 1; fi' \
         '    version="$(<"${NOVA_TEST_FIXTURE}/installed-version")"' \
         '    printf "{\"dependencies\":{\"@nanocollective/nanocoder\":{\"version\":\"%s\"},\"opencode-ai\":{\"version\":\"%s\"},\"@openai/codex\":{\"version\":\"%s\"}}}\n" "${version}" "${version}" "${version}"' \
+        '    if [ "${NOVA_TEST_SCENARIO}" = "list-nonzero" ]; then exit 1; fi' \
         '    ;;' \
         '  view)' \
         '    if [ "${NOVA_TEST_SCENARIO}" = "resolution-fail" ]; then echo "simulated registry failure" >&2; exit 69; fi' \
-        '    if [ "${NOVA_TEST_SCENARIO}" = "current" ] || [ "${NOVA_TEST_SCENARIO}" = "root" ] || [ "${NOVA_TEST_SCENARIO}" = "permission" ]; then' \
+        '    if [ "${NOVA_TEST_SCENARIO}" = "current" ] || [ "${NOVA_TEST_SCENARIO}" = "list-nonzero" ] || [ "${NOVA_TEST_SCENARIO}" = "root" ] || [ "${NOVA_TEST_SCENARIO}" = "permission" ]; then' \
         '      printf "%s\n" "$(<"${NOVA_TEST_FIXTURE}/installed-version")"' \
         '    else' \
         '      echo 2.0.0' \
@@ -129,6 +149,14 @@ run_installer() {
 result="$(run_installer current)"
 [ "${result%%$'\n'*}" = "0" ] || fail "current tools should pass"
 assert_contains "${result}" "All npm coding tools are current."
+
+result="$(run_installer list-nonzero)"
+[ "${result%%$'\n'*}" = "0" ] || fail "valid npm list JSON should survive npm's diagnostic exit"
+assert_contains "${result}" "npm list exited 1, but its valid dependency tree will be used"
+
+result="$(run_installer list-invalid)"
+[ "${result%%$'\n'*}" != "0" ] || fail "invalid npm list JSON must fail the refresh"
+assert_contains "${result}" "npm list did not return a valid global dependency tree"
 
 result="$(run_installer update)"
 [ "${result%%$'\n'*}" = "0" ] || fail "available updates should install"
@@ -195,11 +223,22 @@ touch "${workspace}/src/source.cs" "${workspace}/src/Expired/bin/expired.dll" \
     "${workspace}/src/Recent/obj/recent.dll" "${workspace}/artifacts/build-cache/preserved.cache" \
     "${workspace}/artifacts/results/expired.txt" "${workspace}/artifacts/results/recent.txt" \
     "${workspace}/BenchmarkDotNet.Artifacts/build-cache/expired.json"
-touch -d 'now - 7 days - 12 hours' "${workspace}/src/Expired/bin/expired.dll" \
-    "${workspace}/artifacts/build-cache/preserved.cache" "${workspace}/artifacts/results/expired.txt" \
-    "${workspace}/BenchmarkDotNet.Artifacts/build-cache/expired.json"
-touch -d 'now - 6 days - 12 hours' "${workspace}/src/Recent/obj/recent.dll" \
-    "${workspace}/artifacts/results/recent.txt"
+ln -s ../../src/source.cs "${workspace}/artifacts/results/expired.link"
+ln -s ../../src/source.cs "${workspace}/artifacts/results/recent.link"
+for expired_path in \
+    "${workspace}/src/Expired/bin/expired.dll" \
+    "${workspace}/artifacts/build-cache/preserved.cache" \
+    "${workspace}/artifacts/results/expired.txt" \
+    "${workspace}/artifacts/results/expired.link" \
+    "${workspace}/BenchmarkDotNet.Artifacts/build-cache/expired.json"; do
+    set_mtime_days_ago "${expired_path}" 7.5
+done
+for recent_path in \
+    "${workspace}/src/Recent/obj/recent.dll" \
+    "${workspace}/artifacts/results/recent.txt" \
+    "${workspace}/artifacts/results/recent.link"; do
+    set_mtime_days_ago "${recent_path}" 6.5
+done
 
 bash "${REPO_ROOT}/.devcontainer/cleanup-artifacts.sh" "${workspace}" --older-than-days 7 >/dev/null
 [ ! -e "${workspace}/src/Expired/bin" ] || fail "7.5-day-old bin directory survived"
@@ -207,6 +246,8 @@ bash "${REPO_ROOT}/.devcontainer/cleanup-artifacts.sh" "${workspace}" --older-th
 [ -f "${workspace}/artifacts/build-cache/preserved.cache" ] || fail "legacy mounted cache was deleted"
 [ ! -e "${workspace}/artifacts/results/expired.txt" ] || fail "7.5-day-old artifact survived"
 [ -f "${workspace}/artifacts/results/recent.txt" ] || fail "6.5-day-old artifact was deleted"
+[ ! -L "${workspace}/artifacts/results/expired.link" ] || fail "7.5-day-old symlink survived"
+[ -L "${workspace}/artifacts/results/recent.link" ] || fail "6.5-day-old symlink was deleted"
 [ ! -e "${workspace}/BenchmarkDotNet.Artifacts/build-cache/expired.json" ] || fail "benchmark build-cache name was incorrectly exempted"
 [ -f "${workspace}/src/source.cs" ] || fail "source was deleted"
 
