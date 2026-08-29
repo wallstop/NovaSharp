@@ -7,8 +7,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
@@ -16,6 +18,149 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     [UserDataIsolation]
     public sealed class DebugModuleTUnitTests
     {
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task RegisteredDebugCallbacksUseArgumentViews(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            Table debugTable = script.Globals.Get("debug").Table;
+            string[] callbackNames =
+            {
+                "debug",
+                "getinfo",
+                "getuservalue",
+                "setuservalue",
+                "getregistry",
+                "getmetatable",
+                "setmetatable",
+                "getupvalue",
+                "upvalueid",
+                "setupvalue",
+                "upvaluejoin",
+                "traceback",
+                "sethook",
+                "gethook",
+                "getlocal",
+                "setlocal",
+            };
+
+            for (int i = 0; i < callbackNames.Length; i++)
+            {
+                string callbackName = callbackNames[i];
+                CallbackFunction callback = debugTable.Get(callbackName).Callback;
+                await Assert
+                    .That(callback.HasArgumentViewCallback)
+                    .IsTrue()
+                    .Because($"debug.{callbackName} should use stack-only arguments")
+                    .ConfigureAwait(false);
+            }
+
+            LuaValue result = script.DoString(
+                @"
+local target = {}
+local metatable = { marker = 42 }
+debug.setmetatable(target, metatable)
+local info = debug.getinfo(debug.getregistry, 'S')
+return debug.getmetatable(target).marker, info.what
+"
+            );
+
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("C").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task PublicLegacyCallbacksPreserveNullArgumentContracts(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            (
+                string Name,
+                Func<ScriptExecutionContext, CallbackArguments, LuaValue> Callback,
+                bool AllowsNull
+            )[] callbacks =
+            {
+                ("debug", DebugModule.Debug, false),
+                ("getinfo", DebugModule.GetInfo, false),
+                ("getuservalue", DebugModule.GetUserValue, false),
+                ("setuservalue", DebugModule.SetUserValue, false),
+                ("getregistry", DebugModule.GetRegistry, false),
+                ("getmetatable", DebugModule.GetMetatable, false),
+                ("setmetatable", DebugModule.SetMetatable, false),
+                ("getupvalue", DebugModule.GetUpValue, false),
+                ("upvalueid", DebugModule.UpValueId, false),
+                ("setupvalue", DebugModule.SetUpValue, false),
+                ("upvaluejoin", DebugModule.UpValueJoin, false),
+                ("traceback", DebugModule.Traceback, false),
+                ("sethook", DebugModule.SetHook, true),
+                ("gethook", DebugModule.GetHook, true),
+                ("getlocal", DebugModule.GetLocal, false),
+                ("setlocal", DebugModule.SetLocal, false),
+            };
+
+            for (int i = 0; i < callbacks.Length; i++)
+            {
+                (
+                    string callbackName,
+                    Func<ScriptExecutionContext, CallbackArguments, LuaValue> callback,
+                    bool allowsNull
+                ) = callbacks[i];
+
+                if (allowsNull)
+                {
+                    LuaValue result = callback(context, null);
+                    if (callbackName == "sethook")
+                    {
+                        await Assert
+                            .That(result.Type)
+                            .IsEqualTo(DataType.Nil)
+                            .ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await Assert
+                            .That(result.Type)
+                            .IsEqualTo(DataType.Tuple)
+                            .ConfigureAwait(false);
+                        await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+                        await Assert
+                            .That(result.Tuple[0].Type)
+                            .IsEqualTo(DataType.Nil)
+                            .ConfigureAwait(false);
+                        await Assert
+                            .That(result.Tuple[1].Type)
+                            .IsEqualTo(DataType.String)
+                            .ConfigureAwait(false);
+                        await Assert
+                            .That(result.Tuple[1].String)
+                            .IsEqualTo(string.Empty)
+                            .ConfigureAwait(false);
+                        await Assert
+                            .That(result.Tuple[2].Type)
+                            .IsEqualTo(DataType.Number)
+                            .ConfigureAwait(false);
+                        await Assert
+                            .That(result.Tuple[2].Number)
+                            .IsEqualTo(0d)
+                            .ConfigureAwait(false);
+                    }
+                    continue;
+                }
+
+                ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                    callback(context, null)
+                );
+                await Assert
+                    .That(exception.ParamName)
+                    .IsEqualTo("args")
+                    .Because($"debug.{callbackName} should keep validating legacy arguments")
+                    .ConfigureAwait(false);
+            }
+        }
+
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]

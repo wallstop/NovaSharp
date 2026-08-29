@@ -53,6 +53,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Debug(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "debug")]
+        private static LuaValue Debug(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             Script script = executionContext.Script;
 
             if (script.Options.DebugInput == null)
@@ -137,13 +146,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return GetInfo(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "getinfo")]
+        private static LuaValue GetInfo(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue target = args[0];
             string what = ResolveWhatOption(executionContext.Script, args, 1);
 
             switch (target.Type)
             {
                 case DataType.Number:
-                    int level = args.AsInt(0, "getinfo");
+                    int level = AsInt(args, 0, "getinfo");
                     if (level < 0)
                     {
                         return LuaValue.Nil;
@@ -182,6 +200,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return GetUserValue(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "getuservalue")]
+        private static LuaValue GetUserValue(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
             bool isLua54OrLater =
                 LuaVersionDefaults.Resolve(version) >= LuaCompatibilityVersion.Lua54;
@@ -232,6 +259,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return SetUserValue(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "setuservalue")]
+        private static LuaValue SetUserValue(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
             LuaCompatibilityVersion resolvedVersion = LuaVersionDefaults.Resolve(version);
             bool isLua54OrLater = resolvedVersion >= LuaCompatibilityVersion.Lua54;
@@ -283,7 +319,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         }
 
         private static int GetOptionalUserValueIndex(
-            CallbackArguments args,
+            CallbackArgumentsView args,
             int argumentIndex,
             string functionName,
             LuaCompatibilityVersion version
@@ -344,6 +380,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return GetRegistry(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "getregistry")]
+        private static LuaValue GetRegistry(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             return LuaValue.NewTable(executionContext.Script.Registry);
         }
 
@@ -365,6 +410,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return GetMetatable(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "getmetatable")]
+        private static LuaValue GetMetatable(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue v = args[0];
             Script s = executionContext.Script;
 
@@ -402,6 +456,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return SetMetatable(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "setmetatable")]
+        private static LuaValue SetMetatable(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue v = args[0];
             LuaValue metaArgument = args.Count > 1 ? args[1] : LuaValue.Void;
 
@@ -459,6 +522,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return GetUpValue(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "getupvalue")]
+        private static LuaValue GetUpValue(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue indexArg = args.AsType(1, "getupvalue", DataType.Number, false);
 
             // Lua 5.3+: index must have integer representation
@@ -510,6 +582,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return UpValueId(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "upvalueid")]
+        private static LuaValue UpValueId(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue indexArg = args.AsType(1, "upvalueid", DataType.Number, false);
 
             // Lua 5.3+: index must have integer representation
@@ -598,6 +679,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return SetUpValue(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "setupvalue")]
+        private static LuaValue SetUpValue(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue indexArg = args.AsType(1, "setupvalue", DataType.Number, false);
 
             // Lua 5.3+: index must have integer representation
@@ -651,10 +741,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return UpValueJoin(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "upvaluejoin")]
+        private static LuaValue UpValueJoin(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue f1 = args.AsType(0, "upvaluejoin", DataType.Function, false);
             LuaValue f2 = args.AsType(2, "upvaluejoin", DataType.Function, false);
-            int n1 = args.AsInt(1, "upvaluejoin") - 1;
-            int n2 = args.AsInt(3, "upvaluejoin") - 1;
+            int n1 = AsInt(args, 1, "upvaluejoin") - 1;
+            int n2 = AsInt(args, 3, "upvaluejoin") - 1;
 
             Closure c1 = f1.Function;
             Closure c2 = f2.Function;
@@ -693,6 +792,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Traceback(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "traceback")]
+        private static LuaValue Traceback(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
 
             LuaValue vmessage = args[0];
@@ -780,9 +888,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            CallbackArgumentsView argumentView =
+                args == null
+                    ? new CallbackArgumentsView(ReadOnlySpan<LuaValue>.Empty, false)
+                    : new CallbackArgumentsView(args);
+
+            return SetHook(executionContext, argumentView);
+        }
+
+        [NovaSharpModuleMethod(Name = "sethook")]
+        private static LuaValue SetHook(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             int argIndex = 0;
             Coroutine targetCoroutine = null;
-            int argCount = args?.Count ?? 0;
+            int argCount = args.Count;
 
             if (argCount > 0 && args[0].Type == DataType.Thread)
             {
@@ -810,7 +932,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (argCount > argIndex + 2 && args[argIndex + 2].IsNotNil())
             {
-                count = args.AsInt(argIndex + 2, "sethook");
+                count = AsInt(args, argIndex + 2, "sethook");
             }
 
             if (hookFunction.IsNil)
@@ -845,10 +967,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
+            CallbackArgumentsView argumentView =
+                args == null
+                    ? new CallbackArgumentsView(ReadOnlySpan<LuaValue>.Empty, false)
+                    : new CallbackArgumentsView(args);
 
+            return GetHook(executionContext, argumentView);
+        }
+
+        [NovaSharpModuleMethod(Name = "gethook")]
+        private static LuaValue GetHook(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             Coroutine targetCoroutine = null;
 
-            if (args != null && args.Count > 0 && args[0].Type == DataType.Thread)
+            if (args.Count > 0 && args[0].Type == DataType.Thread)
             {
                 targetCoroutine = args[0].Coroutine;
             }
@@ -886,17 +1021,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return GetLocal(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "getlocal")]
+        private static LuaValue GetLocal(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             int argIndex = 0;
             LuaValue target = args[argIndex];
 
             if (target.Type == DataType.Function || target.Type == DataType.ClrFunction)
             {
-                int funcLocalIndex = args.AsInt(argIndex + 1, "getlocal");
+                int funcLocalIndex = AsInt(args, argIndex + 1, "getlocal");
                 return GetLocalFromFunction(target, funcLocalIndex);
             }
 
-            int level = args.AsInt(argIndex, "getlocal");
-            int locationIndex = args.AsInt(argIndex + 1, "getlocal");
+            int level = AsInt(args, argIndex, "getlocal");
+            int locationIndex = AsInt(args, argIndex + 1, "getlocal");
 
             if (level < 0)
             {
@@ -935,13 +1079,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return SetLocal(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "setlocal")]
+        private static LuaValue SetLocal(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             if (args.Count < 3)
             {
                 throw ScriptRuntimeException.BadArgument(2, "setlocal", "value expected");
             }
 
-            int level = args.AsInt(0, "setlocal");
-            int locationIndex = args.AsInt(1, "setlocal");
+            int level = AsInt(args, 0, "setlocal");
+            int locationIndex = AsInt(args, 1, "setlocal");
             LuaValue newValue = args[2];
 
             if (level < 0)
@@ -1191,7 +1344,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         private static string ResolveWhatOption(
             Script script,
-            CallbackArguments args,
+            CallbackArgumentsView args,
             int optionIndex
         )
         {
@@ -1318,7 +1471,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         private static LuaValue GetClrDebugLocalTuple(
             int index,
-            CallbackArguments args,
+            CallbackArgumentsView args,
             int levelArgIndex
         )
         {
@@ -1351,14 +1504,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             };
         }
 
-        private static LuaValue GetArgumentOrNil(CallbackArguments args, int index)
+        private static LuaValue GetArgumentOrNil(CallbackArgumentsView args, int index)
         {
-            if (args == null || index < 0 || index >= args.Count)
+            if (index < 0 || index >= args.Count)
             {
                 return LuaValue.Nil;
             }
 
             return args[index];
+        }
+
+        private static int AsInt(CallbackArgumentsView args, int index, string functionName)
+        {
+            LuaValue value = args.AsType(index, functionName, DataType.Number, false);
+            return (int)value.Number;
         }
 
         private static object GetHookKey(
