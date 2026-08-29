@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788026328285,
+  "lastUpdate": 1788034395857,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -2782,6 +2782,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 752.649,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f8ee5c166ab2d8bf66996a98b8597857256eb558",
+          "message": "Migrate string callbacks to argument views (#120)\n\n## Summary\n\n- migrate all 18 registered `string.*` exports to stack-only argument\nviews while retaining public legacy shims\n- migrate the nested `gmatch` iterator and Lua 5.4+ string arithmetic\nmetamethods\n- add a view-native classic-call bridge, multi-version regression\ncoverage, one comparable fixture, and advance `PLAN.md`\n\nPart of #108.\n\n## Validation\n\n- `./scripts/build/quick.sh`\n- `./scripts/test/quick.sh` — 15,259 passed\n- focused String module suite — 1,038 passed\n- String arithmetic suite — 28 passed\n- full Lua 5.1–5.5 comparison enforcement — zero unexpected deltas\n- `./scripts/ci/check-vm-hotpath-allocations.sh`\n- `bash ./scripts/dev/pre-commit.sh`\n\n## Notes\n\n- the return-buffer writer and legitimate `string.byte`/`string.unicode`\nmulti-return arrays remain separate A5 work\n- Docker-backed devcontainer verification skipped locally because Docker\nis unavailable\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Touches all string library call paths and nested gmatch/arithmetic\ncallbacks across Lua 5.1–5.5, but behavior is heavily gated by\nregistration, module, and comparison tests with shims preserving the\nlegacy API.\n> \n> **Overview**\n> Completes the Phase A5 **String** slice (#108): every registered\n`string.*` entry point and Lua 5.4+ string arithmetic metamethod now\nruns through **stack-only** `CallbackArgumentsView` callbacks, while the\npublic `CallbackArguments` methods stay as validating shims.\n> \n> KopiLua-backed APIs (`match`, `gmatch`, `gsub`, `find`, `format`) gain\na **view-native** `EmulateClassicCall` path and a matching `LuaState`\nconstructor so classic emulation no longer needs a legacy argument\ncontainer. The **`string.gmatch` iterator** is a script-owned view\ncallback with a named classic adapter instead of a captured closure.\n> \n> **Tests and planning:** multi-version registration gate\n(`RegisteredStringCallbacksUseArgumentViews`), legacy null contracts,\nand classic-bridge behavior; one new comparable Lua fixture. **String**\nis removed from `PLAN.md`; **Io** is next. `byte`/`unicode` multi-return\narrays and the return-buffer milestone are explicitly unchanged.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n13654af4fa336df511efa2f5b75f475f0c8eccf6. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-08-29T13:07:46-07:00",
+          "tree_id": "a518f8d1d77a8f435dc0acf11e042c51c6dd65af",
+          "url": "https://github.com/wallstop/NovaSharp/commit/f8ee5c166ab2d8bf66996a98b8597857256eb558"
+        },
+        "date": 1788034395147,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 382.311,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 426.16,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 414.219,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 602.19,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 651.346,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 634.338,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 632.031,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 687.793,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 702.261,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 659.612,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 741.918,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 737.95,
             "unit": "ns",
             "extra": ""
           }
