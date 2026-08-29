@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787443236813,
+  "lastUpdate": 1788004685872,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -2590,6 +2590,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 747.896,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "ac67dfe8e9f5eaa138258489321f498b4fdbffb9",
+          "message": "Complete Basic A5 callback views and harden repository integrity (#116)\n\n## Summary\n\n- complete the Phase A5 Basic-module callback migration to\n`CallbackArgumentsView`, preserve multi-return forwarding, and fix Lua\n5.4/5.5 `warn` semantics (default-off script-local state, exact\ncontrols, concatenation, validation, stderr routing, and host stream\nownership)\n- make Lua corpus extraction deterministic and lossless across\ncross-file path collisions, preserve curated fixture bodies/metadata,\nreport orphaned fixtures without deleting them, and wire 32 extractor\nregressions into CI\n- replace the historical PLAN ledger with a lean execution queue and add\nan enforced plan-hygiene skill/check\n- carry forward the devcontainer lifecycle work: current non-root npm\nCLIs, bounded refresh/offline behavior, artifact retention, and\ncredential-free shared GitHub MCP configuration\n- preserve the remaining heuristic work under #99 and the broader Phase\nA5 gates under #108\n\n## Correctness and review\n\nTwo independent adversarial passes found and drove fixes for:\n\n- Lua `warn` default state, controls, formatting, argument validation,\nscript isolation, stderr ownership, and 5.4/5.5 coverage\n- common Basic fixture version undercoverage\n- extractor regressions missing from CI\n- stale progress counts\n- POSIX hook portability\n- staged/untracked scope and MCP credential handling\n\nFinal independent disposition: **APPROVE**, zero actionable findings.\n\n## Validation\n\n- forced full solution/test-project build: 0 warnings, 0 errors\n- `BasicModuleTUnitTests`: 252 passed\n- full TUnit suite: 15,238 passed; 0 failed; 0 skipped\n- fresh reference-Lua comparison 5.1–5.5: zero mismatches, zero\none-sided failures; all 1,254 current both-error signatures unchanged\n- extractor regressions: 32 passed\n- fixture metadata guards: 6 passed\n- PLAN hygiene: 24 tests plus checker passed\n- skill index: 19 tests, generation, and strict check passed\n- formatter, Markdown/link, branding, namespace, shell, YAML/actionlint,\ntooling consistency, and full pre-commit/pre-push gates passed\n- devcontainer lifecycle harness passed; Docker-backed no-cache probe\nwas skipped locally because Docker is unavailable\n\nFixes #100\nFixes #101\nRefs #99\nRefs #108\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Devcontainer changes affect every developer (npm `latest` installs,\nautomated artifact deletion, PAT forwarding) and the corpus extractor\ntest expands CI coverage; no auth or VM runtime changes appear in this\ndiff.\n> \n> **Overview**\n> **Devcontainer and agent tooling** are reworked so coding CLIs\n(`nanocoder`, `opencode`, `codex`) install through NVM as the `vscode`\nuser from npm `latest`, with `install-npm-tools.sh` on create and\nbounded `--offline-ok` refresh on every start. Image builds use\n`--no-cache`, group-writable global npm trees for UID remapping, and\nDockerfile verification for the three CLIs. The `artifacts/build-cache`\nvolume mount is removed; **on-create** runs full artifact cleanup plus\nnpm refresh, and **post-start** prunes `artifacts/`,\n`BenchmarkDotNet.Artifacts/`, and stale `bin/obj` older than seven days\nvia new `cleanup-artifacts.sh`. Host `GITHUB_PERSONAL_ACCESS_TOKEN` is\nforwarded through `devcontainer.json`; shared GitHub MCP entries are\nadded for VS Code, Codex, Claude/Copilot/Nanocoder, and OpenCode (no\nsecrets in-repo). `.gitignore` now allows `.vscode/mcp.json`.\n> \n> **Planning and contributor docs**: `PLAN.md` is cut from a long\nroadmap to a **Now / Next / Later** execution queue with issue links; a\nnew **plan-maintenance** skill and `.llm/context.md` updates route\nhistory to `progress/` and enforce lean PLAN hygiene (checker referenced\nin existing lint/pre-commit). Docs (`Contributing`, `LuaCompatibility`,\n`Modernization`, `README`) tell contributors to record milestones in\nsession progress instead of expanding PLAN.\n> \n> **CI**: the Lua comparison workflow adds\n`tools/LuaCorpusExtractor/test_lua_corpus_extractor_v2.py` to the Python\ntooling verification step.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\nce58052f27890ef0ca29cb32d0185f2844d3f175. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-08-29T04:52:26-07:00",
+          "tree_id": "217758f1b1a5e2682ec1522c4dade684c1459226",
+          "url": "https://github.com/wallstop/NovaSharp/commit/ac67dfe8e9f5eaa138258489321f498b4fdbffb9"
+        },
+        "date": 1788004685286,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 379.286,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 408.31,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 410.093,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 592.433,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 655.225,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 633.783,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 641.848,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 700.225,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 694.364,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 663.624,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 754.113,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 738.002,
             "unit": "ns",
             "extra": ""
           }
