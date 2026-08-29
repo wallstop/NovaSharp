@@ -69,18 +69,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __add: a + b
             stringMetatable.Set(
                 Metamethods.Add,
-                LuaValue.NewCallback(
+                LuaValue.NewCallbackView(
                     ownerScript,
-                    (ctx, args) => StringBinaryArithmetic(ctx, args, Metamethods.Add, LuaNumber.Add)
+                    static (ctx, args) =>
+                        StringBinaryArithmetic(ctx, args, Metamethods.Add, LuaNumber.Add)
                 )
             );
 
             // __sub: a - b
             stringMetatable.Set(
                 Metamethods.Sub,
-                LuaValue.NewCallback(
+                LuaValue.NewCallbackView(
                     ownerScript,
-                    (ctx, args) =>
+                    static (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.Sub, LuaNumber.Subtract)
                 )
             );
@@ -88,9 +89,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __mul: a * b
             stringMetatable.Set(
                 Metamethods.Mul,
-                LuaValue.NewCallback(
+                LuaValue.NewCallbackView(
                     ownerScript,
-                    (ctx, args) =>
+                    static (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.Mul, LuaNumber.Multiply)
                 )
             );
@@ -98,9 +99,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __div: a / b
             stringMetatable.Set(
                 Metamethods.Div,
-                LuaValue.NewCallback(
+                LuaValue.NewCallbackView(
                     ownerScript,
-                    (ctx, args) =>
+                    static (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.Div, LuaNumber.Divide)
                 )
             );
@@ -108,14 +109,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __mod: a % b
             stringMetatable.Set(
                 Metamethods.Mod,
-                LuaValue.NewCallback(
+                LuaValue.NewCallbackView(
                     ownerScript,
-                    (ctx, args) =>
+                    static (ctx, args) =>
                         StringBinaryArithmetic(
                             ctx,
                             args,
                             Metamethods.Mod,
-                            (a, b) => LuaNumber.Modulo(a, b, LuaCompatibilityVersion.Lua54)
+                            static (a, b) => LuaNumber.Modulo(a, b, LuaCompatibilityVersion.Lua54)
                         )
                 )
             );
@@ -123,9 +124,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __pow: a ^ b
             stringMetatable.Set(
                 Metamethods.Pow,
-                LuaValue.NewCallback(
+                LuaValue.NewCallbackView(
                     ownerScript,
-                    (ctx, args) =>
+                    static (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.Pow, LuaNumber.Power)
                 )
             );
@@ -133,9 +134,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __idiv: a // b (floor division)
             stringMetatable.Set(
                 Metamethods.IDiv,
-                LuaValue.NewCallback(
+                LuaValue.NewCallbackView(
                     ownerScript,
-                    (ctx, args) =>
+                    static (ctx, args) =>
                         StringBinaryArithmetic(ctx, args, Metamethods.IDiv, LuaNumber.FloorDivide)
                 )
             );
@@ -143,9 +144,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __unm: -a (unary minus)
             stringMetatable.Set(
                 Metamethods.Unm,
-                LuaValue.NewCallback(
+                LuaValue.NewCallbackView(
                     ownerScript,
-                    (ctx, args) =>
+                    static (ctx, args) =>
                     {
                         LuaNumber? a = CoerceToLuaNumber(args[0]);
                         if (!a.HasValue)
@@ -164,7 +165,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         private static LuaValue StringBinaryArithmetic(
             ScriptExecutionContext ctx,
-            CallbackArguments args,
+            CallbackArgumentsView args,
             string metamethodName,
             Func<LuaNumber, LuaNumber, LuaNumber> operation
         )
@@ -262,6 +263,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return Dump(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "dump")]
+        private static LuaValue Dump(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue fn = args.AsType(0, "dump", DataType.Function, false);
 
             try
@@ -305,6 +316,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return CharFunction(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "char")]
+        private static LuaValue CharFunction(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                 executionContext.Script.CompatibilityVersion
             );
@@ -429,6 +449,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return Byte(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "byte")]
+        private static LuaValue Byte(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue vs = args.AsType(0, "byte", DataType.String, false);
             LuaValue vi = args.AsType(1, "byte", DataType.Number, true);
             LuaValue vj = args.AsType(2, "byte", DataType.Number, true);
@@ -441,7 +471,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 "byte"
             );
 
-            return PerformByteLike(vs, vi, vj, i => NormalizeByte(i));
+            return PerformByteLike(vs, vi, vj, static i => NormalizeByte(i));
         }
 
         /// <summary>
@@ -461,11 +491,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return Unicode(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "unicode")]
+        private static LuaValue Unicode(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue vs = args.AsType(0, "unicode", DataType.String, false);
             LuaValue vi = args.AsType(1, "unicode", DataType.Number, true);
             LuaValue vj = args.AsType(2, "unicode", DataType.Number, true);
 
-            return PerformByteLike(vs, vi, vj, i => i);
+            return PerformByteLike(vs, vi, vj, static i => i);
         }
 
         private static LuaValue PerformByteLike(
@@ -569,6 +609,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return Len(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "len")]
+        private static LuaValue Len(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue vs = args.AsType(0, "len", DataType.String, false);
             return LuaValue.FromNumber(vs.String.Length);
         }
@@ -587,6 +637,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return Match(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "match")]
+        private static LuaValue Match(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             return executionContext.EmulateClassicCall(args, "match", KopiLuaStringLib.str_match);
         }
 
@@ -604,6 +664,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return GMatch(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "gmatch")]
+        private static LuaValue GMatch(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             return executionContext.EmulateClassicCall(args, "gmatch", KopiLuaStringLib.str_gmatch);
         }
 
@@ -618,6 +688,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return GSub(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "gsub")]
+        private static LuaValue GSub(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             return executionContext.EmulateClassicCall(args, "gsub", KopiLuaStringLib.str_gsub);
         }
 
@@ -632,6 +712,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return Find(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "find")]
+        private static LuaValue Find(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             return executionContext.EmulateClassicCall(args, "find", KopiLuaStringLib.str_find);
         }
 
@@ -649,6 +739,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return Lower(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "lower")]
+        private static LuaValue Lower(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue argS = args.AsType(0, "lower", DataType.String, false);
             return LuaValue.NewString(InvariantString.ToLowerInvariantIfNeeded(argS.String));
         }
@@ -667,6 +767,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return Upper(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "upper")]
+        private static LuaValue Upper(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue argS = args.AsType(0, "upper", DataType.String, false);
             return LuaValue.NewString(InvariantString.ToUpperInvariantIfNeeded(argS.String));
         }
@@ -693,6 +803,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return Rep(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "rep")]
+        private static LuaValue Rep(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue argS = args.AsType(0, "rep", DataType.String, false);
             LuaValue argN = args.AsType(1, "rep", DataType.Number, false);
             LuaValue argSep = args.AsType(2, "rep", DataType.String, true);
@@ -749,6 +869,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return Format(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "format")]
+        private static LuaValue Format(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             return executionContext.EmulateClassicCall(args, "format", KopiLuaStringLib.str_format);
         }
 
@@ -766,6 +896,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return Reverse(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "reverse")]
+        private static LuaValue Reverse(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue argS = args.AsType(0, "reverse", DataType.String, false);
             string str = argS.String;
 
@@ -810,6 +950,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return Sub(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "sub")]
+        private static LuaValue Sub(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue argS = args.AsType(0, "sub", DataType.String, false);
             LuaValue argI = args.AsType(1, "sub", DataType.Number, true);
             LuaValue argJ = args.AsType(2, "sub", DataType.Number, true);
@@ -842,6 +992,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return StartsWith(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "startswith")]
+        private static LuaValue StartsWith(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue argS1 = args.AsType(0, "startsWith", DataType.String, true);
             LuaValue argS2 = args.AsType(1, "startsWith", DataType.String, true);
 
@@ -869,6 +1029,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return EndsWith(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "endswith")]
+        private static LuaValue EndsWith(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue argS1 = args.AsType(0, "endsWith", DataType.String, true);
             LuaValue argS2 = args.AsType(1, "endsWith", DataType.String, true);
 
@@ -896,6 +1066,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            return Contains(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "contains")]
+        private static LuaValue Contains(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue argS1 = args.AsType(0, "contains", DataType.String, true);
             LuaValue argS2 = args.AsType(1, "contains", DataType.String, true);
 

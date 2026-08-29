@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1958,
+  "total_snippets": 1959,
   "novasharp_only": 491,
-  "comparable": 1467,
+  "comparable": 1468,
   "by_version": {
-    "5.1": 984,
-    "5.2": 683,
-    "5.3": 924,
-    "5.4": 984,
-    "5.5": 1026
+    "5.1": 985,
+    "5.2": 684,
+    "5.3": 925,
+    "5.4": 985,
+    "5.5": 1027
   },
   "snippets": [
     {
@@ -21693,6 +21693,20 @@
       "path": "DebugModuleTUnitTests/RegisteredDebugCallbacksUseArgumentViews.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:56",
       "test": "DebugModuleTUnitTests.RegisteredDebugCallbacksUseArgumentViews",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringModuleTUnitTests/RegisteredStringCallbacksUseArgumentViews.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:98",
+      "test": "StringModuleTUnitTests.RegisteredStringCallbacksUseArgumentViews",
       "lua_versions": [
         "5.1",
         "5.2",

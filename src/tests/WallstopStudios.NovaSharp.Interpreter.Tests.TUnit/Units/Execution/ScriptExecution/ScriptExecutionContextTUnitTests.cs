@@ -11,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
+    using WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
@@ -2193,6 +2194,88 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
+        public async Task EmulateClassicCallArgumentViewPreservesArgumentsReturnsAndFailures()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+
+            LuaValue zeroArgumentCount = InvokeClassicArgumentView(
+                context,
+                Array.Empty<LuaValue>(),
+                ReturnClassicArgumentCount
+            );
+            LuaValue oneArgumentCount = InvokeClassicArgumentView(
+                context,
+                new[] { LuaValue.FromNumber(1d) },
+                ReturnClassicArgumentCount
+            );
+            LuaValue multipleArgumentCount = InvokeClassicArgumentView(
+                context,
+                new[] { LuaValue.FromNumber(1d), LuaValue.FromNumber(2d), LuaValue.FromNumber(3d) },
+                ReturnClassicArgumentCount
+            );
+            LuaValue tupleArgumentCount = InvokeClassicArgumentView(
+                context,
+                new[]
+                {
+                    LuaValue.FromNumber(1d),
+                    LuaValue.NewTuple(
+                        LuaValue.FromNumber(2d),
+                        LuaValue.FromNumber(3d),
+                        LuaValue.Void
+                    ),
+                },
+                ReturnClassicArgumentCount
+            );
+            LuaValue voidArgumentCount = InvokeClassicArgumentView(
+                context,
+                new[] { LuaValue.FromNumber(1d), LuaValue.Void },
+                ReturnClassicArgumentCount
+            );
+
+            LuaValue zeroReturns = InvokeClassicArgumentView(
+                context,
+                Array.Empty<LuaValue>(),
+                ReturnNoClassicValues
+            );
+            LuaValue oneReturn = InvokeClassicArgumentView(
+                context,
+                Array.Empty<LuaValue>(),
+                ReturnOneClassicValue
+            );
+            LuaValue multipleReturns = InvokeClassicArgumentView(
+                context,
+                Array.Empty<LuaValue>(),
+                ReturnMultipleClassicValues
+            );
+
+            ArgumentNullException callbackException = ExpectException<ArgumentNullException>(() =>
+                InvokeClassicArgumentView(context, Array.Empty<LuaValue>(), null)
+            );
+            InvalidOperationException propagatedException =
+                ExpectException<InvalidOperationException>(() =>
+                    InvokeClassicArgumentView(
+                        context,
+                        Array.Empty<LuaValue>(),
+                        ThrowFromClassicCallback
+                    )
+                );
+
+            await Assert.That(zeroArgumentCount.Number).IsEqualTo(0d);
+            await Assert.That(oneArgumentCount.Number).IsEqualTo(1d);
+            await Assert.That(multipleArgumentCount.Number).IsEqualTo(3d);
+            await Assert.That(tupleArgumentCount.Number).IsEqualTo(3d);
+            await Assert.That(voidArgumentCount.Number).IsEqualTo(1d);
+            await Assert.That(zeroReturns.IsNil).IsTrue();
+            await Assert.That(oneReturn.Number).IsEqualTo(11d);
+            await Assert.That(multipleReturns.Tuple.Length).IsEqualTo(2);
+            await Assert.That(multipleReturns.Tuple[0].Number).IsEqualTo(12d);
+            await Assert.That(multipleReturns.Tuple[1].String).IsEqualTo("thirteen");
+            await Assert.That(callbackException.ParamName).IsEqualTo("callback");
+            await Assert.That(propagatedException.Message).IsEqualTo("classic failure");
+        }
+
+        [global::TUnit.Core.Test]
         public async Task CallValidatesFunctionArgument()
         {
             Script script = new(default(CoreModules));
@@ -2980,6 +3063,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             }
 
             return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static LuaValue InvokeClassicArgumentView(
+            ScriptExecutionContext context,
+            LuaValue[] args,
+            Func<LuaState, int> callback
+        )
+        {
+            CallbackArgumentsView argumentView = new(args.AsSpan(), false);
+            return context.EmulateClassicCall(argumentView, "classic", callback);
+        }
+
+        private static int ReturnClassicArgumentCount(LuaState state)
+        {
+            state.Push(LuaValue.FromNumber(state.Count));
+            return 1;
+        }
+
+        private static int ReturnNoClassicValues(LuaState state)
+        {
+            return 0;
+        }
+
+        private static int ReturnOneClassicValue(LuaState state)
+        {
+            state.Push(LuaValue.FromNumber(11d));
+            return 1;
+        }
+
+        private static int ReturnMultipleClassicValues(LuaState state)
+        {
+            state.Push(LuaValue.FromNumber(12d));
+            state.Push(LuaValue.NewString("thirteen"));
+            return 2;
+        }
+
+        private static int ThrowFromClassicCallback(LuaState state)
+        {
+            throw new InvalidOperationException("classic failure");
         }
     }
 }
