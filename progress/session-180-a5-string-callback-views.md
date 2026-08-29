@@ -79,3 +79,17 @@ already recorded in session 176, and the fixture preservation behavior in sessio
 so no duplicate skill or knowledge entry was added. A fresh adversarial reviewer then
 inspected the exact staged aggregate and returned `APPROVE` with zero actionable
 findings.
+
+## Hosted verification
+
+- Opened non-draft PR #120 from `dev/wallstop/a5-string-callback-views`; GitHub
+  reported the PR mergeable.
+- The first hosted cycle at `57d3bf90` completed successfully: CSharpier run
+  33271085980, Benchmarks run 33271085991, and Tests run 33271085997.
+- All 20 benchmark jobs succeeded. Tests succeeded on Windows, macOS, and Linux;
+  coverage, lint, all 15 OS/Lua comparison lanes, and the aggregate comparison report
+  succeeded. The conditional lint-autofix job skipped as designed.
+- Hosted coverage reported 84.60% lines, 81.60% branches, and 88.10% methods.
+- PR review inspection found no inline threads or actionable reviewer feedback. The
+  only review submission was an automated Copilot quota notice; the benchmark,
+  coverage, and Lua comparison comments were successful workflow reports.
