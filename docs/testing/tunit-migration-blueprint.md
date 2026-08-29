@@ -39,8 +39,8 @@
 1. **Phase 1 — Batch conversions (Dec 4 – Dec 18)**
 
    - Convert fixtures group-by-group (see table below).
-   - For each batch: add TUnit copies of the fixtures, keep the NUnit versions compiling, and dual-run the batch locally/CI with the measurement harness (step 2 of the PLAN next actions).
-   - File PLAN checkpoints per batch with runtime deltas, coverage diffs, and any analyzer suppressions needed for TUnit.
+   - For each batch: add TUnit copies of the fixtures, keep the NUnit versions compiling, and dual-run the batch locally/CI with the measurement harness below.
+   - Record per-batch runtime deltas, coverage diffs, and analyzer suppressions in the current progress session and measurement artifacts; file an issue for unresolved follow-up.
    - ✅ ScriptLoad suite migrated into `ScriptLoadTUnitTests` (33 tests covering load/dump/coroutine helpers) with measurement artefact `artifacts/tunit-migration/script-load.json` (current sample: NUnit 2.15 s vs. TUnit 1.83 s).
    - ✅ ScriptRun + ScriptCall suites now have TUnit counterparts (`ScriptRunTUnitTests`, `ScriptCallTUnitTests`), and their compare artefacts (`script-run.json`, `script-call.json`) track the incremental performance deltas (e.g., ScriptCall currently 1.29 s NUnit vs. 1.28 s TUnit for 27/37 tests).
    - ✅ ScriptExecutionContext scenarios (22 NUnit tests / 22 TUnit tests) are live via `ScriptExecutionContextTUnitTests`, with measurements recorded in `script-execution-context.json` (currently ~1.01 s NUnit vs. 1.10 s TUnit).
@@ -75,7 +75,7 @@
   - Total runtime `(totalSeconds)` per suite plus the summarized Microsoft.Testing.Platform counts (`total`, `failed`, `succeeded`, `skipped`).
   - A `tests` array listing every test name, raw duration text, and computed seconds so regression reports can sort by slowest cases.
 
-- Store the generated JSON in source control when it represents a milestone measurement (one file per batch under `artifacts/tunit-migration/<batch>.json`) and reference it from PLAN checkpoints.
+- Store the generated JSON in source control when it represents a milestone measurement (one file per batch under `artifacts/tunit-migration/<batch>.json`) and reference it from the progress session or follow-up issue.
 
 ## Fixture Conversion Batches
 
@@ -93,16 +93,16 @@
 1. Fixtures compile + run under both NUnit and TUnit (temporary duplication is acceptable).
 1. Measurement harness records (<batch> runtime, ±5 % threshold) and stores the JSON artefact under `artifacts/tunit-migration/<batch>.json`.
 1. Coverage deltas for converted files are ±0.1 % line/branch/method in `docs/coverage/latest/Summary.json`.
-1. PLAN.md updated with a checkpoint summarizing runtime delta, coverage delta, and any follow-up issues.
+1. The current progress session records runtime and coverage deltas; PLAN retains only unresolved, selected follow-up.
 
 ## Risks & Mitigations
 
-- **Isolation gaps:** Until all isolation attributes have TUnit equivalents, interop fixtures cannot safely run in parallel. Mitigation: finish adapter work before converting the `UserData*` suites; document any remaining thread-static state in PLAN.md.
+- **Isolation gaps:** Until all isolation attributes have TUnit equivalents, interop fixtures cannot safely run in parallel. Mitigation: finish adapter work before converting the `UserData*` suites; document remaining thread-static state in this blueprint and tests.
 - **Analyzer noise:** TUnit introduces async wrappers that may trigger new CA warnings (e.g., CA2007 `ConfigureAwait`). Mitigation: update `.editorconfig` only if absolutely required and document every suppression.
 - **Fixture drift:** Running NUnit and TUnit copies side-by-side risks divergent assertions. Mitigation: convert fixtures by moving shared assertions into helper methods inside the adapter so both versions call the same code.
 
 ## Tracking & Reporting
 
-- Use PLAN.md for milestone checkpoints (date, batch, runtime delta, coverage delta, blockers).
-- Record measurement harness outputs under `artifacts/tunit-migration/` and link them from PLAN.md.
+- Use `progress/` session files for milestone checkpoints, dates, deltas, and blockers.
+- Record measurement harness outputs under `artifacts/tunit-migration/` and link them from the relevant progress session.
 - Update this blueprint whenever owners/dates shift or new batches are added.

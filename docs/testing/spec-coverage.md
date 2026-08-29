@@ -68,7 +68,7 @@ NovaSharp currently aims to support the following Lua versions:
 1. **CI Integration** – Wire the conformance suite so failures block merges; consider per-version lanes if runtime options diverge.
 1. **Documentation Sync** – Whenever coverage improves, update `docs/LuaCompatibility.md`, release notes, and this file to keep contributors aligned.
 
-Progress updates should be reflected in `PLAN.md` under “Lua Spec Conformance Harness” and linked back to the relevant spec sections here.
+Keep detailed progress and spec links in this file. `PLAN.md` should name only selected unfinished conformance work; completed evidence belongs in `progress/`.
 
 - ✅ (2025-11-21) Added the first multi-version harness (`LuaTableMoveMultiVersionSpecTests`) covering Lua 5.2–Latest `table.move` availability, overlapping-copy semantics, and the destination-default rule cited in Lua 5.3 manual §6.6.
 - ✅ (2025-11-21) Expanded the harness with `LuaUtf8MultiVersionSpecTests`, which cites Lua 5.3 manual §6.5 scenarios for `utf8.len`, `utf8.codepoint`, `utf8.offset`, `utf8.codes`, and `utf8.charpattern` across Lua 5.2–Latest, ensuring the library stays hidden in Lua 5.2 and spec behaviours remain intact elsewhere.

@@ -25,7 +25,7 @@ dotnet test src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Wallstop
 
 ### TUnit-first policy
 
-- Interpreter and debugger suites now live entirely on TUnit. Use TUnit’s async assertions and data sources for every new test, and only introduce NUnit fixtures if a third-party dependency requires it (coordinate in `PLAN.md` before doing so).
+- Interpreter and debugger suites now live entirely on TUnit. Use TUnit’s async assertions and data sources for every new test, and only introduce NUnit fixtures if a third-party dependency requires it; document that exception in this guide and the change record.
 - Shared Lua fixtures, TAP corpuses, and helper infrastructure remain under `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests`. Link the files you need into the TUnit project instead of reviving the deleted NUnit host.
 - The runtime/TAP blueprint in `docs/testing/tunit-migration-blueprint.md` is preserved for historical context. If you need to compare timing against the retired NUnit host, use `pwsh ./scripts/tests/compare-test-runtimes.ps1 -Name <scenario> -BaselineArguments @(...) -TUnitArguments @(...)` so the JSON artefact captures the delta.
 
@@ -51,7 +51,7 @@ bash ./scripts/build/build.sh
 - Cleanup helpers (`TempFileScope`, `SemaphoreSlimScope`, `DeferredActionScope`, etc.) replaced the last manual `try`/`finally` blocks under `src/tests`. Run `python scripts/lint/check-test-finally.py` (or `./scripts/ci/check-test-finally.sh`) to ensure new tests do not reintroduce raw `finally` blocks; the script fails on the first match so the offending file is easy to spot.
 - Tests must never call `Path.GetTempPath()` or `Path.GetTempFileName()` directly anymore—use `TempFileScope`/`TempDirectoryScope` so cleanup stays centralized. `python scripts/lint/check-temp-path-usage.py` (or `./scripts/ci/check-temp-path-usage.sh`) enforces this by failing whenever a test references either API outside the shared scope helper.
 - `dotnet_diagnostic.CA2007` is enforced as an error. Every awaited assertion/task must end with `.ConfigureAwait(false)` (the TUnit assertion extensions already do this—be sure to append the call when writing custom awaits). Avoid `await using`/`await foreach` unless the language demands it; in all other cases, follow the helper pattern so tests remain analyzer-clean.
-- `python scripts/lint/check-userdata-scope-usage.py` (or `./scripts/ci/check-userdata-scope.sh`) ensures new tests register userdata through `UserDataRegistrationScope`; direct calls to `UserData.RegisterType`/`UserData.UnregisterType` are confined to the isolation/history suites called out in PLAN.md.
+- `python scripts/lint/check-userdata-scope-usage.py` (or `./scripts/ci/check-userdata-scope.sh`) ensures new tests register userdata through `UserDataRegistrationScope`; direct calls to `UserData.RegisterType`/`UserData.UnregisterType` are confined to the allowlisted isolation/history suites reported by the lint check.
 
 ## Generating Coverage
 
@@ -142,7 +142,7 @@ If you discover a production bug while writing tests, fix the production code fi
 - NUnit test methods (`[Test]`, `[TestCase]`, etc.) must use PascalCase without underscores. The solution-wide `.editorconfig` enforces this as an error, so stray underscore names will fail analyzers and builds.
 - Author all new failure expectations with `Assert.Throws<TException>(...)`/`Assert.That(async () => ..., Throws.TypeOf<TException>())` rather than `[ExpectedException]`. The NUnit 3 runner no longer honors the legacy attribute, and the explicit assertion keeps error paths local to the test body.
 - When a test fixture touches shared static registries (e.g., `UserData.RegisterType`, global caches, or other mutable singletons), decorate the class with `[UserDataIsolation]` so the registry is sandboxed per test and keep the fixture `[Parallelizable(ParallelScope.Self)]`. Suites that tweak `Script.GlobalOptions` must route changes through the shared scopes (`ScriptGlobalOptionsScope.Override(...)`, `ScriptCustomConvertersScope`, `ScriptPlatformScope`, etc.) so platform/converter/flag overrides are restored automatically. Only drop back to `[NonParallelizable]` when a given suite still depends on mutable globals you can’t isolate yet.
-- Multi-word Lua concepts keep their canonical casing when surfaced through C# APIs. In particular, treat “upvalue” as `UpValue`/`UpValues` so helpers such as `GetUpValue`, `UpValuesType`, and `SymbolRef.UpValue` remain consistent with the runtime surface. Do **not** collapse these identifiers to `Upvalue` or `Upvalues`, and document any additional Lua-specific casing decisions in `PLAN.md` before introducing new APIs.
+- Multi-word Lua concepts keep their canonical casing when surfaced through C# APIs. In particular, treat “upvalue” as `UpValue`/`UpValues` so helpers such as `GetUpValue`, `UpValuesType`, and `SymbolRef.UpValue` remain consistent with the runtime surface. Do **not** collapse these identifiers to `Upvalue` or `Upvalues`, and document additional durable casing decisions in the naming guide before introducing new APIs.
 
 ## Expanding Coverage
 
@@ -150,14 +150,15 @@ If you discover a production bug while writing tests, fix the production code fi
 1. Introduce debugger protocol integration tests (attach, breakpoint, variable inspection) and capture golden transcripts for the CLI shell.
 1. Keep Lua fixtures under version control in `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests` to avoid drift and simplify regeneration.
 1. Restore the skipped OS/IO TAP fixtures through conditional execution in trusted environments or provide managed equivalents.
+1. Restore interactive `debug.debug` REPL-loop coverage after fixing the nested `ReplInterpreter`/`ProcessingLoop` state failure; null-input exit and prompt behavior remain covered separately.
 
-Track active goals and gaps in `PLAN.md`, and update this document as new harnesses or policies ship.
+Track only selected goals in `PLAN.md`; keep the complete testing gaps and shipped policies in this document and record completed work in `progress/`.
 
 ## Analyzer & Warning Policy
 
 - **Formatter gate**: Run `dotnet tool restore` followed by `dotnet tool run csharpier format .` (or `dotnet tool run csharpier check .` if you only need verification) before every push. CI executes the same check via `scripts/ci/check-csharpier.sh` during the lint job, so any mismatch will fail PRs immediately. If `dotnet format` or another tool disagrees with CSharpier output, treat that as a tooling bug—update `.editorconfig`/workflow settings instead of reformatting away from CSharpier style.
 
-- **Solution baseline (2025-12-07)**: `Directory.Build.props` now sets `<TreatWarningsAsErrors>true>`, so `dotnet build src/NovaSharp.sln -c Release -nologo` fails on any compiler or analyzer warning. Run that command before every push and note it in your PR (the template now calls out analyzer commands explicitly). If a warning is unavoidable, add a targeted suppression plus a `PLAN.md` entry before merging.
+- **Solution baseline (2025-12-07)**: `Directory.Build.props` now sets `<TreatWarningsAsErrors>true>`, so `dotnet build src/NovaSharp.sln -c Release -nologo` fails on any compiler or analyzer warning. Run that command before every push and note it in your PR (the template now calls out analyzer commands explicitly). If a warning is unavoidable, add a targeted suppression with rationale in the closest authoritative analyzer documentation and change record.
 
 - `src/debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj` now builds with `<TreatWarningsAsErrors>true>`. Any new warning in the VS Code debugger project fails the build locally and in CI, so always run:
 
@@ -165,7 +166,7 @@ Track active goals and gaps in `PLAN.md`, and update this document as new harnes
   dotnet build src/debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj -c Release -nologo
   ```
 
-  before pushing debugger changes. Keep the analyzer configuration warning-free; suppressions should be avoided unless they are documented in `PLAN.md`.
+  before pushing debugger changes. Keep the analyzer configuration warning-free; document unavoidable suppressions in the closest authoritative analyzer documentation and change record.
 
 - `src/tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj` now also treats warnings as errors. Run `dotnet build src/tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj -c Release -nologo` before committing tooling changes, and keep analyzer suppressions documented.
 
@@ -173,7 +174,7 @@ Track active goals and gaps in `PLAN.md`, and update this document as new harnes
 
 - Record every analyzer command you run when filling out `.github/pull_request_template.md`. Reviewers expect to see the solution build plus any scoped project builds/tests for the areas you touched.
 
-- Because the solution-wide warning gate is now on, suppressions must remain surgical. Any new `[SuppressMessage]` or ruleset tweak requires a `PLAN.md` entry (rule, justification, follow-up owner) before merging.
+- Because the solution-wide warning gate is now on, suppressions must remain surgical. Any new `[SuppressMessage]` or ruleset tweak requires a nearby or analyzer-policy record of the rule, justification, and follow-up owner before merging.
 
 ### Debugger Analyzer Guardrails
 
@@ -193,4 +194,4 @@ dotnet build src/debuggers/WallstopStudios.NovaSharp.RemoteDebugger/WallstopStud
 dotnet test src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj -c Release --filter "FullyQualifiedName~RemoteDebugger"
 ```
 
-Document any new suppressions or analyzer exclusions in `PLAN.md` (with the CA rule, justification, and follow-up owner) before merging.
+Document new suppressions or analyzer exclusions in the closest authoritative analyzer documentation (with the CA rule, justification, and follow-up owner) before merging.

@@ -11,7 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
-    /// Tests for Script constructor consistency (§8.2 from PLAN.md).
+    /// Tests consistency across Script constructor overloads and option ownership.
     /// Verifies that all Script constructors initialize state identically and documents expected behavior.
     /// </summary>
     public sealed class ScriptConstructorConsistencyTUnitTests : LuaSpecTestBase

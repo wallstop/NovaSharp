@@ -540,7 +540,16 @@ update_spelling_audit_log() {
 check_branding() {
   log "[pre-commit] Checking NovaSharp branding..."
   # Check for MoonSharp-branded filenames in staged files
-  moonsharp_files="$(git diff --cached --name-only --diff-filter=ACM | grep -i 'MoonSharp' || printf '')"
+  moonsharp_files="$(
+    git diff --cached --name-only --diff-filter=ACM |
+      grep -i 'MoonSharp' |
+      while IFS= read -r file; do
+        case "$file" in
+          docs/modernization/moonsharp-issue-audit.md|scripts/modernization/generate-moonsharp-audit.ps1) ;;
+          *) printf '%s\n' "$file" ;;
+        esac
+      done || true
+  )"
   if [ -n "$moonsharp_files" ]; then
     printf '%s\n' "[pre-commit] ERROR: MoonSharp-branded filenames detected in staged files:" >&2
     printf '%s\n' "$moonsharp_files" >&2
@@ -615,6 +624,14 @@ check_tooling_consistency() {
   log "[pre-commit] Checking tooling setup consistency..."
   if ! run_python scripts/lint/check-tooling-consistency.py; then
     printf '%s\n' "[pre-commit] ERROR: Devcontainer, hooks, or CI tooling setup is inconsistent. See message above." >&2
+    exit 1
+  fi
+}
+
+check_plan_hygiene() {
+  log "[pre-commit] Checking PLAN hygiene..."
+  if ! run_python scripts/lint/check-plan-hygiene.py; then
+    printf '%s\n' "[pre-commit] ERROR: PLAN.md must remain a lean active/future execution queue. See message above." >&2
     exit 1
   fi
 }
@@ -816,6 +833,7 @@ check_namespace_alignment
 check_shell_executable
 check_shell_python_invocation
 check_tooling_consistency
+check_plan_hygiene
 check_vm_hotpath_allocations
 check_yaml_lint
 check_github_actions_lint

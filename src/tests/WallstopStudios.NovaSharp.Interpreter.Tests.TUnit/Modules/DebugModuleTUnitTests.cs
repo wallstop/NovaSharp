@@ -1158,8 +1158,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // NOTE: Tests for the debug.debug REPL loop (interactive input) are skipped because
         // using ReplInterpreter within a running script context triggers a VM state issue
-        // (ArgumentOutOfRangeException in ProcessingLoop). This is a pre-existing limitation
-        // documented in PLAN.md. The DebugInput check and null-exits-loop paths are covered above.
+        // (ArgumentOutOfRangeException in ProcessingLoop). This pre-existing testing gap is
+        // tracked in docs/Testing.md. The DebugInput check and null-exits-loop paths are covered above.
 
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]

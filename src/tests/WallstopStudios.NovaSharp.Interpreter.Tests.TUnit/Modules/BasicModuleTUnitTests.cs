@@ -2,8 +2,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Reflection;
     using System.Reflection.Emit;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using global::NovaSharp;
@@ -261,15 +263,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task WarnInvokesCustomWarnHandler(LuaCompatibilityVersion version)
         {
-            Script script = new();
-            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            Script script = CreateScript(version);
             string observed = null;
             script.Globals.Set(
                 "_WARN",
@@ -282,57 +280,116 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 )
             );
 
-            CallbackArguments args = new(new[] { LuaValue.NewString("custom-warning") }, false);
-            BasicModule.Warn(context, args);
+            script.DoString("warn('@on'); warn('custom-', 7)");
 
-            await Assert.That(observed).IsEqualTo("custom-warning");
+            await Assert.That(observed).IsEqualTo("custom-7");
         }
 
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task WarnUsesDebugPrintWhenHandlerMissing(LuaCompatibilityVersion version)
-        {
-            Script script = new();
-            script.Globals.Set("_WARN", LuaValue.Nil);
-            string observed = null;
-            script.Options.DebugPrint = s => observed = s;
-            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-
-            CallbackArguments args = new(new[] { LuaValue.NewString("debug-warning") }, false);
-            BasicModule.Warn(context, args);
-
-            await Assert.That(observed).IsEqualTo("debug-warning");
-        }
-
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task WarnWritesToConsoleWhenNoHandlerOrDebugPrint(
+        public async Task WarnUsesConfiguredStderrWhenHandlerMissing(
             LuaCompatibilityVersion version
         )
         {
-            Script script = new();
+            using MemoryStream stderr = new();
+            ScriptOptions options = new(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+                Stderr = stderr,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+
+            script.DoString("warn('@on'); warn('stream-', 8)");
+
+            string observed = Encoding.UTF8.GetString(stderr.ToArray());
+            await Assert.That(observed).IsEqualTo("Lua warning: stream-8" + Environment.NewLine);
+            await Assert.That(stderr.CanWrite).IsTrue();
+            long lengthBeforeOwnershipProbe = stderr.Length;
+            stderr.WriteByte((byte)'!');
+            await Assert.That(stderr.Length).IsEqualTo(lengthBeforeOwnershipProbe + 1);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task WarnStateIsIsolatedAcrossScripts(LuaCompatibilityVersion version)
+        {
+            Script firstScript = CreateScript(version);
+            Script secondScript = CreateScript(version);
+            ScriptExecutionContext firstContext = firstScript.CreateDynamicExecutionContext();
+            ScriptExecutionContext secondContext = secondScript.CreateDynamicExecutionContext();
+            List<string> firstObserved = new();
+            List<string> secondObserved = new();
+            firstScript.Globals.Set(
+                "_WARN",
+                LuaValue.NewCallback(
+                    (_, warnArgs) =>
+                    {
+                        firstObserved.Add(warnArgs[0].String);
+                        return LuaValue.Nil;
+                    }
+                )
+            );
+            secondScript.Globals.Set(
+                "_WARN",
+                LuaValue.NewCallback(
+                    (_, warnArgs) =>
+                    {
+                        secondObserved.Add(warnArgs[0].String);
+                        return LuaValue.Nil;
+                    }
+                )
+            );
+
+            BasicModule.Warn(
+                firstContext,
+                new CallbackArguments(new[] { LuaValue.NewString("@on") }, false)
+            );
+            BasicModule.Warn(
+                firstContext,
+                new CallbackArguments(new[] { LuaValue.NewString("first") }, false)
+            );
+            BasicModule.Warn(
+                secondContext,
+                new CallbackArguments(new[] { LuaValue.NewString("second-disabled") }, false)
+            );
+            BasicModule.Warn(
+                secondContext,
+                new CallbackArguments(new[] { LuaValue.NewString("@on") }, false)
+            );
+            BasicModule.Warn(
+                secondContext,
+                new CallbackArguments(new[] { LuaValue.NewString("second") }, false)
+            );
+            BasicModule.Warn(
+                firstContext,
+                new CallbackArguments(new[] { LuaValue.NewString("first-again") }, false)
+            );
+
+            await Assert.That(firstObserved.Count).IsEqualTo(2);
+            await Assert.That(firstObserved[0]).IsEqualTo("first");
+            await Assert.That(firstObserved[1]).IsEqualTo("first-again");
+            await Assert.That(secondObserved.Count).IsEqualTo(1);
+            await Assert.That(secondObserved[0]).IsEqualTo("second");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task WarnWritesToConsoleWhenNoHandlerOrConfiguredStderr(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
             script.Globals.Set("_WARN", LuaValue.Nil);
-            script.Options.DebugPrint = null;
-            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
             string output = string.Empty;
             await ConsoleTestUtilities
                 .WithConsoleCaptureAsync(
                     consoleScope =>
                     {
-                        CallbackArguments args = new(
-                            new[] { LuaValue.NewString("console-warning") },
-                            false
-                        );
-                        BasicModule.Warn(context, args);
+                        script.DoString("warn('@on'); warn('console-warning')");
                         output = consoleScope.Writer.ToString();
                         return Task.CompletedTask;
                     },
@@ -340,7 +397,65 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 )
                 .ConfigureAwait(false);
 
-            await Assert.That(output).Contains("console-warning");
+            await Assert
+                .That(output)
+                .IsEqualTo("Lua warning: console-warning" + Environment.NewLine);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task WarnDefaultsOffAndHonorsControlMessages(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            List<string> observed = new();
+            script.Globals.Set(
+                "_WARN",
+                LuaValue.NewCallback(
+                    (_, warnArgs) =>
+                    {
+                        observed.Add(warnArgs[0].String);
+                        return LuaValue.Nil;
+                    }
+                )
+            );
+
+            script.DoString(
+                @"
+warn('disabled')
+warn('@unknown')
+warn('@on')
+warn('enabled-', 9)
+warn('@unknown')
+warn('@off', '-is-data')
+warn('@off')
+warn('disabled-again')
+"
+            );
+
+            await Assert.That(observed.Count).IsEqualTo(2);
+            await Assert.That(observed[0]).IsEqualTo("enabled-9");
+            await Assert.That(observed[1]).IsEqualTo("@off-is-data");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task WarnValidatesEveryArgumentWhileDisabled(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            ScriptRuntimeException missing = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("warn()")
+            );
+            ScriptRuntimeException invalidSecond = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("warn('valid', true)")
+            );
+
+            await Assert.That(missing.Message).Contains("bad argument #1");
+            await Assert.That(missing.Message).Contains("string expected");
+            await Assert.That(invalidSecond.Message).Contains("bad argument #2");
+            await Assert.That(invalidSecond.Message).Contains("string expected");
         }
 
         [global::TUnit.Core.Test]
@@ -1658,11 +1773,20 @@ return reader()
             if (version >= LuaCompatibilityVersion.Lua54)
             {
                 List<string> warnings = new();
-                script.Options.DebugPrint = s => warnings.Add(s);
-                script.DoString("warn('caution', 9)");
+                script.Globals.Set(
+                    "_WARN",
+                    LuaValue.NewCallback(
+                        (_, warnArgs) =>
+                        {
+                            warnings.Add(warnArgs[0].String);
+                            return LuaValue.Nil;
+                        }
+                    )
+                );
+                script.DoString("warn('@on'); warn('caution', 9); warn('@off')");
 
                 await Assert.That(warnings.Count).IsEqualTo(1).ConfigureAwait(false);
-                await Assert.That(warnings[0]).IsEqualTo("caution\t9").ConfigureAwait(false);
+                await Assert.That(warnings[0]).IsEqualTo("caution9").ConfigureAwait(false);
             }
         }
 

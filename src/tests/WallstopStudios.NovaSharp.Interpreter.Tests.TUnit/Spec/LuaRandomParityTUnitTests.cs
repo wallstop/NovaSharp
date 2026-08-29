@@ -14,7 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
-    /// Tests for Lua version-specific random number generator behavior (§8.1 from PLAN.md).
+    /// Tests Lua version-specific random number generator behavior.
     /// Verifies that NovaSharp correctly uses LCG for Lua 5.1-5.3 and xoshiro256** for Lua 5.4+.
     /// </summary>
     public sealed class LuaRandomParityTUnitTests : LuaSpecTestBase

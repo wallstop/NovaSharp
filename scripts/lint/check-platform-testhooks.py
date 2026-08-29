@@ -2,7 +2,7 @@
 """
 Fails if any file outside the approved infrastructure helpers references
 PlatformAutoDetector.TestHooks directly. Helps enforce the disposable-scope
-pattern tracked in PLAN.md.
+pattern documented in docs/Testing.md.
 """
 
 from __future__ import annotations

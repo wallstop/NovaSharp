@@ -25,7 +25,7 @@ Future updates should refresh this file after any large-scale refactor so the mo
 | Tests                                         | `tests/NovaSharp.Interpreter.Tests/*`                                                                   | Reflection used to probe descriptors, load resources for fixtures.                                                         | ⚖️ Acceptable in tests; no action.                                                                                             |
 | Samples/Tutorials                             | `samples/Tutorial/Tutorials/*`                                                                          | Reflection used for demo scenarios.                                                                                        | ✅ Leave as-is; educational code.                                                                                              |
 
-Legend: ✅ keep, ⚖️ monitor, ⚠️ needs follow-up (tracked in `PLAN.md` Milestone).
+Legend: ✅ keep, ⚖️ monitor, ⚠️ needs follow-up (tracked here and in an issue; selected work may enter `PLAN.md`).
 
 ## Hotspots Requiring Follow-Up
 
@@ -38,6 +38,7 @@ These items feed back into the modernization milestones (Coverage Push, Roslyn h
 
 ## Action Items
 
-- [ ] File issues/PLAN sub-items for each ⚠️ entry to track removal/migration work.
+- [ ] File issues for each ⚠️ entry; place only the selected current/next removal
+  in `PLAN.md`.
 - [ ] When replacing reflection with `internal` accessors, update the relevant `InternalsVisibleTo` declarations.
 - [ ] Reference this document from contributor guides so newcomers know the current policy.

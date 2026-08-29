@@ -14,7 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     /// Lua version (e.g., "Lua 5.4").
     /// </summary>
     /// <remarks>
-    /// §8.41 from PLAN.md: Fix _VERSION global to return correct string per compatibility mode.
+    /// Tests that the _VERSION global reports the selected Lua compatibility version.
     /// Reference: Lua 5.4 Manual §6.1 - Basic Functions.
     /// </remarks>
     public sealed class LuaVersionGlobalTUnitTests : LuaSpecTestBase

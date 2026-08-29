@@ -419,16 +419,22 @@ ______________________________________________________________________
 | `rawlen`     | ❌  | ✅              | ✅  | ✅  |
 | `warn`       | ❌  | ❌              | ❌  | ✅  |
 
-### 8.2 warn() Function (5.4 Only)
+### 8.2 warn() Function (5.4+)
 
 ```lua
-warn("This is a warning")
-warn("Multiple", " ", "parts")
-
--- Control messages (start with '@')
-warn("@off")   -- Disable warnings
-warn("@on")    -- Enable warnings
+warn("This is suppressed by default")
+warn("@on")
+warn("Multiple", " ", "parts") -- Lua warning: Multiple parts
+warn("@off")
 ```
+
+Warning state is local to each script and starts disabled, matching the standalone Lua
+interpreter. A single `"@on"` or `"@off"` argument changes that state; any other single
+argument beginning with `@` is ignored as an unknown control message. Normal arguments must
+be strings or numbers and are concatenated without separators. NovaSharp writes enabled
+warnings to `ScriptOptions.Stderr` when configured, otherwise to standard error, using Lua's
+`Lua warning: ` prefix. Hosts may install the NovaSharp-specific `_WARN` callback to receive
+the concatenated payload directly.
 
 ### 8.3 load() Function Changes
 

@@ -2,7 +2,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Runtime.CompilerServices;
+    using System.Text;
     using global::NovaSharp;
     using Cysharp.Text;
     using Debugging;
@@ -375,9 +377,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 if (args[args.Count - 1].Type == DataType.Tuple)
                 {
-                    return LuaValue.FromNumber(
-                        args.Count - 1 + args[args.Count - 1].Tuple.Length
-                    );
+                    return LuaValue.FromNumber(args.Count - 1 + args[args.Count - 1].Tuple.Length);
                 }
                 else
                 {
@@ -1127,10 +1127,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         }
 
         /// <summary>
-        /// Implements Lua 5.4's <c>warn</c> helper by routing formatted arguments to <c>_WARN</c> or the debug printer.
+        /// Implements Lua 5.4's <c>warn</c> helper, including its script-local disabled state and control messages.
         /// </summary>
-        /// <param name="executionContext">Execution context used to access the host script and debug sink.</param>
-        /// <param name="args">Arguments to format before invoking <c>_WARN</c> or printing.</param>
+        /// <param name="executionContext">Execution context used to access the host script and warning sink.</param>
+        /// <param name="args">Control message or warning arguments to validate and concatenate.</param>
         /// <returns><see cref="LuaValue.Nil"/>, matching Lua's return contract.</returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua54)]
         [NovaSharpModuleMethod(Name = "warn")]
@@ -1152,38 +1152,59 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
+            Script script = executionContext.Script;
+            LuaValue firstArgument = args.AsType(0, "warn", DataType.String);
+
+            if (args.Count == 1 && firstArgument.String.StartsWith('@'))
+            {
+                if (string.Equals(firstArgument.String, "@on", StringComparison.Ordinal))
+                {
+                    script.WarningOutputEnabled = true;
+                }
+                else if (string.Equals(firstArgument.String, "@off", StringComparison.Ordinal))
+                {
+                    script.WarningOutputEnabled = false;
+                }
+
+                return LuaValue.Nil;
+            }
+
             using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
 
             for (int i = 0; i < args.Count; i++)
             {
-                if (i != 0)
-                {
-                    sb.Append('\t');
-                }
-
-                sb.Append(args.AsStringUsingMeta(executionContext, i, "warn"));
+                LuaValue argument =
+                    i == 0 ? firstArgument : args.AsType(i, "warn", DataType.String);
+                sb.Append(argument.String);
             }
 
             string payload = sb.ToString();
-            Script script = executionContext.Script;
+            if (!script.WarningOutputEnabled)
+            {
+                return LuaValue.Nil;
+            }
+
             LuaValue warnHandler = script.Globals.RawGet("_WARN");
 
             if (warnHandler.Type == DataType.Function || warnHandler.Type == DataType.ClrFunction)
             {
                 script.CallValues(warnHandler, LuaValue.NewString(payload));
             }
+            else if (script.Options.Stderr != null)
+            {
+                using StreamWriter writer = new(
+                    script.Options.Stderr,
+                    new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+                    bufferSize: 1024,
+                    leaveOpen: true
+                );
+                writer.Write("Lua warning: ");
+                writer.WriteLine(payload);
+            }
             else
             {
-                Action<string> sink = script.Options.DebugPrint;
-
-                if (sink != null)
-                {
-                    sink(payload);
-                }
-                else
-                {
-                    Console.Error.WriteLine(payload);
-                }
+                Console.Error.Write("Lua warning: ");
+                Console.Error.WriteLine(payload);
             }
 
             return LuaValue.Nil;

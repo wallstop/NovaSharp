@@ -6,6 +6,7 @@ from __future__ import annotations
 import sys
 import unittest
 import json
+from collections import Counter
 from pathlib import Path
 
 
@@ -35,14 +36,77 @@ def read_header(relative_path: str) -> tuple[dict[str, str], str]:
     return metadata, text
 
 
-def read_manifest_by_path() -> dict[str, dict[str, object]]:
+def read_manifest_entries() -> list[dict[str, object]]:
     with MANIFEST.open(encoding="utf-8") as manifest_file:
         manifest = json.load(manifest_file)
 
-    return {entry["path"]: entry for entry in manifest["snippets"]}
+    return manifest["snippets"]
+
+
+def read_manifest_by_path() -> dict[str, dict[str, object]]:
+    return {entry["path"]: entry for entry in read_manifest_entries()}
+
+
+def duplicate_paths(paths: list[str]) -> list[str]:
+    return sorted(path for path, count in Counter(paths).items() if count > 1)
 
 
 class LuaFixtureMetadataTests(unittest.TestCase):
+    def test_registered_basic_callback_fixtures_cover_their_source_versions(self) -> None:
+        common, _ = read_header(
+            "BasicModuleTUnitTests/RegisteredBasicCallbacksUseArgumentViews.lua"
+        )
+        warning, warning_text = read_header(
+            "BasicModuleTUnitTests/RegisteredBasicCallbacksUseArgumentViews_2.lua"
+        )
+
+        self.assertEqual("5.1+", common.get("@lua-versions"))
+        self.assertEqual("false", common.get("@novasharp-only"))
+        self.assertEqual("5.4, 5.5", warning.get("@lua-versions"))
+        self.assertEqual("false", warning.get("@novasharp-only"))
+        self.assertIn("warn('@on')", warning_text)
+        self.assertIn("warn('@off')", warning_text)
+
+    def test_extracted_source_manifest_and_fixture_paths_match(self) -> None:
+        """Every extracted snippet must have exactly one manifest entry and fixture."""
+        import lua_corpus_extractor_v2 as extractor
+
+        result = extractor.extract_all_snippets(extractor.DEFAULT_TEST_DIRS)
+        extractor.reconcile_snippet_output_paths(result, FIXTURES_DIR)
+        self.assertEqual([], result.errors, "Lua source extraction reported errors")
+
+        extracted_paths = [snippet.output_path for snippet in result.snippets]
+        manifest_paths = [str(entry["path"]) for entry in read_manifest_entries()]
+        fixture_paths = sorted(
+            path.relative_to(FIXTURES_DIR).as_posix()
+            for path in FIXTURES_DIR.rglob("*.lua")
+        )
+
+        extracted = set(extracted_paths)
+        manifest = set(manifest_paths)
+        fixtures = set(fixture_paths)
+        mismatches = []
+
+        for label, paths in (
+            ("source", extracted_paths),
+            ("manifest", manifest_paths),
+            ("fixtures", fixture_paths),
+        ):
+            duplicates = duplicate_paths(paths)
+            if duplicates:
+                mismatches.append(f"duplicate {label} paths: {duplicates[:10]}")
+
+        comparisons = (
+            ("missing from manifest", extracted - manifest),
+            ("not extracted from source but listed in manifest", manifest - extracted),
+            ("missing fixture", extracted - fixtures),
+        )
+        for label, paths in comparisons:
+            if paths:
+                mismatches.append(f"{label}: {sorted(paths)[:10]}")
+
+        self.assertEqual([], mismatches, "\n".join(mismatches))
+
     def test_interop_equality_injected_userdata_fixtures_are_novasharp_only(
         self,
     ) -> None:

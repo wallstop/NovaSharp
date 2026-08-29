@@ -92,7 +92,8 @@ NovaSharp must match official Lua behavior. When behavior differs:
 1. Verify against `lua5.1`, `lua5.2`, `lua5.3`, `lua5.4`, `lua5.5`
 1. **FIX PRODUCTION CODE** — never adjust tests to match buggy behavior
 1. Create standalone `.lua` fixtures runnable against real Lua
-1. Update `PLAN.md` §8.38 to document fixes
+1. Record completed evidence in the session progress file; update `PLAN.md` only
+   when actionable follow-up remains
 
 ______________________________________________________________________
 

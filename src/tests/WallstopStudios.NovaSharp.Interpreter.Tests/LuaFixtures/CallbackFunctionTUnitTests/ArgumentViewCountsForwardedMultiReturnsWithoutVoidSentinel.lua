@@ -1,5 +1,5 @@
 -- @lua-versions: 5.1+
--- @novasharp-only: false
+-- @novasharp-only: true
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/CallbackFunctionTUnitTests.cs:489
 -- @test: CallbackFunctionTUnitTests.ArgumentViewCountsForwardedMultiReturnsWithoutVoidSentinel

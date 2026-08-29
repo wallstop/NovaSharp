@@ -35,7 +35,7 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
   ```bash
   DOTNET_ROLL_FORWARD=Major bash ./scripts/coverage/coverage.sh
   ```
-- Coverage artefacts land in `artifacts/coverage/` and `docs/coverage/latest/`. Update `PLAN.md` / docs as needed when the baseline changes.
+- Coverage artefacts land in `artifacts/coverage/` and `docs/coverage/latest/`. Update the benchmark or coverage documentation when the baseline changes; retain a PLAN item only while follow-up is selected and active.
 
 ## Branding & Namespace Guards
 
@@ -88,6 +88,6 @@ Before opening a PR:
 1. Run the branding + namespace scripts.
 1. Ensure formatting hooks have run (or run `dotnet tool restore` + `dotnet tool run csharpier format .` + `python scripts/ci/format_markdown.py --check --all` + `bash ./scripts/ci/check-markdown.sh` manually) so CI doesn't reject style issues.
 1. Update relevant docs (`docs/README.md`, `docs/Testing.md`, feature-specific guides).
-1. Update `PLAN.md` if you progressed a milestone item.
+1. Record completed milestone evidence in the current `progress/` session and remove the finished PLAN item; update PLAN only when actionable follow-up remains.
 
 Report each command you ran and whether it passed. If a check or PR CI was not run, mark it as `not run` and residual risk instead of describing the PR as green.

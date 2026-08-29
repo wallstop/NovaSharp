@@ -76,6 +76,9 @@ metadata are not reclaimed by trimming.
 - A5 must not repeat the rejected full inline-frame layout. Profile a compact hot frame with
   cold debugger/error/close state stored separately, then remove `CallStackItemPool` only when
   same-run call throughput improves without increasing per-processor construction allocation.
+- Issue #108 predates the lean execution-plan contract. Its legacy request to write
+  observed results into `PLAN.md` is superseded: keep measurements in the current
+  `progress/` session and only unresolved task state in the issue.
 - Benchmark-only scratch prototypes compare baseline pool-per-buffer, `ArrayPool<T>`, and
   managed region-style `ScratchScope` for compile scratch and VM scratch. Runtime adoption
   still requires a measured speed or retained-memory win without changing Lua behavior.

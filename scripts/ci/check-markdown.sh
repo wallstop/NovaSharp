@@ -61,6 +61,8 @@ fi
 
 "$PYTHON_BIN" scripts/ci/test_format_markdown.py
 "$PYTHON_BIN" scripts/ci/test_check_jekyll_liquid.py
+"$PYTHON_BIN" scripts/lint/test_plan_hygiene.py
+"$PYTHON_BIN" scripts/lint/check-plan-hygiene.py
 
 # Repository-wide, not diff-scoped: GitHub Pages renders every Markdown file in
 # the repo through Liquid, so one bad file anywhere takes the published site

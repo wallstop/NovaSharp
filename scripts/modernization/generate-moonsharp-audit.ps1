@@ -180,7 +180,7 @@ $auditData = @(
         Class  = 'Gap'
         Status = 'Tracked'
         Owner  = 'Runtime'
-        Note   = 'Lua 5.3 integer parity folded into Lua 5.4 compatibility matrix (PLAN.md item 14)'
+        Note   = 'Lua 5.3 integer parity is tracked in docs/LuaCompatibility.md'
     }
     [pscustomobject]@{
         Number = 298

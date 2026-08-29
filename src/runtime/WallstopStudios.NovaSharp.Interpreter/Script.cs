@@ -62,6 +62,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         private readonly Execution.ScriptCompilationCache _compilationCache;
         private int _facadeLifetimeInvalidated;
         private bool _bit32CompatibilityWarningEmitted;
+        private bool _warningOutputEnabled;
         private static ScriptGlobalOptions GlobalOptionsSnapshot;
         private static readonly AsyncLocal<GlobalOptionsScope> ScopedGlobalOptions = new();
         private static readonly ConcurrentDictionary<
@@ -4686,6 +4687,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
             sink(message);
 
             _bit32CompatibilityWarningEmitted = true;
+        }
+
+        /// <summary>
+        /// Gets or sets whether Lua 5.4 warning messages are emitted for this script.
+        /// New scripts start with warnings disabled, matching the standalone Lua interpreter.
+        /// </summary>
+        internal bool WarningOutputEnabled
+        {
+            get => _warningOutputEnabled;
+            set => _warningOutputEnabled = value;
         }
 
         /// <summary>

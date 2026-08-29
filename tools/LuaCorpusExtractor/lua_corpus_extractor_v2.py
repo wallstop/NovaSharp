@@ -338,6 +338,26 @@ class LuaSnippet:
             "@test": f"{self.test_class}.{self.test_method}",
         }
 
+    @property
+    def emitted_header_values(self) -> dict[str, str]:
+        """Return the tool-owned values that will actually be emitted.
+
+        Existing fixtures keep a stable source line while they still point at
+        the same source file. The manifest must use that preserved value too or
+        regeneration immediately creates header/manifest drift.
+        """
+        if self.curated_header_lines is None:
+            return self.refreshed_values
+
+        rewritten = rewrite_curated_header(
+            self.curated_header_lines, self.refreshed_values
+        )
+        metadata = parse_header_metadata(rewritten)
+        return {
+            key: metadata.get(key, value)
+            for key, value in self.refreshed_values.items()
+        }
+
     def generate_header(self) -> str:
         """Generate the metadata header for the Lua file.
 
@@ -434,6 +454,27 @@ def strip_absorbed_body_prefix(header_lines: list[str], lua_code: str) -> list[s
             return remaining
 
 
+def fixture_body_matches(
+    header_lines: list[str], body: str, lua_code: str
+) -> bool:
+    """Whether a fixture body equals a snippet, including absorbed comments.
+
+    ``split_fixture_header`` necessarily treats leading Lua comments as header
+    lines. Reattach the tail that matches the snippet before comparing bodies so
+    comment-led fixtures do not acquire a new numeric suffix on every run.
+    """
+    curated_header = strip_absorbed_body_prefix(header_lines, lua_code)
+    leading_body_comments: list[str] = []
+    if len(curated_header) < len(header_lines):
+        for line in lua_code.splitlines():
+            if not line.startswith("--"):
+                break
+            leading_body_comments.append(line)
+
+    reconstructed = "\n".join([*leading_body_comments, body]).strip()
+    return reconstructed == lua_code
+
+
 def parse_header_metadata(header_lines: list[str]) -> dict[str, str]:
     """Return the `@key: value` pairs in a fixture header, keyed lowercase."""
     metadata: dict[str, str] = {}
@@ -462,7 +503,13 @@ def rewrite_curated_header(header_lines: list[str], refreshed: dict[str, str]) -
         if stripped.startswith("@") and ":" in stripped:
             key = stripped.split(":", 1)[0].strip().lower()
             if key in refreshed:
-                line = f"-- {key}: {refreshed[key]}"
+                current_value = stripped.split(":", 1)[1].strip()
+                refreshed_value = refreshed[key]
+                if key == "@source" and _same_source_file(
+                    current_value, refreshed_value
+                ):
+                    refreshed_value = current_value
+                line = f"-- {key}: {refreshed_value}"
                 seen.add(key)
             last_key_index = len(rewritten)
         rewritten.append(line)
@@ -473,6 +520,13 @@ def rewrite_curated_header(header_lines: list[str], refreshed: dict[str, str]) -
         rewritten[insert_at:insert_at] = missing
 
     return rewritten
+
+
+def _same_source_file(current: str, refreshed: str) -> bool:
+    """Whether two ``path:line`` source values refer to the same file."""
+    if ":" not in current or ":" not in refreshed:
+        return False
+    return current.rsplit(":", 1)[0] == refreshed.rsplit(":", 1)[0]
 
 
 def compatibility_from_metadata(metadata: dict[str, str]) -> LuaVersionCompatibility | None:
@@ -531,17 +585,21 @@ def apply_curated_metadata(
     overrides: list[CuratedOverride] = []
 
     for snippet in result.snippets:
-        existing = output_dir / snippet.output_path
-        try:
-            text = existing.read_text(encoding="utf-8")
-        except (FileNotFoundError, NotADirectoryError):
-            continue
-        except (OSError, UnicodeDecodeError) as error:
-            result.errors.append(f"{existing}: could not read curated header: {error}")
-            continue
+        header_lines = snippet.curated_header_lines
+        if header_lines is None:
+            existing = output_dir / snippet.output_path
+            try:
+                text = existing.read_text(encoding="utf-8")
+            except (FileNotFoundError, NotADirectoryError):
+                continue
+            except (OSError, UnicodeDecodeError) as error:
+                result.errors.append(f"{existing}: could not read curated header: {error}")
+                continue
 
-        header_lines, _ = split_fixture_header(text)
-        header_lines = strip_absorbed_body_prefix(header_lines, snippet.lua_code)
+            header_lines, body = split_fixture_header(text)
+            if not fixture_body_matches(header_lines, body, snippet.lua_code):
+                continue
+            header_lines = strip_absorbed_body_prefix(header_lines, snippet.lua_code)
         if not header_lines:
             continue
 
@@ -937,7 +995,7 @@ def discover_test_files(test_dirs: list[Path]) -> Iterator[Path]:
     for test_dir in test_dirs:
         if not test_dir.exists():
             continue
-        for cs_file in test_dir.rglob("*.cs"):
+        for cs_file in sorted(test_dir.rglob("*.cs")):
             if any(skip in cs_file.name for skip in ["AssemblyInfo", ".g.cs", "GlobalUsings", "_Hardwired"]):
                 continue
             yield cs_file
@@ -955,6 +1013,130 @@ def extract_all_snippets(test_dirs: list[Path]) -> ExtractionResult:
             result.errors.append(f"{cs_file}: {e}")
     
     return result
+
+
+def _existing_fixture_indexes(
+    output_dir: Path, test_class: str, test_method: str
+) -> dict[int, tuple[list[str], str, str | None]]:
+    """Return existing slots as ``index -> (header, body, source file)``."""
+    fixture_dir = output_dir / test_class
+    if not fixture_dir.is_dir():
+        return {}
+
+    filename_pattern = re.compile(rf"^{re.escape(test_method)}(?:_([0-9]+))?\.lua$")
+    existing: dict[int, tuple[list[str], str, str | None]] = {}
+    for fixture in sorted(fixture_dir.glob(f"{test_method}*.lua")):
+        match = filename_pattern.fullmatch(fixture.name)
+        if match is None:
+            continue
+
+        index = int(match.group(1) or 0)
+        header, body = split_fixture_header(fixture.read_text(encoding="utf-8"))
+        source = parse_header_metadata(header).get("@source")
+        source_file = source.rsplit(":", 1)[0] if source and ":" in source else None
+        existing[index] = (header, body, source_file)
+
+    return existing
+
+
+def reconcile_snippet_output_paths(result: ExtractionResult, output_dir: Path) -> None:
+    """Make generated paths unique and keep curated metadata with its Lua body.
+
+    Test classes with the same short name can live in different namespaces. The
+    per-file snippet counter previously assigned those tests the same output path,
+    so later writes silently replaced earlier Lua programs and the manifest held
+    duplicate entries. Identical programs need one comparison; distinct programs
+    receive separate numeric slots. Stable source ordering owns slot assignment;
+    an existing fixture contributes curated metadata only to the matching Lua
+    body, so renumbering cannot attach compatibility decisions to another program.
+    """
+    groups: dict[tuple[str, str], list[LuaSnippet]] = {}
+    for snippet in result.snippets:
+        groups.setdefault((snippet.test_class, snippet.test_method), []).append(snippet)
+
+    reconciled: list[LuaSnippet] = []
+    for (test_class, test_method), snippets in groups.items():
+        by_slot_and_code: dict[tuple[int, str], list[LuaSnippet]] = {}
+        for snippet in snippets:
+            by_slot_and_code.setdefault(
+                (snippet.snippet_index, snippet.lua_code), []
+            ).append(snippet)
+
+        existing = _existing_fixture_indexes(output_dir, test_class, test_method)
+        ordered_keys = sorted(
+            by_slot_and_code,
+            key=lambda key: (
+                key[0],
+                min(
+                    (snippet.source_file, snippet.line_number)
+                    for snippet in by_slot_and_code[key]
+                ),
+            ),
+        )
+        used_indexes: set[int] = set()
+        for original_index, code in ordered_keys:
+            candidates = by_slot_and_code[(original_index, code)]
+            matching_existing = [
+                (index, header, source_file)
+                for index, (header, body, source_file) in existing.items()
+                if index not in used_indexes and fixture_body_matches(header, body, code)
+            ]
+            matching_sources = {
+                source_file for _, _, source_file in matching_existing if source_file
+            }
+            representative = min(
+                candidates,
+                key=lambda snippet: (
+                    snippet.source_file not in matching_sources,
+                    snippet.source_file,
+                    snippet.line_number,
+                ),
+            )
+
+            preferred_existing = sorted(
+                matching_existing,
+                key=lambda item: (
+                    item[2] != representative.source_file,
+                    item[0] != original_index,
+                    item[0],
+                ),
+            )
+            if preferred_existing:
+                target_index, header, _ = preferred_existing[0]
+                representative.curated_header_lines = strip_absorbed_body_prefix(
+                    header, code
+                )
+            else:
+                target_index = original_index
+                if target_index in existing or target_index in used_indexes:
+                    target_index = 0
+                    while target_index in existing or target_index in used_indexes:
+                        target_index += 1
+
+            representative.snippet_index = target_index
+            used_indexes.add(target_index)
+            reconciled.append(representative)
+
+    result.snippets = reconciled
+
+
+def find_orphaned_fixture_paths(
+    result: ExtractionResult, output_dir: Path
+) -> list[str]:
+    """Return fixture paths that no current extracted snippet owns.
+
+    Orphans are intentionally reported rather than removed. Many are curated,
+    standalone comparison programs that have no one-to-one C# source snippet.
+    """
+    if not output_dir.is_dir():
+        return []
+
+    generated = {snippet.output_path for snippet in result.snippets}
+    fixtures = {
+        path.relative_to(output_dir).as_posix()
+        for path in output_dir.rglob("*.lua")
+    }
+    return sorted(fixtures - generated)
 
 
 def write_snippets(result: ExtractionResult, output_dir: Path, dry_run: bool = False) -> None:
@@ -976,6 +1158,7 @@ def write_snippets(result: ExtractionResult, output_dir: Path, dry_run: bool = F
 
 def write_manifest(result: ExtractionResult, output_dir: Path, dry_run: bool = False) -> None:
     """Write the manifest file with snippet metadata."""
+    snippets = _order_snippets_for_manifest(result.snippets, output_dir)
     manifest = {
         "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
         "total_snippets": result.total_snippets,
@@ -991,13 +1174,13 @@ def write_manifest(result: ExtractionResult, output_dir: Path, dry_run: bool = F
         "snippets": [
             {
                 "path": snippet.output_path,
-                "source": f"{snippet.source_file}:{snippet.line_number}",
-                "test": f"{snippet.test_class}.{snippet.test_method}",
+                "source": snippet.emitted_header_values["@source"],
+                "test": snippet.emitted_header_values["@test"],
                 "lua_versions": snippet.compatibility.compatible_versions,
                 "novasharp_only": snippet.compatibility.novasharp_only,
                 "expects_error": snippet.expects_error,
             }
-            for snippet in result.snippets
+            for snippet in snippets
         ]
     }
     
@@ -1007,6 +1190,61 @@ def write_manifest(result: ExtractionResult, output_dir: Path, dry_run: bool = F
     
     manifest_path = output_dir / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding='utf-8')
+
+
+def _order_snippets_for_manifest(
+    snippets: list[LuaSnippet], output_dir: Path
+) -> list[LuaSnippet]:
+    """Preserve existing manifest order and append newly generated paths.
+
+    Extraction order is deterministic but occasionally changes when tests move
+    between files. Keeping the established path order prevents unrelated source
+    movement from rewriting the entire manifest.
+    """
+    by_path = {snippet.output_path: snippet for snippet in snippets}
+    ordered: list[LuaSnippet] = []
+    seen: set[str] = set()
+    manifest_path = output_dir / "manifest.json"
+
+    try:
+        existing = json.loads(manifest_path.read_text(encoding="utf-8"))
+        existing_paths = [entry["path"] for entry in existing["snippets"]]
+    except (FileNotFoundError, KeyError, TypeError, json.JSONDecodeError, OSError):
+        existing_paths = []
+
+    for path in existing_paths:
+        if path in by_path and path not in seen:
+            ordered.append(by_path[path])
+            seen.add(path)
+
+    ordered.extend(
+        by_path[path] for path in sorted(by_path.keys() - seen)
+    )
+    return ordered
+
+
+def print_orphan_summary(
+    result: ExtractionResult, output_dir: Path, report_all: bool = False
+) -> None:
+    """Report fixtures that require human triage without deleting them."""
+    orphaned = find_orphaned_fixture_paths(result, output_dir)
+    print("\n=== Orphaned Fixtures ===")
+    if not orphaned:
+        print("No fixture paths are unowned by extracted source snippets.")
+        return
+
+    shown = orphaned if report_all else orphaned[:20]
+    print(
+        f"Found {len(orphaned)} fixture path(s) with no extracted source owner; "
+        "none were deleted."
+    )
+    for path in shown:
+        print(f"  {path}")
+    if len(shown) < len(orphaned):
+        print(
+            f"  ... {len(orphaned) - len(shown)} more "
+            "(pass --report-orphans to list all)"
+        )
 
 
 def print_curation_summary(
@@ -1090,11 +1328,17 @@ def main() -> int:
             "be re-audited against reference Lua before committing."
         )
     )
+    parser.add_argument(
+        '--report-orphans',
+        action='store_true',
+        help="List every existing fixture path with no extracted source owner",
+    )
 
     args = parser.parse_args()
 
     print(f"Extracting Lua snippets from test files...")
     result = extract_all_snippets(DEFAULT_TEST_DIRS)
+    reconcile_snippet_output_paths(result, args.output_dir)
 
     if args.refresh_metadata:
         print(
@@ -1105,6 +1349,7 @@ def main() -> int:
         overrides = apply_curated_metadata(result, args.output_dir)
         print_curation_summary(result, overrides)
 
+    print_orphan_summary(result, args.output_dir, report_all=args.report_orphans)
     print_summary(result)
 
     if not args.manifest_only:

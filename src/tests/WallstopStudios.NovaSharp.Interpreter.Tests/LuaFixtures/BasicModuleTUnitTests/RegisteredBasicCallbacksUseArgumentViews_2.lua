@@ -1,7 +1,7 @@
--- @lua-versions: none
+-- @lua-versions: 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1662
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1724
 -- @test: BasicModuleTUnitTests.RegisteredBasicCallbacksUseArgumentViews
--- Compatibility notes: Test targets Lua 5.1; Lua 5.4+: warn function
-warn('caution', 9)
+-- The warning-specific callback path runs for Lua 5.4+.
+warn('@on'); warn('caution', 9); warn('@off')
