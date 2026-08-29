@@ -81,5 +81,16 @@ zero findings.
   no inline review threads were open, and Copilot's quota notification contained
   no code finding to address.
 
-This closure receipt is documentation-only. Its final pushed head is verified
-separately through the same hosted PR workflows before session handoff.
+That closure-receipt commit was documentation-only and triggered the same hosted
+PR workflows before session handoff.
+
+The first receipt-head rerun then exposed a Windows-only test-isolation failure:
+`WarnWritesToConsoleWhenNoHandlerOrConfiguredStderr(Lua54)` captured a concurrent
+`UnityAssetsScriptLoader` initialization diagnostic. TUnit runs tests in parallel
+by default, while this assertion temporarily redirects the process-wide console;
+the console-capture semaphore only coordinates other capture helpers. The test
+now uses keyless `NotInParallel`, making its exact fallback-console assertion run
+alone instead of weakening the expected output. A forced full rebuild passed
+with zero warnings or errors, and all 15,248 tests passed with the new attribute
+compiled. An independent investigator approved the root cause and minimal fix;
+the corrected head receives a fresh hosted verification cycle.

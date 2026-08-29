@@ -375,6 +375,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.NotInParallel]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task WarnWritesToConsoleWhenNoHandlerOrConfiguredStderr(
