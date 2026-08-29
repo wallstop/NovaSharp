@@ -62,4 +62,24 @@ tightened the two null-tolerant assertions to require exact `SetHook` nil and
 `GetHook` `(nil, "", 0)` results, then approved all 607 focused cases. Final
 adversarial review found and closed a nil-versus-void/type false-positive in
 those assertions; a fresh exact-contract reviewer then returned `APPROVE` with
-zero findings. PR review and hosted CI are recorded after those gates complete.
+zero findings.
+
+## Pull request and hosted verification
+
+- Opened PR #117, `Migrate debug callbacks to argument views`, from
+  `dev/wallstop/a5-debug-callback-views` at implementation commit `5e969204`.
+- CSharpier run `33264372687` passed its format-check job.
+- Benchmarks run `33264372685` passed all 20 jobs; the aggregate report recorded
+  zero Phase A0 gate failures.
+- Tests run `33264372650` passed 21 jobs with the expected conditional
+  `lint-autofix` skip: lint, coverage, .NET tests on Linux, macOS, and Windows,
+  all 15 Lua comparison lanes, and the aggregate Lua report succeeded.
+- Hosted coverage was 84.60% line, 81.60% branch, and 88.00% method; every Lua
+  5.1–5.5 comparison lane on all three operating systems reported zero
+  unexpected deltas.
+- GitHub reported the PR mergeable. Cursor Bugbot found no actionable issue,
+  no inline review threads were open, and Copilot's quota notification contained
+  no code finding to address.
+
+This closure receipt is documentation-only. Its final pushed head is verified
+separately through the same hosted PR workflows before session handoff.
