@@ -35,6 +35,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             FunctionName = functionName;
         }
 
+        internal LuaState(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args,
+            string functionName
+        )
+        {
+            ExecutionContext = executionContext;
+            _stack = new List<LuaValue>(16);
+
+            for (int i = 0; i < args.Count; i++)
+            {
+                _stack.Add(args[i]);
+            }
+
+            FunctionName = functionName;
+        }
+
         public LuaValue Top(int pos = 0)
         {
             return _stack[_stack.Count - 1 - pos];

@@ -885,19 +885,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
 
         private static LuaValue gmatch_aux_2(
             ScriptExecutionContext executionContext,
-            CallbackArguments args
+            CallbackArgumentsView args
         )
         {
-            return executionContext.EmulateClassicCall(
-                args,
-                "gmatch",
-                l => gmatch_aux(l, (GMatchAuxData)executionContext.AdditionalData)
-            );
+            return executionContext.EmulateClassicCall(args, "gmatch", gmatch_aux_3);
+        }
+
+        private static int gmatch_aux_3(LuaState l)
+        {
+            return gmatch_aux(l, (GMatchAuxData)l.ExecutionContext.AdditionalData);
         }
 
         public static int str_gmatch(LuaState l)
         {
-            CallbackFunction c = new(l.ExecutionContext.Script, gmatch_aux_2, "gmatch");
+            CallbackFunction c = CallbackFunction.FromArgumentView(
+                l.ExecutionContext.Script,
+                gmatch_aux_2,
+                "gmatch"
+            );
             string s = ArgAsType(l, 1, DataType.String, false).String;
             string p = PatchPattern(ArgAsType(l, 2, DataType.String, false).String);
 

@@ -526,6 +526,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         }
 
         /// <summary>
+        /// Invokes a classic LuaState callback from a stack-only argument view.
+        /// </summary>
+        /// <param name="args">Arguments visible to the callback.</param>
+        /// <param name="functionName">Function name used in diagnostics.</param>
+        /// <param name="callback">Classic callback to invoke synchronously.</param>
+        /// <returns>The values left on the emulated LuaState stack.</returns>
+        internal LuaValue EmulateClassicCall(
+            CallbackArgumentsView args,
+            string functionName,
+            Func<LuaState, int> callback
+        )
+        {
+            if (callback == null)
+            {
+                throw new ArgumentNullException(nameof(callback));
+            }
+
+            LuaState l = new(this, args, functionName);
+            int retvals = callback(l);
+            return l.GetReturnValue(retvals);
+        }
+
+        /// <summary>
         /// Calls the specified function, supporting most cases. The called function must not yield.
         /// </summary>
         /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>

@@ -10,11 +10,181 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class StringModuleTUnitTests
     {
+        [Test]
+        [AllLuaVersions]
+        public async Task RegisteredStringCallbacksUseArgumentViews(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            Table stringTable = script.Globals.Get("string").Table;
+            string[] callbackNames =
+            {
+                "dump",
+                "char",
+                "byte",
+                "unicode",
+                "len",
+                "match",
+                "gmatch",
+                "gsub",
+                "find",
+                "lower",
+                "upper",
+                "rep",
+                "format",
+                "reverse",
+                "sub",
+                "startswith",
+                "endswith",
+                "contains",
+            };
+
+            for (int i = 0; i < callbackNames.Length; i++)
+            {
+                string callbackName = callbackNames[i];
+                CallbackFunction callback = stringTable.Get(callbackName).Callback;
+                await Assert
+                    .That(callback.HasArgumentViewCallback)
+                    .IsTrue()
+                    .Because($"string.{callbackName} should use stack-only arguments")
+                    .ConfigureAwait(false);
+            }
+
+            Table stringMetatable = script.GetTypeMetatable(DataType.String);
+            string[] arithmeticMetamethodNames =
+            {
+                "__add",
+                "__sub",
+                "__mul",
+                "__div",
+                "__mod",
+                "__pow",
+                "__idiv",
+                "__unm",
+            };
+            bool hasStringArithmeticMetamethods = version >= LuaCompatibilityVersion.Lua54;
+
+            for (int i = 0; i < arithmeticMetamethodNames.Length; i++)
+            {
+                string metamethodName = arithmeticMetamethodNames[i];
+                LuaValue metamethod = stringMetatable.Get(metamethodName);
+                if (hasStringArithmeticMetamethods)
+                {
+                    await Assert
+                        .That(metamethod.Callback.HasArgumentViewCallback)
+                        .IsTrue()
+                        .Because(
+                            $"string metatable {metamethodName} should use stack-only arguments"
+                        )
+                        .ConfigureAwait(false);
+                }
+                else
+                {
+                    await Assert
+                        .That(metamethod.IsNil)
+                        .IsTrue()
+                        .Because(
+                            $"string metatable {metamethodName} should be absent before Lua 5.4"
+                        )
+                        .ConfigureAwait(false);
+                }
+            }
+
+            LuaValue result = script.DoString(
+                @"
+local iterator = string.gmatch('alpha beta', '%a+')
+local matches = {}
+for value in iterator do
+    matches[#matches + 1] = value
+end
+local upper = string.upper(matches[1])
+local substring = string.sub(matches[2], 2)
+local formatted = string.format('%s:%d', 'n', 2)
+assert(upper == 'ALPHA')
+assert(substring == 'eta')
+assert(formatted == 'n:2')
+return iterator, upper, substring, formatted
+"
+            );
+
+            CallbackFunction iterator = result.Tuple[0].Callback;
+            await Assert
+                .That(iterator.HasArgumentViewCallback)
+                .IsTrue()
+                .Because("the string.gmatch iterator should use stack-only arguments")
+                .ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("ALPHA").ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].String).IsEqualTo("eta").ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].String).IsEqualTo("n:2").ConfigureAwait(false);
+        }
+
+        [Test]
+        [AllLuaVersions]
+        public async Task PublicLegacyCallbacksPreserveNullArgumentContracts(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments emptyArguments = new(Array.Empty<LuaValue>(), false);
+            (
+                string Name,
+                Func<ScriptExecutionContext, CallbackArguments, LuaValue> Callback
+            )[] callbacks =
+            {
+                ("dump", StringModule.Dump),
+                ("char", StringModule.CharFunction),
+                ("byte", StringModule.Byte),
+                ("unicode", StringModule.Unicode),
+                ("len", StringModule.Len),
+                ("match", StringModule.Match),
+                ("gmatch", StringModule.GMatch),
+                ("gsub", StringModule.GSub),
+                ("find", StringModule.Find),
+                ("lower", StringModule.Lower),
+                ("upper", StringModule.Upper),
+                ("rep", StringModule.Rep),
+                ("format", StringModule.Format),
+                ("reverse", StringModule.Reverse),
+                ("sub", StringModule.Sub),
+                ("startswith", StringModule.StartsWith),
+                ("endswith", StringModule.EndsWith),
+                ("contains", StringModule.Contains),
+            };
+
+            for (int i = 0; i < callbacks.Length; i++)
+            {
+                (
+                    string callbackName,
+                    Func<ScriptExecutionContext, CallbackArguments, LuaValue> callback
+                ) = callbacks[i];
+
+                ArgumentNullException argumentsException = Assert.Throws<ArgumentNullException>(
+                    () =>
+                        callback(context, null)
+                );
+                ArgumentNullException contextException = Assert.Throws<ArgumentNullException>(() =>
+                    callback(null, emptyArguments)
+                );
+
+                await Assert
+                    .That(argumentsException.ParamName)
+                    .IsEqualTo("args")
+                    .Because($"string.{callbackName} should preserve its null argument contract")
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(contextException.ParamName)
+                    .IsEqualTo("executionContext")
+                    .Because($"string.{callbackName} should preserve its null context contract")
+                    .ConfigureAwait(false);
+            }
+        }
+
         [Test]
         [AllLuaVersions]
         public async Task CharProducesStringFromByteValues(LuaCompatibilityVersion version)
