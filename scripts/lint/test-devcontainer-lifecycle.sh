@@ -24,16 +24,15 @@ assert_contains() {
         fail "expected output to contain: ${expected}"
 }
 
-set_mtime_days_ago() {
+set_mtime_epoch() {
     local path="$1"
-    local days_ago="$2"
-    python3 - "${path}" "${days_ago}" <<'PY'
+    local timestamp="$2"
+    python3 - "${path}" "${timestamp}" <<'PY'
 import os
 import sys
-import time
 
 path = sys.argv[1]
-timestamp = time.time() - (float(sys.argv[2]) * 24 * 60 * 60)
+timestamp = float(sys.argv[2])
 os.utime(path, (timestamp, timestamp), follow_symlinks=False)
 PY
 }
@@ -214,16 +213,27 @@ fi
 assert_contains "${permission_output}" "npm path is not writable"
 chmod 0755 "${permission_fixture}/prefix/lib/node_modules/@openai/codex"
 
+cleanup_now_epoch=2000000000
+expired_epoch=$((cleanup_now_epoch - (15 * 24 * 60 * 60 / 2)))
+exact_epoch=$((cleanup_now_epoch - (7 * 24 * 60 * 60)))
+recent_epoch=$((cleanup_now_epoch - (13 * 24 * 60 * 60 / 2)))
 workspace="${TEST_ROOT}/cleanup-workspace"
-mkdir -p "${workspace}/.devcontainer" "${workspace}/src/Expired/bin" "${workspace}/src/Recent/obj" \
+cleanup_tmp="${TEST_ROOT}/cleanup-tmp"
+mkdir -p "${cleanup_tmp}" "${workspace}/.devcontainer" "${workspace}/src/Expired/bin" \
+    "${workspace}/src/ExactBin/bin" "${workspace}/src/ExactObj/obj" \
+    "${workspace}/src/Recent/obj" \
     "${workspace}/artifacts/build-cache" "${workspace}/artifacts/results" \
     "${workspace}/BenchmarkDotNet.Artifacts/build-cache"
 printf '{}\n' > "${workspace}/.devcontainer/devcontainer.json"
 touch "${workspace}/src/source.cs" "${workspace}/src/Expired/bin/expired.dll" \
-    "${workspace}/src/Recent/obj/recent.dll" "${workspace}/artifacts/build-cache/preserved.cache" \
+    "${workspace}/src/ExactBin/bin/exact.dll" "${workspace}/src/ExactObj/obj/exact.dll" \
+    "${workspace}/src/Recent/obj/recent.dll" \
+    "${workspace}/artifacts/build-cache/preserved.cache" \
     "${workspace}/artifacts/results/expired.txt" "${workspace}/artifacts/results/recent.txt" \
+    "${workspace}/artifacts/results/exact.txt" \
     "${workspace}/BenchmarkDotNet.Artifacts/build-cache/expired.json"
 ln -s ../../src/source.cs "${workspace}/artifacts/results/expired.link"
+ln -s ../../src/source.cs "${workspace}/artifacts/results/exact.link"
 ln -s ../../src/source.cs "${workspace}/artifacts/results/recent.link"
 for expired_path in \
     "${workspace}/src/Expired/bin/expired.dll" \
@@ -231,25 +241,116 @@ for expired_path in \
     "${workspace}/artifacts/results/expired.txt" \
     "${workspace}/artifacts/results/expired.link" \
     "${workspace}/BenchmarkDotNet.Artifacts/build-cache/expired.json"; do
-    set_mtime_days_ago "${expired_path}" 7.5
+    set_mtime_epoch "${expired_path}" "${expired_epoch}"
+done
+for exact_path in \
+    "${workspace}/src/ExactBin/bin/exact.dll" \
+    "${workspace}/src/ExactObj/obj/exact.dll" \
+    "${workspace}/artifacts/results/exact.txt" \
+    "${workspace}/artifacts/results/exact.link"; do
+    set_mtime_epoch "${exact_path}" "${exact_epoch}"
 done
 for recent_path in \
     "${workspace}/src/Recent/obj/recent.dll" \
     "${workspace}/artifacts/results/recent.txt" \
     "${workspace}/artifacts/results/recent.link"; do
-    set_mtime_days_ago "${recent_path}" 6.5
+    set_mtime_epoch "${recent_path}" "${recent_epoch}"
 done
 
-bash "${REPO_ROOT}/.devcontainer/cleanup-artifacts.sh" "${workspace}" --older-than-days 7 >/dev/null
+TMPDIR="${cleanup_tmp}" NOVA_ARTIFACT_CLEANUP_NOW_EPOCH="${cleanup_now_epoch}" \
+    bash "${REPO_ROOT}/.devcontainer/cleanup-artifacts.sh" "${workspace}" --older-than-days 7 >/dev/null
 [ ! -e "${workspace}/src/Expired/bin" ] || fail "7.5-day-old bin directory survived"
+[ ! -e "${workspace}/src/ExactBin/bin" ] || fail "exact-cutoff bin directory survived"
+[ ! -e "${workspace}/src/ExactObj/obj" ] || fail "exact-cutoff obj directory survived"
 [ -f "${workspace}/src/Recent/obj/recent.dll" ] || fail "6.5-day-old obj file was deleted"
 [ -f "${workspace}/artifacts/build-cache/preserved.cache" ] || fail "legacy mounted cache was deleted"
 [ ! -e "${workspace}/artifacts/results/expired.txt" ] || fail "7.5-day-old artifact survived"
+[ ! -e "${workspace}/artifacts/results/exact.txt" ] || fail "exact-cutoff artifact survived"
 [ -f "${workspace}/artifacts/results/recent.txt" ] || fail "6.5-day-old artifact was deleted"
 [ ! -L "${workspace}/artifacts/results/expired.link" ] || fail "7.5-day-old symlink survived"
+[ ! -L "${workspace}/artifacts/results/exact.link" ] || fail "exact-cutoff symlink survived"
 [ -L "${workspace}/artifacts/results/recent.link" ] || fail "6.5-day-old symlink was deleted"
 [ ! -e "${workspace}/BenchmarkDotNet.Artifacts/build-cache/expired.json" ] || fail "benchmark build-cache name was incorrectly exempted"
 [ -f "${workspace}/src/source.cs" ] || fail "source was deleted"
+if compgen -G "${cleanup_tmp}/novasharp-*" >/dev/null; then
+    fail "successful cleanup leaked temporary files"
+fi
+
+python_failure_workspace="${TEST_ROOT}/python-failure-workspace"
+python_failure_tmp="${TEST_ROOT}/python-failure-tmp"
+python_failure_bin="${TEST_ROOT}/python-failure-bin"
+mkdir -p "${python_failure_workspace}/.devcontainer" "${python_failure_workspace}/src" \
+    "${python_failure_workspace}/artifacts" "${python_failure_tmp}" "${python_failure_bin}"
+printf '{}\n' > "${python_failure_workspace}/.devcontainer/devcontainer.json"
+touch "${python_failure_workspace}/artifacts/preserved.txt"
+write_executable "${python_failure_bin}/python3" \
+    '#!/usr/bin/env bash' \
+    'echo "simulated cutoff clock failure" >&2' \
+    'exit 74'
+if python_failure_output="$(
+    PATH="${python_failure_bin}:${PATH}" TMPDIR="${python_failure_tmp}" \
+        NOVA_ARTIFACT_CLEANUP_NOW_EPOCH="${cleanup_now_epoch}" \
+        bash "${REPO_ROOT}/.devcontainer/cleanup-artifacts.sh" \
+        "${python_failure_workspace}" --older-than-days 7 2>&1
+)"; then
+    fail "cutoff clock failure must fail cleanup"
+fi
+assert_contains "${python_failure_output}" "simulated cutoff clock failure"
+[ -f "${python_failure_workspace}/artifacts/preserved.txt" ] || fail "clock failure deleted an artifact"
+if compgen -G "${python_failure_tmp}/novasharp-*" >/dev/null; then
+    fail "clock failure leaked its cutoff reference"
+fi
+
+find_failure_workspace="${TEST_ROOT}/find-failure-workspace"
+find_failure_tmp="${TEST_ROOT}/find-failure-tmp"
+find_failure_bin="${TEST_ROOT}/find-failure-bin"
+find_failure_count="${TEST_ROOT}/find-failure-count"
+real_find="$(command -v find)"
+mkdir -p "${find_failure_workspace}/.devcontainer" "${find_failure_workspace}/src/Fail/bin" \
+    "${find_failure_tmp}" "${find_failure_bin}"
+printf '{}\n' > "${find_failure_workspace}/.devcontainer/devcontainer.json"
+touch "${find_failure_workspace}/src/Fail/bin/preserved.dll"
+# shellcheck disable=SC2016
+write_executable "${find_failure_bin}/find" \
+    '#!/usr/bin/env bash' \
+    'count=0' \
+    'if [ -f "${NOVA_TEST_FIND_COUNT}" ]; then read -r count < "${NOVA_TEST_FIND_COUNT}"; fi' \
+    'count=$((count + 1))' \
+    'printf "%s\n" "${count}" > "${NOVA_TEST_FIND_COUNT}"' \
+    'if [ "${count}" -eq "${NOVA_TEST_FIND_FAIL_AT}" ]; then echo "simulated find failure" >&2; exit 77; fi' \
+    'exec "${NOVA_TEST_REAL_FIND}" "$@"'
+if outer_find_failure_output="$(
+    PATH="${find_failure_bin}:${PATH}" TMPDIR="${find_failure_tmp}" \
+        NOVA_ARTIFACT_CLEANUP_NOW_EPOCH="${cleanup_now_epoch}" \
+        NOVA_TEST_FIND_COUNT="${find_failure_count}" NOVA_TEST_FIND_FAIL_AT=1 \
+        NOVA_TEST_REAL_FIND="${real_find}" \
+        bash "${REPO_ROOT}/.devcontainer/cleanup-artifacts.sh" \
+        "${find_failure_workspace}" --older-than-days 7 2>&1
+)"; then
+    fail "build-directory enumeration failure must fail cleanup"
+fi
+assert_contains "${outer_find_failure_output}" "no build directories were removed"
+[ -f "${find_failure_workspace}/src/Fail/bin/preserved.dll" ] || fail "enumeration failure deleted build output"
+if compgen -G "${find_failure_tmp}/novasharp-*" >/dev/null; then
+    fail "enumeration failure leaked temporary files"
+fi
+rm -f -- "${find_failure_count}"
+
+if find_failure_output="$(
+    PATH="${find_failure_bin}:${PATH}" TMPDIR="${find_failure_tmp}" \
+        NOVA_ARTIFACT_CLEANUP_NOW_EPOCH="${cleanup_now_epoch}" \
+        NOVA_TEST_FIND_COUNT="${find_failure_count}" NOVA_TEST_FIND_FAIL_AT=2 \
+        NOVA_TEST_REAL_FIND="${real_find}" \
+        bash "${REPO_ROOT}/.devcontainer/cleanup-artifacts.sh" \
+        "${find_failure_workspace}" --older-than-days 7 2>&1
+)"; then
+    fail "build-directory traversal failure must fail cleanup"
+fi
+assert_contains "${find_failure_output}" "refusing to remove it"
+[ -f "${find_failure_workspace}/src/Fail/bin/preserved.dll" ] || fail "find failure deleted build output"
+if compgen -G "${find_failure_tmp}/novasharp-*" >/dev/null; then
+    fail "find failure leaked temporary files"
+fi
 
 mkdir -p "${workspace}/src/Full/bin" "${workspace}/artifacts/results" \
     "${workspace}/BenchmarkDotNet.Artifacts/build-cache"

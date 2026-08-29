@@ -167,10 +167,13 @@ After the first pushed head passed all Tests, Benchmarks, and CSharpier workflow
 Cursor Bugbot found two devcontainer lifecycle defects. The npm refresh now accepts
 a nonzero `npm list` diagnostic exit only when the emitted dependency tree is valid
 JSON, and both initial and post-install fallback reads share that validation. The
-retention cleanup now uses portable `find -mtime` age predicates instead of GNU-only
-`date --date`/`find -newermt`; the tooling checker prevents those host-portability
-regressions. Focused lifecycle tests reproduce the npm diagnostic-exit case and
-the 7-day cleanup boundary.
+retention cleanup now uses an exact Python-created cutoff reference with portable
+`find -newer` comparisons instead of platform-dependent `find -mtime` rounding or
+GNU-only `date --date`/`find -newermt`; the tooling checker prevents those
+host-portability regressions. Focused lifecycle tests reproduce the npm
+diagnostic-exit case and the exact 7-day cleanup boundary for files, symlinks,
+`bin`, and `obj`. Injected cutoff-clock and directory-traversal failures verify
+that cleanup exits nonzero, preserves build output, and removes temporary files.
 
 ## Validation receipt before PR
 

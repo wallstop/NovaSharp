@@ -14,7 +14,20 @@ fi
 
 cleanup_mode=""
 retention_days=""
-retention_mtime_days=""
+cutoff_reference=""
+build_directory_list=""
+recent_build_output=""
+
+cleanup_temp_files() {
+    local temporary_path
+    for temporary_path in "${cutoff_reference}" "${build_directory_list}" "${recent_build_output}"; do
+        if [ -n "${temporary_path}" ]; then
+            rm -f -- "${temporary_path}" || true
+        fi
+    done
+}
+trap cleanup_temp_files EXIT
+
 case "${1:-}" in
     --all)
         cleanup_mode="all"
@@ -26,9 +39,24 @@ case "${1:-}" in
             usage
             exit 2
         fi
-        # POSIX find rounds -mtime down to complete 24-hour periods. +N therefore
-        # selects ages of at least N+1 days without GNU-only date/find flags.
-        retention_mtime_days=$((retention_days - 1))
+        if ! command -v python3 >/dev/null 2>&1; then
+            echo "❌ python3 is required for exact cross-platform retention timestamps." >&2
+            exit 1
+        fi
+        cutoff_reference="$(mktemp "${TMPDIR:-/tmp}/novasharp-artifact-cutoff.XXXXXX")"
+        python3 - "${cutoff_reference}" "${retention_days}" <<'PY'
+import os
+import math
+import sys
+import time
+
+now_text = os.environ.get("NOVA_ARTIFACT_CLEANUP_NOW_EPOCH")
+now = float(now_text) if now_text is not None else time.time()
+if not math.isfinite(now):
+    raise ValueError("cleanup clock must be finite")
+cutoff = now - (int(sys.argv[2]) * 24 * 60 * 60)
+os.utime(sys.argv[1], (cutoff, cutoff))
+PY
         ;;
     *)
         usage
@@ -60,23 +88,39 @@ size_kib() {
 
 remove_build_directories() {
     local remove_all="$1"
-    local removed=0
     local directory
+
+    build_directory_count=0
+    build_directory_list="$(mktemp "${TMPDIR:-/tmp}/novasharp-build-directories.XXXXXX")"
+    recent_build_output="$(mktemp "${TMPDIR:-/tmp}/novasharp-recent-build-output.XXXXXX")"
+
+    if ! find src -type d \( -name "bin" -o -name "obj" \) -prune -print0 > "${build_directory_list}"; then
+        echo "❌ Failed to enumerate bin/obj directories; no build directories were removed." >&2
+        return 1
+    fi
 
     while IFS= read -r -d '' directory; do
         if [ "${remove_all}" = "1" ]; then
             rm -rf -- "${directory}"
-            removed=$((removed + 1))
+            build_directory_count=$((build_directory_count + 1))
             continue
         fi
 
-        if ! find "${directory}" -type f ! -mtime "+${retention_mtime_days}" -print -quit | IFS= read -r _; then
-            rm -rf -- "${directory}"
-            removed=$((removed + 1))
+        : > "${recent_build_output}"
+        if ! find "${directory}" \( -type f -o -type l \) -newer "${cutoff_reference}" \
+            -print -quit > "${recent_build_output}"; then
+            echo "❌ Failed to inspect build directory; refusing to remove it: ${directory}" >&2
+            return 1
         fi
-    done < <(find src -type d \( -name "bin" -o -name "obj" \) -prune -print0)
+        if [ ! -s "${recent_build_output}" ]; then
+            rm -rf -- "${directory}"
+            build_directory_count=$((build_directory_count + 1))
+        fi
+    done < "${build_directory_list}"
 
-    echo "${removed}"
+    rm -f -- "${build_directory_list}" "${recent_build_output}"
+    build_directory_list=""
+    recent_build_output=""
 }
 
 remove_generated_root() {
@@ -98,23 +142,23 @@ remove_generated_root() {
     fi
 
     if [ "${root}" = "artifacts" ]; then
-        find "${root}" -type f ! -path "artifacts/build-cache/*" -mtime "+${retention_mtime_days}" -delete
-        find "${root}" -type l ! -path "artifacts/build-cache/*" -mtime "+${retention_mtime_days}" -delete
+        find "${root}" -type f ! -path "artifacts/build-cache/*" ! -newer "${cutoff_reference}" -delete
+        find "${root}" -type l ! -path "artifacts/build-cache/*" ! -newer "${cutoff_reference}" -delete
         find "${root}" -depth -type d ! -path "${root}" ! -path "artifacts/build-cache" \
             ! -path "artifacts/build-cache/*" -empty -delete
         return
     fi
 
-    find "${root}" -type f -mtime "+${retention_mtime_days}" -delete
-    find "${root}" -type l -mtime "+${retention_mtime_days}" -delete
+    find "${root}" -type f ! -newer "${cutoff_reference}" -delete
+    find "${root}" -type l ! -newer "${cutoff_reference}" -delete
     find "${root}" -depth -type d ! -path "${root}" -empty -delete
 }
 
 before_kib="$(size_kib)"
 if [ "${cleanup_mode}" = "all" ]; then
-    build_directory_count="$(remove_build_directories 1)"
+    remove_build_directories 1
 else
-    build_directory_count="$(remove_build_directories 0)"
+    remove_build_directories 0
 fi
 
 remove_generated_root artifacts

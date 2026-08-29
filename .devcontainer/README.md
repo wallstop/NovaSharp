@@ -93,7 +93,8 @@ bash .devcontainer/cleanup-artifacts.sh "$(pwd)" --older-than-days 7
 bash .devcontainer/cleanup-artifacts.sh "$(pwd)" --all
 ```
 
-The age-based cleanup uses portable `find -mtime` predicates and works with both
-GNU and BSD/macOS command-line tools.
+The age-based cleanup creates an exact cutoff timestamp with Python and compares
+it using the portable `find -newer` predicate, avoiding GNU/BSD age-rounding
+differences.
 
 The scripts validate the workspace before deletion and never use `sudo`.
