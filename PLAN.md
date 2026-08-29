@@ -10,7 +10,7 @@ backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
 
 1. Advance Phase A5 call paths:
    - Migrate each remaining legacy CoreLib registration in its own scoped change:
-     Debug, String, Io, Bit32, Table, Load, Utf8, OsSystem, StringPack, MetaTable,
+     String, Io, Bit32, Table, Load, Utf8, OsSystem, StringPack, MetaTable,
      ErrorHandling, TableIterators, OsTime, Json, and Dynamic.
    - Add the return-buffer writer and confine tuple arrays to escaped varargs or
      multi-return values.

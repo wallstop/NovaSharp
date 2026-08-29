@@ -207,5 +207,11 @@ that cleanup exits nonzero, preserves build output, and removes temporary files.
   aggregate, including formatting, links, generated audits, branding, namespace,
   shell, tooling, PLAN, skill-index, and Liquid checks.
 
-Independent aggregate review, commit/push, PR CI, and remote review resolution
-are recorded after those gates complete.
+## Post-PR closure
+
+- Independent aggregate review findings and Cursor Bugbot's two lifecycle
+  findings were resolved in the implementation described above.
+- [PR #116](https://github.com/wallstop/NovaSharp/pull/116) merged as `ac67dfe8`.
+- The resulting main revision completed the Tests, Benchmarks, CSharpier, and
+  Pages workflows successfully: 44 checks succeeded and the two conditional
+  `lua-comparison-report` and `lint-autofix` checks were skipped as designed.
