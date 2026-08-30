@@ -97,4 +97,16 @@ executed review of the Debug quick-test synchronization branch.
 
 ## Hosted verification
 
-Pending the final local closure gates and independent aggregate review.
+- Opened non-draft PR #123 from `dev/wallstop/a5-io-callback-views`; GitHub reported
+  the PR mergeable.
+- The first hosted cycle at `771dd105` completed successfully: CSharpier run
+  33300324911, Benchmarks run 33300324827, and Tests run 33300324842.
+- All 20 benchmark jobs succeeded. Tests succeeded on Windows, macOS, and Linux;
+  coverage, lint, all 15 OS/Lua comparison lanes, and the aggregate comparison report
+  succeeded. The conditional lint-autofix job skipped as designed.
+- Hosted coverage reported 84.50% lines, 81.60% branches, and 88.10% methods. Every
+  hosted Lua lane reported zero mismatches, one-sided failures, missing outputs, and
+  error-ratchet changes.
+- PR review inspection found no inline threads or actionable reviewer feedback. The
+  only review submission was an automated Copilot quota notice; benchmark, coverage,
+  and Lua comparison comments were successful workflow reports.
