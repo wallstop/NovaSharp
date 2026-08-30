@@ -12,8 +12,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib.IO;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure.IO;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
@@ -24,6 +26,233 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     [ScriptGlobalOptionsIsolation]
     public sealed class IoModuleTUnitTests
     {
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task RegisteredIoCallbacksUseArgumentViews(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            Table ioTable = script.Globals.Get("io").Table;
+            string[] callbackNames =
+            {
+                "close",
+                "flush",
+                "input",
+                "output",
+                "lines",
+                "open",
+                "type",
+                "read",
+                "write",
+                "tmpfile",
+                "popen",
+            };
+
+            for (int i = 0; i < callbackNames.Length; i++)
+            {
+                string callbackName = callbackNames[i];
+                CallbackFunction callback = ioTable.Get(callbackName).Callback;
+                await Assert
+                    .That(callback.HasArgumentViewCallback)
+                    .IsTrue()
+                    .Because($"io.{callbackName} should use stack-only arguments")
+                    .ConfigureAwait(false);
+            }
+
+            CallbackFunction indexCallback = ioTable.MetaTable.Get(Metamethods.Index).Callback;
+            await Assert
+                .That(indexCallback.HasArgumentViewCallback)
+                .IsTrue()
+                .Because("the io table index callback should use stack-only arguments")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task RegisteredFileCallbacksUseArgumentViews(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            LuaValue fileCallbacks = script.DoString(
+                @"
+return io.stderr.close,
+       io.stderr.flush,
+       io.stderr.lines,
+       io.stderr.read,
+       io.stderr.seek,
+       io.stderr.setvbuf,
+       io.stderr.write
+"
+            );
+            string[] fileCallbackNames =
+            {
+                "close",
+                "flush",
+                "lines",
+                "read",
+                "seek",
+                "setvbuf",
+                "write",
+            };
+
+            for (int i = 0; i < fileCallbackNames.Length; i++)
+            {
+                string callbackName = fileCallbackNames[i];
+                CallbackFunction callback = fileCallbacks.Tuple[i].Callback;
+                await Assert
+                    .That(callback.HasArgumentViewCallback)
+                    .IsTrue()
+                    .Because($"file:{callbackName} should use stack-only arguments")
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task IoIteratorsUseArgumentViews(LuaCompatibilityVersion version)
+        {
+            using MemoryStream stdin = new(
+                Encoding.UTF8.GetBytes("default input\n"),
+                writable: false
+            );
+            ScriptOptions options = new(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+                Stdin = stdin,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            LuaValue iterators = script.DoString(
+                @"
+local file = assert(io.tmpfile())
+file:write('first\nsecond\n')
+file:seek('set', 0)
+local file_iterator = file:lines()
+file:close()
+
+local path = os.tmpname()
+local output = assert(io.open(path, 'w'))
+output:write('path input\n')
+output:close()
+local path_iterator = io.lines(path)
+assert(path_iterator() == 'path input')
+assert(path_iterator() == nil)
+os.remove(path)
+
+local default_iterator = io.lines()
+return file_iterator, path_iterator, default_iterator
+"
+            );
+            string[] iteratorNames = { "file:lines", "io.lines(path)", "io.lines()" };
+
+            for (int i = 0; i < iteratorNames.Length; i++)
+            {
+                LuaValue iterator = iterators.Tuple[i];
+                bool found = iterator.UserData.Descriptor.TryMetaIndex(
+                    script,
+                    iterator.UserData.Object,
+                    Metamethods.Call,
+                    out LuaValue iteratorCallback
+                );
+                await Assert
+                    .That(found)
+                    .IsTrue()
+                    .Because($"{iteratorNames[i]} should return a callable iterator")
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(iteratorCallback.Callback.HasArgumentViewCallback)
+                    .IsTrue()
+                    .Because($"{iteratorNames[i]} should use stack-only iterator arguments")
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task FileArgumentViewCallbacksNormalizeMethodReceiverOnce(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            LuaValue result = script.DoString(
+                @"
+local file = assert(io.tmpfile())
+local write = file.write
+local seek = file.seek
+local read = file.read
+local flush = file.flush
+local close = file.close
+
+write('alpha\n')
+assert(flush() == true)
+assert(seek('set', 0) == 0)
+local detached = read('*l')
+assert(seek('set', 0) == 0)
+local colon = file:read('*l')
+assert(close() == true)
+return detached, colon
+"
+            );
+
+            await Assert.That(result.Tuple[0].String).IsEqualTo("alpha").ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("alpha").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task PublicLegacyIoCallbacksPreserveNullArgumentContracts(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments emptyArguments = new(Array.Empty<LuaValue>(), false);
+            (
+                string Name,
+                Func<ScriptExecutionContext, CallbackArguments, LuaValue> Callback
+            )[] callbacks =
+            {
+                ("close", IoModule.Close),
+                ("flush", IoModule.Flush),
+                ("input", IoModule.Input),
+                ("output", IoModule.Output),
+                ("lines", IoModule.Lines),
+                ("open", IoModule.Open),
+                ("type", IoModule.Type),
+                ("read", IoModule.Read),
+                ("write", IoModule.Write),
+                ("tmpfile", IoModule.TmpFile),
+                ("popen", IoModule.Popen),
+            };
+
+            for (int i = 0; i < callbacks.Length; i++)
+            {
+                (
+                    string callbackName,
+                    Func<ScriptExecutionContext, CallbackArguments, LuaValue> callback
+                ) = callbacks[i];
+                ArgumentNullException contextException = Assert.Throws<ArgumentNullException>(() =>
+                    callback(null, emptyArguments)
+                );
+                await Assert
+                    .That(contextException.ParamName)
+                    .IsEqualTo("executionContext")
+                    .Because($"io.{callbackName} should preserve its null-context contract")
+                    .ConfigureAwait(false);
+
+                ArgumentNullException argumentsException = Assert.Throws<ArgumentNullException>(
+                    () =>
+                        callback(context, null)
+                );
+                await Assert
+                    .That(argumentsException.ParamName)
+                    .IsEqualTo("args")
+                    .Because($"io.{callbackName} should preserve its null-arguments contract")
+                    .ConfigureAwait(false);
+            }
+
+            CallbackArguments typeArguments = new(new[] { LuaValue.Nil }, false);
+            LuaValue result = IoModule.Type(context, typeArguments);
+            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
+        }
+
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
@@ -215,12 +444,14 @@ end
                 @"
                 local f = io.tmpfile()
                 f:write('temp-data')
-                return io.type(f)
+                f:seek('set', 0)
+                return io.type(f), f:read('*a')
                 "
             );
 
-            await Assert.That(typeValue.Type).IsEqualTo(DataType.String);
-            await Assert.That(typeValue.String).IsEqualTo("file");
+            await Assert.That(typeValue.Tuple[0].Type).IsEqualTo(DataType.String);
+            await Assert.That(typeValue.Tuple[0].String).IsEqualTo("file");
+            await Assert.That(typeValue.Tuple[1].String).IsEqualTo("temp-data");
         }
 
         [global::TUnit.Core.Test]
@@ -1090,7 +1321,7 @@ end
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task WriteReturnsHandleAndClosedHandleWriteThrows(
+        public async Task WriteReturnMatchesLuaVersionAndClosedHandleWriteThrows(
             LuaCompatibilityVersion version
         )
         {
@@ -1104,13 +1335,15 @@ end
                     local returned = f:write('payload')
                     f:close()
                     local ok, err = pcall(function() f:write('more') end)
-                    return returned == f, ok, err
+                    return returned == true, returned == f, ok, err
                     "
             );
 
-            await Assert.That(tuple.Tuple[0].Boolean).IsTrue();
-            await Assert.That(tuple.Tuple[1].Boolean).IsFalse();
-            await Assert.That(tuple.Tuple[2].String).Contains("attempt to use a closed file");
+            bool expectsBoolean = version == LuaCompatibilityVersion.Lua51;
+            await Assert.That(tuple.Tuple[0].Boolean).IsEqualTo(expectsBoolean);
+            await Assert.That(tuple.Tuple[1].Boolean).IsEqualTo(!expectsBoolean);
+            await Assert.That(tuple.Tuple[2].Boolean).IsFalse();
+            await Assert.That(tuple.Tuple[3].String).Contains("attempt to use a closed file");
         }
 
         [global::TUnit.Core.Test]
@@ -1201,16 +1434,18 @@ end
                 @"
                 local f = io.tmpfile()
                 f:write('temp data')
-                f:seek('set')
+                f:seek('set', 0)
+                local content = f:read('*a')
                 local t_open = io.type(f)
                 f:close()
                 local t_closed = io.type(f)
-                return t_open, t_closed
+                return t_open, t_closed, content
                 "
             );
 
             await Assert.That(tuple.Tuple[0].String).IsEqualTo("file");
             await Assert.That(tuple.Tuple[1].String).IsEqualTo("closed file");
+            await Assert.That(tuple.Tuple[2].String).IsEqualTo("temp data");
         }
 
         [global::TUnit.Core.Test]

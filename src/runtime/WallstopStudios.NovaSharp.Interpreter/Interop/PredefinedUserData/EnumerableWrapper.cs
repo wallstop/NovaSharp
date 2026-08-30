@@ -62,13 +62,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         /// <summary>
         /// Callback that exposes the enumerator as a Lua iterator triple.
         /// </summary>
-        private LuaValue LuaIteratorCallback(
-            ScriptExecutionContext executionContext,
-            CallbackArguments args
-        )
+        private LuaValue LuaIteratorCallback(CallbackArgumentsView args)
         {
             _prev = GetNext(_prev);
             return _prev;
+        }
+
+        /// <summary>
+        /// Advances the wrapped enumerator for the exposed MoveNext callback.
+        /// </summary>
+        private LuaValue MoveNextCallback(CallbackArgumentsView args)
+        {
+            return LuaValue.NewBoolean(_enumerator.MoveNext());
+        }
+
+        /// <summary>
+        /// Resets the wrapped enumerator for the exposed Reset callback.
+        /// </summary>
+        private LuaValue ResetCallback(CallbackArgumentsView args)
+        {
+            Reset();
+            return LuaValue.Nil;
         }
 
         /// <summary>
@@ -118,22 +132,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
                 }
                 else if (idx == "MoveNext" || idx == "moveNext" || idx == "move_next")
                 {
-                    value = LuaValue.NewCallback(
-                        script,
-                        (ctx, args) => LuaValue.NewBoolean(_enumerator.MoveNext())
-                    );
+                    value = LuaValue.NewCallbackView(script, MoveNextCallback);
                     return true;
                 }
                 else if (idx == "Reset" || idx == "reset")
                 {
-                    value = LuaValue.NewCallback(
-                        script,
-                        (ctx, args) =>
-                        {
-                            Reset();
-                            return LuaValue.Nil;
-                        }
-                    );
+                    value = LuaValue.NewCallbackView(script, ResetCallback);
                     return true;
                 }
             }
@@ -163,7 +167,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         {
             if (metaname == Metamethods.Call)
             {
-                value = LuaValue.NewCallback(script, LuaIteratorCallback);
+                value = LuaValue.NewCallbackView(script, LuaIteratorCallback);
                 return true;
             }
 

@@ -6,4 +6,5 @@
 -- Test targets Lua 5.1
 local f = io.tmpfile()
                 f:write('temp-data')
-                return io.type(f)
+                f:seek('set', 0)
+                return io.type(f), f:read('*a')

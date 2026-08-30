@@ -133,6 +133,8 @@ if (( BUILD )); then
     # The test project source gen is slow (~40s), but we can skip it if only runtime code changed
     INTERPRETER_CSPROJ="src/runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj"
     TEST_DLL="src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/bin/$CONFIGURATION/net8.0/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.dll"
+    INTERPRETER_OUTPUT_DIR="src/runtime/WallstopStudios.NovaSharp.Interpreter/bin/$CONFIGURATION/netstandard2.1"
+    TEST_OUTPUT_DIR="src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/bin/$CONFIGURATION/net8.0"
     
     if (( FULL_BUILD )) || [[ ! -f "$TEST_DLL" ]]; then
         # Full build requested or no test DLL - need full build including test project (~50s)
@@ -146,6 +148,19 @@ if (( BUILD )); then
         if ! dotnet build "$INTERPRETER_CSPROJ" -c "$CONFIGURATION" -m --no-restore --verbosity quiet 2>/dev/null; then
             dotnet build "$INTERPRETER_CSPROJ" -c "$CONFIGURATION" -m --verbosity quiet
         fi
+
+        for assembly in \
+            WallstopStudios.NovaSharp.Interpreter.dll \
+            WallstopStudios.NovaSharp.Interpreter.Infrastructure.dll; do
+            source_assembly="$INTERPRETER_OUTPUT_DIR/$assembly"
+            if [[ ! -f "$source_assembly" ]]; then
+                echo "Built interpreter assembly is missing: $source_assembly" >&2
+                exit 1
+            fi
+
+            cp -- "$source_assembly" "$TEST_OUTPUT_DIR/$assembly"
+        done
+        echo "🔄 Synchronized rebuilt interpreter assemblies into the cached test output."
     fi
 fi
 

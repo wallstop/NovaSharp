@@ -45,7 +45,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             Table meta = new(ioTable.OwnerScript);
             LuaValue index = LuaValue.NewCallback(
-                new CallbackFunction(ioTable.OwnerScript, __index_callback, "__index_callback")
+                CallbackFunction.FromArgumentView(
+                    ioTable.OwnerScript,
+                    __index_callback,
+                    "__index_callback"
+                )
             );
             meta.Set(Metamethods.Index, index);
             ioTable.MetaTable = meta;
@@ -69,15 +73,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         private static LuaValue __index_callback(
             ScriptExecutionContext executionContext,
-            CallbackArguments args
+            CallbackArgumentsView args
         )
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-
             string name = args[1].CastToString();
 
             if (name == "stdin")
@@ -232,8 +234,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Close(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "close")]
+        private static LuaValue Close(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             FileUserDataBase outp =
-                args.AsUserData<FileUserDataBase>(0, "close", true)
+                args[0]
+                    .CheckUserDataType<FileUserDataBase>("close", 0, TypeValidationOptions.AllowNil)
                 ?? GetDefaultFile(executionContext, StandardFileType.StdOut);
             return outp.Close(executionContext, args);
         }
@@ -256,8 +268,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Flush(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "flush")]
+        private static LuaValue Flush(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             FileUserDataBase outp =
-                args.AsUserData<FileUserDataBase>(0, "close", true)
+                args[0]
+                    .CheckUserDataType<FileUserDataBase>("close", 0, TypeValidationOptions.AllowNil)
                 ?? GetDefaultFile(executionContext, StandardFileType.StdOut);
             outp.Flush();
             return LuaValue.True;
@@ -281,6 +303,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Input(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "input")]
+        private static LuaValue Input(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             return HandleDefaultStreamSetter(executionContext, args, StandardFileType.StdIn);
         }
 
@@ -302,21 +333,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Output(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "output")]
+        private static LuaValue Output(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             return HandleDefaultStreamSetter(executionContext, args, StandardFileType.StdOut);
         }
 
         private static LuaValue HandleDefaultStreamSetter(
             ScriptExecutionContext executionContext,
-            CallbackArguments args,
+            CallbackArgumentsView args,
             StandardFileType defaultFiles
         )
         {
-            executionContext = ModuleArgumentValidation.RequireExecutionContext(
-                executionContext,
-                nameof(executionContext)
-            );
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-
             if (args.Count == 0 || args[0].IsNil)
             {
                 FileUserDataBase file = GetDefaultFile(executionContext, defaultFiles);
@@ -339,11 +373,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
             else
             {
-                inp = args.AsUserData<FileUserDataBase>(
-                    0,
-                    defaultFiles == StandardFileType.StdIn ? "input" : "output",
-                    false
-                );
+                inp = args[0]
+                    .CheckUserDataType<FileUserDataBase>(
+                        defaultFiles == StandardFileType.StdIn ? "input" : "output",
+                        0,
+                        default
+                    );
             }
 
             SetDefaultFile(executionContext, defaultFiles, inp);
@@ -378,6 +413,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Lines(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "lines")]
+        private static LuaValue Lines(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             if (args.Count == 0)
             {
                 FileUserDataBase defaultInput = GetDefaultFile(
@@ -464,6 +508,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Open(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "open")]
+        private static LuaValue Open(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             string filename = args.AsType(0, "open", DataType.String, false).String;
             LuaValue vmode = args.AsType(1, "open", DataType.String, true);
             LuaValue vencoding = args.AsType(2, "open", DataType.String, true);
@@ -578,6 +631,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Type(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "type")]
+        private static LuaValue Type(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             if (args[0].Type != DataType.UserData)
             {
                 return LuaValue.Nil;
@@ -612,6 +674,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Read(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "read")]
+        private static LuaValue Read(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             FileUserDataBase file = GetDefaultFile(executionContext, StandardFileType.StdIn);
             return file.Read(executionContext, args);
         }
@@ -634,12 +705,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Write(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "write")]
+        private static LuaValue Write(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             FileUserDataBase file = GetDefaultFile(executionContext, StandardFileType.StdOut);
             return file.Write(executionContext, args);
         }
 
         /// <summary>
-        /// Implements Lua's <c>io.tmpfile</c> by creating an anonymous writable file owned by the host platform.
+        /// Implements Lua's <c>io.tmpfile</c> by creating an anonymous read/write file owned by the host platform.
         /// </summary>
         /// <param name="executionContext">Runtime context providing platform access.</param>
         /// <param name="args">Unused arguments; present for signature compatibility.</param>
@@ -656,12 +736,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return TmpFile(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "tmpfile")]
+        private static LuaValue TmpFile(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             string tmpfilename = Script.GlobalOptions.Platform.GetTempFileName();
             FileUserDataBase file = Open(
                 executionContext,
                 tmpfilename,
                 GetUtf8Encoding(),
-                "w",
+                "w+",
                 isBinaryMode: true
             );
             return CreateFileUserData(executionContext.Script, file);
@@ -697,6 +786,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            return Popen(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "popen")]
+        private static LuaValue Popen(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             throw new ScriptRuntimeException("io.popen is not supported on this platform.");
         }
 

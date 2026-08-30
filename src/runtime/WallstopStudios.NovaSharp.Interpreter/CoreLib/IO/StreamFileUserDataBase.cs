@@ -296,6 +296,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
             CheckFileIsNotClosed();
             try
             {
+                _streamWriterInstance?.Flush();
+
                 if (whence != null)
                 {
                     if (whence == "set")
@@ -391,13 +393,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
             }
 
             long currentPosition = _streamInstance.Position;
-            if (currentPosition == targetPosition)
+            _streamReaderInstance.DiscardBufferedData();
+            if (currentPosition != targetPosition)
             {
-                return;
+                _streamInstance.Seek(targetPosition, SeekOrigin.Begin);
             }
 
-            _streamReaderInstance.DiscardBufferedData();
-            _streamInstance.Seek(targetPosition, SeekOrigin.Begin);
             _logicalPosition = targetPosition;
             _pendingCarriageReturnOnRead = false;
         }
