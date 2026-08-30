@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788034395857,
+  "lastUpdate": 1788108408541,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -2878,6 +2878,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 737.95,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f6e033f7a16c028a89d39fd38b8c65261fe926d8",
+          "message": "Migrate IO callbacks to argument views (#123)\n\n## Summary\n\n- migrate all registered `io` exports, the `io` index callback, ordinary\nfile methods, IO iterators, and `EnumerableWrapper` callbacks to\nstack-only argument views\n- preserve the public legacy callback overloads and normalize file\nmethod receivers once at the callback boundary\n- match reference Lua by returning `true` from `file:write` on Lua 5.1\nand the file handle on Lua 5.2+, and by opening `io.tmpfile()`\nread/write\n- flush pending writes and invalidate buffered readers during seek\noperations\n- synchronize freshly rebuilt runtime assemblies into the cached\nquick-test host to prevent stale-runtime evidence\n- advance PLAN's A5 queue and record session 181 evidence\n\n## Verification\n\n- `./scripts/build/quick.sh`\n- `./scripts/test/quick.sh --full` — 15,284 passed, 0 failed, 0 skipped\n- focused IO/descriptor/stream/enumerable suites — 450 passed\n- enforced reference-Lua comparison for 5.1, 5.2, 5.3, 5.4, and 5.5 —\nzero mismatches or ratchet regressions\n- VM hot-path allocation lint — zero non-allowlisted patterns\n- XML documentation warning build — 0 warnings, 0 errors\n- `bash ./scripts/dev/pre-commit.sh`\n- independent staged review — APPROVE, zero findings\n\nRefs #108\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Touches core IO and file userdata on every script that uses `io`,\nincluding version-specific return semantics and seek/buffer behavior;\nrisk is mitigated by broad multi-version tests and Lua comparison gates.\n> \n> **Overview**\n> Completes the **Phase A5** slice for the `io` module\n([#108](https://github.com/wallstop/NovaSharp/issues/108)): registered\n`io` exports, the `io` `__index` metamethod, all seven **file** method\nentry points, line iterators (`io.lines`, `file:lines`), and\n**`EnumerableWrapper`** now run through **`CallbackArgumentsView`** /\n`FromArgumentView`, with public **`CallbackArguments`** shims kept for\nlegacy C# callers.\n> \n> **`FileUserDataDescriptor`** wires script-owned argument-view\ncallbacks and normalizes colon vs detached calls once via\n**`SkipMethodCall`**. Reference comparison drove **Lua parity fixes**:\n**`file:write`** returns **`true` on 5.1** and the handle on **5.2+**;\n**`io.tmpfile()`** opens **`w+`**; **`seek`** flushes pending writes and\nalways discards buffered reader state before repositioning.\n> \n> **`scripts/test/quick.sh`** copies freshly built interpreter\nassemblies into the cached test host after a runtime-only build so fast\niteration does not run against stale DLLs. **PLAN** drops **Io** from\nthe remaining A5 module list (Bit32 is next); session **181** progress\nand expanded IO/Lua fixture coverage document the work.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\nf50a737eaa87b24d180b98fe9a8d1244df69c5e8. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-08-30T09:41:28-07:00",
+          "tree_id": "1a5ffc155e2a7865c94056efe1d5a9d4b11f07a6",
+          "url": "https://github.com/wallstop/NovaSharp/commit/f6e033f7a16c028a89d39fd38b8c65261fe926d8"
+        },
+        "date": 1788108408130,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 399.329,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 415.305,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 420.956,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 584.415,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 635.992,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 642.78,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 632.147,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 838.601,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 698.152,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 679.561,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 772.196,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 736.456,
             "unit": "ns",
             "extra": ""
           }
