@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1959,
-  "novasharp_only": 491,
-  "comparable": 1468,
+  "total_snippets": 1962,
+  "novasharp_only": 492,
+  "comparable": 1470,
   "by_version": {
-    "5.1": 985,
-    "5.2": 684,
-    "5.3": 925,
-    "5.4": 985,
-    "5.5": 1027
+    "5.1": 987,
+    "5.2": 686,
+    "5.3": 927,
+    "5.4": 987,
+    "5.5": 1029
   },
   "snippets": [
     {
@@ -12195,16 +12195,6 @@
       "expects_error": false
     },
     {
-      "path": "IoModuleTUnitTests/TmpFileCreatesWritableFile.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:213",
-      "test": "IoModuleTUnitTests.TmpFileCreatesWritableFile",
-      "lua_versions": [
-        "5.1"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
       "path": "IoModuleTUnitTests/IoStdinExposesFileUserDataHandle.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:267",
       "test": "IoModuleTUnitTests.IoStdinExposesFileUserDataHandle",
@@ -12493,14 +12483,6 @@
       "expects_error": false
     },
     {
-      "path": "IoModuleTUnitTests/WriteReturnsHandleAndClosedHandleWriteThrows.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:1100",
-      "test": "IoModuleTUnitTests.WriteReturnsHandleAndClosedHandleWriteThrows",
-      "lua_versions": [],
-      "novasharp_only": true,
-      "expects_error": false
-    },
-    {
       "path": "IoModuleTUnitTests/OpenReturnsErrorTupleForUnknownEncoding.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:1127",
       "test": "IoModuleTUnitTests.OpenReturnsErrorTupleForUnknownEncoding",
@@ -12522,16 +12504,6 @@
       "test": "IoModuleTUnitTests.OpenRejectsEncodingWhenBinaryModeSpecified",
       "lua_versions": [],
       "novasharp_only": true,
-      "expects_error": false
-    },
-    {
-      "path": "IoModuleTUnitTests/TmpFileCreatesWritableStream.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:1199",
-      "test": "IoModuleTUnitTests.TmpFileCreatesWritableStream",
-      "lua_versions": [
-        "5.1"
-      ],
-      "novasharp_only": false,
       "expects_error": false
     },
     {
@@ -21713,6 +21685,70 @@
         "5.3",
         "5.4",
         "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "IoModuleTUnitTests/RegisteredFileCallbacksUseArgumentViews_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:78",
+      "test": "IoModuleTUnitTests.RegisteredFileCallbacksUseArgumentViews",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "IoModuleTUnitTests/WriteReturnMatchesLuaVersionAndClosedHandleWriteThrows_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:1292",
+      "test": "IoModuleTUnitTests.WriteReturnMatchesLuaVersionAndClosedHandleWriteThrows",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "IoModuleTUnitTests/FileArgumentViewCallbacksNormalizeMethodReceiverOnce_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:169",
+      "test": "IoModuleTUnitTests.FileArgumentViewCallbacksNormalizeMethodReceiverOnce",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "IoModuleTUnitTests/IoIteratorsUseArgumentViews_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:127",
+      "test": "IoModuleTUnitTests.IoIteratorsUseArgumentViews",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "IoModuleTUnitTests/TmpFileCreatesWritableFile.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:213",
+      "test": "IoModuleTUnitTests.TmpFileCreatesWritableFile",
+      "lua_versions": [
+        "5.1"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "IoModuleTUnitTests/TmpFileCreatesWritableStream.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:1199",
+      "test": "IoModuleTUnitTests.TmpFileCreatesWritableStream",
+      "lua_versions": [
+        "5.1"
       ],
       "novasharp_only": false,
       "expects_error": false

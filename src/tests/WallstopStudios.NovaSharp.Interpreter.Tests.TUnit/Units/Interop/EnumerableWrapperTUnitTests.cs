@@ -25,6 +25,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             LuaValue iteratorCallback = GetIteratorCallback(script, iteratorUserData);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
+            await Assert
+                .That(iteratorCallback.Callback.HasArgumentViewNoContextCallback)
+                .IsTrue()
+                .Because("the iterator metamethod should use stack-only arguments")
+                .ConfigureAwait(false);
+
             LuaValue first = iteratorCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()
@@ -104,6 +110,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 LuaValue.NewString("MoveNext"),
                 isDirectIndexing: true
             );
+            await Assert
+                .That(moveNext.Callback.HasArgumentViewNoContextCallback)
+                .IsTrue()
+                .Because("MoveNext should use stack-only arguments")
+                .ConfigureAwait(false);
             bool advanced = moveNext
                 .Callback.ClrCallback(context, TestHelpers.CreateArguments())
                 .Boolean;
@@ -126,6 +137,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 LuaValue.NewString("Reset"),
                 isDirectIndexing: true
             );
+            await Assert
+                .That(resetCallback.Callback.HasArgumentViewNoContextCallback)
+                .IsTrue()
+                .Because("Reset should use stack-only arguments")
+                .ConfigureAwait(false);
             LuaValue resetResult = resetCallback.Callback.ClrCallback(
                 context,
                 TestHelpers.CreateArguments()

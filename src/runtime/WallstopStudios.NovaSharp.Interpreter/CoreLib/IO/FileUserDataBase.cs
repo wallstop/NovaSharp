@@ -31,6 +31,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         /// <returns>A tuple whose elements contain each successful read followed by the final <c>nil</c>.</returns>
         public LuaValue Lines(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            return Lines(executionContext, new CallbackArgumentsView(args));
+        }
+
+        /// <summary>
+        /// Implements <c>file:lines</c> from a stack-only callback argument view.
+        /// </summary>
+        internal LuaValue Lines(ScriptExecutionContext executionContext, CallbackArgumentsView args)
+        {
             List<LuaValue> readLines = new();
 
             LuaValue readValue;
@@ -55,6 +63,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         /// <param name="args">Lua-style parameters describing byte counts or format specifiers.</param>
         /// <returns>A tuple containing the requested values, or <c>nil</c> when the stream reaches EOF.</returns>
         public LuaValue Read(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            return Read(executionContext, new CallbackArgumentsView(args));
+        }
+
+        /// <summary>
+        /// Implements <c>file:read</c> from a stack-only callback argument view.
+        /// </summary>
+        internal LuaValue Read(ScriptExecutionContext executionContext, CallbackArgumentsView args)
         {
             if (args.Count == 0)
             {
@@ -179,8 +195,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         /// </summary>
         /// <param name="executionContext">Execution context owning the current script.</param>
         /// <param name="args">Arguments that should be written sequentially to the stream.</param>
-        /// <returns>The userdata handle so Lua callers can chain additional writes.</returns>
+        /// <returns>
+        /// Boolean <c>true</c> for Lua 5.1, or the userdata handle for Lua 5.2 and later so callers
+        /// can chain additional writes.
+        /// </returns>
         public LuaValue Write(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            return Write(executionContext, new CallbackArgumentsView(args));
+        }
+
+        /// <summary>
+        /// Implements <c>file:write</c> from a stack-only callback argument view.
+        /// </summary>
+        internal LuaValue Write(ScriptExecutionContext executionContext, CallbackArgumentsView args)
         {
             try
             {
@@ -188,6 +215,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                 {
                     string str = args.AsType(i, "write", DataType.String, false).String;
                     Write(str);
+                }
+
+                LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                    executionContext.Script.CompatibilityVersion
+                );
+                if (version == LuaCompatibilityVersion.Lua51)
+                {
+                    return LuaValue.True;
                 }
 
                 return UserData.TryCreate(executionContext.Script, this, out LuaValue value)
@@ -212,6 +247,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         /// <param name="args">Unused Lua arguments; accepted for signature parity.</param>
         /// <returns>A <see cref="LuaValue"/> conveying <c>true</c> or the Lua error tuple.</returns>
         public LuaValue Close(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            return Close(executionContext, new CallbackArgumentsView(args));
+        }
+
+        /// <summary>
+        /// Implements <c>file:close</c> from a stack-only callback argument view.
+        /// </summary>
+        internal LuaValue Close(ScriptExecutionContext executionContext, CallbackArgumentsView args)
         {
             try
             {

@@ -25,15 +25,15 @@ Found 176 undocumented public/internal type declarations.
   - line 1692: missing XML docs for `TryMetaIndex()`
   - line 1698: missing XML docs for `IsTypeCompatible()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/IO/FileUserDataDescriptor.cs
-  - line 21: missing XML docs for `Name`
-  - line 23: missing XML docs for `Type`
-  - line 25: missing XML docs for `Index()`
-  - line 32: missing XML docs for `TryIndex()`
-  - line 50: missing XML docs for `SetIndex()`
-  - line 67: missing XML docs for `AsString()`
-  - line 72: missing XML docs for `MetaIndex()`
-  - line 79: missing XML docs for `TryMetaIndex()`
-  - line 84: missing XML docs for `IsTypeCompatible()`
+  - line 22: missing XML docs for `Name`
+  - line 24: missing XML docs for `Type`
+  - line 26: missing XML docs for `Index()`
+  - line 33: missing XML docs for `TryIndex()`
+  - line 164: missing XML docs for `SetIndex()`
+  - line 181: missing XML docs for `AsString()`
+  - line 186: missing XML docs for `MetaIndex()`
+  - line 193: missing XML docs for `TryMetaIndex()`
+  - line 198: missing XML docs for `IsTypeCompatible()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableIteratorsModule.cs
   - line 29: missing XML docs for `NextArray`
   - line 31: missing XML docs for `Next`
