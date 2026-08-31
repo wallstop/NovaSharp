@@ -1,11 +1,11 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1962,
+  "total_snippets": 1961,
   "novasharp_only": 492,
-  "comparable": 1470,
+  "comparable": 1469,
   "by_version": {
     "5.1": 987,
-    "5.2": 686,
+    "5.2": 685,
     "5.3": 927,
     "5.4": 987,
     "5.5": 1029
@@ -10952,28 +10952,8 @@
       "expects_error": false
     },
     {
-      "path": "Bit32ModuleTUnitTests/BandErrorsOnNonIntegerArgumentLua52WithIntegerValidation.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Bit32ModuleTUnitTests.cs:691",
-      "test": "Bit32ModuleTUnitTests.BandErrorsOnNonIntegerArgumentLua52WithIntegerValidation",
-      "lua_versions": [
-        "5.2"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "Bit32ModuleTUnitTests/BandTruncatesNonIntegerArgumentLua52.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Bit32ModuleTUnitTests.cs:703",
-      "test": "Bit32ModuleTUnitTests.BandTruncatesNonIntegerArgumentLua52",
-      "lua_versions": [
-        "5.2"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
       "path": "Bit32ModuleTUnitTests/BandAcceptsIntegralFloatLua52.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Bit32ModuleTUnitTests.cs:715",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Bit32ModuleTUnitTests.cs:753",
       "test": "Bit32ModuleTUnitTests.BandAcceptsIntegralFloatLua52",
       "lua_versions": [
         "5.2"
@@ -10982,29 +10962,9 @@
       "expects_error": false
     },
     {
-      "path": "Bit32ModuleTUnitTests/LshiftErrorsOnNonIntegerShiftAmountLua52WithIntegerValidation.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Bit32ModuleTUnitTests.cs:730",
-      "test": "Bit32ModuleTUnitTests.LshiftErrorsOnNonIntegerShiftAmountLua52WithIntegerValidation",
-      "lua_versions": [
-        "5.2"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
       "path": "Bit32ModuleTUnitTests/LshiftTruncatesNonIntegerShiftAmountLua52.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Bit32ModuleTUnitTests.cs:742",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Bit32ModuleTUnitTests.cs:771",
       "test": "Bit32ModuleTUnitTests.LshiftTruncatesNonIntegerShiftAmountLua52",
-      "lua_versions": [
-        "5.2"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "Bit32ModuleTUnitTests/ExtractErrorsOnNonIntegerPositionLua52WithIntegerValidation.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Bit32ModuleTUnitTests.cs:758",
-      "test": "Bit32ModuleTUnitTests.ExtractErrorsOnNonIntegerPositionLua52WithIntegerValidation",
       "lua_versions": [
         "5.2"
       ],
@@ -21749,6 +21709,36 @@
       "test": "IoModuleTUnitTests.TmpFileCreatesWritableStream",
       "lua_versions": [
         "5.1"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "Bit32ModuleTUnitTests/ExtractTruncatesNonIntegerPositionLua52.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Bit32ModuleTUnitTests.cs:790",
+      "test": "Bit32ModuleTUnitTests.ExtractTruncatesNonIntegerPositionLua52",
+      "lua_versions": [
+        "5.2"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "Bit32ModuleTUnitTests/BandRoundsFractionalOperandLua52.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Bit32ModuleTUnitTests.cs:735",
+      "test": "Bit32ModuleTUnitTests.BandRoundsFractionalOperandLua52",
+      "lua_versions": [
+        "5.2"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "Bit32ModuleTUnitTests/RegisteredBit32CallbacksUseArgumentViews.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Bit32ModuleTUnitTests.cs:102",
+      "test": "Bit32ModuleTUnitTests.RegisteredBit32CallbacksUseArgumentViews",
+      "lua_versions": [
+        "5.2"
       ],
       "novasharp_only": false,
       "expects_error": false

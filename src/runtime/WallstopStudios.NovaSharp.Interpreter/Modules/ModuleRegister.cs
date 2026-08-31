@@ -595,7 +595,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                             ModuleRegistrationActionKind.Callback,
                             mi,
                             compatibility,
-                            GetModuleNameVariants(attr.Name, mi.Name),
+                            GetModuleNames(attr, mi.Name),
                             func,
                             viewFunc,
                             viewNoContextFunc,
@@ -653,7 +653,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                         fi.GetCustomAttribute<LuaCompatibilityAttribute>(),
                         fi.Name,
                         primaryName,
-                        GetModuleNameVariants(attr.Name, fi.Name)
+                        GetModuleNames(attr, fi.Name)
                     )
                 );
             }
@@ -721,7 +721,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                     method.GetCustomAttribute<NovaSharpModuleMethodAttribute>();
                 LuaCompatibilityAttribute compatibility =
                     method.GetCustomAttribute<LuaCompatibilityAttribute>();
-                string[] names = GetModuleNameVariants(attribute.Name, method.Name);
+                string[] names = GetModuleNames(attribute, method.Name);
                 int argumentViewCount = 0;
 
                 for (int j = i; j < methods.Length; j++)
@@ -817,10 +817,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
 
             NovaSharpModuleMethodAttribute candidateAttribute =
                 candidate.GetCustomAttribute<NovaSharpModuleMethodAttribute>();
-            string[] candidateNames = GetModuleNameVariants(
-                candidateAttribute.Name,
-                candidate.Name
-            );
+            string[] candidateNames = GetModuleNames(candidateAttribute, candidate.Name);
             if (!HaveSameNames(names, candidateNames))
             {
                 return false;
@@ -1050,6 +1047,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             }
 
             return RegisterModuleType(table, typeof(T));
+        }
+
+        private static string[] GetModuleNames(
+            NovaSharpModuleMethodAttribute attribute,
+            string memberName
+        )
+        {
+            return attribute.UsesExactName
+                ? new[] { attribute.Name }
+                : GetModuleNameVariants(attribute.Name, memberName);
         }
 
         private static string[] GetModuleNameVariants(string explicitName, string memberName)

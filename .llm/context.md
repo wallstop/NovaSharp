@@ -32,6 +32,7 @@ ______________________________________________________________________
 1. **NEVER use absolute paths** — Relative to repo root only
 1. **Do not discard diagnostic output in ad-hoc commands** — Repo helper scripts may intentionally quiet noisy tools, but failures must surface actionable output.
 1. **Lua Spec Compliance is HIGHEST PRIORITY** — Fix production code, never tests
+1. **No Legacy Host API Compatibility** — NovaSharp is pre-adoption with no external consumers. Freely make breaking host-facing API changes when they improve the project; update repository-owned callers atomically and remove superseded APIs instead of adding shims, forwarding wrappers, obsolete aliases, migration adapters, deprecation windows, or compatibility layers. This does not relax Lua-version behavior or supported-platform compatibility.
 1. **Zero-Flaky Test Policy** — Every failure is a real bug
 1. **Always create BOTH C# tests AND `.lua` fixtures** — Regenerate corpus after
 1. **Multi-Version Testing** — Run tests against Lua 5.1-5.5

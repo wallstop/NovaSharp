@@ -1,130 +1,70 @@
-# Wallstop Studios Namespace & Package Rebrand Plan
+# Namespace and Package Rebrand Status
 
-This document captures the staged rollout plan for rebranding every NovaSharp assembly and namespace under the `WallstopStudios.*` umbrella while retaining the **NovaSharp** product identity. The goal is to introduce the new naming without derailing in-progress modernization work, keep Unity/netstandard consumers unblocked, and provide a clear migration story for hosts consuming the public APIs.
+The repository-wide move to `WallstopStudios.NovaSharp.*` project, assembly,
+internal namespace, and NuGet names is complete. This document is a status and
+history record, not an active staged-migration plan. Current paths and project
+files are authoritative when they differ from old discussions.
 
-## Goals
+The intentionally small public facade uses the root `NovaSharp` namespace. That
+is not a legacy alias for `NovaSharp.Interpreter`; it is the current host-facing
+API. Future facade consolidation is B5/B6 work and must not recreate the removed
+namespace surface as a compatibility layer.
 
-- Adopt `WallstopStudios.NovaSharp.*` as the canonical namespace for runtime, tooling, debugger, and sample code.
-- Align every distributable package/tool ID to the `com.wallstop-studios.*` naming scheme to match Wallstop Studios’ package governance.
-- Preserve the NovaSharp brand in type and package descriptors (e.g., `WallstopStudios.NovaSharp.Interpreter.Script`).
-- Provide analyzers and CI gates so new code lands directly in the rebranded namespaces.
-- Deliver a migration guide plus compatibility shims so downstream hosts can move on their own schedule.
+## Current Naming
 
-## Constraints & Risks
+| Surface           | Current authority                                                                                                                                                                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime           | [`src/runtime/WallstopStudios.NovaSharp.Interpreter`](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/) builds assembly and NuGet package `WallstopStudios.NovaSharp.Interpreter`; implementation namespaces use `WallstopStudios.NovaSharp.Interpreter.*`. |
+| Infrastructure    | [`WallstopStudios.NovaSharp.Interpreter.Infrastructure.csproj`](../../src/runtime/WallstopStudios.NovaSharp.Interpreter.Infrastructure/WallstopStudios.NovaSharp.Interpreter.Infrastructure.csproj) owns the matching assembly, namespace, and NuGet ID.            |
+| Public facade     | [`src/runtime/WallstopStudios.NovaSharp.Interpreter/Api`](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/Api/) exposes the selected host API as `NovaSharp.*`.                                                                                             |
+| Debuggers         | The remote and VS Code projects, assemblies, namespaces, and NuGet IDs use `WallstopStudios.NovaSharp.RemoteDebugger` and `WallstopStudios.NovaSharp.VsCodeDebugger`.                                                                                               |
+| Tooling and tests | CLI, Hardwire, benchmark, comparison, batch-runner, sample, and test project/folder names use `WallstopStudios.NovaSharp.*`. Hardwire remains only because B1 replacement work is unfinished, not for naming compatibility.                                         |
+| Generated interop | [`WallstopStudios.NovaSharp.Interop.Generator`](../../src/interop/WallstopStudios.NovaSharp.Interop.Generator/) is the current analyzer/source-generator project and package name.                                                                                  |
+| Unity             | The tracked package root and UPM identifier are [`src/unity/com.wallstop-studios.novasharp`](../../src/unity/com.wallstop-studios.novasharp/), distinct from the NuGet naming convention.                                                                           |
+| Packaging         | [`scripts/packaging/README.md`](../../scripts/packaging/README.md) and [`.github/workflows/nuget-publish.yml`](../../.github/workflows/nuget-publish.yml) use the current project and package names.                                                                |
 
-- **Breaking change**: Namespaces/assembly names change, so all consumers must update `using` statements and binding redirects.
-- **Unity/netstandard**: Runtime binaries must remain `netstandard2.1` friendly; global usings remain disabled to keep Unity builds deterministic.
-- **InternalsVisibleTo**: Tests and tooling depend on friend assemblies; all `InternalsVisibleTo` attributes must be updated in lockstep with assembly renames.
-- **Packaging & CI**: GitHub workflows, documentation, scripts, and dotnet-tool manifests reference the current names. They need to be updated atomically to avoid broken builds.
-- **Type forwarding**: C# does not support namespace-level forwards. Back-compat requires either stub assemblies or obsoleted wrapper namespaces—plan assumes we ship a major version bump with temporary wrapper types for the most-used entry points (`Script`, `DynValue`, CLI commands).
+The generated [naming audit](../audits/naming_audit.log) distinguishes the
+`WallstopStudios.NovaSharp` implementation namespaces from the intentional root
+`NovaSharp` facade and reports no old `NovaSharp.Interpreter.*` source namespace.
 
-## Current State Snapshot
+## Residual Work
 
-| Project                                           | Path                                                          | Output                                  | Assembly / Root Namespace                           | Package / Tool Id               | Notes                                                          |
-| ------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------- | --------------------------------------------------- | ------------------------------- | -------------------------------------------------------------- |
-| WallstopStudios.NovaSharp.Interpreter             | `src/runtime/WallstopStudios.NovaSharp.Interpreter`           | Class library (`netstandard2.1`)        | `WallstopStudios.NovaSharp.Interpreter`             | `NovaSharp.Interpreter.netcore` | Primary runtime; referenced by every other project.            |
-| WallstopStudios.NovaSharp.Interpreter.Tests.TUnit | `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit` | TUnit test host (`net8.0`)              | `WallstopStudios.NovaSharp.Interpreter.Tests.TUnit` | n/a                             | Friend assembly access via `InternalsVisibleTo`.               |
-| WallstopStudios.NovaSharp.Cli                     | `src/tooling/WallstopStudios.NovaSharp.Cli`                   | CLI (`netstandard2.1`)                  | `WallstopStudios.NovaSharp.Cli`                     | n/a (not currently packed)      | Ships REPL + tooling wrappers.                                 |
-| WallstopStudios.NovaSharp.RemoteDebugger          | `src/debuggers/WallstopStudios.NovaSharp.RemoteDebugger`      | Class library (`netstandard2.1`)        | `WallstopStudios.NovaSharp.RemoteDebugger`          | n/a                             | Hosts remote debugger protocol + HTML assets.                  |
-| WallstopStudios.NovaSharp.VsCodeDebugger          | `src/debuggers/WallstopStudios.NovaSharp.VsCodeDebugger`      | Class library (`netstandard2.1;net8.0`) | `WallstopStudios.NovaSharp.VsCodeDebugger`          | `NovaSharp.VsCodeDebugger`      | Distributed as NuGet + VS Code extension payload.              |
-| WallstopStudios.NovaSharp.Hardwire                | `src/tooling/WallstopStudios.NovaSharp.Hardwire`              | Library (`netstandard2.1`)              | `WallstopStudios.NovaSharp.Hardwire`                | n/a                             | Generates hardwired descriptors; consumed by CLI + benchmarks. |
-| WallstopStudios.NovaSharp.Benchmarks              | `src/tooling/WallstopStudios.NovaSharp.Benchmarks`            | Console (`net8.0`)                      | `WallstopStudios.NovaSharp.Benchmarks`              | n/a                             | Local-only performance harness.                                |
-| WallstopStudios.NovaSharp.Comparison              | `src/tooling/WallstopStudios.NovaSharp.Comparison`            | Console (`net8.0`)                      | `WallstopStudios.NovaSharp.Comparison`              | n/a                             | Benchmarks vs NLua.                                            |
+The rename itself should not be reopened. Remaining cleanup is narrower:
 
-## Proposed Naming Baseline
+1. Replace the transitional namespace-rule defaults in
+   [`Directory.Build.props`](../../Directory.Build.props). They still default
+   `EnforcedNamespacePrefix` to `NovaSharp`, keep a pre-cutover
+   `NovaSharp.Interpreter.LuaPort` exclusion, and emit only suggestion-level
+   diagnostics. A replacement guard must explicitly allow the root `NovaSharp`
+   facade while enforcing `WallstopStudios.NovaSharp` for implementation code.
+1. Correct remaining undated documentation that still presents the rebrand as
+   pending, including [`docs/Modernization.md`](../Modernization.md). Preserve
+   genuinely historical reports as dated snapshots instead of rewriting their
+   recorded measurements or paths as if they were current.
+1. Verify package publication and consumer installation through the release
+   workflow when release work is selected. Repository configuration proves the
+   intended IDs; it is not evidence that a particular release was published or
+   installed successfully.
+1. Keep later B5/B6 facade, DAP, and extension redesign atomic. Remove
+   superseded host APIs directly and update repository-owned callers, tests,
+   samples, tools, and docs in the same cutover.
 
-### Namespace Roots
+## No-Legacy Rule
 
-| Scope                                      | Current Prefix                                         | Target Prefix                                                                          | Notes                                                                                                                 |
-| ------------------------------------------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Runtime & shared data types                | `NovaSharp.Interpreter`                                | `WallstopStudios.NovaSharp.Interpreter`                                                | Applies to `Execution`, `DataTypes`, `LuaPort`, `Interop`, etc. LuaPort keep snake_case but moves under the new root. |
-| Test assemblies                            | `NovaSharp.Interpreter.Tests.TUnit`                    | `WallstopStudios.NovaSharp.Interpreter.Tests.TUnit`                                    | Mirrors runtime namespace so InternalsVisibleTo stays aligned.                                                        |
-| CLI tooling                                | `NovaSharp.Cli`                                        | `WallstopStudios.NovaSharp.Cli`                                                        | Includes commands, REPL infra, shared options.                                                                        |
-| Debuggers                                  | `NovaSharp.RemoteDebugger`, `NovaSharp.VsCodeDebugger` | `WallstopStudios.NovaSharp.RemoteDebugger`, `WallstopStudios.NovaSharp.VsCodeDebugger` | Shared debugger core should eventually live under `WallstopStudios.NovaSharp.Debuggers.*`.                            |
-| Tooling (Hardwire, Benchmarks, Comparison) | `NovaSharp.*`                                          | `WallstopStudios.NovaSharp.*`                                                          | Keeps internal-only tooling consistent to simplify global using/search.                                               |
+Do not add old namespace wrappers, type forwards, global-using alias packages,
+stub assemblies, old package IDs, obsolete forwarding members, migration
+adapters, or deprecation windows. NovaSharp is pre-adoption, so historical names
+do not create a host-API compatibility obligation. This policy does not relax
+Lua-version behavior or supported-platform compatibility.
 
-### Package & Distribution Identifiers
+## History and Evidence
 
-| Artifact                    | Current Id                      | Target Id                                                   |
-| --------------------------- | ------------------------------- | ----------------------------------------------------------- |
-| Runtime NuGet               | `NovaSharp.Interpreter.netcore` | `com.wallstop-studios.novasharp.interpreter`                |
-| VS Code Debugger NuGet      | `NovaSharp.VsCodeDebugger`      | `com.wallstop-studios.novasharp.vscode-debugger`            |
-| Remote Debugger (if packed) | _n/a_                           | `com.wallstop-studios.novasharp.remote-debugger` (optional) |
-| CLI (future dotnet tool)    | _n/a_                           | `com.wallstop-studios.novasharp.cli`                        |
-| Future Unity packages       | `NovaSharp.*` folder drops      | `com.wallstop-studios.novasharp.*` UPM tarballs             |
-
-Package description/URL metadata should reference `https://wallstop-studios.com/novasharp` once the marketing site is ready.
-
-## Rollout Stages
-
-### Stage 0 – Tooling & Tracking (this document)
-
-1. Keep this document authoritative for the design; add only the selected next milestone to `PLAN.md`.
-1. Extend `tools/NamingAudit/naming_audit.py` to support configurable namespace prefixes so we can measure progress (`NovaSharp.` vs `WallstopStudios.` counts).
-1. Add a `NamespaceRebrand` section in `docs/Modernization.md` pointing to this plan and enumerating affected projects.
-
-### Stage 1 – Guard Rails
-
-1. Update `.editorconfig` / Roslyn naming rules to flag new files authored under `namespace NovaSharp.*` (warning initially, error once Stage 2 lands). Provide an allowlist for `LuaPort` mirrors that cannot change without desyncing upstream sources.
-1. Add a repo-wide MSBuild property (e.g., `NovaSharpNamespacePrefix`) in `Directory.Build.props` so analyzers, scripts, and templates can switch based on a single value.
-1. Teach CI (`tests.yml`) to run `tools/NamingAudit` with the new prefix check and fail if fresh `NovaSharp.*` namespaces are introduced once migration starts.
-   - ✅ `Directory.Build.props` now exposes `LegacyNamespacePrefix`, `TargetNamespacePrefix`, `EnforcedNamespacePrefix`, and `NamespacePrefixExcludedNamespaces` (defaults to `NovaSharp.Interpreter.LuaPort`) along with a severity toggle. `Directory.Build.targets` generates a scoped `.editorconfig` from those properties and feeds it to every project via `EditorConfigFiles`, so analyzers surface a suggestion-level diagnostic for non-compliant namespaces while respecting the LuaPort allowlist.
-
-### Stage 2 – Runtime Assembly Rename
-
-1. Update `NovaSharp.Interpreter.csproj`:
-   - `AssemblyName`, `RootNamespace`, and `PackageId` swap to the new identifiers.
-   - Add `PackageVersion` bump (SemVer major) and `Company` metadata.
-1. Rename namespaces inside `src/runtime` using folder-aligned pass (reuse the existing namespace migration scripts). Tackle one folder per PR (e.g., `Execution/*`, `DataTypes/*`) to keep diffs reviewable.
-1. Update `Properties/AssemblyInfo.cs` with the new titles/company and fix `InternalsVisibleTo` targets.
-1. Add temporary compatibility wrappers for the most widely referenced entry points (`Script`, `DynValue`, `UserData`, CLI commands):
-   - Add `NovaSharp.LegacyNamespaces.cs` containing `[Obsolete]` forwarding partial classes that derive from the new types or expose static helper methods (limited surface to avoid bloating binaries).
-   - Document that the wrappers will be removed after one release.
-1. Run `dotnet build src/NovaSharp.sln -c Release` and `dotnet test src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release`.
-
-### Stage 3 – Tooling & Debugger Rename
-
-1. Repeat the assembly/namespace rename for `NovaSharp.Cli`, `NovaSharp.RemoteDebugger`, `NovaSharp.VsCodeDebugger`, `NovaSharp.Hardwire`, `NovaSharp.Benchmarks`, and `NovaSharp.Comparison`.
-1. Update `InternalsVisibleTo` declarations in each project plus the shared CLI/test helper attributes.
-1. Replace all project references (`ProjectReference Include="...NovaSharp.*.csproj"`) with the new file names once the folders are renamed.
-1. Ensure VS Code extension packaging scripts, debugger manifest JSON, and CLI docs reference the new assemblies.
-
-### Stage 4 – Packaging & Distribution
-
-1. Update `dotnet pack` pipelines to emit the new `PackageId`s and add `PackageIcon`, `PackageProjectUrl`, and `RepositoryUrl` metadata pointing to the rebranded resources.
-1. Teach CI release workflows to publish both NuGet packages and Unity-specific artifacts under the `com.wallstop-studios.*` convention.
-1. Run a dry-run release: produce signed packages, install them in a sample Unity project, and smoke test CLI + debugger attachment.
-1. Prepare migration notes (README, docs/Modernization, docs/UnityIntegration) describing the namespace change and how to update `using` statements. Call out the temporary legacy wrappers and removal timeline.
-
-### Stage 5 – Public Communication & Cleanup
-
-1. Announce the breaking change (blog/README/CHANGELOG). Highlight major-version bump and actionable steps for hosts.
-1. After one release cycle, remove the legacy wrappers and delete any remaining `NovaSharp.*` namespaces from source.
-1. Flip the analyzer severity from warning → error to prevent regressions.
-1. Archive the previous package IDs (`NovaSharp.*`) after confirming consumers migrated.
-
-## Analyzer & Validation Updates
-
-- `tools/NamingAudit`: add a `--namespace-prefix WallstopStudios.NovaSharp` flag plus an `--allowlist` for LuaPort & legacy wrappers.
-- `.editorconfig`: add `dotnet_naming_symbols.namespace_symbols` rule enforcing `WallstopStudios.` prefix once the rename lands.
-- CI: extend `tests.yml` to run `dotnet tool run csharpier check .` (via `scripts/ci/check-csharpier.sh`) plus `naming_audit.py --verify-log` using the new prefix so formatting/naming regressions fail early.
-- Scripts: update `scripts/coverage/coverage.ps1` and `scripts/coverage/coverage-hotspots.md` references after the rename so coverage automation continues to work.
-
-## Compatibility & Communication Plan
-
-- Ship the first rebranded runtime as **NovaSharp 3.0** to signal the breaking change.
-- Provide a `docs/modernization/namespace-rebrand-guide.md` (follow-up item) covering:
-  - How to replace `using NovaSharp.Interpreter;` with `using WallstopStudios.NovaSharp.Interpreter;`.
-  - How to update `InternalsVisibleTo` in host projects if they built friend assemblies.
-  - CLI command name changes (if any).
-- Keep `NovaSharp.LegacyNamespaces.cs` wrappers in the runtime for one release and mark them `[Obsolete("Use WallstopStudios.NovaSharp.* instead")]`.
-- Consider publishing a `NovaSharp.LegacyNamespaces` source-only NuGet package that adds `global using` aliases for hosts that cannot move immediately.
-
-## Immediate Next Steps
-
-1. Add the selected next milestone to `PLAN.md` and keep detailed state in this document and `docs/Modernization.md`.
-1. Extend `tools/NamingAudit` with namespace-prefix awareness so we can quantify remaining files.
-1. Draft the analyzer configuration changes (Stage 1) and land them behind an opt-in MSBuild property.
-1. Inventory all documentation (`docs/`, `README`, samples) that reference `NovaSharp.` so we know the surface area before edits begin.
-
-Track only the selected current/next milestone in `PLAN.md`. Record completed milestone evidence in `progress/` and maintain the full sequence in this document.
+- [PR #19](https://github.com/wallstop/NovaSharp/pull/19) performed the main
+  project, assembly, namespace, and package cutover.
+- [PR #30](https://github.com/wallstop/NovaSharp/pull/30) normalized the remaining
+  repository layout, tooling/test paths, packaging, and audit wiring.
+- [`README.md`](../../README.md) shows the current NuGet ID and implementation
+  namespace in user-facing installation and embedding examples.
+- [`Directory.Build.props`](../../Directory.Build.props) centralizes current
+  company, product, repository, version, and release-note metadata; the namespace
+  rule fields called out above remain transitional debt.

@@ -296,9 +296,9 @@
     },
     {
       "name": "documentation-and-changelog",
-      "description": "Update NovaSharp documentation and changelog artifacts for user-visible features and fixes. Use after public API, behavior, workflow, or configuration changes and when writing XML docs or rationale comments.",
+      "description": "Update NovaSharp documentation and release-note guidance for user-visible features and fixes. Use after public API, behavior, workflow, or configuration changes and when writing XML docs or rationale comments.",
       "file_path": ".llm/skills/documentation-and-changelog/SKILL.md",
-      "line_count": 127,
+      "line_count": 147,
       "category": "workflow",
       "related": [
         "tunit-test-writing",
@@ -306,7 +306,7 @@
       ],
       "priority": "recommended",
       "has_front_matter": true,
-      "title": "Skill: Documentation and Changelog Management",
+      "title": "Skill: Documentation and Release-Note Management",
       "validation_warnings": [],
       "validation_errors": []
     },
