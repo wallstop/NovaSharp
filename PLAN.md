@@ -11,7 +11,7 @@ backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
 1. Advance Phase A5 call paths in
    [#108](https://github.com/wallstop/NovaSharp/issues/108):
    - Migrate each remaining legacy CoreLib registration in its own scoped change:
-     Bit32, Table, Load, Utf8, OsSystem, StringPack, MetaTable, ErrorHandling,
+     Table, Load, Utf8, OsSystem, StringPack, MetaTable, ErrorHandling,
      TableIterators, OsTime, Json, and Dynamic.
    - Add the return-buffer writer and confine tuple arrays to escaped varargs or
      multi-return values.
@@ -25,9 +25,11 @@ backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
 1. Close the post-`LuaValue` table measurements in
    [#93](https://github.com/wallstop/NovaSharp/issues/93), then ratchet the hosted
    allocation baseline in [#92](https://github.com/wallstop/NovaSharp/issues/92).
-1. Finish the B1 source-generator MVP: async suspension output, the NS0002 code
-   fix after adapter contracts settle, Hardwire retirement at parity, LuaLS stubs,
-   a single [machine-readable API authority](docs/proposals/runtime-research-gates.md#machine-readable-api-authority),
+1. Finish the
+   [B1 source-generator MVP](docs/proposals/roslyn-hardwire-generator.md): async
+   suspension output, the NS0002 code fix after adapter contracts settle,
+   Hardwire retirement at parity, LuaLS stubs, a single
+   [machine-readable API authority](docs/proposals/runtime-research-gates.md#machine-readable-api-authority),
    and reflection-free trimmed-publish evidence.
 
 ## Next
@@ -45,10 +47,12 @@ backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
    [sandbox threat-model](docs/security/sandbox-threat-model.md) controls.
 1. A4.5: evaluate table-field inline caches, specialized arithmetic, fast builtins,
    and safe global-import caching independently against the scoreboard.
-1. A6/A7: profile strings and cold compilation, then optimize only measured
-   bottlenecks; exit with string-heavy workloads within 2–3x of native Lua, cold
-   `LoadString` within 5–10x, and cold-load allocations reduced at least 5x. Do not
-   rewrite the parser without a demonstrated loading need.
+1. A6/A7: profile strings and cold compilation, including the cached-compilation
+   work tracked in [#118](https://github.com/wallstop/NovaSharp/issues/118), then
+   optimize only measured bottlenecks; exit with string-heavy workloads within
+   2–3x of native Lua, cold `LoadString` within 5–10x, and cold-load allocations
+   reduced at least 5x. Do not rewrite the parser without a demonstrated loading
+   need.
 1. B2: ship the UPM package, generator integration, Lua assets/loaders, and
    allocation-gated Unity value marshalling; prove Mono, IL2CPP, and WebGL paths.
 
@@ -58,15 +62,21 @@ backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
    providers, hot reload, supply-chain controls, and a Unity mod-host sample;
    close the remaining [sandbox threat-model](docs/security/sandbox-threat-model.md)
    controls.
-1. B5/B6: migrate the remaining public/runtime surface to the root API, freeze it,
-   and retarget the DAP server and VS Code extension.
+1. B5/B6: converge the remaining public/runtime surface on the smallest coherent
+   root API, remove superseded APIs outright, and retarget the DAP server and VS
+   Code extension in the same cutover. Do not add compatibility layers,
+   deprecation windows, or a legacy API freeze.
 1. A8: consider a side-by-side register VM only after A6 if measured compute is
    still more than 5x native Lua or call-heavy work remains more than 2x behind
    Lua-CSharp; evaluate the gated
    [stackless/fuel model](docs/proposals/runtime-research-gates.md#stacklessfuel-execution-model)
    in the same study.
-1. Lua parity backlog: error formats, numeric loop limits, `__gc`, Lua 5.4 garbage
-   collector options, literal overflow, version-migration docs, and explicit
+1. Lua parity backlog: [call-context error names](https://github.com/wallstop/NovaSharp/issues/124),
+   [optional-argument validation](https://github.com/wallstop/NovaSharp/issues/125),
+   other error formats, [numeric-loop correctness](https://github.com/wallstop/NovaSharp/issues/126),
+   [large hexadecimal literals](https://github.com/wallstop/NovaSharp/issues/127),
+   [pre-5.3 decimal literals](https://github.com/wallstop/NovaSharp/issues/128),
+   `__gc`, Lua 5.4 garbage collector options, version-migration docs, and explicit
    compatibility-version matrix coverage; retain the
    [host-GC and byte-fidelity constraints](docs/proposals/runtime-research-gates.md#host-gc-and-string-fidelity).
 1. Maintenance backlog: complete TUnit data-driving migration and numeric

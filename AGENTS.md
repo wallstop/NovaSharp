@@ -18,6 +18,7 @@
 1. **NEVER use absolute paths** - Relative paths from repo root only
 1. **Do not discard diagnostic output in ad-hoc commands** - Repo helper scripts may intentionally quiet noisy tools, but failures must surface actionable output.
 1. **Lua Spec = Source of Truth** - Fix NovaSharp, never tests
+1. **No Legacy Host API Compatibility** - Freely improve or remove public APIs; update repository-owned callers atomically and do not add shims, obsolete aliases, migration adapters, deprecation windows, or other legacy API layers. Lua-version behavior and supported-platform compatibility remain required.
 1. **Pre-Commit Validation Allowed** - `bash ./scripts/dev/pre-commit.sh` is expected before commits and may restage files it auto-formats or regenerates.
 1. **No false green-lighting** - Only say `green`, `verified`, `passes`, or `complete` after the exact local checks and PR CI were observed passing. Otherwise report the check as `not run` or failing residual risk.
 1. **Mandatory post-work improvement gate** - After every large change or investigation, and before declaring it complete, follow [`.llm/skills/post-work-reflection/SKILL.md`](.llm/skills/post-work-reflection/SKILL.md). Fix discovered defects, capture reusable techniques or durable knowledge in the appropriate `.llm` artifact, and obtain an independent review when agents are available.

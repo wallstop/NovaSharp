@@ -36,7 +36,7 @@ When capturing new data, replace the entire `### NovaSharp Latest` section inste
 ### Comparison Runs
 
 - Summarize NLua parity measurements in `docs/Performance.md` by updating the comparison tables and noting the timestamp in the commit message.
-- Mirror the headline deltas (fastest/slowest scenarios and any regressions) into the release notes for the corresponding milestone so downstream consumers understand compatibility impacts.
+- Mirror the headline deltas (fastest/slowest scenarios and any regressions) into the release notes for the corresponding milestone so performance impacts remain visible.
 - Archive historical comparison snapshots in `docs/performance-history/` (create a date-stamped markdown file when results materially change) to keep the main document focused on current data.
 
 ## Windows

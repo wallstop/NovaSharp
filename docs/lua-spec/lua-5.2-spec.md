@@ -2220,7 +2220,9 @@ ______________________________________________________________________
 
 The bit32 library provides bitwise operations on unsigned 32-bit integers. All functions are in table `bit32`.
 
-**Important**: Arguments and results are in range [0, 2^32-1]. Negative arguments are converted modulo 2^32.
+**Important**: Unless stated otherwise, numeric arguments in the range
+(-2^51, 2^51) are reduced modulo 2^32 and converted to an integer in an
+unspecified way. Results are in the range [0, 2^32-1].
 
 ### bit32.arshift (x, disp)
 
@@ -2237,7 +2239,7 @@ Returns number `x` shifted `disp` bits to the right (arithmetic shift). Vacant b
 
 ```lua
 bit32.arshift(8, 1)   -- 4
-bit32.arshift(-8, 1)  -- 2147483644 (sign bit fills)
+bit32.arshift(-8, 1)  -- 4294967292 (sign bit fills)
 bit32.arshift(8, -1)  -- 16 (left shift)
 ```
 
@@ -2344,7 +2346,7 @@ Returns unsigned integer formed by `width` bits extracted from `n`, starting at 
 
 **Returns**: number (extracted bits, right-aligned)
 
-**Constraints**: `field + width` must be \<= 32
+**Constraints**: `field >= 0`, `width > 0`, and `field + width <= 32`
 
 **Example**:
 
@@ -2407,14 +2409,14 @@ Returns copy of `n` with `width` bits starting at `field` replaced by `v`.
 
 **Returns**: number (32-bit unsigned integer)
 
-**Constraints**: `field + width` must be \<= 32
+**Constraints**: `field >= 0`, `width > 0`, and `field + width <= 32`
 
 **Example**:
 
 ```lua
 bit32.replace(0xFF, 0, 4, 4)   -- 240 (0xF0: clear bits 4-7)
 bit32.replace(0, 15, 4, 4)     -- 240 (0xF0: set bits 4-7)
-bit32.replace(0xFFFF, 0xAB, 8, 8)  -- 43775 (0xABFF)
+bit32.replace(0xFFFF, 0xAB, 8, 8)  -- 44031 (0xABFF)
 ```
 
 ### bit32.rrotate (x, disp)

@@ -1,25 +1,46 @@
-# Vestigial Component Inventory (Initial Pass)
+# Vestigial Component Inventory — Historical Snapshot
 
-Date: 2025-11-10\
-Source snapshot: `docs/coverage/latest/Summary.json` + code inspection
+> **Archive notice:** This inventory records an initial investigation made on
+> 2025-11-10 from `docs/coverage/latest/Summary.json` and code inspection at that
+> time. Its paths, coverage statements, and recommendations are not current
+> backlog or removal authority. Re-run repository usage, behavior, coverage, and
+> Lua/platform checks before changing any listed component.
 
-## Summary
+The snapshot predates the `WallstopStudios.NovaSharp` directory/namespace
+cutover. A path recorded as `src/runtime/NovaSharp.Interpreter/...` now maps to
+`src/runtime/WallstopStudios.NovaSharp.Interpreter/...`; the old path below is
+retained only to describe the source snapshot accurately.
 
-| Component                                                                         | Location                                                                 | Observations                                                                                                                                                                                                                         | Recommendation                                                                                                                                                                                                |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PerformanceStopwatch`, `GlobalPerformanceStopwatch`, `DummyPerformanceStopwatch` | `src/runtime/NovaSharp.Interpreter/Diagnostics/PerformanceCounters/*.cs` | Actively referenced via `PerformanceStatistics` (see `PerformanceStatistics.cs:10-88`) and the fast loader/VM hot paths (`LoaderFast.cs`, `Processor.cs`). Provides optional instrumentation when `PerformanceStats.Enabled = true`. | Keep. Consider future upgrade to `System.Diagnostics.Metrics` once we target net8+ exclusively, but no removal at this time. Ensure tests cover behavior (new coverage added in `PerformanceStopwatchTests`). |
-| `PerformanceStatistics`                                                           | `src/runtime/NovaSharp.Interpreter/Diagnostics/PerformanceStatistics.cs` | Constructed by `Script` (`Script.cs:80`), but instrumentation is opt-in. Supports REPL/CLI perf logging.                                                                                                                             | Keep. Document usage in developer guide; consider exposing a public hook to attach modern metrics exporters.                                                                                                  |
-| `ReplHistoryInterpreter`                                                          | `src/runtime/NovaSharp.Interpreter/REPL/ReplHistoryNavigator.cs`         | No in-repo references to `new ReplHistoryInterpreter(...)`. CLI uses the base `ReplInterpreter`. Appears vestigial legacy feature.                                                                                                   | Candidate for removal or relocation to samples. Confirm no downstream consumers; if none, delete and note in release notes.                                                                                   |
-| `ReplInterpreterScriptLoader`                                                     | `src/runtime/NovaSharp.Interpreter/REPL/ReplInterpreterScriptLoader.cs`  | Assigned in CLI (`src/tooling/NovaSharp.Cli/Program.cs:19`) and used in tests/Tutorials.                                                                                                                                             | Keep. Update docs to clarify how REPL loader works.                                                                                                                                                           |
-| Platform accessors (`LimitedPlatformAccessor`, `StandardPlatformAccessor`)        | `src/runtime/NovaSharp.Interpreter/Platforms/*.cs`                       | Auto-detected via `PlatformAutoDetector` and used in samples. Still relevant for sandboxed scripts.                                                                                                                                  | Keep. Future modernization: use `System.IO.Abstractions` or DI-friendly abstractions.                                                                                                                         |
-| Script loaders (`EmbeddedResourcesScriptLoader`, `UnityAssetsScriptLoader`)       | `src/runtime/NovaSharp.Interpreter/Loaders/*.cs`                         | Referenced by samples/tests. Provide netstandard-friendly file loading.                                                                                                                                                              | Keep. Need coverage to guard regressions.                                                                                                                                                                     |
-| `PerformanceCounters` enum values targeting adapter compilation                   | `src/runtime/NovaSharp.Interpreter/Diagnostics/PerformanceCounter.cs`    | Referenced by `PerformanceStatistics` and reflection descriptors. Still used to measure adapter generation.                                                                                                                          | Keep.                                                                                                                                                                                                         |
+## Observations Recorded on 2025-11-10
 
-## Next Steps
+| Component                                                                         | Snapshot-era location                                                    | Observation recorded at the time                                                                                   | Recorded recommendation                                                   |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `PerformanceStopwatch`, `GlobalPerformanceStopwatch`, `DummyPerformanceStopwatch` | `src/runtime/NovaSharp.Interpreter/Diagnostics/PerformanceCounters/*.cs` | Referenced through `PerformanceStatistics` and loader/VM instrumentation when performance statistics were enabled. | Keep; reconsider BCL metrics only after a future target-framework change. |
+| `PerformanceStatistics`                                                           | `src/runtime/NovaSharp.Interpreter/Diagnostics/PerformanceStatistics.cs` | Constructed by `Script`; instrumentation was opt-in and used by performance logging.                               | Keep and improve developer documentation.                                 |
+| `ReplHistoryInterpreter`                                                          | `src/runtime/NovaSharp.Interpreter/REPL/ReplHistoryNavigator.cs`         | No repository-owned construction was found, and the CLI used `ReplInterpreter`; it appeared potentially vestigial. | Re-investigate before removal or relocation.                              |
+| `ReplInterpreterScriptLoader`                                                     | `src/runtime/NovaSharp.Interpreter/REPL/ReplInterpreterScriptLoader.cs`  | Used by the CLI, tests, and tutorials.                                                                             | Keep.                                                                     |
+| Platform accessors                                                                | `src/runtime/NovaSharp.Interpreter/Platforms/*.cs`                       | Selected through `PlatformAutoDetector` and used in samples.                                                       | Keep.                                                                     |
+| `EmbeddedResourcesScriptLoader`, `UnityAssetsScriptLoader`                        | `src/runtime/NovaSharp.Interpreter/Loaders/*.cs`                         | Referenced by samples and tests for portable resource/file loading.                                                | Keep.                                                                     |
+| Adapter-compilation performance counters                                          | `src/runtime/NovaSharp.Interpreter/Diagnostics/PerformanceCounter.cs`    | Used by `PerformanceStatistics` and reflection-backed descriptors.                                                 | Keep.                                                                     |
 
-1. Verify with maintainers whether `ReplHistoryInterpreter` has external consumers; if not, remove or move to samples to trim core runtime surface.
-1. Track follow-up modernization ideas (e.g., replace custom performance counters with BCL metrics once we bump minimum target).
-1. Add coverage tasks for remaining zero-coverage classes (Global/Dummy stopwatch, REPL history) so we can confidently refactor or delete.
-1. Re-run this inventory after each coverage milestone to ensure no new vestigial code creeps in.
+## Known Later Evidence
 
-_Prepared by: Codex automation, 2025-11-10_
+The original coverage/removal suggestions are obsolete:
+
+- Dedicated current tests exist for
+  [`ReplHistoryInterpreter`](../../src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Cli/ReplHistoryInterpreterTUnitTests.cs),
+  [`PerformanceStatistics`](../../src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Utilities/PerformanceStatisticsTUnitTests.cs),
+  and the
+  [`PerformanceStopwatch` implementations](../../src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Utilities/PerformanceStopwatchTUnitTests.cs).
+- Current loader and platform suites cover the retained implementations under
+  [`Loaders`](../../src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Loaders/)
+  and
+  [`Platforms`](../../src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Platforms/).
+- `ReplHistoryInterpreter` is still present and is now constructed by its test
+  suite. That does not prove production demand or justify removal; it invalidates
+  the snapshot's zero-usage/zero-coverage premise.
+
+Any renewed vestigial-code investigation should create current evidence and put
+selected work in `PLAN.md` or a GitHub issue. Do not treat the 2025 recommendations
+as queued work, and do not retain a host API merely for hypothetical external
+consumers if a new investigation proves it should be removed.
