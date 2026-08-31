@@ -73,13 +73,9 @@ assert(bit32.rshift(extreme_value, below_int64_limit) == 0)
 assert(bit32.arshift(extreme_value, below_int64_limit) == 0)
 assert(bit32.lrotate(extreme_value, below_int64_limit) == extreme_value)
 assert(bit32.rrotate(extreme_value, below_int64_limit) == extreme_value)
-for _, displacement in ipairs({ 2^63, 2^64, 1e20, math.huge, -2^63, -2^64, -math.huge, 0 / 0 }) do
-    assert(bit32.lshift(extreme_value, displacement) == extreme_value)
-    assert(bit32.rshift(extreme_value, displacement) == extreme_value)
-    assert(bit32.arshift(extreme_value, displacement) == extreme_value)
-    assert(bit32.lrotate(extreme_value, displacement) == extreme_value)
-    assert(bit32.rrotate(extreme_value, displacement) == extreme_value)
-end
+-- Lua 5.2 leaves displacements outside (-2^51, 2^51) unspecified, and
+-- reference builds differ across architectures. The exact narrowing matrix
+-- is covered by the NovaSharp C# regression test instead.
 local above_double_precision = 9007199254740993
 assert(bit32.band(above_double_precision, 0xffffffff) == 0)
 assert(bit32.extract(1, above_double_precision) == 1)
@@ -88,12 +84,6 @@ local ok_large_width, large_width_error = pcall(function()
     bit32.extract(1, 0, above_double_precision)
 end)
 assert(not ok_large_width and string.find(large_width_error, "width must be positive", 1, true))
-local max_integer_displacement = 9223372036854775807
-assert(bit32.lshift(extreme_value, max_integer_displacement) == extreme_value)
-assert(bit32.rshift(extreme_value, max_integer_displacement) == extreme_value)
-assert(bit32.arshift(extreme_value, max_integer_displacement) == extreme_value)
-assert(bit32.lrotate(extreme_value, max_integer_displacement) == extreme_value)
-assert(bit32.rrotate(extreme_value, max_integer_displacement) == extreme_value)
 local ok_field, field_error = pcall(function() bit32.extract(0, -1, 34) end)
 assert(not ok_field and string.find(field_error, "field cannot be negative", 1, true))
 local ok_width, width_error = pcall(function() bit32.replace(0, 1, 32, 0) end)
