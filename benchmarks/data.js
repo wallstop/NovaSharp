@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788108408541,
+  "lastUpdate": 1788148258229,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -2974,6 +2974,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 736.456,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f31d973e8ea605d6b4282e77b333fc0d14bb0fb6",
+          "message": "Migrate Bit32 callbacks to argument views (#129)\n\n## Summary\n\n- Apply the pre-adoption host API policy and documentation/modernization\ncleanup.\n- Migrate all 12 Lua 5.2 `bit32` exports to private\n`CallbackArgumentsView` callbacks and remove the public callback/helper\nhost surface.\n- Preserve the exact 12-name Lua table surface and correct reducer\nidentities, optional width handling, shifts/rotations, field validation,\nand Lua 5.2 numeric conversion.\n- Match Lua 5.2's default IEEE operand conversion for large finite\nvalues, internal integer subtypes, numeric strings, subnormals,\ninfinities, and NaN.\n- Add comparable fixtures, registration/availability coverage, and\nupdate PLAN/progress/release-note documentation.\n\n## Compatibility\n\nThis intentionally removes the public `Bit32Module` callback/helper host\nAPI under the repository's pre-adoption API policy. Lua-facing `bit32`\nbehavior remains version-scoped to Lua 5.2.\n\n## Validation\n\n- `./scripts/build/quick.sh`\n- `./scripts/test/quick.sh`: 15,285/15,285 passed\n- Bit32: 88/88\n- Availability: 14/14\n- Module registration: 57/57\n- Enforced Lua 5.2 comparison: 2,325 discovered; 716 matches, 170\nunchanged both-errors, 0 mismatches\n- `bash ./scripts/dev/pre-commit.sh`\n- Pre-push checks passed\n\n## Follow-ups\n\nParser/runtime-wide items intentionally deferred at the scope stop are\ntracked in #124, #125, #126, #127, and #128. This advances the A5\numbrella in #108 without closing it.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Breaking removal of public `Bit32Module` host APIs plus broad Lua 5.2\nnumeric conversion changes in a hot standard library; risk is mitigated\nby extensive TUnit and enforced Lua comparison coverage but still\naffects any external C# callers of the old surface.\n> \n> **Overview**\n> **Host policy and docs:** Adds a pre-adoption **no legacy host API**\nrule across agent guidance, `PLAN.md`, modernization pages, and the\ndocumentation skill—GitHub Releases replace root `CHANGELOG.md`, and\nrebrand/Hardwire plans drop shims and deprecation windows.\n> \n> **A5 `bit32` slice:** All 12 Lua 5.2 `bit32` exports move to private\n`CallbackArgumentsView` handlers; the public `Bit32Module`\ncallback/`Bitwise` host surface is removed.\n`NovaSharpModuleMethodAttribute` gains an internal exact-name\nregistration path so `bit32` exposes only the standard 12 keys (no CLR\nname variants).\n> \n> **Lua 5.2 parity:** Operand conversion uses the reference\n`LUA_IEEE754TRICK` path for pre-5.3 profiles; reducers get correct\nzero-arg identities; shifts, rotations, `arshift`, extract/replace\noptional widths, and field/width validation/error ordering align with\nstock Lua 5.2. Reference docs and comparable Lua fixtures/tests are\nupdated accordingly; `PLAN.md` drops Bit32 from the remaining A5 queue.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n1cb5cc49bb94fbd2c22382ad101c07347a09900f. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-08-30T20:45:34-07:00",
+          "tree_id": "31050bc363b42b6bd7f8f0cdb876e491b50f5d51",
+          "url": "https://github.com/wallstop/NovaSharp/commit/f31d973e8ea605d6b4282e77b333fc0d14bb0fb6"
+        },
+        "date": 1788148257819,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 382.421,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 422.954,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 424.55,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 609.444,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 653.763,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 633.544,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 638.131,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 699.899,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 709.505,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 670.913,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 747.063,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 754.651,
             "unit": "ns",
             "extra": ""
           }
