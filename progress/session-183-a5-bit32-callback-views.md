@@ -147,13 +147,13 @@ portability review approved the exact corrected staged snapshot with zero action
 in-scope findings; parser follow-ups #127 and #128 remain accepted tracked scope.
 
 The first hosted macOS ARM64 Lua 5.2 comparison then isolated one remaining
-fixture-only mismatch: displacements above `2^51` are explicitly unspecified by
-Lua 5.2 and the reference result differs by architecture. The comparable fixture
-now stops at the portable boundary and documents that the complete extreme
-displacement matrix remains in `ExtremeDisplacementsMatchLua52Narrowing`, a
-NovaSharp C# regression test. The corrected fixture passed all five Bit32 Lua
-5.2 snippets on both interpreters locally, and the focused Bit32 suite remained
-green at 88/88.
+fixture-only mismatch in the most extreme displacement cases: reference builds
+narrow C integers and non-finite values differently across architectures. The
+comparable fixture keeps the portable boundary cases and documents that the
+complete extreme displacement matrix remains in
+`ExtremeDisplacementsMatchLua52Narrowing`, a NovaSharp C# regression test. The
+corrected fixture passed all five Bit32 Lua 5.2 snippets on both interpreters
+locally, and the focused Bit32 suite remained green at 88/88.
 
 ## Release-note-ready summary
 

@@ -73,9 +73,9 @@ assert(bit32.rshift(extreme_value, below_int64_limit) == 0)
 assert(bit32.arshift(extreme_value, below_int64_limit) == 0)
 assert(bit32.lrotate(extreme_value, below_int64_limit) == extreme_value)
 assert(bit32.rrotate(extreme_value, below_int64_limit) == extreme_value)
--- Lua 5.2 leaves displacements outside (-2^51, 2^51) unspecified, and
--- reference builds differ across architectures. The exact narrowing matrix
--- is covered by the NovaSharp C# regression test instead.
+-- Reference Lua builds can differ for the most extreme displacement values
+-- because their C integer/non-finite narrowing is architecture-sensitive. The
+-- exact narrowing matrix is covered by the NovaSharp C# regression test instead.
 local above_double_precision = 9007199254740993
 assert(bit32.band(above_double_precision, 0xffffffff) == 0)
 assert(bit32.extract(1, above_double_precision) == 1)
