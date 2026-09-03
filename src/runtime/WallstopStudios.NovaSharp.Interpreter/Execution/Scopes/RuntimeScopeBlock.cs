@@ -31,6 +31,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         public SymbolRef[] ToBeClosed { get; internal set; } = Array.Empty<SymbolRef>();
 
         /// <summary>
+        /// Gets or sets the number of value-stack slots the owning construct keeps alive across
+        /// the block's lifetime, such as a numeric for-loop's control triple. Statements that
+        /// jump out of the block without flowing through its normal exit must pop these slots.
+        /// </summary>
+        public int ValueStackSlots { get; internal set; }
+
+        /// <summary>
         /// Returns a human-readable description of the slot range covered by the block.
         /// </summary>
         public override string ToString()

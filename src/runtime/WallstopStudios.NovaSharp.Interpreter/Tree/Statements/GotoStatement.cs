@@ -59,7 +59,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         }
 
         /// <summary>
-        /// Emits the pending jump; scope exits are injected if the goto needs to unwind runtime blocks.
+        /// Emits the pending jump; scope exits are injected if the goto needs to unwind runtime blocks,
+        /// popping any value-stack slots the exited constructs keep alive (a numeric for-loop's
+        /// control triple, a generic for-loop's iterator state) so repeated jumps cannot leak them.
         /// </summary>
         /// <param name="bc">Bytecode builder receiving the generated jump.</param>
         public override void Compile(ByteCode bc)
@@ -69,6 +71,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                 foreach (RuntimeScopeBlock scope in _exitScopes)
                 {
                     bc.EmitExit(scope);
+                    if (scope.ValueStackSlots > 0)
+                    {
+                        bc.EmitPop(scope.ValueStackSlots);
+                    }
                 }
             }
 

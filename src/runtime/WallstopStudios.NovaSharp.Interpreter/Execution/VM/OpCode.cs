@@ -49,7 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         Jump = 27, // Jumps to the specified PC
         Jf = 28, // Pops the top of the v-stack and jumps to the specified location if it's false
         JNil = 29, // Jumps if the top of the stack is nil
-        JFor = 30, // Numeric for-loop gate: peeks the loop-control triple on the v-stack. When top-2 holds an integer (the remaining-iteration counter installed by ForPrep), continues iff it is nonzero; otherwise compares top (index) against top-2 (limit) honoring the sign of top-1 (step). Jumps when the loop must not run.
+        JFor = 30, // Numeric for-loop continuation gate at the bottom of the body: peeks the loop-control triple on the v-stack. When top-2 holds an integer (the remaining-iteration counter installed by ForPrep), continues iff it is nonzero; otherwise compares top (index) against top-2 (limit) honoring the sign of top-1 (step). Jumps back to the loop body while the loop continues, falls through to the exit otherwise.
         JtOrPop = 31, // Peeks at the topmost value of the v-stack as a boolean. If true, it performs a jump, otherwise it removes the topmost value from the v-stack.
         JfOrPop = 32, // Peeks at the topmost value of the v-stack as a boolean. If false, it performs a jump, otherwise it removes the topmost value from the v-stack.
 
@@ -73,13 +73,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         MkTuple = 47, // Creates a tuple from the topmost n values
         Scalar = 48, // Converts the topmost tuple to a scalar
         Incr = 49, // Numeric for-loop increment: advances the loop-control triple on the v-stack without extracting it. When top-2 holds an integer (the remaining-iteration counter installed by ForPrep), also decrements it; always adds top-1 (step) to top (index).
-        ToNum = 50, // Converts the top of the stack to a number
         ToBool = 51, // Converts the top of the stack to a boolean
         ExpTuple = 52, // Expands a tuple on the stack
         Enter = 53, // Prepares a scope block (clears locals and registers to-be-closed variables)
         Leave = 54, // Leaves a scope block (normal flow, closes to-be-closed variables)
         Exit = 55, // Leaves a scope block due to break/goto (closes to-be-closed variables)
-        ForPrep = 66, // Prepares the numeric for-loop control triple [limit, step, index] on the v-stack. Integer loops (integer index and step) replace the limit with the remaining-iteration counter computed with reference Lua's unsigned arithmetic, so the visible control variable can never wrap around; float loops force the limit slot to the float subtype to mark the comparison-driven loop.
+        ForPrep = 66, // Prepares the numeric for-loop control triple [limit, step, index] on the v-stack from the raw expression results, validating and converting them in reference Lua's order, and jumps past the loop when the body must not run. Integer loops (integer index and step, Lua 5.3+) replace the limit with the remaining-iteration counter computed with reference Lua's unsigned arithmetic, so the visible control variable can never wrap around; every other loop normalizes all three controls to floats.
 
         // Iterators
         IterPrep = 56, // Prepares an iterator for execution
@@ -95,6 +94,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         FloorDiv = 65,
 
         // Meta
-        Invalid = 58, // Crashes the executor with an unrecoverable NotImplementedException. This MUST always be the last opcode in enum
+        Invalid = 58, // Crashes the executor with an unrecoverable NotImplementedException. This MUST remain the final entry in the enum declaration
     }
 }

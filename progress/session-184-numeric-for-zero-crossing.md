@@ -90,8 +90,46 @@ repaired in place. Replace it with reference Lua's counter-based loop protocol.
 ## Independent review
 
 An adversarial sub-agent reviewed the protocol against reference Lua 5.4.4's `lvm.c`
-and probed subtype mixing, boundary arithmetic, suspension/unwinding paths, and
-dump round-trips; the outcome is recorded below once complete.
+(raw sources for 5.1.5 and 5.4.4 were fetched and compared) and probed protocol
+soundness, counter arithmetic at every extreme, subtype mixing, float drift, zero-step
+matrix, suspension/unwinding paths, dump round-trips, and the test suite. It confirmed
+the counter protocol sound on every reachable case and confirmed the float-accumulation
+drift is bit-exact against all five references, then reported four actionable findings,
+all addressed in this session:
+
+1. NaN float-limit clamping had regressed the 5.1/5.2 profiles (a NaN limit with an
+   integer-descending loop ran ~forever where reference lua5.1/5.2 run zero
+   iterations). Fixed by restructure (3): pre-5.3 profiles now never take the integer
+   counter path.
+2. A float loop exposed an integer-subtype control variable on its first iteration
+   (`for i = 1, 3, 1.0` yielded integer `1` where reference yields float `1.0`). Fixed
+   by normalizing float-loop controls to the float subtype from 5.3 on; 5.1/5.2 keep
+   the coerced subtypes because NovaSharp's `table.concat` does not yet apply the
+   pre-5.3 integral-float formatting there (filed as
+   [#132](https://github.com/wallstop/NovaSharp/issues/132)).
+3. The zero-step error lost reference Lua's priority race against an invalid limit
+   (`for i = 1, {}, 0` reported the limit error first). Fixed by restructuring to
+   reference Lua's instruction shape: `ForPrep` now performs every validation and the
+   entry decision (jumping past the loop when the body must not run) while `JFor`
+   moved to the bottom of the body as the pure continuation check. This also produced
+   exact entry semantics for non-finite bounds: Lua 5.4+ enter a NaN-bounded float
+   loop for one iteration, while 5.1-5.3 — whose `forprep` computes the entry index as
+   `(init - step) + step` — never start, NaN steps included; and it made the control
+   error messages version-exact (`bad 'for' limit (number expected, got table)` on
+   5.4+, `'for' limit must be a number` before, with 5.3 validating the limit before
+   its tolerated zero step and 5.4+ reversing that order).
+4. A pre-existing `goto` out of a numeric or generic `for` loop leaked the loop's
+   value-stack slots on every jump until the stack overflowed (reproduced identically
+   on the parent commit). Fixed by recording each construct's live value-stack slots
+   on its `RuntimeScopeBlock` and making `GotoStatement` pop them when it exits the
+   block; the original five-million-jump reproduction now completes in constant memory
+   like reference Lua.
+
+Nits also addressed: the counter-cap comment now states the lost terminal iteration;
+`ForPrep` joined `OpCodeStrings`; the stale "Invalid must be last" note was corrected.
+Acknowledged and left open: reference 5.3 loops forever at the integer extremes where
+NovaSharp follows the corrected 5.4 semantics (documented in tests and fixtures), and
+Lua 5.5's const control variable ([#130](https://github.com/wallstop/NovaSharp/issues/130)).
 
 ## Release-note-ready summary
 

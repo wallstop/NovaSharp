@@ -72,7 +72,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 case OpCode.TblInitI:
                 case OpCode.ExpTuple:
                 case OpCode.Incr:
-                case OpCode.ToNum:
                 case OpCode.Ret:
                 case OpCode.MkTuple:
                     return InstructionFieldUsage.NumVal;

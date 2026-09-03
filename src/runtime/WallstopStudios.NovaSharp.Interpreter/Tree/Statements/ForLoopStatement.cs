@@ -63,13 +63,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             _innerBlock = new CompositeStatement(lcontext);
             _refEnd = CheckTokenType(lcontext, TokenType.End).GetSourceRef();
             _stackFrame = lcontext.Scope.PopBlock();
+            _stackFrame.ValueStackSlots = 3;
 
             lcontext.Source.Refs.Add(_refFor);
             lcontext.Source.Refs.Add(_refEnd);
         }
 
         /// <summary>
-        /// Compiles the numeric loop following Lua §3.3.5: evaluates bounds/step, emits the iteration prologue, body, and increment logic.
+        /// Compiles the numeric loop following Lua §3.3.5 and reference Lua's instruction shape:
+        /// ForPrep validates and prepares the control triple and jumps past the loop when it must
+        /// not run, the body follows immediately, and the bottom JFor advances the controls and
+        /// jumps back for the next iteration. A break or goto leaving the loop pops the triple.
         /// </summary>
         public override void Compile(ByteCode bc)
         {
@@ -80,17 +84,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                 bc.LoopTracker.Loops.Push(l);
 
                 _end.Compile(bc);
-                bc.EmitToNum(3);
                 _step.Compile(bc);
-                bc.EmitToNum(2);
                 _start.Compile(bc);
-                bc.EmitToNum(1);
-                bc.EmitForPrep();
 
-                int start = bc.GetJumpPointForNextInstruction();
-                Instruction jumpend = bc.EmitJump(OpCode.JFor, -1);
+                Instruction jumpend = bc.EmitJump(OpCode.ForPrep, -1);
+
+                int bodyStart = bc.GetJumpPointForNextInstruction();
                 bc.EmitEnter(_stackFrame);
-                //bc.Emit_SymStorN(_VarName);
 
                 bc.EmitStore(_varName, 0, 0);
 
@@ -102,7 +102,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                 bc.EmitDebug("..end");
                 bc.EmitLeave(_stackFrame);
                 bc.EmitIncr(1);
-                bc.EmitJump(OpCode.Jump, start);
+                bc.EmitJump(OpCode.JFor, bodyStart);
 
                 bc.LoopTracker.Loops.Pop();
 

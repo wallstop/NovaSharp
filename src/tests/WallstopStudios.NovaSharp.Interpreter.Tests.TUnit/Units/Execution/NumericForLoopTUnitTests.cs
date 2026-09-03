@@ -417,5 +417,243 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             await Assert.That(result.String).IsEqualTo("-2,-1,0,1,2").ConfigureAwait(false);
         }
+
+        [global::TUnit.Core.Test]
+        [MethodDataSource(nameof(GetNanBoundTruthTableData))]
+        public async Task NonFiniteBoundsMatchReferenceIterations(
+            LuaCompatibilityVersion version,
+            string range,
+            string expected
+        )
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                "local n = 0 for i = "
+                    + range
+                    + " do n = n + 1 if n > 3 then break end end return n > 3 and 'MANY' or tostring(n)"
+            );
+
+            await Assert.That(result.String).IsEqualTo(expected).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Reference-verified matrix for NaN and infinite bounds. Lua 5.4+ route a float
+        /// loop's first decision through a comparison that never rejects NaN, so such loops
+        /// run one iteration; Lua 5.1-5.3 compute the entry index as (init - step) + step,
+        /// which NaN poisons, so they never start. Integer loops under Lua 5.3+ clamp a NaN
+        /// descending limit to mininteger.
+        /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "TUnit MethodDataSource requires method"
+        )]
+        public static IEnumerable<(
+            LuaCompatibilityVersion,
+            string,
+            string
+        )> GetNanBoundTruthTableData()
+        {
+            (LuaCompatibilityVersion version, string expected)[] byVersion =
+            {
+                (LuaCompatibilityVersion.Lua51, "0"),
+                (LuaCompatibilityVersion.Lua52, "0"),
+                (LuaCompatibilityVersion.Lua53, "MANY"),
+                (LuaCompatibilityVersion.Lua54, "MANY"),
+                (LuaCompatibilityVersion.Lua55, "MANY"),
+            };
+
+            foreach ((LuaCompatibilityVersion version, string expected) in byVersion)
+            {
+                yield return (version, "5,0/0,-1", expected);
+            }
+
+            // Float loops with NaN bounds: one iteration on 5.4+, none before.
+            (LuaCompatibilityVersion version, string expected)[] floatNanByVersion =
+            {
+                (LuaCompatibilityVersion.Lua51, "0"),
+                (LuaCompatibilityVersion.Lua52, "0"),
+                (LuaCompatibilityVersion.Lua53, "0"),
+                (LuaCompatibilityVersion.Lua54, "1"),
+                (LuaCompatibilityVersion.Lua55, "1"),
+            };
+
+            foreach ((LuaCompatibilityVersion version, string expected) in floatNanByVersion)
+            {
+                yield return (version, "5.5,0/0,-1", expected);
+                yield return (version, "10,1,0/0", expected);
+                yield return (version, "1,0/0,1.0", expected);
+            }
+
+            // Ascending toward NaN never runs; descending toward infinity never runs.
+            foreach (LuaCompatibilityVersion version in AllVersions)
+            {
+                yield return (version, "5,0/0", "0");
+                yield return (version, "5,2e400,-1", "0");
+                yield return (version, "5.5,2e400,-1", "0");
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FloatLoopControlsAreFloatFromFirstIteration(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Reference Lua stores a float loop's controls as floats, so even an
+            // integer-subtype initial value observes the float subtype in the body.
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"local t = {}
+                  for i = 1, 3, 1.0 do t[#t + 1] = math.type(i) end
+                  return table.concat(t, ',')"
+            );
+
+            await Assert.That(result.String).IsEqualTo("float,float,float").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        public async Task FloatLoopControlsKeepIntegralFormattingBeforeLua53(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.1/5.2 have one number type: an integral float limit with integer
+            // controls still renders whole loop values without a decimal point.
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"local t = {}
+                  for i = 1, 3.0 do t[#t + 1] = tostring(i) end
+                  return table.concat(t, ',')"
+            );
+
+            await Assert.That(result.String).IsEqualTo("1,2,3").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task ZeroStepReportedBeforeInvalidLimitFromLua54(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.4+ reject a zero integer step before validating the limit.
+            Script script = new(version);
+            ScriptRuntimeException captured = null;
+            try
+            {
+                script.DoString("for i = 1, {}, 0 do end");
+            }
+            catch (ScriptRuntimeException ex)
+            {
+                captured = ex;
+            }
+
+            await Assert.That(captured).IsNotNull().ConfigureAwait(false);
+            await Assert
+                .That(captured.Message)
+                .Contains("'for' step is zero")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
+        public async Task InvalidLimitReportedBeforeZeroStepThroughLua53(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.1-5.3 validate the limit before considering the (tolerated) zero step.
+            Script script = new(version);
+            ScriptRuntimeException captured = null;
+            try
+            {
+                script.DoString("for i = 1, {}, 0 do end");
+            }
+            catch (ScriptRuntimeException ex)
+            {
+                captured = ex;
+            }
+
+            await Assert.That(captured).IsNotNull().ConfigureAwait(false);
+            await Assert
+                .That(captured.Message)
+                .Contains("'for' limit must be a number")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task NonNumberControlErrorsUseLua54MessageFormat(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+
+            await Assert
+                .That(() => script.DoString("for i = 1, {}, 1 do end"))
+                .Throws<ScriptRuntimeException>()
+                .ConfigureAwait(false);
+
+            ScriptRuntimeException captured = null;
+            try
+            {
+                script.DoString("for i = 1, {}, 1 do end");
+            }
+            catch (ScriptRuntimeException ex)
+            {
+                captured = ex;
+            }
+
+            await Assert
+                .That(captured.Message)
+                .IsEqualTo("bad 'for' limit (number expected, got table)")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task GotoOutOfNumericLoopDoesNotLeakControlSlots(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Each backward goto out of the loop must pop the control triple; before the
+            // fix this leaked three value-stack slots per jump until the stack overflowed.
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"local n = 0
+                  ::top::
+                  for i = 1, 2 do
+                      if n < 100000 then
+                          n = n + 1
+                          goto top
+                      end
+                  end
+                  return n"
+            );
+
+            await Assert.That(result.Number).IsEqualTo(100000).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task GotoOutOfGenericLoopDoesNotLeakIteratorSlot(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"local n = 0
+                  local t = { 1, 2, 3 }
+                  ::top::
+                  for k, v in pairs(t) do
+                      if n < 50000 then
+                          n = n + 1
+                          goto top
+                      end
+                  end
+                  return n"
+            );
+
+            await Assert.That(result.Number).IsEqualTo(50000).ConfigureAwait(false);
+        }
     }
 }

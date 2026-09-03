@@ -436,17 +436,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
-        /// Emits a number conversion helper used by <c>tonumber</c> and numeric for loops.
-        /// </summary>
-        /// <param name="stage">Stage of the conversion pipeline.</param>
-        public Instruction EmitToNum(int stage = 0)
-        {
-            return AppendInstruction(
-                new Instruction(_currentSourceRef) { OpCode = OpCode.ToNum, NumVal = stage }
-            );
-        }
-
-        /// <summary>
         /// Emits the increment opcode used by numeric for loops.
         /// </summary>
         /// <param name="i">Step amount.</param>

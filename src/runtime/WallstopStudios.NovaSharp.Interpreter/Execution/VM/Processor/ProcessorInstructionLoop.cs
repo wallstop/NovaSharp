@@ -345,16 +345,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         case OpCode.Incr:
                             ExecIncr(i);
                             break;
-                        case OpCode.ToNum:
-                            ExecToNum(i);
-                            break;
                         case OpCode.JFor:
                             instructionPtr = ExecJFor(i, instructionPtr);
                             shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
                         case OpCode.ForPrep:
-                            ExecForPrep();
+                            instructionPtr = ExecForPrep(i, instructionPtr);
+                            shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
+
                             break;
                         case OpCode.NewTable:
                             if (i.NumVal == 0)
@@ -1114,25 +1113,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             _valueStack.Push(LuaValue.NewTuple(v));
         }
 
-        private void ExecToNum(Instruction i)
-        {
-            // Use CastToLuaNumber to preserve integer/float subtype for precise arithmetic.
-            // Using CastToNumber (double) loses integer precision for large values near maxinteger,
-            // causing for-loops to infinite loop due to floating-point precision limits.
-            LuaNumber? v = _valueStack
-                .Pop()
-                .ToScalar()
-                .CastToLuaNumber(_script.Options.CompatibilityVersion);
-            if (v.HasValue)
-            {
-                _valueStack.Push(LuaValue.NewNumber(v.Value));
-            }
-            else
-            {
-                throw ScriptRuntimeException.ConvertToNumberFailed(i.NumVal);
-            }
-        }
-
         private void ExecIterUpd(Instruction i)
         {
             LuaValue v = _valueStack.Peek(0);
@@ -1212,53 +1192,72 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
-        /// Prepares the numeric for-loop control triple on the value stack, which holds
-        /// [limit, step, index] bottom to top with all three already converted to numbers.
-        /// Mirrors reference Lua's <c>forprep</c> (lvm.c): when the index and step are
-        /// integers, the loop is counter-driven — the limit slot is replaced by the number
-        /// of remaining iterations computed with wrapping-free unsigned arithmetic, so
-        /// <see cref="ExecJFor"/> and <see cref="ExecIncr"/> never need to infer overflow
-        /// from value signs and the visible control variable cannot wrap around (Lua 5.4
-        /// manual, section 3.3.5). Every other loop is comparison-driven; its limit slot is
-        /// forced to the float subtype both to match Lua's float-loop preparation and to
-        /// mark which protocol the later instructions must follow.
+        /// Prepares the numeric for-loop control triple on the value stack — [limit, step, index]
+        /// bottom to top, still holding the raw expression results — and decides whether the body
+        /// may run at all. Mirrors reference Lua's <c>forprep</c> (lvm.c), including its
+        /// validation order: the loop flavor comes from the raw index and step (an integer loop
+        /// needs both to already be integers, which only exists from Lua 5.3 on; a zero integer
+        /// step therefore reports before the limit is validated), then the limit, then the step,
+        /// then the index. An integer loop replaces its limit slot with a remaining-iteration
+        /// counter computed with wrapping-free unsigned arithmetic, so <see cref="ExecJFor"/> and
+        /// <see cref="ExecIncr"/> never need to infer overflow from value signs and the visible
+        /// control variable cannot wrap around (Lua 5.4 manual, section 3.3.5). Every other loop
+        /// is comparison-driven; from Lua 5.3 on it normalizes all three controls to floats
+        /// exactly like reference Lua's float-loop preparation, while the float limit slot itself
+        /// marks the comparison protocol in every profile.
         /// </summary>
-        private void ExecForPrep()
+        /// <returns>The instruction to execute next: the loop body, or the loop exit when the
+        /// body must not run.</returns>
+        private int ExecForPrep(Instruction i, int instructionPtr)
         {
-            LuaNumber index = _valueStack.Peek(0).LuaNumber;
-            LuaNumber step = _valueStack.Peek(1).LuaNumber;
-            LuaNumber limit = _valueStack.Peek(2).LuaNumber;
+            LuaCompatibilityVersion version = _script.Options.CompatibilityVersion;
+            LuaValue rawIndex = _valueStack.Peek(0).ToScalar();
+            LuaValue rawStep = _valueStack.Peek(1).ToScalar();
 
-            if (index.IsInteger && step.IsInteger)
+            bool integerLoop =
+                version >= LuaCompatibilityVersion.Lua53
+                && IsIntegerNumber(rawIndex)
+                && IsIntegerNumber(rawStep);
+
+            if (integerLoop)
             {
-                long init = index.AsInteger;
-                long stepVal = step.AsInteger;
+                long init = rawIndex.LuaNumber.AsInteger;
+                long stepVal = rawStep.LuaNumber.AsInteger;
+
+                // Lua 5.4+ rejects a zero step before validating the limit; Lua 5.3
+                // validates the limit first and then silently runs zero iterations.
+                if (stepVal == 0 && version >= LuaCompatibilityVersion.Lua54)
+                {
+                    throw ScriptRuntimeException.ForStepIsZero();
+                }
+
+                LuaNumber? limit = _valueStack.Peek(2).ToScalar().CastToLuaNumber(version);
+                if (!limit.HasValue)
+                {
+                    throw ScriptRuntimeException.ForControlNotANumber(
+                        3,
+                        _valueStack.Peek(2).ToScalar().Type,
+                        version
+                    );
+                }
 
                 if (stepVal == 0)
                 {
-                    // Lua 5.4+ rejects a zero step; Lua 5.1-5.3 silently run zero
-                    // iterations (their descending form loops forever, which NovaSharp
-                    // deliberately terminates instead).
-                    if (_script.Options.CompatibilityVersion >= LuaCompatibilityVersion.Lua54)
-                    {
-                        throw ScriptRuntimeException.ForStepIsZero();
-                    }
-
                     _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.Zero));
-                    return;
+                    return i.NumVal;
                 }
 
-                if (!TryResolveIntegerForLimit(limit, stepVal > 0, out long resolvedLimit))
+                if (!TryResolveIntegerForLimit(limit.Value, stepVal > 0, out long resolvedLimit))
                 {
                     _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.Zero));
-                    return;
+                    return i.NumVal;
                 }
 
                 if (stepVal > 0 ? init > resolvedLimit : init < resolvedLimit)
                 {
                     // Initial value already beyond the limit: the body must not run.
                     _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.Zero));
-                    return;
+                    return i.NumVal;
                 }
 
                 ulong remaining;
@@ -1280,7 +1279,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 // remaining counts the iterations after the first; the counter JFor tests
                 // must include the iteration about to run. The only overflow case (a full
-                // long-range scan with unit step) is capped rather than wrapped to zero.
+                // long-range scan with unit step) is capped at ulong.MaxValue, which keeps
+                // the loop effectively unbounded without ever visiting a wrapped index.
                 ulong total = remaining + 1;
                 if (total == 0)
                 {
@@ -1291,26 +1291,89 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     2,
                     LuaValue.NewNumber(LuaNumber.FromInteger(unchecked((long)total)))
                 );
+                return instructionPtr;
+            }
+
+            LuaNumber? coercedLimit = _valueStack.Peek(2).ToScalar().CastToLuaNumber(version);
+            if (!coercedLimit.HasValue)
+            {
+                throw ScriptRuntimeException.ForControlNotANumber(
+                    3,
+                    _valueStack.Peek(2).ToScalar().Type,
+                    version
+                );
+            }
+
+            LuaNumber? coercedStep = rawStep.CastToLuaNumber(version);
+            if (!coercedStep.HasValue)
+            {
+                throw ScriptRuntimeException.ForControlNotANumber(2, rawStep.Type, version);
+            }
+
+            LuaNumber? coercedIndex = rawIndex.CastToLuaNumber(version);
+            if (!coercedIndex.HasValue)
+            {
+                throw ScriptRuntimeException.ForControlNotANumber(1, rawIndex.Type, version);
+            }
+
+            if (coercedStep.Value.AsFloat == 0.0 && version >= LuaCompatibilityVersion.Lua54)
+            {
+                throw ScriptRuntimeException.ForStepIsZero();
+            }
+
+            // Reference Lua stores all three controls of a float loop as floats; NovaSharp
+            // normalizes the same way from Lua 5.3 on, so the body observes float control
+            // values from the very first iteration. Lua 5.1/5.2 have a single number
+            // type, so their controls keep the coerced subtypes and only the limit slot
+            // is forced to the float subtype, which marks the comparison-driven protocol
+            // for JFor and Incr.
+            if (version >= LuaCompatibilityVersion.Lua53)
+            {
+                _valueStack.Set(
+                    0,
+                    LuaValue.NewNumber(LuaNumber.FromFloat(coercedIndex.Value.AsFloat))
+                );
+                _valueStack.Set(
+                    1,
+                    LuaValue.NewNumber(LuaNumber.FromFloat(coercedStep.Value.AsFloat))
+                );
+            }
+
+            _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.FromFloat(coercedLimit.Value.AsFloat)));
+
+            // Lua 5.4+ enters the body unless the limit is provably beyond the initial
+            // value, so a NaN bound runs exactly one iteration before the bottom
+            // comparison ends the loop. Lua 5.1-5.3 instead route the very first
+            // decision through their bottom check on the index re-computed as
+            // (init - step) + step, so a NaN step poisons the entry comparison and the
+            // loop never starts; for every non-NaN operand the two forms agree.
+            LuaNumber limitN = coercedLimit.Value;
+            LuaNumber stepN = coercedStep.Value;
+            LuaNumber indexN = coercedIndex.Value;
+            bool stepPositive = stepN.AsFloat > 0.0;
+            bool skip;
+            if (version >= LuaCompatibilityVersion.Lua54)
+            {
+                skip = stepPositive
+                    ? LuaNumber.LessThan(limitN, indexN)
+                    : LuaNumber.LessThan(indexN, limitN);
             }
             else
             {
-                double stepFloat = step.AsFloat;
-
-                if (stepFloat == 0.0)
-                {
-                    if (_script.Options.CompatibilityVersion >= LuaCompatibilityVersion.Lua54)
-                    {
-                        throw ScriptRuntimeException.ForStepIsZero();
-                    }
-
-                    // A NaN limit fails both comparison directions, terminating the loop
-                    // immediately whatever the sign of the (zero) step.
-                    _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.NaN));
-                    return;
-                }
-
-                _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.FromFloat(limit.AsFloat)));
+                double entryIndex = (indexN.AsFloat - stepN.AsFloat) + stepN.AsFloat;
+                double entryLimit = limitN.AsFloat;
+                skip = !(stepPositive ? entryIndex <= entryLimit : entryLimit <= entryIndex);
             }
+
+            return skip ? i.NumVal : instructionPtr;
+        }
+
+        /// <summary>
+        /// Determines whether a raw value is a number of the integer subtype.
+        /// </summary>
+        private static bool IsIntegerNumber(LuaValue value)
+        {
+            return value.Type == DataType.Number && value.LuaNumber.IsInteger;
         }
 
         /// <summary>
@@ -1377,10 +1440,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private int ExecJFor(Instruction i, int instructionPtr)
         {
-            // Use LuaNumber to preserve integer precision for large values (e.g., near maxinteger).
-            // Using .Number (double) causes precision loss and infinite loops for large integer bounds.
+            // Bottom-of-loop continuation check, run after Incr advanced the controls.
+            // Jumps back to the loop body while the loop continues and falls through to
+            // the exit otherwise. Use LuaNumber to preserve integer precision for large
+            // values (e.g., near maxinteger); .Number (double) causes precision loss and
+            // infinite loops for large integer bounds.
             LuaNumber control = _valueStack.Peek(2).LuaNumber;
 
+            bool continueLoop;
             if (control.IsInteger)
             {
                 // Counter-driven integer loop: ForPrep replaced the limit slot with the
@@ -1388,29 +1455,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 // reaches zero. Reference Lua's OP_FORLOOP does the same and never
                 // compares the index against the limit, which is what keeps the visible
                 // control variable from wrapping around at the integer boundaries.
-                return control.AsInteger != 0 ? instructionPtr : i.NumVal;
-            }
-
-            LuaNumber val = _valueStack.Peek(0).LuaNumber;
-            LuaNumber step = _valueStack.Peek(1).LuaNumber;
-            LuaNumber stop = control;
-
-            // Lua for-loop condition: if step > 0 then val <= stop else val >= stop
-            // Use LuaNumber comparison to avoid precision loss with large step values
-            bool stepPositive = LuaNumber.LessThan(LuaNumber.Zero, step);
-
-            bool whileCond = stepPositive
-                ? LuaNumber.LessThanOrEqual(val, stop)
-                : LuaNumber.LessThanOrEqual(stop, val);
-
-            if (!whileCond)
-            {
-                return i.NumVal;
+                continueLoop = control.AsInteger != 0;
             }
             else
             {
-                return instructionPtr;
+                LuaNumber val = _valueStack.Peek(0).LuaNumber;
+                LuaNumber step = _valueStack.Peek(1).LuaNumber;
+
+                // Lua for-loop condition: if step > 0 then val <= stop else val >= stop
+                bool stepPositive = LuaNumber.LessThan(LuaNumber.Zero, step);
+
+                continueLoop = stepPositive
+                    ? LuaNumber.LessThanOrEqual(val, control)
+                    : LuaNumber.LessThanOrEqual(control, val);
             }
+
+            return continueLoop ? i.NumVal : instructionPtr;
         }
 
         private void ExecIncr(Instruction i)

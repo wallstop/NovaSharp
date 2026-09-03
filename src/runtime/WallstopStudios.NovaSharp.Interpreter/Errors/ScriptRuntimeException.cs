@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
     using System.Globalization;
     using global::NovaSharp;
     using Interop.BasicDescriptors;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
@@ -573,6 +574,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         public static ScriptRuntimeException ForStepIsZero()
         {
             return new ScriptRuntimeException("'for' step is zero");
+        }
+
+        /// <summary>
+        /// Creates a ScriptRuntimeException for a numeric <c>for</c> loop control that is not a
+        /// number, using the message of the requested compatibility profile: Lua 5.1-5.3 say
+        /// "'for' limit must be a number" while Lua 5.4+ say "bad 'for' limit (number expected,
+        /// got table)".
+        /// </summary>
+        /// <param name="stage">
+        /// Selects the control:
+        /// 1 - initial value
+        /// 2 - step
+        /// 3 - limit
+        /// </param>
+        /// <param name="type">The Lua type of the offending control value.</param>
+        /// <param name="version">The compatibility profile naming the message format.</param>
+        /// <returns>
+        /// The exception to be raised.
+        /// </returns>
+        public static ScriptRuntimeException ForControlNotANumber(
+            int stage,
+            DataType type,
+            LuaCompatibilityVersion version
+        )
+        {
+            if (version < LuaCompatibilityVersion.Lua54)
+            {
+                return ConvertToNumberFailed(stage);
+            }
+
+            string name = stage switch
+            {
+                1 => "initial value",
+                2 => "step",
+                _ => "limit",
+            };
+            return new ScriptRuntimeException(
+                "bad 'for' {0} (number expected, got {1})",
+                name,
+                type.ToLuaTypeString()
+            );
         }
 
         /// <summary>
