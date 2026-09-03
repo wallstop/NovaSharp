@@ -464,7 +464,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     );
                 }
 
-                string s = v.ToPrintString();
+                string s = v.ToPrintString(version);
 
                 if (i != start)
                 {

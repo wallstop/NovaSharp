@@ -32,7 +32,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         public static StandardIoFileUserDataBase CreateOutputStream(Stream stream)
         {
             StandardIoFileUserDataBase f = new();
-            f.Initialize(stream, null, new StreamWriter(stream), false);
+            // Standard streams must not hold buffered output past the write call: nothing
+            // flushes them at host exit, so buffered bytes would be lost (C leaves stderr
+            // unbuffered and the reference standalone interpreter flushes stdout at exit).
+            f.Initialize(stream, null, new StreamWriter(stream) { AutoFlush = true }, false);
             return f;
         }
     }

@@ -19,6 +19,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private readonly ReadOnlySpan<LuaValue> _span;
         private readonly IList<LuaValue> _list;
         private readonly CallbackArguments _callbackArguments;
+        private readonly Script _ownerScript;
         private readonly LuaValue _arg0;
         private readonly LuaValue _arg1;
         private readonly LuaValue _arg2;
@@ -33,7 +34,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private readonly bool _lastIsTuple;
         private readonly bool _isMethodCall;
 
-        internal CallbackArgumentsView(bool isMethodCall)
+        internal CallbackArgumentsView(bool isMethodCall, Script ownerScript = null)
             : this(
                 default,
                 null,
@@ -48,10 +49,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 SourceFixed,
                 0,
                 0,
-                isMethodCall
+                isMethodCall,
+                ownerScript
             ) { }
 
-        internal CallbackArgumentsView(LuaValue arg, bool isMethodCall)
+        internal CallbackArgumentsView(LuaValue arg, bool isMethodCall, Script ownerScript = null)
             : this(
                 default,
                 null,
@@ -66,10 +68,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 SourceFixed,
                 0,
                 1,
-                isMethodCall
+                isMethodCall,
+                ownerScript
             ) { }
 
-        internal CallbackArgumentsView(LuaValue arg1, LuaValue arg2, bool isMethodCall)
+        internal CallbackArgumentsView(
+            LuaValue arg1,
+            LuaValue arg2,
+            bool isMethodCall,
+            Script ownerScript = null
+        )
             : this(
                 default,
                 null,
@@ -84,14 +92,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 SourceFixed,
                 0,
                 2,
-                isMethodCall
+                isMethodCall,
+                ownerScript
             ) { }
 
         internal CallbackArgumentsView(
             LuaValue arg1,
             LuaValue arg2,
             LuaValue arg3,
-            bool isMethodCall
+            bool isMethodCall,
+            Script ownerScript = null
         )
             : this(
                 default,
@@ -107,7 +117,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 SourceFixed,
                 0,
                 3,
-                isMethodCall
+                isMethodCall,
+                ownerScript
             ) { }
 
         internal CallbackArgumentsView(
@@ -115,7 +126,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             LuaValue arg2,
             LuaValue arg3,
             LuaValue arg4,
-            bool isMethodCall
+            bool isMethodCall,
+            Script ownerScript = null
         )
             : this(
                 default,
@@ -131,7 +143,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 SourceFixed,
                 0,
                 4,
-                isMethodCall
+                isMethodCall,
+                ownerScript
             ) { }
 
         internal CallbackArgumentsView(
@@ -140,7 +153,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             LuaValue arg3,
             LuaValue arg4,
             LuaValue arg5,
-            bool isMethodCall
+            bool isMethodCall,
+            Script ownerScript = null
         )
             : this(
                 default,
@@ -156,7 +170,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 SourceFixed,
                 0,
                 5,
-                isMethodCall
+                isMethodCall,
+                ownerScript
             ) { }
 
         internal CallbackArgumentsView(
@@ -166,7 +181,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             LuaValue arg4,
             LuaValue arg5,
             LuaValue arg6,
-            bool isMethodCall
+            bool isMethodCall,
+            Script ownerScript = null
         )
             : this(
                 default,
@@ -182,7 +198,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 SourceFixed,
                 0,
                 6,
-                isMethodCall
+                isMethodCall,
+                ownerScript
             ) { }
 
         internal CallbackArgumentsView(
@@ -193,7 +210,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             LuaValue arg5,
             LuaValue arg6,
             LuaValue arg7,
-            bool isMethodCall
+            bool isMethodCall,
+            Script ownerScript = null
         )
             : this(
                 default,
@@ -209,13 +227,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 SourceFixed,
                 0,
                 7,
-                isMethodCall
+                isMethodCall,
+                ownerScript
             ) { }
 
         /// <summary>
         /// Initializes a new argument view from contiguous backing storage.
         /// </summary>
-        public CallbackArgumentsView(ReadOnlySpan<LuaValue> args, bool isMethodCall)
+        public CallbackArgumentsView(
+            ReadOnlySpan<LuaValue> args,
+            bool isMethodCall,
+            Script ownerScript = null
+        )
             : this(
                 args,
                 null,
@@ -230,7 +253,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 SourceSpan,
                 0,
                 args.Length,
-                isMethodCall
+                isMethodCall,
+                ownerScript
             ) { }
 
         /// <summary>
@@ -247,6 +271,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             int offset,
             int count,
             bool isMethodCall
+        )
+            : this(args, offset, count, isMethodCall, ownerScript: null) { }
+
+        /// <summary>
+        /// Initializes a new argument view from a subrange of list backing storage, tracking
+        /// the script whose compatibility version governs number-to-string coercion.
+        /// </summary>
+        internal CallbackArgumentsView(
+            IList<LuaValue> args,
+            int offset,
+            int count,
+            bool isMethodCall,
+            Script ownerScript
         )
         {
             if (args == null)
@@ -278,6 +315,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _span = span;
             _list = args;
             _callbackArguments = null;
+            _ownerScript = ownerScript;
             _arg0 = default;
             _arg1 = default;
             _arg2 = default;
@@ -331,7 +369,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 SourceCallbackArguments,
                 0,
                 args.Count,
-                args.IsMethodCall
+                args.IsMethodCall,
+                args.OwnerScript
             ) { }
 
         private CallbackArgumentsView(
@@ -348,12 +387,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             int source,
             int offset,
             int storedCount,
-            bool isMethodCall
+            bool isMethodCall,
+            Script ownerScript = null
         )
         {
             _span = span;
             _list = list;
             _callbackArguments = callbackArguments;
+            _ownerScript = ownerScript;
             _arg0 = arg0;
             _arg1 = arg1;
             _arg2 = arg2;
@@ -523,15 +564,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns>The validated or converted argument.</returns>
         public LuaValue AsType(int argNum, string funcName, DataType type, bool allowNil = false)
         {
-            return this[argNum]
-                .CheckType(
-                    funcName,
-                    type,
-                    argNum,
-                    allowNil
-                        ? TypeValidationOptions.AllowNil | TypeValidationOptions.AutoConvert
-                        : TypeValidationOptions.AutoConvert
-                );
+            return CallbackArguments.CheckTypeWithOwner(
+                this[argNum],
+                funcName,
+                type,
+                argNum,
+                allowNil
+                    ? TypeValidationOptions.AllowNil | TypeValidationOptions.AutoConvert
+                    : TypeValidationOptions.AutoConvert,
+                _ownerScript
+            );
         }
 
         /// <summary>

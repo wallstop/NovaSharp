@@ -205,7 +205,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             while (coroutine.Coroutine.State != CoroutineState.Dead)
             {
                 LuaValue yielded = coroutine.Coroutine.Resume();
-                result += yielded.ToString();
+                result += yielded.ToPrintString(version);
             }
 
             await Assert.That(result).IsEqualTo("1234567").ConfigureAwait(false);
@@ -277,7 +277,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string result = "";
             foreach (LuaValue yielded in coroutine.Coroutine.AsTypedEnumerable())
             {
-                result += yielded.ToString();
+                result += yielded.ToPrintString(version);
             }
 
             await Assert.That(result).IsEqualTo("1234567").ConfigureAwait(false);

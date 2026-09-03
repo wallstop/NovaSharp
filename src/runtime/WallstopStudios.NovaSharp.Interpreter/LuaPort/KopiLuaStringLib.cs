@@ -1864,12 +1864,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                             }
                             else
                             {
-                                // Lua 5.1 coerces numbers to strings, but rejects other types
-                                // ArgAsType returns a NEW LuaValue with the converted string
-                                // when AutoConvert is enabled (which is the default).
-                                // For non-convertible types (table, function, etc.), it throws.
-                                LuaValue converted = ArgAsType(l, arg, DataType.String, false);
-                                s = converted.String;
+                                // Lua 5.1 coerces numbers to strings with the version's
+                                // tostring formatting, but rejects other types
+                                if (argValue.Type == DataType.Number)
+                                {
+                                    s = argValue.ToPrintString(version);
+                                }
+                                else
+                                {
+                                    // ArgAsType throws for non-convertible types
+                                    // (table, function, etc.)
+                                    LuaValue converted = ArgAsType(l, arg, DataType.String, false);
+                                    s = converted.String;
+                                }
                             }
 
                             uint localLength = (uint)s.Length;

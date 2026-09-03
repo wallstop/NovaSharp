@@ -98,7 +98,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task DumpLoadRoundTripPreservesIntegerSubtype(LuaCompatibilityVersion version)
         {
             // Test that integer subtype is preserved through dump/load cycle
@@ -125,6 +125,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert
                 .That(result2.LuaNumber.AsInteger)
                 .IsEqualTo(9007199254740993L)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        public async Task DumpLoadRoundTripPreservesPre53FloatSubtype(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.1/5.2 have a single double number type: the integer-syntax literal
+            // rounds to the nearest IEEE 754 double, and the float subtype must survive
+            // the dump/load cycle unchanged.
+            Script script = new(version);
+            LuaValue chunk = script.LoadString("return 9007199254740993"); // 2^53 + 1, rounds to 2^53
+            LuaValue result1 = script.Call(chunk);
+
+            await Assert.That(result1.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result1.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result1.LuaNumber.AsFloat)
+                .IsEqualTo(9007199254740992d)
+                .ConfigureAwait(false);
+
+            using MemoryStream stream = new();
+            script.Dump(chunk, stream);
+
+            stream.Position = 0;
+            Script script2 = new(version);
+            LuaValue loadedChunk = script2.LoadStream(stream);
+            LuaValue result2 = script2.Call(loadedChunk);
+
+            await Assert.That(result2.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result2.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result2.LuaNumber.AsFloat)
+                .IsEqualTo(9007199254740992d)
                 .ConfigureAwait(false);
         }
 
@@ -328,7 +364,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task DumpLoadRoundTripPreservesLargeIntegerPrecision(
             LuaCompatibilityVersion version
         )
@@ -358,6 +394,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert
                 .That(result2.LuaNumber.AsInteger)
                 .IsEqualTo(long.MaxValue)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        public async Task DumpLoadRoundTripPreservesPre53LargeLiteralRounding(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.1/5.2 have a single double number type: the maxinteger-syntax literal
+            // materializes as the float 2^63 and must survive the dump/load cycle exactly.
+            Script script = new(version);
+            LuaValue chunk = script.LoadString("return 9223372036854775807");
+            LuaValue result1 = script.Call(chunk);
+
+            await Assert.That(result1.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result1.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result1.LuaNumber.AsFloat)
+                .IsEqualTo(9223372036854775808d)
+                .ConfigureAwait(false);
+
+            using MemoryStream stream = new();
+            script.Dump(chunk, stream);
+
+            stream.Position = 0;
+            Script script2 = new(version);
+            LuaValue loadedChunk = script2.LoadStream(stream);
+            LuaValue result2 = script2.Call(loadedChunk);
+
+            await Assert.That(result2.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result2.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result2.LuaNumber.AsFloat)
+                .IsEqualTo(9223372036854775808d)
                 .ConfigureAwait(false);
         }
 

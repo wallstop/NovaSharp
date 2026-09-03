@@ -31,6 +31,9 @@ branch state, raw logs, or facts already easy to discover in canonical docs.
 - [numeric for reference matrix](numeric-for-reference-matrix.md) — verified
   Lua 5.1-5.5 numeric `for` semantics: counter protocol, NaN and boundary corners,
   zero-step and error-message matrices.
+- [numeric literal materialization](numeric-literal-materialization.md) — verified
+  Lua 5.1-5.5 numeral semantics: literal subtypes, float-to-string formats,
+  `tonumber` base conversions, and extraction/buffering traps.
 
 ## Entry Template
 

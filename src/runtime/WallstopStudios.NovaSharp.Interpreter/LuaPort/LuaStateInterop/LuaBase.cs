@@ -51,15 +51,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
         )
         {
             EnsureState(l, nameof(l));
-            return GetArgument(l, pos)
-                .CheckType(
-                    l.FunctionName,
-                    type,
-                    pos - 1,
-                    allowNil
-                        ? TypeValidationOptions.AllowNil | TypeValidationOptions.AutoConvert
-                        : TypeValidationOptions.AutoConvert
-                );
+            return CallbackArguments.CheckTypeWithOwner(
+                GetArgument(l, pos),
+                l.FunctionName,
+                type,
+                pos - 1,
+                allowNil
+                    ? TypeValidationOptions.AllowNil | TypeValidationOptions.AutoConvert
+                    : TypeValidationOptions.AutoConvert,
+                l.ExecutionContext?.Script
+            );
         }
 
         internal static lua_Integer LuaType(LuaState l, lua_Integer p)

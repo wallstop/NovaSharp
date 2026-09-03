@@ -281,14 +281,39 @@ namespace NovaSharp
         /// <summary>
         /// Gets the Lua number as a 64-bit integer.
         /// </summary>
+        /// <remarks>
+        /// Lua 5.1/5.2 numbers are always floats, so any value with an exact integer
+        /// representation converts, mirroring Lua's float-to-integer conversion
+        /// (including negative zero, which converts to <c>0</c>). Use <see cref="Kind"/>
+        /// when the integer/float subtype distinction matters.
+        /// </remarks>
         public long AsInteger()
         {
-            if (_type != DataType.Number || !IsInteger)
+            if (_type == DataType.Number)
             {
-                throw NewFacadeKindException(nameof(AsInteger), LuaKind.Integer, Kind);
+                if (_number.IsInteger)
+                {
+                    return _number.AsInteger;
+                }
+
+                if (_number.TryToInteger(out long integer))
+                {
+                    return integer;
+                }
+
+                // Negative zero converts to zero like math.tointeger
+                double floatValue = _number.AsFloat;
+                if (floatValue == 0.0)
+                {
+                    return 0;
+                }
             }
 
-            return _number.AsInteger;
+            throw NewFacadeKindException(
+                nameof(AsInteger),
+                "an integer-representable number",
+                Kind
+            );
         }
 
         /// <summary>

@@ -440,6 +440,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Gets or sets the script whose compatibility version governs number-to-string
+        /// coercion for these arguments. Reference Lua coerces through
+        /// <c>luaL_checklstring</c>, which formats numbers with the active version's
+        /// number format.
+        /// </summary>
+        internal Script OwnerScript { get; set; }
+
+        /// <summary>
         /// Gets the specified argument as as an argument of the specified type. If not possible,
         /// an exception is raised.
         /// </summary>
@@ -450,15 +458,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public LuaValue AsType(int argNum, string funcName, DataType type, bool allowNil = false)
         {
-            return this[argNum]
-                .CheckType(
-                    funcName,
-                    type,
-                    argNum,
-                    allowNil
-                        ? TypeValidationOptions.AllowNil | TypeValidationOptions.AutoConvert
-                        : TypeValidationOptions.AutoConvert
-                );
+            return CheckTypeWithOwner(
+                this[argNum],
+                funcName,
+                type,
+                argNum,
+                allowNil
+                    ? TypeValidationOptions.AllowNil | TypeValidationOptions.AutoConvert
+                    : TypeValidationOptions.AutoConvert,
+                OwnerScript
+            );
+        }
+
+        /// <summary>
+        /// Validates or converts a single argument, coercing numbers to strings with the
+        /// owning script's number format. Reference Lua's <c>luaL_checklstring</c> coercion
+        /// is version-sensitive: Lua 5.1/5.2 render <c>42</c> where 5.3+ render <c>42.0</c>.
+        /// </summary>
+        internal static LuaValue CheckTypeWithOwner(
+            LuaValue value,
+            string funcName,
+            DataType type,
+            int argNum,
+            TypeValidationOptions flags,
+            Script ownerScript
+        )
+        {
+            if (type == DataType.String && ownerScript != null && value.Type == DataType.Number)
+            {
+                return LuaValue.NewString(value.CastToString(ownerScript.CompatibilityVersion));
+            }
+
+            return value.CheckType(funcName, type, argNum, flags);
         }
 
         /// <summary>
@@ -584,64 +615,69 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public CallbackArguments SkipMethodCall()
         {
-            if (IsMethodCall)
-            {
-                if (_args != null)
-                {
-                    Slice<LuaValue> slice = new(_args, 1, _args.Count - 1, false);
-                    return new CallbackArguments(slice, false);
-                }
-
-                switch (_fixedCount)
-                {
-                    case 0:
-                    case 1:
-                        return new CallbackArguments(false);
-                    case 2:
-                        return new CallbackArguments(_fixedArgs._arg1, false);
-                    case 3:
-                        return new CallbackArguments(_fixedArgs._arg1, _fixedArgs._arg2, false);
-                    case 4:
-                        return new CallbackArguments(
-                            _fixedArgs._arg1,
-                            _fixedArgs._arg2,
-                            _fixedArgs._arg3,
-                            false
-                        );
-                    case 5:
-                        return new CallbackArguments(
-                            _fixedArgs._arg1,
-                            _fixedArgs._arg2,
-                            _fixedArgs._arg3,
-                            _fixedArgs._arg4,
-                            false
-                        );
-                    case 6:
-                        return new CallbackArguments(
-                            _fixedArgs._arg1,
-                            _fixedArgs._arg2,
-                            _fixedArgs._arg3,
-                            _fixedArgs._arg4,
-                            _fixedArgs._arg5,
-                            false
-                        );
-                    case 7:
-                        return new CallbackArguments(
-                            _fixedArgs._arg1,
-                            _fixedArgs._arg2,
-                            _fixedArgs._arg3,
-                            _fixedArgs._arg4,
-                            _fixedArgs._arg5,
-                            _fixedArgs._arg6,
-                            false
-                        );
-                    default:
-                        throw new InvalidOperationException("Invalid fixed argument count.");
-                }
-            }
-            else
+            if (!IsMethodCall)
             {
                 return this;
+            }
+
+            CallbackArguments skipped = SkipMethodCallCore();
+            skipped.OwnerScript = OwnerScript;
+            return skipped;
+        }
+
+        private CallbackArguments SkipMethodCallCore()
+        {
+            if (_args != null)
+            {
+                Slice<LuaValue> slice = new(_args, 1, _args.Count - 1, false);
+                return new CallbackArguments(slice, false);
+            }
+
+            switch (_fixedCount)
+            {
+                case 0:
+                case 1:
+                    return new CallbackArguments(false);
+                case 2:
+                    return new CallbackArguments(_fixedArgs._arg1, false);
+                case 3:
+                    return new CallbackArguments(_fixedArgs._arg1, _fixedArgs._arg2, false);
+                case 4:
+                    return new CallbackArguments(
+                        _fixedArgs._arg1,
+                        _fixedArgs._arg2,
+                        _fixedArgs._arg3,
+                        false
+                    );
+                case 5:
+                    return new CallbackArguments(
+                        _fixedArgs._arg1,
+                        _fixedArgs._arg2,
+                        _fixedArgs._arg3,
+                        _fixedArgs._arg4,
+                        false
+                    );
+                case 6:
+                    return new CallbackArguments(
+                        _fixedArgs._arg1,
+                        _fixedArgs._arg2,
+                        _fixedArgs._arg3,
+                        _fixedArgs._arg4,
+                        _fixedArgs._arg5,
+                        false
+                    );
+                case 7:
+                    return new CallbackArguments(
+                        _fixedArgs._arg1,
+                        _fixedArgs._arg2,
+                        _fixedArgs._arg3,
+                        _fixedArgs._arg4,
+                        _fixedArgs._arg5,
+                        _fixedArgs._arg6,
+                        false
+                    );
+                default:
+                    throw new InvalidOperationException("Invalid fixed argument count.");
             }
         }
 

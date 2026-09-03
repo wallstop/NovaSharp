@@ -21,6 +21,7 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
     using System.Text;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Platforms;
@@ -674,6 +675,24 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
                                     options.Sandbox = sandbox;
 
                                     Script script = new Script(CoreModulePresets.Complete, options);
+                                    // io.write bypasses Console.SetOut (it writes the raw
+                                    // standard stream), so redirect the default handles
+                                    // onto the capture writers for full-fidelity output
+                                    // The adapters deliberately outlive this scope: the
+                                    // io handles stay alive with the script, and the writers
+                                    // are disposed by the capture scope itself
+#pragma warning disable CA2000 // adapters transfer ownership to the script's io handles
+                                    IoModule.SetDefaultFile(
+                                        script,
+                                        StandardFileType.StdOut,
+                                        new TextWriterStream(stdoutWriter)
+                                    );
+                                    IoModule.SetDefaultFile(
+                                        script,
+                                        StandardFileType.StdErr,
+                                        new TextWriterStream(stderrWriter)
+                                    );
+#pragma warning restore CA2000
                                     script.DoFile(luaFile);
                                     ThrowIfFixtureWallClockExceeded(maxWallClock, fixtureStopwatch);
                                 }
@@ -1015,6 +1034,62 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
                     totalElapsed
                 )
             );
+        }
+
+        /// <summary>
+        /// Adapts a <see cref="TextWriter"/> to the <see cref="Stream"/> contract expected by
+        /// <c>io</c> default-file overrides, so <c>io.write</c> output lands in the fixture's
+        /// captured stdout/stderr instead of the process's real standard stream.
+        /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Usage",
+            "CA2213:Disposable fields should be disposed",
+            Justification = "The adapted writer is owned by the fixture-capture scope, not this adapter."
+        )]
+        private sealed class TextWriterStream : Stream
+        {
+            private readonly TextWriter _writer;
+
+            public TextWriterStream(TextWriter writer)
+            {
+                _writer = writer;
+            }
+
+            public override bool CanRead => false;
+
+            public override bool CanSeek => false;
+
+            public override bool CanWrite => true;
+
+            public override long Length => throw new NotSupportedException();
+
+            public override long Position
+            {
+                get => throw new NotSupportedException();
+                set => throw new NotSupportedException();
+            }
+
+            public override void Flush() => _writer.Flush();
+
+            public override void Write(byte[] buffer, int offset, int count)
+            {
+                _writer.Write(Encoding.UTF8.GetChars(buffer, offset, count));
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                throw new NotSupportedException();
+            }
+
+            public override long Seek(long offset, SeekOrigin origin)
+            {
+                throw new NotSupportedException();
+            }
+
+            public override void SetLength(long value)
+            {
+                throw new NotSupportedException();
+            }
         }
     }
 }

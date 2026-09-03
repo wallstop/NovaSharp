@@ -46,3 +46,4 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("WallstopStudios.NovaSharp.RemoteDebugger")]
 [assembly: InternalsVisibleTo("WallstopStudios.NovaSharp.Cli")]
 [assembly: InternalsVisibleTo("WallstopStudios.NovaSharp.Comparison")]
+[assembly: InternalsVisibleTo("WallstopStudios.NovaSharp.LuaBatchRunner")]

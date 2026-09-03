@@ -71,12 +71,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
         };
 
         private static readonly (TokenType Type, string Text, double Expected)[] NumericTokenCases =
-            new[]
-            {
-                (TokenType.Number, "42.5", 42.5d),
-                (TokenType.NumberHex, "0x1A", 26d),
-                (TokenType.NumberHexFloat, "0x1.fp+2", 7.75d),
-            };
+            new[] { (TokenType.Number, "42.5", 42.5d), (TokenType.Number, "1e3", 1000d) };
 
         [global::TUnit.Core.Test]
         public async Task ToStringIncludesTypeLocationAndText()
@@ -139,6 +134,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
             )!;
 
             await Assert.That(exception).IsNotNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetNumberValueThrowsOnHexadecimalTokens()
+        {
+            // Hexadecimal numerals are version-sensitive and materialize through LuaNumber,
+            // so the unversioned double path must reject them.
+            Token integerToken = CreateToken(TokenType.NumberHex, "0x1A");
+            Token floatToken = CreateToken(TokenType.NumberHexFloat, "0x1.fp+2");
+
+            NotSupportedException integerException = Assert.Throws<NotSupportedException>(() =>
+                integerToken.GetNumberValue()
+            )!;
+            NotSupportedException floatException = Assert.Throws<NotSupportedException>(() =>
+                floatToken.GetNumberValue()
+            )!;
+
+            await Assert.That(integerException).IsNotNull().ConfigureAwait(false);
+            await Assert.That(floatException).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
