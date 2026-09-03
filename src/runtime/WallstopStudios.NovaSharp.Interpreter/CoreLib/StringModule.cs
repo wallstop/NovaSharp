@@ -459,7 +459,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue vs = args.AsType(0, "byte", DataType.String, false);
+            LuaValue vs = args.AsType(executionContext, 0, "byte", DataType.String, false);
             LuaValue vi = args.AsType(1, "byte", DataType.Number, true);
             LuaValue vj = args.AsType(2, "byte", DataType.Number, true);
 
@@ -501,7 +501,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue vs = args.AsType(0, "unicode", DataType.String, false);
+            LuaValue vs = args.AsType(executionContext, 0, "unicode", DataType.String, false);
             LuaValue vi = args.AsType(1, "unicode", DataType.Number, true);
             LuaValue vj = args.AsType(2, "unicode", DataType.Number, true);
 
@@ -619,7 +619,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue vs = args.AsType(0, "len", DataType.String, false);
+            LuaValue vs = args.AsType(executionContext, 0, "len", DataType.String, false);
             return LuaValue.FromNumber(vs.String.Length);
         }
 
@@ -749,7 +749,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue argS = args.AsType(0, "lower", DataType.String, false);
+            LuaValue argS = args.AsType(executionContext, 0, "lower", DataType.String, false);
             return LuaValue.NewString(InvariantString.ToLowerInvariantIfNeeded(argS.String));
         }
 
@@ -777,7 +777,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue argS = args.AsType(0, "upper", DataType.String, false);
+            LuaValue argS = args.AsType(executionContext, 0, "upper", DataType.String, false);
             return LuaValue.NewString(InvariantString.ToUpperInvariantIfNeeded(argS.String));
         }
 
@@ -813,9 +813,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue argS = args.AsType(0, "rep", DataType.String, false);
+            LuaValue argS = args.AsType(executionContext, 0, "rep", DataType.String, false);
             LuaValue argN = args.AsType(1, "rep", DataType.Number, false);
-            LuaValue argSep = args.AsType(2, "rep", DataType.String, true);
+            LuaValue argSep = args.AsType(executionContext, 2, "rep", DataType.String, true);
 
             // Validate count for Lua 5.3+ integer representation requirements
             LuaNumberHelpers.ValidateIntegerArgument(
@@ -906,7 +906,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue argS = args.AsType(0, "reverse", DataType.String, false);
+            LuaValue argS = args.AsType(executionContext, 0, "reverse", DataType.String, false);
             string str = argS.String;
 
             if (String.IsNullOrEmpty(str))
@@ -960,7 +960,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue argS = args.AsType(0, "sub", DataType.String, false);
+            LuaValue argS = args.AsType(executionContext, 0, "sub", DataType.String, false);
             LuaValue argI = args.AsType(1, "sub", DataType.Number, true);
             LuaValue argJ = args.AsType(2, "sub", DataType.Number, true);
 
@@ -1002,8 +1002,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue argS1 = args.AsType(0, "startsWith", DataType.String, true);
-            LuaValue argS2 = args.AsType(1, "startsWith", DataType.String, true);
+            LuaValue argS1 = args.AsType(executionContext, 0, "startsWith", DataType.String, true);
+            LuaValue argS2 = args.AsType(executionContext, 1, "startsWith", DataType.String, true);
 
             if (argS1.IsNil || argS2.IsNil)
             {
@@ -1039,8 +1039,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue argS1 = args.AsType(0, "endsWith", DataType.String, true);
-            LuaValue argS2 = args.AsType(1, "endsWith", DataType.String, true);
+            LuaValue argS1 = args.AsType(executionContext, 0, "endsWith", DataType.String, true);
+            LuaValue argS2 = args.AsType(executionContext, 1, "endsWith", DataType.String, true);
 
             if (argS1.IsNil || argS2.IsNil)
             {
@@ -1076,8 +1076,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue argS1 = args.AsType(0, "contains", DataType.String, true);
-            LuaValue argS2 = args.AsType(1, "contains", DataType.String, true);
+            LuaValue argS1 = args.AsType(executionContext, 0, "contains", DataType.String, true);
+            LuaValue argS2 = args.AsType(executionContext, 1, "contains", DataType.String, true);
 
             if (argS1.IsNil || argS2.IsNil)
             {

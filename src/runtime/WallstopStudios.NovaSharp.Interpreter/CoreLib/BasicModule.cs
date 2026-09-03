@@ -181,7 +181,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue message = args.AsType(0, "error", DataType.String, false);
+            LuaValue message = args.AsType(executionContext, 0, "error", DataType.String, false);
             LuaValue level = args.AsType(1, "error", DataType.Number, true);
 
             // Lua 5.3+: level must have integer representation
@@ -1268,7 +1268,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         )
         {
             Script script = executionContext.Script;
-            LuaValue firstArgument = args.AsType(0, "warn", DataType.String);
+            LuaValue firstArgument = args.AsType(executionContext, 0, "warn", DataType.String);
 
             if (args.Count == 1 && firstArgument.String.StartsWith('@'))
             {

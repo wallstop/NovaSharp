@@ -282,20 +282,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 return InvokeArgumentViewCallback(
                     executionContext,
-                    new CallbackArgumentsView(
-                        args,
-                        0,
-                        args.Count,
-                        isMethodCall,
-                        executionContext.Script
-                    )
+                    new CallbackArgumentsView(args, isMethodCall)
                 );
             }
 
-            return ClrCallback(
-                executionContext,
-                new CallbackArguments(args, isMethodCall) { OwnerScript = executionContext.Script }
-            );
+            return ClrCallback(executionContext, new CallbackArguments(args, isMethodCall));
         }
 
         /// <summary>
@@ -321,9 +312,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 isMethodCall
             );
 
-            return _argumentViewNoContextCallback(
-                new CallbackArgumentsView(args, 0, args.Count, isMethodCall, script)
-            );
+            return _argumentViewNoContextCallback(new CallbackArgumentsView(args, isMethodCall));
         }
 
         /// <summary>
@@ -337,7 +326,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(executionContext, 0, LuaValue.Nil, isMethodCall);
             return InvokeArgumentViewCallback(
                 executionContext,
-                new CallbackArgumentsView(isMethodCall, executionContext.Script)
+                new CallbackArgumentsView(isMethodCall)
             );
         }
 
@@ -355,7 +344,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             isMethodCall = NormalizeMethodCall(script, 0, LuaValue.Nil, isMethodCall);
-            return _argumentViewNoContextCallback(new CallbackArgumentsView(isMethodCall, script));
+            return _argumentViewNoContextCallback(new CallbackArgumentsView(isMethodCall));
         }
 
         /// <summary>
@@ -370,7 +359,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(executionContext, 1, arg, isMethodCall);
             return InvokeArgumentViewCallback(
                 executionContext,
-                new CallbackArgumentsView(arg, isMethodCall, executionContext.Script)
+                new CallbackArgumentsView(arg, isMethodCall)
             );
         }
 
@@ -393,9 +382,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             isMethodCall = NormalizeMethodCall(script, 1, arg, isMethodCall);
-            return _argumentViewNoContextCallback(
-                new CallbackArgumentsView(arg, isMethodCall, script)
-            );
+            return _argumentViewNoContextCallback(new CallbackArgumentsView(arg, isMethodCall));
         }
 
         /// <summary>
@@ -411,7 +398,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(executionContext, 2, arg1, isMethodCall);
             return InvokeArgumentViewCallback(
                 executionContext,
-                new CallbackArgumentsView(arg1, arg2, isMethodCall, executionContext.Script)
+                new CallbackArgumentsView(arg1, arg2, isMethodCall)
             );
         }
 
@@ -437,7 +424,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             isMethodCall = NormalizeMethodCall(script, 2, arg1, isMethodCall);
             return _argumentViewNoContextCallback(
-                new CallbackArgumentsView(arg1, arg2, isMethodCall, script)
+                new CallbackArgumentsView(arg1, arg2, isMethodCall)
             );
         }
 
@@ -455,7 +442,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(executionContext, 3, arg1, isMethodCall);
             return InvokeArgumentViewCallback(
                 executionContext,
-                new CallbackArgumentsView(arg1, arg2, arg3, isMethodCall, executionContext.Script)
+                new CallbackArgumentsView(arg1, arg2, arg3, isMethodCall)
             );
         }
 
@@ -483,7 +470,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             isMethodCall = NormalizeMethodCall(script, 3, arg1, isMethodCall);
             return _argumentViewNoContextCallback(
-                new CallbackArgumentsView(arg1, arg2, arg3, isMethodCall, script)
+                new CallbackArgumentsView(arg1, arg2, arg3, isMethodCall)
             );
         }
 
@@ -502,14 +489,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(executionContext, 4, arg1, isMethodCall);
             return InvokeArgumentViewCallback(
                 executionContext,
-                new CallbackArgumentsView(
-                    arg1,
-                    arg2,
-                    arg3,
-                    arg4,
-                    isMethodCall,
-                    executionContext.Script
-                )
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, isMethodCall)
             );
         }
 
@@ -539,7 +519,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             isMethodCall = NormalizeMethodCall(script, 4, arg1, isMethodCall);
             return _argumentViewNoContextCallback(
-                new CallbackArgumentsView(arg1, arg2, arg3, arg4, isMethodCall, script)
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, isMethodCall)
             );
         }
 
@@ -559,15 +539,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(executionContext, 5, arg1, isMethodCall);
             return InvokeArgumentViewCallback(
                 executionContext,
-                new CallbackArgumentsView(
-                    arg1,
-                    arg2,
-                    arg3,
-                    arg4,
-                    arg5,
-                    isMethodCall,
-                    executionContext.Script
-                )
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, isMethodCall)
             );
         }
 
@@ -599,7 +571,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             isMethodCall = NormalizeMethodCall(script, 5, arg1, isMethodCall);
             return _argumentViewNoContextCallback(
-                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, isMethodCall, script)
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, isMethodCall)
             );
         }
 
@@ -620,16 +592,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(executionContext, 6, arg1, isMethodCall);
             return InvokeArgumentViewCallback(
                 executionContext,
-                new CallbackArgumentsView(
-                    arg1,
-                    arg2,
-                    arg3,
-                    arg4,
-                    arg5,
-                    arg6,
-                    isMethodCall,
-                    executionContext.Script
-                )
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, arg6, isMethodCall)
             );
         }
 
@@ -663,7 +626,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             isMethodCall = NormalizeMethodCall(script, 6, arg1, isMethodCall);
             return _argumentViewNoContextCallback(
-                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, arg6, isMethodCall, script)
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, arg6, isMethodCall)
             );
         }
 
@@ -685,17 +648,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             isMethodCall = NormalizeMethodCall(executionContext, 7, arg1, isMethodCall);
             return InvokeArgumentViewCallback(
                 executionContext,
-                new CallbackArgumentsView(
-                    arg1,
-                    arg2,
-                    arg3,
-                    arg4,
-                    arg5,
-                    arg6,
-                    arg7,
-                    isMethodCall,
-                    executionContext.Script
-                )
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, arg6, arg7, isMethodCall)
             );
         }
 
@@ -731,17 +684,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             isMethodCall = NormalizeMethodCall(script, 7, arg1, isMethodCall);
             return _argumentViewNoContextCallback(
-                new CallbackArgumentsView(
-                    arg1,
-                    arg2,
-                    arg3,
-                    arg4,
-                    arg5,
-                    arg6,
-                    arg7,
-                    isMethodCall,
-                    script
-                )
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, arg6, arg7, isMethodCall)
             );
         }
 
@@ -784,13 +727,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             );
             return InvokeArgumentViewCallback(
                 executionContext,
-                new CallbackArgumentsView(
-                    args,
-                    offset,
-                    count,
-                    isMethodCall,
-                    executionContext.Script
-                )
+                new CallbackArgumentsView(args, offset, count, isMethodCall)
             );
         }
 
@@ -825,7 +762,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 isMethodCall
             );
             return _argumentViewNoContextCallback(
-                new CallbackArgumentsView(args, offset, count, isMethodCall, script)
+                new CallbackArgumentsView(args, offset, count, isMethodCall)
             );
         }
 
@@ -851,7 +788,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             );
             return InvokeArgumentViewCallback(
                 executionContext,
-                new CallbackArgumentsView(args, isMethodCall, executionContext.Script)
+                new CallbackArgumentsView(args, isMethodCall)
             );
         }
 
@@ -879,9 +816,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 args.Length > 0 ? args[0] : LuaValue.Nil,
                 isMethodCall
             );
-            return _argumentViewNoContextCallback(
-                new CallbackArgumentsView(args, isMethodCall, script)
-            );
+            return _argumentViewNoContextCallback(new CallbackArgumentsView(args, isMethodCall));
         }
 
         /// <summary>
@@ -909,10 +844,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 args.Count > 0 ? args[0] : LuaValue.Nil,
                 isMethodCall
             );
-            return ClrCallback(
-                executionContext,
-                new CallbackArguments(args, isMethodCall) { OwnerScript = executionContext.Script }
-            );
+            return ClrCallback(executionContext, new CallbackArguments(args, isMethodCall));
         }
 
         /// <summary>
@@ -924,10 +856,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             isMethodCall = NormalizeMethodCall(executionContext, 0, LuaValue.Nil, isMethodCall);
-            return ClrCallback(
-                executionContext,
-                new CallbackArguments(isMethodCall) { OwnerScript = executionContext.Script }
-            );
+            return ClrCallback(executionContext, new CallbackArguments(isMethodCall));
         }
 
         /// <summary>
@@ -940,10 +869,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             isMethodCall = NormalizeMethodCall(executionContext, 1, arg, isMethodCall);
-            return ClrCallback(
-                executionContext,
-                new CallbackArguments(arg, isMethodCall) { OwnerScript = executionContext.Script }
-            );
+            return ClrCallback(executionContext, new CallbackArguments(arg, isMethodCall));
         }
 
         /// <summary>
@@ -957,13 +883,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             isMethodCall = NormalizeMethodCall(executionContext, 2, arg1, isMethodCall);
-            return ClrCallback(
-                executionContext,
-                new CallbackArguments(arg1, arg2, isMethodCall)
-                {
-                    OwnerScript = executionContext.Script,
-                }
-            );
+            return ClrCallback(executionContext, new CallbackArguments(arg1, arg2, isMethodCall));
         }
 
         /// <summary>
@@ -981,9 +901,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return ClrCallback(
                 executionContext,
                 new CallbackArguments(arg1, arg2, arg3, isMethodCall)
-                {
-                    OwnerScript = executionContext.Script,
-                }
             );
         }
 
@@ -1003,9 +920,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return ClrCallback(
                 executionContext,
                 new CallbackArguments(arg1, arg2, arg3, arg4, isMethodCall)
-                {
-                    OwnerScript = executionContext.Script,
-                }
             );
         }
 
@@ -1026,9 +940,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return ClrCallback(
                 executionContext,
                 new CallbackArguments(arg1, arg2, arg3, arg4, arg5, isMethodCall)
-                {
-                    OwnerScript = executionContext.Script,
-                }
             );
         }
 
@@ -1050,9 +961,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return ClrCallback(
                 executionContext,
                 new CallbackArguments(arg1, arg2, arg3, arg4, arg5, arg6, isMethodCall)
-                {
-                    OwnerScript = executionContext.Script,
-                }
             );
         }
 
@@ -1075,9 +983,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return ClrCallback(
                 executionContext,
                 new CallbackArguments(arg1, arg2, arg3, arg4, arg5, arg6, arg7, isMethodCall)
-                {
-                    OwnerScript = executionContext.Script,
-                }
             );
         }
 

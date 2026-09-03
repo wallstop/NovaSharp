@@ -418,7 +418,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             LuaValue vlist = args.AsType(0, "concat", DataType.Table, false);
-            LuaValue vsep = args.AsType(1, "concat", DataType.String, true);
+            LuaValue vsep = args.AsType(executionContext, 1, "concat", DataType.String, true);
             LuaValue vstart = args.AsType(2, "concat", DataType.Number, true);
             LuaValue vend = args.AsType(3, "concat", DataType.Number, true);
 

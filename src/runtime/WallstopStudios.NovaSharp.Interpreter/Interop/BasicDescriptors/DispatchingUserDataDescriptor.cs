@@ -715,8 +715,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             if (index.Type != DataType.Tuple)
             {
                 args = !value.HasValue
-                    ? new CallbackArguments(index, false) { OwnerScript = script }
-                    : new CallbackArguments(index, value.Value, false) { OwnerScript = script };
+                    ? new CallbackArguments(index, false)
+                    : new CallbackArguments(index, value.Value, false);
             }
             else
             {
@@ -731,7 +731,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                     values.Add(value.Value);
                 }
 
-                args = new CallbackArguments(values, false) { OwnerScript = script };
+                args = new CallbackArguments(values, false);
             }
 
             ScriptExecutionContext execCtx = script.CreateDynamicExecutionContext();

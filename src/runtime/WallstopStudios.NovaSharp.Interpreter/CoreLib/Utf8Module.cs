@@ -50,7 +50,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleMethod(Name = "len")]
         public static LuaValue Len(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            LuaValue value = args.AsType(0, "utf8.len", DataType.String, false);
+            LuaValue value = args.AsType(executionContext, 0, "utf8.len", DataType.String, false);
             LuaValue start = args.AsType(1, "utf8.len", DataType.Number, true);
             LuaValue end = args.AsType(2, "utf8.len", DataType.Number, true);
 
@@ -87,7 +87,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            LuaValue value = args.AsType(0, "utf8.codepoint", DataType.String, false);
+            LuaValue value = args.AsType(
+                executionContext,
+                0,
+                "utf8.codepoint",
+                DataType.String,
+                false
+            );
             LuaValue start = args.AsType(1, "utf8.codepoint", DataType.Number, true);
             LuaValue end = args.AsType(2, "utf8.codepoint", DataType.Number, true);
 
@@ -350,7 +356,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            LuaValue value = args.AsType(0, "utf8.codes", DataType.String, false);
+            LuaValue value = args.AsType(executionContext, 0, "utf8.codes", DataType.String, false);
 
             // Lua 5.4+ supports optional 'lax' parameter
             bool lax = false;
@@ -386,7 +392,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         )
         {
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
-            LuaValue value = args.AsType(0, "utf8.offset", DataType.String, false);
+            LuaValue value = args.AsType(
+                executionContext,
+                0,
+                "utf8.offset",
+                DataType.String,
+                false
+            );
             LuaValue nArg = args.AsType(1, "utf8.offset", DataType.Number, false);
             LuaValue indexArg = args.AsType(2, "utf8.offset", DataType.Number, true);
 
@@ -504,7 +516,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            LuaValue state = args.AsType(0, "utf8.codes", DataType.String, false);
+            LuaValue state = args.AsType(executionContext, 0, "utf8.codes", DataType.String, false);
             LuaValue control = args.AsType(1, "utf8.codes", DataType.Number, true);
 
             string value = state.String;
@@ -539,7 +551,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
-            LuaValue state = args.AsType(0, "utf8.codes", DataType.String, false);
+            LuaValue state = args.AsType(executionContext, 0, "utf8.codes", DataType.String, false);
             LuaValue control = args.AsType(1, "utf8.codes", DataType.Number, true);
 
             string value = state.String;

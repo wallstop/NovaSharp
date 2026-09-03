@@ -37,7 +37,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             try
             {
-                LuaValue vs = args.AsType(0, "parse", DataType.String, false);
+                LuaValue vs = args.AsType(executionContext, 0, "parse", DataType.String, false);
                 Table t = JsonTableConverter.JsonToTable(vs.String, executionContext.Script);
                 return LuaValue.NewTable(t);
             }

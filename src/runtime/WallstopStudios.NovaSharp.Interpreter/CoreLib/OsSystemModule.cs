@@ -49,7 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                 executionContext.Script.CompatibilityVersion
             );
-            LuaValue v = args.AsType(0, "execute", DataType.String, true);
+            LuaValue v = args.AsType(executionContext, 0, "execute", DataType.String, true);
 
             if (v.IsNil)
             {
@@ -146,7 +146,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            LuaValue varName = args.AsType(0, "getenv", DataType.String, false);
+            LuaValue varName = args.AsType(executionContext, 0, "getenv", DataType.String, false);
 
             string val = Script.GlobalOptions.Platform.GetEnvironmentVariable(varName.String);
 
@@ -180,7 +180,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            string fileName = args.AsType(0, "remove", DataType.String, false).String;
+            string fileName = args.AsType(
+                executionContext,
+                0,
+                "remove",
+                DataType.String,
+                false
+            ).String;
 
             try
             {
@@ -236,8 +242,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            string fileNameOld = args.AsType(0, "rename", DataType.String, false).String;
-            string fileNameNew = args.AsType(1, "rename", DataType.String, false).String;
+            string fileNameOld = args.AsType(
+                executionContext,
+                0,
+                "rename",
+                DataType.String,
+                false
+            ).String;
+            string fileNameNew = args.AsType(
+                executionContext,
+                1,
+                "rename",
+                DataType.String,
+                false
+            ).String;
 
             try
             {

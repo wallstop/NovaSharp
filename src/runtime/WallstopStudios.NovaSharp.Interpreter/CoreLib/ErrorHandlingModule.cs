@@ -394,7 +394,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return SetErrorHandlerStrategy(
                 "xpcall",
                 executionContext,
-                new CallbackArguments(a, false) { OwnerScript = executionContext.Script },
+                new CallbackArguments(a, false),
                 handler,
                 hasHandlerBeforeUnwind: true
             );
