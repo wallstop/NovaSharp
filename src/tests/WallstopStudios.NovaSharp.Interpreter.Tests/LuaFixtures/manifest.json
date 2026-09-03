@@ -1,7 +1,7 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1977,
-  "novasharp_only": 492,
+  "total_snippets": 1978,
+  "novasharp_only": 493,
   "comparable": 1485,
   "by_version": {
     "5.1": 994,
@@ -21935,6 +21935,14 @@
         "5.3"
       ],
       "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/Unknown.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:36",
+      "test": "NumericForLoopTUnitTests.Unknown",
+      "lua_versions": [],
+      "novasharp_only": true,
       "expects_error": false
     }
   ]

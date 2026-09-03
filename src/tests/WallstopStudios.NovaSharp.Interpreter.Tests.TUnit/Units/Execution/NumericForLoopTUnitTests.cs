@@ -30,12 +30,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         private static string RunLoop(LuaCompatibilityVersion version, string range)
         {
             Script script = new(version);
-            // Composed by concatenation so the corpus extractor does not pick the range
-            // placeholder up as a standalone fixture.
+            // The unresolved {range} placeholder makes the corpus extractor mark its
+            // derived Unknown.lua snippet NovaSharp-only, keeping the comparable corpus
+            // free of a partial helper body.
             LuaValue result = script.DoString(
-                "local t = {} for i = "
-                    + range
-                    + " do t[#t + 1] = i end return table.concat(t, ',')"
+                $"local t = {{}} for i = {range} do t[#t + 1] = i end return table.concat(t, ',')"
             );
             return result.String;
         }
