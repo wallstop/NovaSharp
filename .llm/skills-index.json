@@ -399,7 +399,7 @@
       "name": "lua-spec-verification",
       "description": "Determine exact reference Lua behavior and compare NovaSharp against Lua 5.1 through 5.5. Use for spec compliance, semantic ambiguity, version differences, or behavior investigations.",
       "file_path": ".llm/skills/lua-spec-verification/SKILL.md",
-      "line_count": 121,
+      "line_count": 140,
       "category": "lua",
       "related": [
         "lua-fixture-creation",

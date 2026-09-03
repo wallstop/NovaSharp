@@ -631,6 +631,49 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        public async Task StringCoercibleControlsIterateLikeReferenceBeforeLua53(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.1/5.2 coerce string controls to the single number type; the loop
+            // values must still be numbers, not the raw strings.
+            Script script = new(version);
+            LuaValue withInit = script.DoString(
+                @"local t = {}
+                  for i = '1', 3 do t[#t + 1] = type(i) .. ':' .. tostring(i) end
+                  return table.concat(t, ',')"
+            );
+            LuaValue withStep = script.DoString(
+                @"local t = {}
+                  for i = 1, 3, '1' do t[#t + 1] = tostring(i) end
+                  return table.concat(t, ',')"
+            );
+
+            await Assert
+                .That(withInit.String)
+                .IsEqualTo("number:1,number:2,number:3")
+                .ConfigureAwait(false);
+            await Assert.That(withStep.String).IsEqualTo("1,2,3").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task StringControlsProduceFloatLoopFromLua53(LuaCompatibilityVersion version)
+        {
+            // From 5.3 on, a string control never selects the integer loop; reference
+            // coerces it into a float loop whose values print as floats.
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"local t = {}
+                  for i = '1', 3 do t[#t + 1] = tostring(i) end
+                  return table.concat(t, ',')"
+            );
+
+            await Assert.That(result.String).IsEqualTo("1.0,2.0,3.0").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task GotoOutOfNumericLoopDoesNotLeakControlSlots(
             LuaCompatibilityVersion version

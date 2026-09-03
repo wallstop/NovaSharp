@@ -77,13 +77,15 @@ repaired in place. Replace it with reference Lua's counter-based loop protocol.
   [#99](https://github.com/wallstop/NovaSharp/issues/99) class) and were curated —
   curated headers are authoritative across regenerations, verified by re-running the
   extractor.
-- The interpolated `RunLoop` helper in the test was rewritten as concatenation so the
-  extractor stops emitting a placeholder `Unknown.lua` fixture.
-- Corpus regeneration is idempotent at 1,978 snippets. The enforced comparison
+- The `RunLoop` test helper deliberately keeps its unresolved `{range}` interpolation
+  placeholder: the corpus extractor then marks its derived `Unknown.lua` snippet
+  NovaSharp-only, keeping the comparable corpus free of a partial helper body (the
+  same self-suppression the repository's other `Unknown.lua` snippets rely on).
+- Corpus regeneration is idempotent at 1,990 snippets. The enforced comparison
   matrix passed on all five lanes with zero mismatches, zero one-sided failures, and
-  zero missing outputs; the both-error ratchet was rebaselined (+66 lines) for the
-  new zero-step fixtures that both interpreters reject with version-appropriate but
-  differently formatted messages.
+  zero missing outputs; the both-error ratchet was rebaselined for the fixtures that
+  both interpreters reject with version-appropriate but differently formatted
+  messages (+286 lines across the session's rebaselines).
 - The loop check stays allocation-free by construction: the new paths use only
   value-type `LuaNumber` arithmetic, integer compares, and in-place stack writes.
 
@@ -130,6 +132,19 @@ Nits also addressed: the counter-cap comment now states the lost terminal iterat
 Acknowledged and left open: reference 5.3 loops forever at the integer extremes where
 NovaSharp follows the corrected 5.4 semantics (documented in tests and fixtures), and
 Lua 5.5's const control variable ([#130](https://github.com/wallstop/NovaSharp/issues/130)).
+
+A second, independent post-merge review then found one regression the earlier gates
+missed: string-coercible controls (`for i = "1", 3`) crashed or mis-iterated on the
+5.1/5.2 profiles because the float branch only wrote the coerced limit back to its
+slot, leaving raw strings in the index and step slots that `Incr`/`JFor` cannot
+operate on — the deleted `ToNum` stages used to perform that write-back. Fixed by
+writing the coerced controls back in every profile (normalized to floats from 5.3,
+coerced subtypes before), with reference-verified regressions on both sides of 5.3.
+The same review confirmed the counter-protocol port line-by-line against the fetched
+`lvm.c` and spot-checked 25+ parity cases; it also surfaced a pre-existing 5.1/5.2
+validation-order gap (reference validates init→limit→step; NovaSharp always uses the
+5.3+ order) now filed for follow-up, and tightened this session's knowledge matrix
+around NaN steps.
 
 ## Release-note-ready summary
 
