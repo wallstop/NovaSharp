@@ -1321,6 +1321,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 throw ScriptRuntimeException.ForStepIsZero();
             }
 
+            // A zero float step on Lua 5.1-5.3 is left to the entry check below, exactly
+            // like reference Lua: an ascending loop skips, while a descending loop enters
+            // and never terminates (verified against lua5.1-5.3; sandbox instruction
+            // limits bound such scripts).
+
             // Reference Lua stores all three controls of a float loop as floats; NovaSharp
             // normalizes the same way from Lua 5.3 on, so the body observes float control
             // values from the very first iteration. Lua 5.1/5.2 have a single number

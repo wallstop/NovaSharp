@@ -50,7 +50,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 case OpCode.IterUpd:
                 case OpCode.IterPrep:
                 case OpCode.NewTable:
-                case OpCode.ForPrep:
                 case OpCode.Concat:
                 case OpCode.LessEq:
                 case OpCode.Less:
@@ -85,6 +84,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 case OpCode.Jf:
                 case OpCode.JNil:
                 case OpCode.JFor:
+                case OpCode.ForPrep:
                 case OpCode.JtOrPop:
                 case OpCode.JfOrPop:
                     return InstructionFieldUsagePresets.NumValAsCodeAddress;

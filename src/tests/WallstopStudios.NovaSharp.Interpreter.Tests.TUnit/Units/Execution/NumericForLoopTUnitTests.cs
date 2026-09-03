@@ -419,6 +419,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task SkippedLoopRoundTripsThroughBinaryDump(LuaCompatibilityVersion version)
+        {
+            // ForPrep carries the loop's skip target in NumVal; the dump must preserve it
+            // so a dumped skipped loop still resumes past the loop instead of address zero.
+            Script script = new(version);
+            LuaValue function = script.LoadString(
+                "local t = {} for i = 5, 3 do t[#t + 1] = i end t[#t + 1] = 99 "
+                    + "return table.concat(t, ',')"
+            );
+
+            using MemoryStream stream = new();
+            script.Dump(function, stream);
+            stream.Position = 0;
+            LuaValue loaded = script.LoadStream(stream);
+            LuaValue result = script.Call(loaded);
+
+            await Assert.That(result.String).IsEqualTo("99").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [MethodDataSource(nameof(GetNanBoundTruthTableData))]
         public async Task NonFiniteBoundsMatchReferenceIterations(
             LuaCompatibilityVersion version,
