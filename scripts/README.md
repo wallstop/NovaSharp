@@ -28,7 +28,7 @@ For fast iterative development, use the quick build and test scripts:
 - `ci/` — Repository health guards (e.g., README/link enforcement, GitHub Pages Liquid syntax) that run locally or in CI before builds/tests execute.
 - `dev/` — Local developer utilities, including the shared pre-commit hook installer/driver and GitHub CLI authentication helpers for either the current shell or every shell in the current container.
 - `branding/` — Guardrail scripts (e.g., `ensure-novasharp-branding.sh`) that prevent regressions to the legacy brand.
-- `lint/` — Static and deterministic behavior checks that enforce test isolation patterns, guard VM hot paths against new allocation traps, and keep developer tooling and devcontainer lifecycle behavior aligned.
+- `lint/` — Static and deterministic behavior checks that enforce test isolation patterns, guard VM hot paths against new allocation traps, and keep developer tooling, the devcontainer lifecycle, and the AI-backend launcher contract aligned.
 - `modernization/` — One-off helpers such as `generate-moonsharp-audit.ps1` used during the modernization campaign.
 
 ## Usage Guidelines
