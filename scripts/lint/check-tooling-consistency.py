@@ -27,6 +27,7 @@ DEVCONTAINER_ON_CREATE = REPO_ROOT / ".devcontainer" / "on-create.sh"
 DEVCONTAINER_POST_START = REPO_ROOT / ".devcontainer" / "post-start.sh"
 DEVCONTAINER_LIFECYCLE_TEST = REPO_ROOT / "scripts" / "lint" / "test-devcontainer-lifecycle.sh"
 DEVCONTAINER_BUILD_CACHE_TEST = REPO_ROOT / "scripts" / "lint" / "test-devcontainer-build-cache.sh"
+DEVCONTAINER_AI_BACKENDS_TEST = REPO_ROOT / "scripts" / "lint" / "test-ai-backends.sh"
 CODEX_MCP_CONFIG = REPO_ROOT / ".codex" / "config.toml"
 SHARED_MCP_CONFIG = REPO_ROOT / ".mcp.json"
 VSCODE_MCP_CONFIG = REPO_ROOT / ".vscode" / "mcp.json"
@@ -419,6 +420,27 @@ def check_devcontainer_build_cache_behavior(violations: list[str]) -> None:
         )
 
 
+def check_devcontainer_ai_backends(violations: list[str]) -> None:
+    if not DEVCONTAINER_AI_BACKENDS_TEST.is_file():
+        violations.append(f"{repo_path(DEVCONTAINER_AI_BACKENDS_TEST)} is missing.")
+        return
+
+    try:
+        result = subprocess.run(
+            ["bash", repo_path(DEVCONTAINER_AI_BACKENDS_TEST)],
+            cwd=REPO_ROOT,
+            check=False,
+        )
+    except OSError as exc:
+        violations.append(f"Unable to run {repo_path(DEVCONTAINER_AI_BACKENDS_TEST)}: {exc}")
+        return
+
+    if result.returncode != 0:
+        violations.append(
+            f"{repo_path(DEVCONTAINER_AI_BACKENDS_TEST)} failed with exit code {result.returncode}."
+        )
+
+
 def check_github_mcp_configs(violations: list[str]) -> None:
     required_configs = (
         CODEX_MCP_CONFIG,
@@ -607,6 +629,7 @@ def main() -> int:
     check_devcontainer_artifact_cleanup(violations)
     check_devcontainer_lifecycle_behavior(violations)
     check_devcontainer_build_cache_behavior(violations)
+    check_devcontainer_ai_backends(violations)
     check_github_mcp_configs(violations)
     check_shell_dotnet_tool_restore(violations)
     check_unpinned_template_installs(violations)

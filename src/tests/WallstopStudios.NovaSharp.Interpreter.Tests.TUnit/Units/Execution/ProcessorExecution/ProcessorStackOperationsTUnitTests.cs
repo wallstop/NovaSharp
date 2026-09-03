@@ -28,9 +28,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Processor processor = script.GetMainProcessorForTests();
             FastStack<LuaValue> valueStack = processor.GetValueStackForTests();
             valueStack.Clear();
+            // Numeric for-loop control triple: [remaining iterations, step, index].
+            LuaValue remainingCounter = LuaValue.NewNumber(4);
+            valueStack.Push(remainingCounter);
             valueStack.Push(LuaValue.NewNumber(1));
-            LuaValue previousCounter = LuaValue.NewNumber(2);
-            valueStack.Push(previousCounter);
+            LuaValue previousIndex = LuaValue.NewNumber(2);
+            valueStack.Push(previousIndex);
 
             Instruction instruction = new(SourceRef.GetClrLocation()) { NumVal = 1 };
             processor.ExecIncrForTests(instruction);
@@ -38,11 +41,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             LuaValue result = valueStack.Peek();
 
             await Assert.That(result.Number).IsEqualTo(3d);
-            await Assert.That(result).IsNotEqualTo(previousCounter);
+            await Assert.That(result).IsNotEqualTo(previousIndex);
 
-            // The prior counter may already have been stored into the loop variable's slot,
+            // The prior index may already have been stored into the loop variable's slot,
             // so incrementing must never write through it.
-            await Assert.That(previousCounter.Number).IsEqualTo(2d);
+            await Assert.That(previousIndex.Number).IsEqualTo(2d);
+            // The integer-loop counter is consumed by one unit per completed iteration.
+            await Assert.That(valueStack.Peek(2).Number).IsEqualTo(3d);
         }
 
         [global::TUnit.Core.Test]

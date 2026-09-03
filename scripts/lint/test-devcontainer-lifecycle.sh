@@ -51,6 +51,7 @@ setup_npm_fixture() {
     local fake_bin="${fixture}/fake-bin"
     local prefix="${fixture}/prefix"
     mkdir -p "${fake_bin}" "${prefix}/bin" "${prefix}/lib/node_modules/@openai/codex" \
+        "${prefix}/lib/node_modules/@anthropic-ai/claude-code" \
         "${prefix}/lib/node_modules/@nanocollective" "${fixture}/cache"
     printf '%s\n' "1.0.0" > "${fixture}/installed-version"
 
@@ -85,7 +86,7 @@ setup_npm_fixture() {
         '  list)' \
         '    if [ "${NOVA_TEST_SCENARIO}" = "list-invalid" ]; then printf "not-json\n"; exit 1; fi' \
         '    version="$(<"${NOVA_TEST_FIXTURE}/installed-version")"' \
-        '    printf "{\"dependencies\":{\"@nanocollective/nanocoder\":{\"version\":\"%s\"},\"opencode-ai\":{\"version\":\"%s\"},\"@openai/codex\":{\"version\":\"%s\"}}}\n" "${version}" "${version}" "${version}"' \
+        '    printf "{\"dependencies\":{\"@nanocollective/nanocoder\":{\"version\":\"%s\"},\"opencode-ai\":{\"version\":\"%s\"},\"@openai/codex\":{\"version\":\"%s\"},\"@anthropic-ai/claude-code\":{\"version\":\"%s\"}}}\n" "${version}" "${version}" "${version}" "${version}"' \
         '    if [ "${NOVA_TEST_SCENARIO}" = "list-nonzero" ]; then exit 1; fi' \
         '    ;;' \
         '  view)' \
@@ -116,7 +117,7 @@ setup_npm_fixture() {
     write_executable "${prefix}/bin/fake-cli" \
         '#!/usr/bin/env bash' \
         'printf "%s %s\n" "$(basename "$0")" "$(<"${NOVA_TEST_FIXTURE}/installed-version")"'
-    for command_name in nanocoder opencode codex; do
+    for command_name in nanocoder opencode codex claude; do
         ln -s fake-cli "${prefix}/bin/${command_name}"
     done
 

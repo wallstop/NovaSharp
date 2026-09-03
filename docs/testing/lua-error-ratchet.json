@@ -1169,6 +1169,39 @@
       "nova_error_excerpt": "LuaFixtures/NovaSharpHideMemberAttributeTUnitTests/HiddenMembersPropagateThroughInheritance_1.lua:(6,0-28): attempt to index a nil value [compatibility: Lua 5.1]"
     },
     {
+      "file": "NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "4f6f7095491e9bbb52ec0d6c47047ca48711fcc8106469531aa9ee21d3d14645",
+      "nova_error_sha256": "24779896847f438f20aa0c99d12dc426e7e0abd4fe973c6f809b86de8d7376da",
+      "lua_error_excerpt": "lua: ...ricForLoopTUnitTests/ForControlErrorsBeforeLua54.lua:<line>: 'for' limit must be a number | stack traceback: | \t...ricForLoopTUnitTests/ForControlErrorsBeforeLua54.lua:<...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua:(8,0-19): 'for' limit must be a number [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "7b5593ceb9e722615955bf3f873b99ed2807a591134798473fb55d9f2a0cfde4",
+      "nova_error_sha256": "80ac5f78b1d38e19215ab9b07c5a568df668c2ed00e26502459ee5a1b668f437",
+      "lua_error_excerpt": "lua: ...s/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:<line>: 'for' limit must be a number | stack traceback: | \t...s/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:<...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:(7,0-19): 'for' limit must be a number [compatibility: Lua 5.1]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "dc32b6842b2886cebfcc8fcc725e5e561b812aade9a6cbfb167986048a36cba1",
+      "nova_error_sha256": "949fec27eae75c9ba14e6fad23102c4485baf7648afb8bad46d3c08acd349c55",
+      "lua_error_excerpt": "lua: ...res/NumericForLoopTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua:<line>: unexpected symbol near '<eof>'",
+      "nova_error_excerpt": "unexpected symbol near '<eof>'"
+    },
+    {
       "file": "OsTimeModuleTUnitTests/TimeThrowsWhenDayFieldMissing.lua",
       "lua_version": "5.1",
       "classification": "unclassified",
@@ -3400,6 +3433,39 @@
       "nova_error_sha256": "abdcc1245e0e034baaca63161fba22b0b176a0efa7c0228e4a46f609b6a15ea1",
       "lua_error_excerpt": "lua: ...UnitTests/HiddenMembersPropagateThroughInheritance_1.lua:<line>: attempt to index global 'sample' (a nil value) | stack traceback: | \t...UnitTests/HiddenMembersPropagate...",
       "nova_error_excerpt": "LuaFixtures/NovaSharpHideMemberAttributeTUnitTests/HiddenMembersPropagateThroughInheritance_1.lua:(6,0-28): attempt to index a nil value [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "825f6c556e83aa6ae7b894a8491be5fee0a3f393ba1ad953e814596c8b350edf",
+      "nova_error_sha256": "72cc19506298340e3382c77a6055c9b2235669466a63e41bd136f0d3a628721c",
+      "lua_error_excerpt": "lua: ...NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua:<line>: 'for' limit must be a number | stack traceback: | \t...NumericForLoopTUnitTests/ForControlErrorsBeforeLua...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua:(8,0-19): 'for' limit must be a number [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "ae782cb9ca2ee471247b5d2ae8ae844ea9bbde86ebd2b6954400cf5134d2b26b",
+      "nova_error_sha256": "006c6f2c127992d2b925194806632b0110a3da22cf874fa1d9eda201f090573d",
+      "lua_error_excerpt": "lua: ...Tests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:<line>: 'for' limit must be a number | stack traceback: | \t...Tests/InvalidLimitReportedBeforeZeroStepThroughLua...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:(7,0-19): 'for' limit must be a number [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "1c775588fe4f34b110f9d07659b4de1ff1918f8896a61dcf361fe9ed6dacc103",
+      "nova_error_sha256": "949fec27eae75c9ba14e6fad23102c4485baf7648afb8bad46d3c08acd349c55",
+      "lua_error_excerpt": "lua: ...opTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua:<line>: unexpected symbol near <eof>",
+      "nova_error_excerpt": "unexpected symbol near '<eof>'"
     },
     {
       "file": "OverloadsTestClass/InteropOutParamInOverloadResolution.lua",
@@ -5765,6 +5831,50 @@
       "nova_error_sha256": "81aa8e970e14d44e1ae23d72a8e75abc530dda6dfdd3ba3ab9bb457108e381a5",
       "lua_error_excerpt": "lua: ...UnitTests/HiddenMembersPropagateThroughInheritance_1.lua:<line>: attempt to index a nil value (global 'sample') | stack traceback: | \t...UnitTests/HiddenMembersPropagate...",
       "nova_error_excerpt": "LuaFixtures/NovaSharpHideMemberAttributeTUnitTests/HiddenMembersPropagateThroughInheritance_1.lua:(6,0-28): attempt to index a nil value [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "825f6c556e83aa6ae7b894a8491be5fee0a3f393ba1ad953e814596c8b350edf",
+      "nova_error_sha256": "934838484acdad2deecb4410772a612087960745caf1033a6faccf89eb3e599f",
+      "lua_error_excerpt": "lua: ...NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua:<line>: 'for' limit must be a number | stack traceback: | \t...NumericForLoopTUnitTests/ForControlErrorsBeforeLua...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua:(8,0-19): 'for' limit must be a number [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "ae782cb9ca2ee471247b5d2ae8ae844ea9bbde86ebd2b6954400cf5134d2b26b",
+      "nova_error_sha256": "e692043f9964bc664d97dea9d1b4a975a0d6713995d716ee222318186069ebd7",
+      "lua_error_excerpt": "lua: ...Tests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:<line>: 'for' limit must be a number | stack traceback: | \t...Tests/InvalidLimitReportedBeforeZeroStepThroughLua...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:(7,0-19): 'for' limit must be a number [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "1c775588fe4f34b110f9d07659b4de1ff1918f8896a61dcf361fe9ed6dacc103",
+      "nova_error_sha256": "949fec27eae75c9ba14e6fad23102c4485baf7648afb8bad46d3c08acd349c55",
+      "lua_error_excerpt": "lua: ...opTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua:<line>: unexpected symbol near <eof>",
+      "nova_error_excerpt": "unexpected symbol near '<eof>'"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepReportedBeforeInvalidLimitFromLua54.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "7922b6b6409c5b9caa2259de25d2fb5a44c58d1d6bcffe92475a4fd9f8960132",
+      "nova_error_sha256": "6a2b367ce3bda6d40b481e194584e0d75ce46c03f1bb95a07124c10fa478fe80",
+      "lua_error_excerpt": "lua: ...nitTests/ZeroStepReportedBeforeInvalidLimitFromLua54.lua:<line>: 'for' limit must be a number | stack traceback: | \t...nitTests/ZeroStepReportedBeforeInvalidLimitFromLua...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepReportedBeforeInvalidLimitFromLua54.lua:(7,0-19): 'for' limit must be a number [compatibility: Lua 5.3]"
     },
     {
       "file": "OsTimeModuleTUnitTests/DiffTimeHandlesOptionalStartArgument_1.lua",
@@ -8911,6 +9021,94 @@
       "nova_error_sha256": "92098350936484da2d888d5f8cb29a8c73fd7ee7a8539b0df47ff975a6a49401",
       "lua_error_excerpt": "lua: ...UnitTests/HiddenMembersPropagateThroughInheritance_1.lua:<line>: attempt to index a nil value (global 'sample') | stack traceback: | \t...UnitTests/HiddenMembersPropagate...",
       "nova_error_excerpt": "LuaFixtures/NovaSharpHideMemberAttributeTUnitTests/HiddenMembersPropagateThroughInheritance_1.lua:(6,0-28): attempt to index a nil value [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "c683c16432e14955adfda3f1d956125f27e133d70e84051fe2018e895d6301d6",
+      "nova_error_sha256": "6456fb47a1e83c465f49e576c9446c87baa7e6810cbc42903ed85a10eedd0f1c",
+      "lua_error_excerpt": "lua: ...s/NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua:<line>: 'for' step is zero | stack traceback: | \t...s/NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua:(7,0-19): 'for' step is zero [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "1c775588fe4f34b110f9d07659b4de1ff1918f8896a61dcf361fe9ed6dacc103",
+      "nova_error_sha256": "949fec27eae75c9ba14e6fad23102c4485baf7648afb8bad46d3c08acd349c55",
+      "lua_error_excerpt": "lua: ...opTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua:<line>: unexpected symbol near <eof>",
+      "nova_error_excerpt": "unexpected symbol near '<eof>'"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/NonNumberControlErrorsUseLua54MessageFormat.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "ab8c7d41293ca771191fa777549fbe3146211b3b80142db0d14793083f2eff9e",
+      "nova_error_sha256": "ebc463c5cc199a406bf13a97a25d6c8dbb4f0d2534867e58cbbbb3ccf3395945",
+      "lua_error_excerpt": "lua: ...nitTests/NonNumberControlErrorsUseLua54MessageFormat.lua:<line>: bad 'for' limit (number expected, got table) | stack traceback: | \t...nitTests/NonNumberControlErrorsUse...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/NonNumberControlErrorsUseLua54MessageFormat.lua:(7,0-19): bad 'for' limit (number expected, got table) [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/NonNumberControlErrorsUseLua54MessageFormat_1.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "6012b9e2f5dfc43f48e0c80f31a0fd586d3e9b235644e3441079b722fcf6f103",
+      "nova_error_sha256": "e260905971f45887afdf0f7cae3c4c74f09b5719b61f307f08ad5f8e149b4fdd",
+      "lua_error_excerpt": "lua: ...tTests/NonNumberControlErrorsUseLua54MessageFormat_1.lua:<line>: bad 'for' limit (number expected, got table) | stack traceback: | \t...tTests/NonNumberControlErrorsUseLu...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/NonNumberControlErrorsUseLua54MessageFormat_1.lua:(7,0-19): bad 'for' limit (number expected, got table) [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "e2f00db9fdf233edd6a18a88d1ccd2a714772759318bce3dc979f113655dc94c",
+      "nova_error_sha256": "8b25e526067e6c77f147cddd18359ed598ff95b8e480e78b770a428024e45b85",
+      "lua_error_excerpt": "lua: ...rLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua:<line>: 'for' step is zero | stack traceback: | \t...rLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua:(7,0-19): 'for' step is zero [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "bc7cc289cda579308c045872526c0fdfaadbb30f526660274e36b8b5085b1f70",
+      "nova_error_sha256": "c7c11d97c9d25b64de543d339172c10bfe9237cdf86713931019fb94204aee12",
+      "lua_error_excerpt": "lua: ...res/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua:<line>: 'for' step is zero | stack traceback: | \t...res/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua:(6,0-19): 'for' step is zero [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "577084e16a608eb0776bcb5b1e653d2d3edf61c3b505ce14365f1b84509e4e16",
+      "nova_error_sha256": "542054c343c23d177e6275ecbaaa17e3b477314fc692bbda357ca0f55ca22478",
+      "lua_error_excerpt": "lua: ...s/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua:<line>: 'for' step is zero | stack traceback: | \t...s/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua:(8,26-45): 'for' step is zero [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepReportedBeforeInvalidLimitFromLua54.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "7070a776f7f610a6862eb0452af7ba0c0cd1e318618cbeaedeb00f07b0ad5aac",
+      "nova_error_sha256": "de654282abee1feb0fd8496a0619a834326d911c6b8bf92379914723decd5326",
+      "lua_error_excerpt": "lua: ...nitTests/ZeroStepReportedBeforeInvalidLimitFromLua54.lua:<line>: 'for' step is zero | stack traceback: | \t...nitTests/ZeroStepReportedBeforeInvalidLimitFromLua54.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepReportedBeforeInvalidLimitFromLua54.lua:(7,0-19): 'for' step is zero [compatibility: Lua 5.4]"
     },
     {
       "file": "OsTimeModuleTUnitTests/DiffTimeHandlesOptionalStartArgument_1.lua",
@@ -12123,6 +12321,94 @@
       "nova_error_sha256": "3f8026e25e3f5c56c71f509326ddadc48e118fe05197ecf6630dd23107686dd8",
       "lua_error_excerpt": "lua: ...UnitTests/HiddenMembersPropagateThroughInheritance_1.lua:<line>: attempt to index a nil value (global 'sample') | stack traceback: | \t...UnitTests/HiddenMembersPropagate...",
       "nova_error_excerpt": "LuaFixtures/NovaSharpHideMemberAttributeTUnitTests/HiddenMembersPropagateThroughInheritance_1.lua:(6,0-28): attempt to index a nil value [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "c683c16432e14955adfda3f1d956125f27e133d70e84051fe2018e895d6301d6",
+      "nova_error_sha256": "e2749dd419bd3f42979159d5622822c1695b752eb181d16de11a8262d67b81bd",
+      "lua_error_excerpt": "lua: ...s/NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua:<line>: 'for' step is zero | stack traceback: | \t...s/NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua:(7,0-19): 'for' step is zero [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "1c775588fe4f34b110f9d07659b4de1ff1918f8896a61dcf361fe9ed6dacc103",
+      "nova_error_sha256": "949fec27eae75c9ba14e6fad23102c4485baf7648afb8bad46d3c08acd349c55",
+      "lua_error_excerpt": "lua: ...opTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua:<line>: unexpected symbol near <eof>",
+      "nova_error_excerpt": "unexpected symbol near '<eof>'"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/NonNumberControlErrorsUseLua54MessageFormat.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "ab8c7d41293ca771191fa777549fbe3146211b3b80142db0d14793083f2eff9e",
+      "nova_error_sha256": "c15991d746fa110a70a64611f35080b4388faea9bbcc95065fe7bee72b97b684",
+      "lua_error_excerpt": "lua: ...nitTests/NonNumberControlErrorsUseLua54MessageFormat.lua:<line>: bad 'for' limit (number expected, got table) | stack traceback: | \t...nitTests/NonNumberControlErrorsUse...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/NonNumberControlErrorsUseLua54MessageFormat.lua:(7,0-19): bad 'for' limit (number expected, got table) [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/NonNumberControlErrorsUseLua54MessageFormat_1.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "6012b9e2f5dfc43f48e0c80f31a0fd586d3e9b235644e3441079b722fcf6f103",
+      "nova_error_sha256": "445d7c4d5dc6007a4f7b267c1277a27a5c80e47b9de2d65ff76637091c59733d",
+      "lua_error_excerpt": "lua: ...tTests/NonNumberControlErrorsUseLua54MessageFormat_1.lua:<line>: bad 'for' limit (number expected, got table) | stack traceback: | \t...tTests/NonNumberControlErrorsUseLu...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/NonNumberControlErrorsUseLua54MessageFormat_1.lua:(7,0-19): bad 'for' limit (number expected, got table) [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "e2f00db9fdf233edd6a18a88d1ccd2a714772759318bce3dc979f113655dc94c",
+      "nova_error_sha256": "adf03ce8735adb4b1a3d85ea60cd34035e5afb4a450c225d7e445c5ed38ffb75",
+      "lua_error_excerpt": "lua: ...rLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua:<line>: 'for' step is zero | stack traceback: | \t...rLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua:(7,0-19): 'for' step is zero [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "bc7cc289cda579308c045872526c0fdfaadbb30f526660274e36b8b5085b1f70",
+      "nova_error_sha256": "8b0071caec2b87844a3aed744f633f157d81efc0dcdea97e2ae84b0731148905",
+      "lua_error_excerpt": "lua: ...res/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua:<line>: 'for' step is zero | stack traceback: | \t...res/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua:(6,0-19): 'for' step is zero [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "577084e16a608eb0776bcb5b1e653d2d3edf61c3b505ce14365f1b84509e4e16",
+      "nova_error_sha256": "ab7bab66a9ee800e2fb2e3f93ead5f3c8fb9fdce2c754c5d3b4bb49e7af9a97e",
+      "lua_error_excerpt": "lua: ...s/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua:<line>: 'for' step is zero | stack traceback: | \t...s/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua:(8,26-45): 'for' step is zero [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepReportedBeforeInvalidLimitFromLua54.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "7070a776f7f610a6862eb0452af7ba0c0cd1e318618cbeaedeb00f07b0ad5aac",
+      "nova_error_sha256": "8644b322696882c755a7d63084735aa71d353ffb01e2d721706695fc75c05172",
+      "lua_error_excerpt": "lua: ...nitTests/ZeroStepReportedBeforeInvalidLimitFromLua54.lua:<line>: 'for' step is zero | stack traceback: | \t...nitTests/ZeroStepReportedBeforeInvalidLimitFromLua54.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepReportedBeforeInvalidLimitFromLua54.lua:(7,0-19): 'for' step is zero [compatibility: Lua 5.5]"
     },
     {
       "file": "OsTimeModuleTUnitTests/DiffTimeHandlesOptionalStartArgument_1.lua",

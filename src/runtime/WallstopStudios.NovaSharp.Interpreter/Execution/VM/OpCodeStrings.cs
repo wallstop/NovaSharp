@@ -115,8 +115,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             "Scalar",
             // Index 50: Incr (49)
             "Incr",
-            // Index 51: ToNum (50)
-            "ToNum",
+            // Index 51: reserved (ToNum (50) removed; value stays unassigned)
+            "Reserved50",
             // Index 52: ToBool (51)
             "ToBool",
             // Index 53: ExpTuple (52)
@@ -147,6 +147,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             "ShiftRight",
             // Index 66: FloorDiv (65)
             "FloorDiv",
+            // Index 67: ForPrep (66)
+            "ForPrep",
         };
 
         private static readonly string[] UpperNames =
@@ -253,8 +255,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             "SCALAR",
             // Index 50: Incr (49)
             "INCR",
-            // Index 51: ToNum (50)
-            "TONUM",
+            // Index 51: reserved (ToNum (50) removed; value stays unassigned)
+            "RESERVED50",
             // Index 52: ToBool (51)
             "TOBOOL",
             // Index 53: ExpTuple (52)
@@ -285,6 +287,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             "SHIFTRIGHT",
             // Index 66: FloorDiv (65)
             "FLOORDIV",
+            // Index 67: ForPrep (66)
+            "FORPREP",
         };
 
         /// <summary>

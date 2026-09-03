@@ -1,0 +1,13 @@
+[Unit]
+Description=Disable Wi-Fi while wired Ethernet is connected
+Documentation=https://networkmanager.pages.freedesktop.org/NetworkManager/NetworkManager/nmcli-examples.html
+After=dbus.socket
+
+[Service]
+Type=simple
+ExecStart=%h/.local/libexec/prefer-wired-network --monitor
+Restart=on-failure
+RestartSec=2s
+
+[Install]
+WantedBy=default.target

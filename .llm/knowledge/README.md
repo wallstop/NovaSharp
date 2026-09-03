@@ -24,6 +24,8 @@ branch state, raw logs, or facts already easy to discover in canonical docs.
 
 ## Topic Index
 
+- [devcontainer AI backend launchers](devcontainer-ai-backends.md) — isolation,
+  secret handling, synchronization, and upgrade verification invariants.
 - [gstack adaptation decisions](gstack-adaptation.md) — pinned research
   provenance plus adopted and intentionally rejected workflow practices.
 

@@ -71,6 +71,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             _refEnd = CheckTokenType(lcontext, TokenType.End).GetSourceRef();
 
             _stackFrame = lcontext.Scope.PopBlock();
+            _stackFrame.ValueStackSlots = 1;
 
             lcontext.Source.Refs.Add(_refFor);
             lcontext.Source.Refs.Add(_refEnd);

@@ -1,0 +1,17 @@
+# Set to "no" to stop enforcing the policy. If the service disabled Wi-Fi, it
+# restores Wi-Fi before becoming passive.
+PREFER_WIRED_ENABLED=yes
+
+# Space-separated Ethernet interface allowlist. Empty means any connected
+# NetworkManager Ethernet device. Example: "enp5s0 enx001122334455"
+PREFER_WIRED_INTERFACES=
+
+# Restore Wi-Fi when no allowed Ethernet interface is connected, but only when
+# this service was responsible for disabling Wi-Fi.
+PREFER_WIRED_RESTORE_WIFI=yes
+
+# Reconcile periodically as a fallback for an event missed while resubscribing.
+PREFER_WIRED_RECONCILE_SECONDS=30
+
+# Delay before recreating nmcli's event monitor if NetworkManager restarts.
+PREFER_WIRED_MONITOR_RESTART_SECONDS=2

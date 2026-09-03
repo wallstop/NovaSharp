@@ -1,5 +1,13 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "zai-coding-plan": {
+      "options": {
+        "timeout": 300000,
+        "chunkTimeout": 45000
+      }
+    }
+  },
   "mcp": {
     "github-mcp-server": {
       "type": "remote",

@@ -11,6 +11,7 @@ NOVA_NPM_INSTALL_ATTEMPTS="${NOVA_NPM_START_ATTEMPTS:-2}" \
     NPM_CONFIG_FETCH_RETRIES="${NOVA_NPM_START_FETCH_RETRIES:-1}" \
     NPM_CONFIG_FETCH_TIMEOUT="${NOVA_NPM_START_FETCH_TIMEOUT_MS:-10000}" \
     bash .devcontainer/install-npm-tools.sh --offline-ok
+bash .devcontainer/ai-backends.sh install
 bash .devcontainer/cleanup-artifacts.sh "${workspace_dir}" --older-than-days "${retention_days}"
 
 echo "✅ NovaSharp dev container ready."
