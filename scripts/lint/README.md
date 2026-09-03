@@ -109,6 +109,12 @@ exception. When Docker is available, `test-devcontainer-build-cache.sh` also
 performs a primed-cache rebuild and proves that Docker's no-cache option does
 not report cached steps.
 
+`test-ai-backends.sh` verifies the `.devcontainer/ai-backends.sh` launcher
+contract with a fake CLI: hostile provider environments are scrubbed before a
+Z.ai backend starts, custom `CODEX_HOME` profiles are installed with restrictive
+permissions, missing credentials fail closed, arguments are forwarded verbatim,
+and existing non-symlink launchers are never replaced.
+
 ```bash
 python scripts/lint/check-tooling-consistency.py
 ```
