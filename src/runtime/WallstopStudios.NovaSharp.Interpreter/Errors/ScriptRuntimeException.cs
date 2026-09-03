@@ -564,6 +564,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         }
 
         /// <summary>
+        /// Creates a ScriptRuntimeException with Lua's predefined error message for a
+        /// numeric <c>for</c> loop whose step is zero (Lua 5.4+ behavior).
+        /// </summary>
+        /// <returns>
+        /// The exception to be raised.
+        /// </returns>
+        public static ScriptRuntimeException ForStepIsZero()
+        {
+            return new ScriptRuntimeException("'for' step is zero");
+        }
+
+        /// <summary>
         /// Creates a ScriptRuntimeException with a predefined error message specifying that
         /// a conversion of a CLR type to a Lua type has failed.
         /// </summary>

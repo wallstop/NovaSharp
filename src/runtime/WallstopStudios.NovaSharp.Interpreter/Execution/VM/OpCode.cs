@@ -49,7 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         Jump = 27, // Jumps to the specified PC
         Jf = 28, // Pops the top of the v-stack and jumps to the specified location if it's false
         JNil = 29, // Jumps if the top of the stack is nil
-        JFor = 30, // Peeks at the top, top-1 and top-2 values of the v-stack which it assumes to be numbers. Then if top-1 is less than zero, checks if top is <= top-2, otherwise it checks that top is >= top-2. Then if the condition is false, it jumps.
+        JFor = 30, // Numeric for-loop gate: peeks the loop-control triple on the v-stack. When top-2 holds an integer (the remaining-iteration counter installed by ForPrep), continues iff it is nonzero; otherwise compares top (index) against top-2 (limit) honoring the sign of top-1 (step). Jumps when the loop must not run.
         JtOrPop = 31, // Peeks at the topmost value of the v-stack as a boolean. If true, it performs a jump, otherwise it removes the topmost value from the v-stack.
         JfOrPop = 32, // Peeks at the topmost value of the v-stack as a boolean. If false, it performs a jump, otherwise it removes the topmost value from the v-stack.
 
@@ -72,13 +72,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         // Type conversions and manipulations
         MkTuple = 47, // Creates a tuple from the topmost n values
         Scalar = 48, // Converts the topmost tuple to a scalar
-        Incr = 49, // Performs an add operation, without extracting the operands from the v-stack and assuming the operands are numbers.
+        Incr = 49, // Numeric for-loop increment: advances the loop-control triple on the v-stack without extracting it. When top-2 holds an integer (the remaining-iteration counter installed by ForPrep), also decrements it; always adds top-1 (step) to top (index).
         ToNum = 50, // Converts the top of the stack to a number
         ToBool = 51, // Converts the top of the stack to a boolean
         ExpTuple = 52, // Expands a tuple on the stack
         Enter = 53, // Prepares a scope block (clears locals and registers to-be-closed variables)
         Leave = 54, // Leaves a scope block (normal flow, closes to-be-closed variables)
         Exit = 55, // Leaves a scope block due to break/goto (closes to-be-closed variables)
+        ForPrep = 66, // Prepares the numeric for-loop control triple [limit, step, index] on the v-stack. Integer loops (integer index and step) replace the limit with the remaining-iteration counter computed with reference Lua's unsigned arithmetic, so the visible control variable can never wrap around; float loops force the limit slot to the float subtype to mark the comparison-driven loop.
 
         // Iterators
         IterPrep = 56, // Prepares an iterator for execution

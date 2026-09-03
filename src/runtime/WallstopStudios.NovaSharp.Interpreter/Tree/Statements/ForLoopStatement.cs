@@ -85,6 +85,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                 bc.EmitToNum(2);
                 _start.Compile(bc);
                 bc.EmitToNum(1);
+                bc.EmitForPrep();
 
                 int start = bc.GetJumpPointForNextInstruction();
                 Instruction jumpend = bc.EmitJump(OpCode.JFor, -1);

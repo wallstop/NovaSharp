@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1961,
+  "total_snippets": 1977,
   "novasharp_only": 492,
-  "comparable": 1469,
+  "comparable": 1485,
   "by_version": {
-    "5.1": 987,
-    "5.2": 685,
-    "5.3": 927,
-    "5.4": 987,
-    "5.5": 1029
+    "5.1": 994,
+    "5.2": 692,
+    "5.3": 934,
+    "5.4": 1002,
+    "5.5": 1043
   },
   "snippets": [
     {
@@ -21739,6 +21739,200 @@
       "test": "Bit32ModuleTUnitTests.RegisteredBit32CallbacksUseArgumentViews",
       "lua_versions": [
         "5.2"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/BoundaryLoopsFromExtremesIterateFullRange.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:212",
+      "test": "NumericForLoopTUnitTests.BoundaryLoopsFromExtremesIterateFullRange",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/BoundaryLoopsWithMaximalStepsStopBeforeWrapping.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:235",
+      "test": "NumericForLoopTUnitTests.BoundaryLoopsWithMaximalStepsStopBeforeWrapping",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/BoundaryLoopsWithMaximalStepsStopBeforeWrapping_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:240",
+      "test": "NumericForLoopTUnitTests.BoundaryLoopsWithMaximalStepsStopBeforeWrapping",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/BoundaryLoopsWithMaximalStepsStopBeforeWrapping_2.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:245",
+      "test": "NumericForLoopTUnitTests.BoundaryLoopsWithMaximalStepsStopBeforeWrapping",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/ControlVariableIsOutOfScopeAfterLoop.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:367",
+      "test": "NumericForLoopTUnitTests.ControlVariableIsOutOfScopeAfterLoop",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/FloatLoopWithFloatInitIteratesFractionalValues.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:136",
+      "test": "NumericForLoopTUnitTests.FloatLoopWithFloatInitIteratesFractionalValues",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/FloatLoopWithFractionalLimitStopsAtWholeBound.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:154",
+      "test": "NumericForLoopTUnitTests.FloatLoopWithFractionalLimitStopsAtWholeBound",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/FloatLoopWithFractionalStepCountsEveryHalf.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:170",
+      "test": "NumericForLoopTUnitTests.FloatLoopWithFractionalStepCountsEveryHalf",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/IntegerBoundaryLoopsNeverWrapTheControlVariable.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:186",
+      "test": "NumericForLoopTUnitTests.IntegerBoundaryLoopsNeverWrapTheControlVariable",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/IntegerBoundaryLoopsNeverWrapTheControlVariable_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:191",
+      "test": "NumericForLoopTUnitTests.IntegerBoundaryLoopsNeverWrapTheControlVariable",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/MutatingControlVariableDoesNotChangeIterationCount.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:352",
+      "test": "NumericForLoopTUnitTests.MutatingControlVariableDoesNotChangeIterationCount",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/OutOfRangeFloatLimitClampsToIntegerBoundary.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:274",
+      "test": "NumericForLoopTUnitTests.OutOfRangeFloatLimitClampsToIntegerBoundary",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/ZeroCrossingLoopSurvivesCoroutineSuspension.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:379",
+      "test": "NumericForLoopTUnitTests.ZeroCrossingLoopSurvivesCoroutineSuspension",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:329",
+      "test": "NumericForLoopTUnitTests.ZeroStepErrorMatchesReferenceMessage",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:311",
+      "test": "NumericForLoopTUnitTests.ZeroStepErrorsFromLua54",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "NumericForLoopTUnitTests/ZeroStepRunsZeroIterationsBeforeLua54.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:293",
+      "test": "NumericForLoopTUnitTests.ZeroStepRunsZeroIterationsBeforeLua54",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3"
       ],
       "novasharp_only": false,
       "expects_error": false

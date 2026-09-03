@@ -1,0 +1,9 @@
+-- @lua-versions: 5.4+
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:274
+-- @test: NumericForLoopTUnitTests.OutOfRangeFloatLimitClampsToIntegerBoundary
+-- Compatibility notes: reference Lua 5.3 loops forever on ranges reaching the integer extremes
+local t = {}
+                  for i = 0, 2e63, math.maxinteger do t[#t + 1] = i end
+                  return table.concat(t, ',')

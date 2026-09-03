@@ -8913,6 +8913,39 @@
       "nova_error_excerpt": "LuaFixtures/NovaSharpHideMemberAttributeTUnitTests/HiddenMembersPropagateThroughInheritance_1.lua:(6,0-28): attempt to index a nil value [compatibility: Lua 5.4]"
     },
     {
+      "file": "NumericForLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "e2f00db9fdf233edd6a18a88d1ccd2a714772759318bce3dc979f113655dc94c",
+      "nova_error_sha256": "8b25e526067e6c77f147cddd18359ed598ff95b8e480e78b770a428024e45b85",
+      "lua_error_excerpt": "lua: ...rLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua:<line>: 'for' step is zero | stack traceback: | \t...rLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua:(7,0-19): 'for' step is zero [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "bc7cc289cda579308c045872526c0fdfaadbb30f526660274e36b8b5085b1f70",
+      "nova_error_sha256": "c7c11d97c9d25b64de543d339172c10bfe9237cdf86713931019fb94204aee12",
+      "lua_error_excerpt": "lua: ...res/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua:<line>: 'for' step is zero | stack traceback: | \t...res/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua:(6,0-19): 'for' step is zero [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "577084e16a608eb0776bcb5b1e653d2d3edf61c3b505ce14365f1b84509e4e16",
+      "nova_error_sha256": "542054c343c23d177e6275ecbaaa17e3b477314fc692bbda357ca0f55ca22478",
+      "lua_error_excerpt": "lua: ...s/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua:<line>: 'for' step is zero | stack traceback: | \t...s/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua:(8,26-45): 'for' step is zero [compatibility: Lua 5.4]"
+    },
+    {
       "file": "OsTimeModuleTUnitTests/DiffTimeHandlesOptionalStartArgument_1.lua",
       "lua_version": "5.4",
       "classification": "unclassified",
@@ -12123,6 +12156,39 @@
       "nova_error_sha256": "3f8026e25e3f5c56c71f509326ddadc48e118fe05197ecf6630dd23107686dd8",
       "lua_error_excerpt": "lua: ...UnitTests/HiddenMembersPropagateThroughInheritance_1.lua:<line>: attempt to index a nil value (global 'sample') | stack traceback: | \t...UnitTests/HiddenMembersPropagate...",
       "nova_error_excerpt": "LuaFixtures/NovaSharpHideMemberAttributeTUnitTests/HiddenMembersPropagateThroughInheritance_1.lua:(6,0-28): attempt to index a nil value [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "e2f00db9fdf233edd6a18a88d1ccd2a714772759318bce3dc979f113655dc94c",
+      "nova_error_sha256": "adf03ce8735adb4b1a3d85ea60cd34035e5afb4a450c225d7e445c5ed38ffb75",
+      "lua_error_excerpt": "lua: ...rLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua:<line>: 'for' step is zero | stack traceback: | \t...rLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepErrorMatchesReferenceMessage.lua:(7,0-19): 'for' step is zero [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "bc7cc289cda579308c045872526c0fdfaadbb30f526660274e36b8b5085b1f70",
+      "nova_error_sha256": "8b0071caec2b87844a3aed744f633f157d81efc0dcdea97e2ae84b0731148905",
+      "lua_error_excerpt": "lua: ...res/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua:<line>: 'for' step is zero | stack traceback: | \t...res/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54.lua:(6,0-19): 'for' step is zero [compatibility: Lua 5.5]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "577084e16a608eb0776bcb5b1e653d2d3edf61c3b505ce14365f1b84509e4e16",
+      "nova_error_sha256": "ab7bab66a9ee800e2fb2e3f93ead5f3c8fb9fdce2c754c5d3b4bb49e7af9a97e",
+      "lua_error_excerpt": "lua: ...s/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua:<line>: 'for' step is zero | stack traceback: | \t...s/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua:<li...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ZeroStepErrorsFromLua54_1.lua:(8,26-45): 'for' step is zero [compatibility: Lua 5.5]"
     },
     {
       "file": "OsTimeModuleTUnitTests/DiffTimeHandlesOptionalStartArgument_1.lua",

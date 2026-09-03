@@ -353,6 +353,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
                             break;
+                        case OpCode.ForPrep:
+                            ExecForPrep();
+                            break;
                         case OpCode.NewTable:
                             if (i.NumVal == 0)
                             {
@@ -1208,62 +1211,193 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             _valueStack.Push(LuaValue.NewTuple(f, s, var));
         }
 
+        /// <summary>
+        /// Prepares the numeric for-loop control triple on the value stack, which holds
+        /// [limit, step, index] bottom to top with all three already converted to numbers.
+        /// Mirrors reference Lua's <c>forprep</c> (lvm.c): when the index and step are
+        /// integers, the loop is counter-driven — the limit slot is replaced by the number
+        /// of remaining iterations computed with wrapping-free unsigned arithmetic, so
+        /// <see cref="ExecJFor"/> and <see cref="ExecIncr"/> never need to infer overflow
+        /// from value signs and the visible control variable cannot wrap around (Lua 5.4
+        /// manual, section 3.3.5). Every other loop is comparison-driven; its limit slot is
+        /// forced to the float subtype both to match Lua's float-loop preparation and to
+        /// mark which protocol the later instructions must follow.
+        /// </summary>
+        private void ExecForPrep()
+        {
+            LuaNumber index = _valueStack.Peek(0).LuaNumber;
+            LuaNumber step = _valueStack.Peek(1).LuaNumber;
+            LuaNumber limit = _valueStack.Peek(2).LuaNumber;
+
+            if (index.IsInteger && step.IsInteger)
+            {
+                long init = index.AsInteger;
+                long stepVal = step.AsInteger;
+
+                if (stepVal == 0)
+                {
+                    // Lua 5.4+ rejects a zero step; Lua 5.1-5.3 silently run zero
+                    // iterations (their descending form loops forever, which NovaSharp
+                    // deliberately terminates instead).
+                    if (_script.Options.CompatibilityVersion >= LuaCompatibilityVersion.Lua54)
+                    {
+                        throw ScriptRuntimeException.ForStepIsZero();
+                    }
+
+                    _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.Zero));
+                    return;
+                }
+
+                if (!TryResolveIntegerForLimit(limit, stepVal > 0, out long resolvedLimit))
+                {
+                    _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.Zero));
+                    return;
+                }
+
+                if (stepVal > 0 ? init > resolvedLimit : init < resolvedLimit)
+                {
+                    // Initial value already beyond the limit: the body must not run.
+                    _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.Zero));
+                    return;
+                }
+
+                ulong remaining;
+                if (stepVal > 0)
+                {
+                    remaining = (ulong)resolvedLimit - (ulong)init;
+                    if (stepVal != 1)
+                    {
+                        remaining /= (ulong)stepVal;
+                    }
+                }
+                else
+                {
+                    remaining = (ulong)init - (ulong)resolvedLimit;
+                    // Dividing by -(stepVal + 1) + 1 yields |stepVal| without ever
+                    // negating long.MinValue.
+                    remaining /= (ulong)(-(stepVal + 1)) + 1;
+                }
+
+                // remaining counts the iterations after the first; the counter JFor tests
+                // must include the iteration about to run. The only overflow case (a full
+                // long-range scan with unit step) is capped rather than wrapped to zero.
+                ulong total = remaining + 1;
+                if (total == 0)
+                {
+                    total = ulong.MaxValue;
+                }
+
+                _valueStack.Set(
+                    2,
+                    LuaValue.NewNumber(LuaNumber.FromInteger(unchecked((long)total)))
+                );
+            }
+            else
+            {
+                double stepFloat = step.AsFloat;
+
+                if (stepFloat == 0.0)
+                {
+                    if (_script.Options.CompatibilityVersion >= LuaCompatibilityVersion.Lua54)
+                    {
+                        throw ScriptRuntimeException.ForStepIsZero();
+                    }
+
+                    // A NaN limit fails both comparison directions, terminating the loop
+                    // immediately whatever the sign of the (zero) step.
+                    _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.NaN));
+                    return;
+                }
+
+                _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.FromFloat(limit.AsFloat)));
+            }
+        }
+
+        /// <summary>
+        /// Resolves the integer limit of an integer for-loop whose limit expression
+        /// produced a float, mirroring reference Lua's <c>forlimit</c> (lvm.c): the float
+        /// converts with floor rounding for ascending loops and ceil rounding for
+        /// descending loops; a limit beyond the integer range clamps to the boundary the
+        /// loop walks toward, except when no integer limit could ever satisfy the loop
+        /// condition, in which case the loop must not run.
+        /// </summary>
+        /// <param name="limit">The limit as produced by the loop's limit expression.</param>
+        /// <param name="ascending">Whether the step is positive.</param>
+        /// <param name="resolved">The integer limit to iterate toward.</param>
+        /// <returns><c>true</c> if the loop may run; <c>false</c> when it must be skipped.</returns>
+        private static bool TryResolveIntegerForLimit(
+            LuaNumber limit,
+            bool ascending,
+            out long resolved
+        )
+        {
+            if (limit.IsInteger)
+            {
+                resolved = limit.AsInteger;
+                return true;
+            }
+
+            double floatLimit = limit.AsFloat;
+            double rounded = ascending ? Math.Floor(floatLimit) : Math.Ceiling(floatLimit);
+            if (
+                !double.IsNaN(floatLimit)
+                && rounded >= -9223372036854775808.0
+                && rounded < 9223372036854775808.0
+            )
+            {
+                resolved = (long)rounded;
+                return true;
+            }
+
+            if (floatLimit > 0)
+            {
+                // Positive but at or beyond maxinteger: ascending loops clamp, descending
+                // loops can never satisfy their condition.
+                if (!ascending)
+                {
+                    resolved = 0;
+                    return false;
+                }
+
+                resolved = long.MaxValue;
+                return true;
+            }
+
+            // Negative beyond mininteger, negative infinity, or NaN: descending loops
+            // clamp, ascending loops can never satisfy their condition.
+            if (ascending)
+            {
+                resolved = 0;
+                return false;
+            }
+
+            resolved = long.MinValue;
+            return true;
+        }
+
         private int ExecJFor(Instruction i, int instructionPtr)
         {
             // Use LuaNumber to preserve integer precision for large values (e.g., near maxinteger).
             // Using .Number (double) causes precision loss and infinite loops for large integer bounds.
+            LuaNumber control = _valueStack.Peek(2).LuaNumber;
+
+            if (control.IsInteger)
+            {
+                // Counter-driven integer loop: ForPrep replaced the limit slot with the
+                // number of remaining iterations, so the loop ends exactly when the count
+                // reaches zero. Reference Lua's OP_FORLOOP does the same and never
+                // compares the index against the limit, which is what keeps the visible
+                // control variable from wrapping around at the integer boundaries.
+                return control.AsInteger != 0 ? instructionPtr : i.NumVal;
+            }
+
             LuaNumber val = _valueStack.Peek(0).LuaNumber;
             LuaNumber step = _valueStack.Peek(1).LuaNumber;
-            LuaNumber stop = _valueStack.Peek(2).LuaNumber;
+            LuaNumber stop = control;
 
             // Lua for-loop condition: if step > 0 then val <= stop else val >= stop
             // Use LuaNumber comparison to avoid precision loss with large step values
             bool stepPositive = LuaNumber.LessThan(LuaNumber.Zero, step);
-
-            // For integer for-loops in Lua 5.3+, detect overflow to prevent infinite loops.
-            // Per Lua 5.4 §3.3.5: "the control variable never wraps around".
-            // If step is positive and val < stop but we're past the first iteration (val has been incremented),
-            // we need to detect if the previous increment caused overflow.
-            // Overflow detection: if step > 0 and val < start (represented as stop - n*step equivalent),
-            // or more simply: if step > 0 and val wrapped to negative when it should be positive.
-            if (val.IsInteger && step.IsInteger && stop.IsInteger)
-            {
-                long stepVal = step.AsInteger;
-                long valVal = val.AsInteger;
-                long stopVal = stop.AsInteger;
-
-                // Detect overflow: for positive step, if val < (stop - large_positive) we likely wrapped
-                // More precisely: if step > 0, increment causes overflow when val > maxint - step
-                // After overflow, val will be negative (wrapped from max to min).
-                // If step > 0 and val < 0 and stop > 0, this indicates overflow occurred.
-                // Similarly for step < 0.
-                if (stepVal > 0)
-                {
-                    // Positive step: loop should go from low to high
-                    // If val suddenly became much smaller than stop (wrapped), stop the loop
-                    // Detection: if previous val was > current val after increment, overflow occurred
-                    // Since we don't track previous val, use: if step > 0 but val > stop, it's definitely done.
-                    // But also: if overflow occurred, val wrapped around.
-                    // Conservative detection: if the distance from val to stop is larger than it should be.
-                    // Simplest: use checked arithmetic or detect sign change when it shouldn't happen.
-                    // If stopVal >= 0 and valVal < 0 and step > 0, we wrapped from positive to negative.
-                    if (stopVal >= 0 && valVal < 0)
-                    {
-                        // Overflow occurred - loop should terminate
-                        return i.NumVal;
-                    }
-                }
-                else if (stepVal < 0)
-                {
-                    // Negative step: loop should go from high to low
-                    // If stopVal <= 0 and valVal > 0, we wrapped from negative to positive
-                    if (stopVal <= 0 && valVal > 0)
-                    {
-                        // Overflow occurred - loop should terminate
-                        return i.NumVal;
-                    }
-                }
-            }
 
             bool whileCond = stepPositive
                 ? LuaNumber.LessThanOrEqual(val, stop)
@@ -1287,6 +1421,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             if (top.Type != DataType.Number)
             {
                 throw new InternalErrorException("Can't assign number to type {0}", top.Type);
+            }
+
+            if (_valueStack.Peek(2).LuaNumber.IsInteger)
+            {
+                // Counter-driven integer loop: consume one unit of the remaining-iteration
+                // counter ForPrep installed. JFor has already gated the body on it being
+                // nonzero, so the decrement cannot underflow past zero.
+                long remaining = _valueStack.Peek(2).LuaNumber.AsInteger;
+                _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.FromInteger(remaining - 1)));
             }
 
             // Use LuaNumber.Add to preserve integer precision for large values.

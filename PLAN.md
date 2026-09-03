@@ -73,7 +73,7 @@ backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
    in the same study.
 1. Lua parity backlog: [call-context error names](https://github.com/wallstop/NovaSharp/issues/124),
    [optional-argument validation](https://github.com/wallstop/NovaSharp/issues/125),
-   other error formats, [numeric-loop correctness](https://github.com/wallstop/NovaSharp/issues/126),
+   other error formats, [Lua 5.5 const loop-variable enforcement](https://github.com/wallstop/NovaSharp/issues/130),
    [large hexadecimal literals](https://github.com/wallstop/NovaSharp/issues/127),
    [pre-5.3 decimal literals](https://github.com/wallstop/NovaSharp/issues/128),
    `__gc`, Lua 5.4 garbage collector options, version-migration docs, and explicit

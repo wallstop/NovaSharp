@@ -458,6 +458,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
+        /// Emits the loop-preparation opcode used by numeric for loops, after the limit,
+        /// step, and index expressions have been pushed and converted to numbers.
+        /// </summary>
+        public Instruction EmitForPrep()
+        {
+            return AppendInstruction(
+                new Instruction(_currentSourceRef) { OpCode = OpCode.ForPrep }
+            );
+        }
+
+        /// <summary>
         /// Emits a new table allocation instruction.
         /// </summary>
         /// <param name="shared">Whether the table is shared with nested closures.</param>
