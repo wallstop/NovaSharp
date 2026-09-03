@@ -47,7 +47,8 @@
                 "github.copilot",
                 "github.copilot-chat",
                 "anthropic.claude-code",
-                "github.vscode-github-actions"
+                "github.vscode-github-actions",
+                "sst-dev.opencode"
             ],
             "settings": {
                 // ============================================================

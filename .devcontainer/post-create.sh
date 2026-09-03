@@ -209,6 +209,11 @@ if CODEX_VERSION="$(codex --version 2>&1)"; then
 else
     echo "   Codex CLI:         NOT FOUND"
 fi
+if CLAUDE_VERSION="$(claude --version 2>&1)"; then
+    echo "   Claude Code:       ${CLAUDE_VERSION}"
+else
+    echo "   Claude Code:       NOT FOUND"
+fi
 
 echo ""
 echo "📌 Local .NET Tools:"

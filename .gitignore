@@ -144,6 +144,9 @@ lua-comparison-*-extracted/
 .claude/**
 !.claude/skills
 
+# Per-session agent task state
+.nanocoder/
+
 # Click-Once directory
 publish/
 

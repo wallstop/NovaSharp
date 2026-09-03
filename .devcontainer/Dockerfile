@@ -25,6 +25,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # =============================================================================
 # LAYER 1: Core system packages and language runtimes from signed apt repos
 # =============================================================================
+# Includes Claude Code's Linux credential-isolation and sandbox-networking tools.
 RUN set -eux; \
     # Base image may include a stale Yarn repo key; remove Yarn apt source since Yarn is not required.
     rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarn.list.save; \
@@ -54,6 +55,8 @@ RUN set -eux; \
         tldr \
         silversearcher-ag \
         moreutils \
+        bubblewrap \
+        socat \
         fd-find \
         bat \
         fzf \
@@ -204,11 +207,12 @@ RUN echo "=== Environment Verification ===" \
     && required_sdk_regex="^${DOTNET_SDK_MAJOR_MINOR//./\\.}\\." \
     && dotnet --version | grep -E "${required_sdk_regex}" \
     && echo "--- Node.js Tooling ---" && node --version && npm --version \
-    && nanocoder --version && opencode --version && codex --version \
+    && nanocoder --version && opencode --version && codex --version && claude --version \
     && echo "--- PowerShell ---" && pwsh --version \
     && echo "--- Lua Versions ---" \
     && lua5.1 -v && lua5.2 -v && lua5.3 -v && lua5.4 -v && lua5.5 -v \
     && echo "--- Core CLI Tools ---" \
+    && bwrap --version && socat -V \
     && fd --version && bat --version && fzf --version && zoxide --version \
     && rg --version && jq --version && tree --version \
     && echo "--- Workflow/YAML Lint Tools ---" \

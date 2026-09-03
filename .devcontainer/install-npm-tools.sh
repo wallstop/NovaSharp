@@ -23,11 +23,13 @@ readonly NPM_TOOL_PACKAGES=(
     "@nanocollective/nanocoder@latest"
     "opencode-ai@latest"
     "@openai/codex@latest"
+    "@anthropic-ai/claude-code@latest"
 )
 readonly NPM_TOOL_COMMANDS=(
     "nanocoder"
     "opencode"
     "codex"
+    "claude"
 )
 
 run_with_retries() {
@@ -161,10 +163,12 @@ for package_index in "${!NPM_TOOL_PACKAGES[@]}"; do
     fi
 done
 
-# npm 11 blocks dependency lifecycle scripts unless explicitly trusted. OpenCode's
-# tiny launcher package uses a postinstall script to select its native binary.
+# npm 11 blocks dependency lifecycle scripts unless explicitly trusted. OpenCode
+# and Claude Code use install scripts and are the only trusted global packages.
 if [ "${#packages_to_install[@]}" -gt 0 ]; then
-    if run_with_retries "${install_attempts}" npm install --global --allow-scripts=opencode-ai "${packages_to_install[@]}"; then
+    if run_with_retries "${install_attempts}" npm install --global \
+        --allow-scripts=opencode-ai,@anthropic-ai/claude-code \
+        "${packages_to_install[@]}"; then
         clean_tool_cache=1
     else
         install_exit_code=$?
@@ -221,6 +225,7 @@ done
 printf "   %-11s %s\n" "nanocoder:" "${tool_versions[0]}"
 printf "   %-11s %s\n" "opencode:" "${tool_versions[1]}"
 printf "   %-11s %s\n" "codex:" "${tool_versions[2]}"
+printf "   %-11s %s\n" "claude:" "${tool_versions[3]}"
 
 if [ "${clean_tool_cache}" = "1" ] || [ "${NOVA_NPM_CLEAN_CACHE:-0}" = "1" ]; then
     npm cache clean --force
