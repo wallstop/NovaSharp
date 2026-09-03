@@ -77,9 +77,11 @@ repaired in place. Replace it with reference Lua's counter-based loop protocol.
   [#99](https://github.com/wallstop/NovaSharp/issues/99) class) and were curated —
   curated headers are authoritative across regenerations, verified by re-running the
   extractor.
-- The interpolated `RunLoop` helper in the test was rewritten as concatenation so the
-  extractor stops emitting a placeholder `Unknown.lua` fixture.
-- Corpus regeneration is idempotent at 1,987 snippets. The enforced comparison
+- The `RunLoop` test helper deliberately keeps its unresolved `{range}` interpolation
+  placeholder: the corpus extractor then marks its derived `Unknown.lua` snippet
+  NovaSharp-only, keeping the comparable corpus free of a partial helper body (the
+  same self-suppression the repository's other `Unknown.lua` snippets rely on).
+- Corpus regeneration is idempotent at 1,990 snippets. The enforced comparison
   matrix passed on all five lanes with zero mismatches, zero one-sided failures, and
   zero missing outputs; the both-error ratchet was rebaselined for the fixtures that
   both interpreters reject with version-appropriate but differently formatted
