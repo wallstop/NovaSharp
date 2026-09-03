@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788148258229,
+  "lastUpdate": 1788422929524,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -3070,6 +3070,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 754.651,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b8642ac7b330bab6351c689a110344aaff8c74f8",
+          "message": "Fix numeric for-loops crossing zero with Lua's counter protocol (#131)\n\nCloses #126. Also carries forward the devcontainer AI-backend tooling\nleft uncommitted by a prior session, closes dependabot #115 as not\nincorporable (revert RCA stands, upstream coverlet#1990 open), and files\n#130 (Lua 5.5 const loop variable), #132 (`table.concat` pre-5.3 float\nformatting) — both discovered and root-caused during this work.\n\n## The bug\n\nInteger numeric `for` loops terminated before their first iteration\nwhenever the initial value and limit straddled zero, in every\ncompatibility profile:\n\n```lua\nlocal t = {} for i = -2, 2 do t[#t + 1] = i end  -- printed nothing; lua5.1-5.5 print -2,-1,0,1,2\n```\n\n`ExecJFor` inferred prior overflow from the *sign* of the current value\nversus the limit, with no iteration state — so `stop >= 0 && val < 0`\nread every legitimate zero-crossing as a wrapped counter. That heuristic\nis unrepairable in place: from `(val, step, stop)` alone, `for i =\nminint, minint+5` (legit) is indistinguishable from a wrapped state. A\nsecond latent bug of the same class: `for i = 0, 2e63, math.maxinteger`\nexposed wrapped values forever because a float limit can never fail the\ncomparison — exactly the loop reference Lua 5.3.6 hangs on (verified;\nfixed upstream by 5.4's counter design).\n\n## The fix — reference Lua's instruction shape, adversarially reviewed\n\nThe loop now compiles to reference Lua's shape: `ForPrep` performs every\nvalidation and the entry decision (jumping past the loop when the body\nmust not run), the body follows immediately, and `JFor` sits at the\nbottom of the body as the pure continuation check after `Incr` advances\nthe controls.\n\n- **Integer loops** (integer index and step, Lua 5.3+ profiles only —\npre-5.3 Lua has one number type) get a **remaining-iteration counter**\nin place of the limit slot, computed with Lua 5.4's exact unsigned\narithmetic (ascending `((ulong)limit - (ulong)init) / step`, descending\n`((ulong)init - (ulong)limit) / (-(step+1) + 1)`, plus one for the\npending iteration, capped on the one wrap case). `JFor` tests the\ncounter; `Incr` consumes one unit; the visible control variable can\nnever wrap around (Lua 5.4 manual §3.3.5).\n- **Float limits in integer loops** convert with Lua's `forlimit`\nsemantics: floor ascending / ceil descending, clamping beyond the\ninteger range, skipping when no integer limit can satisfy the condition,\nNaN following Lua's branch.\n- **Float loops** normalize all three controls to the float subtype from\n5.3 on (so `math.type(i)` is `float` from the first iteration of `for i\n= 1, 3, 1.0`); the float limit slot doubles as the protocol marker for\n`JFor`/`Incr`.\n- **Entry semantics for non-finite bounds are exact** (verified against\nall five references): Lua 5.4+ enter a NaN-bounded float loop for\nexactly one iteration; Lua 5.1-5.3 — whose `forprep` computes the entry\nindex as `(init − step) + step`, which a NaN step poisons — never start.\nPre-5.3 profiles never take the counter path, so `for i = 5, 0/0, -1`\nruns zero iterations there like reference, instead of forever.\n- **Zero steps follow the version matrix**: 5.4+ raise Lua's exact\n`'for' step is zero`; 5.1-5.3 run zero iterations ascending (their\ndescending form loops forever in reference too).\n- **Validation order and messages are version-exact**: 5.4+ reject a\nzero integer step *before* validating the limit and say `bad 'for' limit\n(number expected, got table)`; 5.1-5.3 validate the limit first and say\n`'for' limit must be a number`.\n- **`goto` out of a loop no longer leaks**: a pre-existing bug\n(reproduced on the parent commit) where every `goto` escaping a\nnumeric/generic `for` leaked the loop's value-stack slots until the\nstack overflowed. `RuntimeScopeBlock` now records the construct's live\nslots and `GotoStatement` pops them; the five-million-jump reproduction\nnow completes in constant memory like reference Lua.\n- The dead `ToNum` opcode (superseded by `ForPrep`'s central\nconversions) is removed along with its emitter and executor; `ForPrep`\njoins `OpCodeStrings`; instruction encoding is unchanged so chunk dumps\nstay compatible (covered by a round-trip test).\n\n## Verification\n\n- Red gates observed first: zero-crossing suites empty on all profiles;\nthe clamp case never terminated; no 5.4 zero-step error.\n- `NumericForLoopTUnitTests` 199/199: data-driven zero-crossing/standard\nmatrices, the reference-verified non-finite bound truth table per\nprofile (NaN limits/steps, ±infinity), integer boundaries from both\nextremes with maximal steps, float-limit clamping, control-subtype\nvisibility, the error priority/message matrix, zero-step matrix,\ncontrol-variable scope and mutation, `goto continue` and goto-leak\nregressions for both loop kinds, coroutine suspension inside a\nzero-crossing loop, and a binary dump round-trip through the new opcode.\n- Float accumulation is bit-exact vs reference: `for i = 1, 0, -0.1`\nreproduces reference drift through `1.3877787807814457e-16` on every\nprofile.\n- An adversarial sub-agent review (reference `lvm.c` from 5.1.5 and\n5.4.4, ~110 probes) confirmed the protocol sound on every reachable case\nand reported four actionable findings — the pre-5.3 NaN-limit\nregression, first-iteration float subtype, error priority, and the\npre-existing goto leak — all fixed here and re-verified; its nits\n(counter-cap comment, `OpCodeStrings`, stale enum comment) are also\naddressed.\n- Full suite 15,484/15,484; enforced comparison matrix green on all five\nlanes with zero mismatches (nine reference-verified comparable fixture\nfamilies; boundary fixtures scoped 5.4+ because reference 5.3 hangs\nthere); both-error ratchet rebaselined for the new\ndeliberately-both-error fixtures; corpus regeneration idempotent at\n1,987 snippets.\n- Loop check remains allocation-free by construction (value-type\n`LuaNumber` arithmetic and in-place stack writes only); integer\niterations now do one integer compare instead of two `LuaNumber`\ncomparisons.\n\n## Follow-ups\n\n- #130 — Lua 5.5 rejects assigning the numeric `for` control variable\n(`const variable`); NovaSharp allows it in every profile.\n- #132 — `table.concat` skips pre-5.3 integral-float formatting (`{2.0}`\njoins as `2.0` under 5.1/5.2 where reference prints `2`); exposed by\nfloat-normalization work.\n- #99 — extractor version-scope heuristics mis-derive ranges from test\nattributes (observed twice here; concrete reproductions commented on the\nissue).\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Changes core VM numeric `for` preparation and continuation semantics\nplus `goto` stack cleanup—high blast radius if wrong, but heavily\nregression-tested; devcontainer scripts affect local agent setup only,\nnot production runtime.\n> \n> **Overview**\n> Closes **#126** by replacing the broken sign-based numeric `for`\nheuristic with reference Lua’s **`ForPrep` / bottom `JFor`** shape:\ninteger loops (5.3+) use a remaining-iteration counter and unsigned math\nso zero-crossing and extreme bounds behave like Lua 5.4+, float loops\nget version-accurate coercion, zero-step and control errors match\nper-profile messages, and **`goto` out of `for` loops** pops leaked\nvalue-stack slots via **`RuntimeScopeBlock.ValueStackSlots`**. The old\n**`ToNum`** loop path is removed; coverage adds\n**`NumericForLoopTUnitTests`**, Lua fixtures, and a rebaselined error\nratchet.\n> \n> **Devcontainer / agent tooling** (carried forward from prior work):\ninstalls **`@anthropic-ai/claude-code`**, **`bubblewrap`/`socat`**, and\n**`ai-backends.sh`** launchers **`codex-zai` / `claude-zai`** with\nisolated credentials and container-aware subprocess scrubbing; documents\nhost dual-uplink issues and optional **`prefer-wired-network`** user\nservice; adds OpenCode **bounded network retries** and Z.ai timeouts in\n**`opencode.json`**; wires lint **`test-ai-backends.sh`** into tooling\nconsistency checks.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\nfb4dd00f033cd84e7b18f1b63e428495146a9281. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->\n\n---------\n\nCo-authored-by: Claude Code <noreply@anthropic.com>",
+          "timestamp": "2026-09-03T01:01:35-07:00",
+          "tree_id": "8e603373e00773e0dafdf731189bd0702c7df5dc",
+          "url": "https://github.com/wallstop/NovaSharp/commit/b8642ac7b330bab6351c689a110344aaff8c74f8"
+        },
+        "date": 1788422928995,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 375.769,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 398.838,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 393.948,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 582.925,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 601.956,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 614.628,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 605.438,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 653.551,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 662.388,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 652.971,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 710.221,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 707.4,
             "unit": "ns",
             "extra": ""
           }
