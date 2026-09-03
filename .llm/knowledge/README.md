@@ -28,6 +28,9 @@ branch state, raw logs, or facts already easy to discover in canonical docs.
   secret handling, synchronization, and upgrade verification invariants.
 - [gstack adaptation decisions](gstack-adaptation.md) — pinned research
   provenance plus adopted and intentionally rejected workflow practices.
+- [numeric for reference matrix](numeric-for-reference-matrix.md) — verified
+  Lua 5.1-5.5 numeric `for` semantics: counter protocol, NaN and boundary corners,
+  zero-step and error-message matrices.
 
 ## Entry Template
 

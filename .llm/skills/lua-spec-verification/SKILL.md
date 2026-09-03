@@ -114,6 +114,25 @@ lua5.1 path/to/fixture.lua
 
 See [lua-comparison-harness](../lua-comparison-harness/SKILL.md) for full harness usage.
 
+### Read the reference C implementation when behavior is ambiguous
+
+Empirical probes answer *what* reference Lua does; when the *why* matters — corner
+cases like NaN comparisons, integer overflow, or entry-versus-continue asymmetries
+where a mental model of the source disagrees with observed output — read the exact
+implementation instead of theorizing. Official sources are downloadable as tarballs
+(`raw.githubusercontent.com` is not reachable from this devcontainer):
+
+```bash
+cd /tmp && curl -sL https://www.lua.org/ftp/lua-5.4.4.tar.gz -o lua544.tar.gz \
+  && tar xzf lua544.tar.gz lua-5.4.4/src/lvm.c
+```
+
+`src/lvm.c` holds the opcode semantics (`forprep`/`forloop`, comparisons, metamethod
+dispatch); `src/lstrlib.c` and `src/lmathlib.c` hold library behavior. Deriving from
+the real source settled questions this repository's mental models got wrong — for
+example, Lua 5.1's `forprep` routes the loop's first decision through its bottom check
+on an index recomputed as `(init - step) + step`, which a NaN step poisons.
+
 ______________________________________________________________________
 
 ## Additional guidance
