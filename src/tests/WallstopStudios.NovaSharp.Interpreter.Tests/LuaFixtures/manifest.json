@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
   "total_snippets": 1996,
-  "novasharp_only": 496,
-  "comparable": 1500,
+  "novasharp_only": 498,
+  "comparable": 1498,
   "by_version": {
     "5.1": 997,
-    "5.2": 702,
-    "5.3": 946,
-    "5.4": 1015,
-    "5.5": 1056
+    "5.2": 700,
+    "5.3": 944,
+    "5.4": 1013,
+    "5.5": 1054
   },
   "snippets": [
     {
@@ -22123,20 +22123,15 @@
     },
     {
       "path": "NumericLiteralTUnitTests/ToNumberRejectsFractionalBaseFromLua53.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericLiteralTUnitTests.cs:359",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericLiteralTUnitTests.cs:361",
       "test": "NumericLiteralTUnitTests.ToNumberRejectsFractionalBaseFromLua53",
-      "lua_versions": [
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
+      "lua_versions": [],
+      "novasharp_only": true,
       "expects_error": true
     },
     {
       "path": "NumericLiteralTUnitTests/ToNumberRejectsFractionalBaseFromLua53_1.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericLiteralTUnitTests.cs:378",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericLiteralTUnitTests.cs:380",
       "test": "NumericLiteralTUnitTests.ToNumberRejectsFractionalBaseFromLua53",
       "lua_versions": [],
       "novasharp_only": true,
@@ -22146,14 +22141,9 @@
       "path": "NumericLiteralTUnitTests/ToNumberTruncatesFractionalBaseBeforeLua53.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericLiteralTUnitTests.cs:347",
       "test": "NumericLiteralTUnitTests.ToNumberTruncatesFractionalBaseBeforeLua53",
-      "lua_versions": [
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": true
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
     }
   ]
 }

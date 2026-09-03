@@ -344,7 +344,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version);
 
-            LuaValue result = script.DoString("return tonumber('12', 3.5)");
+            LuaValue result = script.DoString(
+                "return tonumber('12', {base})".Replace("{base}", "3.5", StringComparison.Ordinal)
+            );
 
             await Assert.That(result.ToPrintString(version)).IsEqualTo("5").ConfigureAwait(false);
         }
@@ -356,7 +358,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new(version);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.DoString("return tonumber('12', 3.5)")
+                script.DoString(
+                    "return tonumber('12', {base})".Replace(
+                        "{base}",
+                        "3.5",
+                        StringComparison.Ordinal
+                    )
+                )
             )!;
 
             await Assert
