@@ -119,6 +119,24 @@ addressed:
   hex-float source syntax were corrected (reference accepts `0x1p4`, rejects
   `0x1.5`/`0x.8`/`0x8p-3`).
 
+## CI closure notes (PR #136)
+
+- `lint` failed once on a stale corpus manifest after test edits — regenerated.
+- `lua-comparison (windows, 5.1)` exposed that reference Windows Lua 5.1 builds have a
+  32-bit `unsigned long`, so `tonumber(v, base)` saturates at `4294967295` there while
+  LP64 builds saturate at `2^64-1`; NovaSharp now mirrors the host OS and the
+  base-conversion test expectations are platform-conditional.
+- `benchmark aggregate report` tripped the Phase A0 Fibonacci NLua-ratio gate
+  (+190% vs the checked-in 6.54x baseline). A local A/B against `main` (three runs
+  each, identical `fib(30)` timings within 2%) proved no code regression: the gate
+  fired because the run's whole runner was ~25-30% slower (every external runtime
+  row regressed equally) on top of a stale baseline. A clean rerun passed. Follow-up:
+  the Phase A0 scoreboard baseline predates the current runner class and sits ~48%
+  below what `main` itself measures — it should be re-captured (relates to
+  [#93](https://github.com/wallstop/NovaSharp/issues/93)).
+- Reruns issued for two workflows at once interact badly with the workflows'
+  `cancel-in-progress` concurrency groups — rerun one workflow at a time.
+
 ## Follow-ups
 
 - Error-message *formats* still diverge (#124 class): reference 5.1/5.2 name
