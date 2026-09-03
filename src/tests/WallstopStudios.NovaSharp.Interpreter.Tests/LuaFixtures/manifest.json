@@ -4,11 +4,11 @@
   "novasharp_only": 493,
   "comparable": 1494,
   "by_version": {
-    "5.1": 995,
-    "5.2": 696,
-    "5.3": 941,
-    "5.4": 1011,
-    "5.5": 1052
+    "5.1": 997,
+    "5.2": 697,
+    "5.3": 940,
+    "5.4": 1009,
+    "5.5": 1050
   },
   "snippets": [
     {
@@ -21962,10 +21962,8 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:520",
       "test": "NumericForLoopTUnitTests.FloatLoopControlsKeepIntegralFormattingBeforeLua53",
       "lua_versions": [
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
+        "5.1",
+        "5.2"
       ],
       "novasharp_only": false,
       "expects_error": false
@@ -22001,12 +21999,12 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:562",
       "test": "NumericForLoopTUnitTests.InvalidLimitReportedBeforeZeroStepThroughLua53",
       "lua_versions": [
-        "5.3",
-        "5.4",
-        "5.5"
+        "5.1",
+        "5.2",
+        "5.3"
       ],
       "novasharp_only": false,
-      "expects_error": false
+      "expects_error": true
     },
     {
       "path": "NumericForLoopTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua",
@@ -22031,7 +22029,7 @@
         "5.5"
       ],
       "novasharp_only": false,
-      "expects_error": false
+      "expects_error": true
     },
     {
       "path": "NumericForLoopTUnitTests/NonNumberControlErrorsUseLua54MessageFormat_1.lua",
@@ -22042,7 +22040,7 @@
         "5.5"
       ],
       "novasharp_only": false,
-      "expects_error": false
+      "expects_error": true
     },
     {
       "path": "NumericForLoopTUnitTests/ZeroStepReportedBeforeInvalidLimitFromLua54.lua",

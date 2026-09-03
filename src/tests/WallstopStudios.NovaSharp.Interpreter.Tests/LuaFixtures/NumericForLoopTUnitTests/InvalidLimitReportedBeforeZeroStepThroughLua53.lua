@@ -1,6 +1,6 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.1-5.3
 -- @novasharp-only: false
--- @expects-error: false
+-- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:562
 -- @test: NumericForLoopTUnitTests.InvalidLimitReportedBeforeZeroStepThroughLua53
 -- Compatibility notes: Test targets Lua 5.3+

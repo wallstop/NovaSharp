@@ -1180,6 +1180,17 @@
       "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua:(8,0-19): 'for' limit must be a number [compatibility: Lua 5.1]"
     },
     {
+      "file": "NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "7b5593ceb9e722615955bf3f873b99ed2807a591134798473fb55d9f2a0cfde4",
+      "nova_error_sha256": "80ac5f78b1d38e19215ab9b07c5a568df668c2ed00e26502459ee5a1b668f437",
+      "lua_error_excerpt": "lua: ...s/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:<line>: 'for' limit must be a number | stack traceback: | \t...s/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:<...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:(7,0-19): 'for' limit must be a number [compatibility: Lua 5.1]"
+    },
+    {
       "file": "NumericForLoopTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua",
       "lua_version": "5.1",
       "classification": "unclassified",
@@ -3433,6 +3444,17 @@
       "nova_error_sha256": "72cc19506298340e3382c77a6055c9b2235669466a63e41bd136f0d3a628721c",
       "lua_error_excerpt": "lua: ...NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua:<line>: 'for' limit must be a number | stack traceback: | \t...NumericForLoopTUnitTests/ForControlErrorsBeforeLua...",
       "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua:(8,0-19): 'for' limit must be a number [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "ae782cb9ca2ee471247b5d2ae8ae844ea9bbde86ebd2b6954400cf5134d2b26b",
+      "nova_error_sha256": "006c6f2c127992d2b925194806632b0110a3da22cf874fa1d9eda201f090573d",
+      "lua_error_excerpt": "lua: ...Tests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:<line>: 'for' limit must be a number | stack traceback: | \t...Tests/InvalidLimitReportedBeforeZeroStepThroughLua...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:(7,0-19): 'for' limit must be a number [compatibility: Lua 5.2]"
     },
     {
       "file": "NumericForLoopTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua",
@@ -9012,17 +9034,6 @@
       "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua:(7,0-19): 'for' step is zero [compatibility: Lua 5.4]"
     },
     {
-      "file": "NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua",
-      "lua_version": "5.4",
-      "classification": "unclassified",
-      "lua_rc_category": "nonzero",
-      "nova_rc_category": "nonzero",
-      "lua_error_sha256": "bf4de6efcc64aede24666505483534a7876ef96cb6f691466608296470e4cbbe",
-      "nova_error_sha256": "fc2bb38cd52e4f8aa3bdbdd82bd2d932dc328ac630db18316a262634a42f2425",
-      "lua_error_excerpt": "lua: ...Tests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:<line>: 'for' step is zero | stack traceback: | \t...Tests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:<li...",
-      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:(7,0-19): 'for' step is zero [compatibility: Lua 5.4]"
-    },
-    {
       "file": "NumericForLoopTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua",
       "lua_version": "5.4",
       "classification": "unclassified",
@@ -12321,17 +12332,6 @@
       "nova_error_sha256": "e2749dd419bd3f42979159d5622822c1695b752eb181d16de11a8262d67b81bd",
       "lua_error_excerpt": "lua: ...s/NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua:<line>: 'for' step is zero | stack traceback: | \t...s/NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua:<li...",
       "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua:(7,0-19): 'for' step is zero [compatibility: Lua 5.5]"
-    },
-    {
-      "file": "NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua",
-      "lua_version": "5.5",
-      "classification": "unclassified",
-      "lua_rc_category": "nonzero",
-      "nova_rc_category": "nonzero",
-      "lua_error_sha256": "bf4de6efcc64aede24666505483534a7876ef96cb6f691466608296470e4cbbe",
-      "nova_error_sha256": "4da485ae183c55e27e07a868dd0952ba0fb1cab2125f615fbfc45fe665b8a248",
-      "lua_error_excerpt": "lua: ...Tests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:<line>: 'for' step is zero | stack traceback: | \t...Tests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:<li...",
-      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/InvalidLimitReportedBeforeZeroStepThroughLua53.lua:(7,0-19): 'for' step is zero [compatibility: Lua 5.5]"
     },
     {
       "file": "NumericForLoopTUnitTests/NonFiniteBoundsMatchReferenceIterations.lua",

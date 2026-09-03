@@ -1,6 +1,6 @@
 -- @lua-versions: 5.4, 5.5
 -- @novasharp-only: false
--- @expects-error: false
+-- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:583
 -- @test: NumericForLoopTUnitTests.NonNumberControlErrorsUseLua54MessageFormat
 -- Compatibility notes: Test targets Lua 5.4+
