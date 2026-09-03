@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788422929524,
+  "lastUpdate": 1788428022088,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -3166,6 +3166,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 707.4,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2e7ffd2ef7bc3d0f2ef35dd3b38f13c09f02c58f",
+          "message": "Capture numeric for reference matrix and source-reading technique (#133)\n\nPost-work reflection output for #131 / session 184 (mandated by the\npost-work-reflection gate):\n\n- New knowledge topic `.llm/knowledge/numeric-for-reference-matrix.md` —\nthe verified Lua 5.1-5.5 numeric `for` behavior matrix (counter\nprotocol, NaN/boundary corners, zero-step and error-message matrices,\ngoto slot accounting) so future loop or number-model work starts from\nevidence.\n- `lua-spec-verification` skill gains the reference-source reading step\n(official lua.org tarballs; `raw.githubusercontent.com` unreachable from\nthe devcontainer) that settled this session's ambiguous NaN and\nentry-semantics questions — with the Lua 5.1 `(init − step) + step`\nentry-index fact as the worked example.\n- Knowledge index updated; skill index regenerated and validated.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Touches VM `ForPrep` stack layout for all float/comparison numeric\nloops on 5.1–5.2; behavior is narrow (coercion write-back) but sits on a\nhot interpreter path with multi-version semantics.\n> \n> **Overview**\n> Adds durable agent knowledge and workflow guidance from the numeric\n`for` work (#131), and fixes a post-merge VM regression for\nstring-coercible loop controls.\n> \n> **Documentation:** New\n`.llm/knowledge/numeric-for-reference-matrix.md` records verified Lua\n5.1–5.5 behavior (counter vs comparison loops, zero-crossing,\nNaN/zero-step, errors, `goto` stack slots), indexed from the knowledge\nREADME. The `lua-spec-verification` skill now tells agents to pull\nofficial `lua.org` tarballs and read `lvm.c` when probes are ambiguous\n(e.g. 5.1’s `(init - step) + step` entry path).\n> \n> **Runtime fix:** In `ExecForPrep`, comparison-driven loops now write\ncoerced **index** and **step** back onto the value stack for Lua 5.1/5.2\nas well as 5.3+ (previously only the limit was updated), so `for i =\n'1', 3` no longer leaves strings that break `Incr`/`JFor`.\n> \n> **Tests:** New TUnit cases and three Lua comparison fixtures cover\nstring init/step on ≤5.2 and float-loop printing from 5.3; session\nprogress and corpus manifest counts are updated accordingly.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\nc2b99520994bc998a11d414d63e03490722aa783. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->\n\n---------\n\nCo-authored-by: Claude Code <noreply@anthropic.com>",
+          "timestamp": "2026-09-03T02:27:57-07:00",
+          "tree_id": "0a73072583bea7be13fccd1c9787a09ae43e3016",
+          "url": "https://github.com/wallstop/NovaSharp/commit/2e7ffd2ef7bc3d0f2ef35dd3b38f13c09f02c58f"
+        },
+        "date": 1788428021428,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 336.962,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 366.417,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 362.391,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 484.332,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 518.355,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 546.935,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 530.725,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 635.249,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 583.842,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 583.498,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 620.863,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 624.729,
             "unit": "ns",
             "extra": ""
           }
