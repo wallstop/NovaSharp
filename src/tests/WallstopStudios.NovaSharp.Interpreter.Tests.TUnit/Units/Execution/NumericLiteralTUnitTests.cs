@@ -183,36 +183,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             // Lua 5.1 defers to strtoul (0x prefix in base 16, unsigned wraparound,
             // saturation, base 10 = standard conversion); Lua 5.2 accumulates in double
-            // with signed negation; Lua 5.3+ wrap modulo 2^64 and keep the integer subtype.
+            // with signed negation; Lua 5.3+ wrap modulo 2^64 and keep the integer
+            // subtype. Reference 5.1 saturates at the platform's unsigned long width:
+            // 32 bits in reference Windows builds, 64 bits on LP64 platforms.
+            bool isWindows = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                System.Runtime.InteropServices.OSPlatform.Windows
+            );
+            string v51Saturation = isWindows ? "4294967295" : "1.844674407371e+19";
+            string v51NegativeWrap = isWindows ? "4294967041" : "1.844674407371e+19";
+            string v51LargeNumberCoercion = isWindows ? "4294967295" : "285960729237";
             (string Expression, string V51, string V52, string V53Plus)[] cases =
             {
                 ("tonumber('7f', 16)", "127", "127", "127"),
-                ("tonumber('-ff', 16)", "1.844674407371e+19", "-255", "-255"),
-                (
-                    "tonumber('ffffffffffffffff', 16)",
-                    "1.844674407371e+19",
-                    "1.844674407371e+19",
-                    "-1"
-                ),
-                (
-                    "tonumber('10000000000000000', 16)",
-                    "1.844674407371e+19",
-                    "1.844674407371e+19",
-                    "0"
-                ),
-                (
-                    "tonumber('fffffffffffffffff', 16)",
-                    "1.844674407371e+19",
-                    "2.9514790517935e+20",
-                    "-1"
-                ),
+                ("tonumber('-ff', 16)", v51NegativeWrap, "-255", "-255"),
+                ("tonumber('ffffffffffffffff', 16)", v51Saturation, "1.844674407371e+19", "-1"),
+                ("tonumber('10000000000000000', 16)", v51Saturation, "1.844674407371e+19", "0"),
+                ("tonumber('fffffffffffffffff', 16)", v51Saturation, "2.9514790517935e+20", "-1"),
                 ("tonumber('0x11', 10)", "17", "nil", "nil"),
                 ("tonumber('3.14', 10)", "3.14", "nil", "nil"),
                 ("tonumber('0x10', 16)", "16", "nil", "nil"),
                 ("tonumber('7g', 16)", "nil", "nil", "nil"),
                 ("tonumber('17', 6)", "nil", "nil", "nil"),
                 ("tonumber(111, 2)", "7", "7", "nil"),
-                ("tonumber(4294967295, 16)", "285960729237", "285960729237", "285960729237"),
+                (
+                    "tonumber(4294967295, 16)",
+                    v51LargeNumberCoercion,
+                    "285960729237",
+                    "285960729237"
+                ),
                 ("tonumber('0x10')", "16", "16", "16"),
             };
 

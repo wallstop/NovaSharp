@@ -54,9 +54,11 @@ implements this matrix in `LiteralExpression` → `LuaNumber.TryParse`,
 - **Lua 5.1** (`luaB_tonumber`): base 10 — explicit or default — runs the *standard*
   conversion (`lua_isnumber`: `strtod`, so `'0x11'`→17, `'3.14'`→3.14). Other bases
   defer to `strtoul`: leading spaces skipped, optional sign applied via **unsigned
-  wraparound** (`'-ff'` base 16 → `1.844674407371e+19`), optional `0x` prefix
-  accepted **in base 16**, overflow **saturates** at `ULONG_MAX` (17 f's →
-  `1.844674407371e+19`), trailing spaces allowed, any other trailing character → nil.
+  wraparound** (`'-ff'` base 16 → `1.844674407371e+19` on LP64), optional `0x` prefix
+  accepted **in base 16**, overflow **saturates** at the platform's `ULONG_MAX`
+  (17 f's → `1.844674407371e+19` on Linux/macOS but `4294967295` on Windows, where
+  reference builds have a 32-bit `unsigned long` — NovaSharp mirrors the OS), trailing
+  spaces allowed, any other trailing character → nil.
 - **Lua 5.2**: strips spaces/sign, accumulates `n = n*base + digit` in **double**
   (arbitrary magnitude, `2^68-1`-exact), **signed** negation (`'-ff'` → `-255`), no
   0x prefix (`'0x11'` base 16 → nil), full-string consumption required.

@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System.Collections.Generic;
     using System.IO;
     using System.Runtime.CompilerServices;
+    using System.Runtime.InteropServices;
     using System.Text;
     using global::NovaSharp;
     using Cysharp.Text;
@@ -669,9 +670,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (resolved == LuaCompatibilityVersion.Lua51)
             {
-                // Lua 5.1 uses strtoul: valid digits accumulate in unsigned 64-bit,
-                // saturating at ulong.MaxValue on overflow (regardless of sign), with
-                // the sign otherwise applied through unsigned wraparound
+                // Lua 5.1 uses strtoul: valid digits accumulate in unsigned long,
+                // saturating at the platform's unsigned long width on overflow
+                // (regardless of sign), with the sign otherwise applied through
+                // unsigned wraparound. Reference Windows builds have a 32-bit
+                // unsigned long; LP64 platforms (Linux/macOS) have 64 bits.
+                ulong unsignedMax = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                    ? 0xFFFF_FFFFUL
+                    : ulong.MaxValue;
                 ulong magnitude = 0;
                 bool saturated = false;
                 for (; index < span.Length; index++)
@@ -687,10 +693,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         continue;
                     }
 
-                    if (magnitude > (ulong.MaxValue - (ulong)digit) / (ulong)numberBase)
+                    if (magnitude > (unsignedMax - (ulong)digit) / (ulong)numberBase)
                     {
                         saturated = true;
-                        magnitude = ulong.MaxValue;
+                        magnitude = unsignedMax;
                         continue;
                     }
 
@@ -698,8 +704,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
 
                 ulong result =
-                    saturated ? ulong.MaxValue
-                    : negative ? unchecked(0UL - magnitude)
+                    saturated ? unsignedMax
+                    : negative
+                        ? magnitude == 0 ? 0
+                            : (unsignedMax - magnitude) + 1
                     : magnitude;
                 value = LuaNumber.FromFloat(result);
                 return true;
