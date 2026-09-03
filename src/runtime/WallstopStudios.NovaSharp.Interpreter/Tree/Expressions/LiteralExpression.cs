@@ -35,23 +35,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 case TokenType.Number:
                 case TokenType.NumberHex:
                 case TokenType.NumberHexFloat:
-                    // For Lua 5.3+ compliance: integer literals become integers,
-                    // float literals (with decimal point or exponent) become floats
-                    if (t.IsFloatLiteralSyntax())
+                    // Materialize the numeral with the script's compatibility profile:
+                    // Lua 5.1/5.2 have a single double number type, so integer-syntax
+                    // literals (decimal or hex) round to IEEE 754 floats, while Lua 5.3+
+                    // keeps integer and float subtypes (hex accumulates modulo 2^64).
+                    if (
+                        !LuaNumber.TryParse(
+                            t.text,
+                            lcontext.Script.CompatibilityVersion,
+                            out LuaNumber number
+                        )
+                    )
                     {
-                        // Float literal syntax (contains . or e/E) - always create float subtype
-                        _value = LuaValue.NewFloat(t.GetNumberValue());
+                        throw new SyntaxErrorException(t, "malformed number near '{0}'", t.text);
                     }
-                    else if (t.TryGetIntegerValue(out long intVal))
-                    {
-                        // Successfully parsed as integer directly (without double intermediate)
-                        _value = LuaValue.NewInteger(intVal);
-                    }
-                    else
-                    {
-                        // Integer syntax but too large for long - use float
-                        _value = LuaValue.NewFloat(t.GetNumberValue());
-                    }
+
+                    _value = LuaValue.NewNumber(number);
                     break;
                 case TokenType.String:
                 case TokenType.StringLong:

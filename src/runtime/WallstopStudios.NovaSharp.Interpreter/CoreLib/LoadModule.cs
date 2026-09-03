@@ -331,7 +331,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     args.AsType(0, "load", DataType.Function, false);
                 }
 
-                LuaValue source = args.AsType(1, "load", DataType.String, true);
+                LuaValue source = args.AsType(executionContext, 1, "load", DataType.String, true);
                 LuaValue env = args.AsType(3, "load", DataType.Table, true);
 
                 LuaValue fn = s.LoadString(
@@ -398,8 +398,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             try
             {
                 Script s = executionContext.Script;
-                LuaValue stringArg = args.AsType(0, "loadstring", DataType.String, false);
-                LuaValue chunkname = args.AsType(1, "loadstring", DataType.String, true);
+                LuaValue stringArg = args.AsType(
+                    executionContext,
+                    0,
+                    "loadstring",
+                    DataType.String,
+                    false
+                );
+                LuaValue chunkname = args.AsType(
+                    executionContext,
+                    1,
+                    "loadstring",
+                    DataType.String,
+                    true
+                );
 
                 LuaValue fn = s.LoadString(
                     stringArg.String,
@@ -501,7 +513,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     return LoadFromStandardInput(s, resolvedEnv);
                 }
 
-                LuaValue filename = args.AsType(0, "loadfile", DataType.String, false);
+                LuaValue filename = args.AsType(
+                    executionContext,
+                    0,
+                    "loadfile",
+                    DataType.String,
+                    false
+                );
                 LuaValue fn = s.LoadFile(filename.String, resolvedEnv);
 
                 return fn;
@@ -615,7 +633,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     return LuaValue.NewTailCallReq(stdinChunk);
                 }
 
-                LuaValue fileArgument = args.AsType(0, "dofile", DataType.String, false);
+                LuaValue fileArgument = args.AsType(
+                    executionContext,
+                    0,
+                    "dofile",
+                    DataType.String,
+                    false
+                );
                 LuaValue fn = script.LoadFile(fileArgument.String);
                 return LuaValue.NewTailCallReq(fn); // tail call to dofile
             }
@@ -695,7 +719,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             Script s = executionContext.Script;
-            LuaValue v = args.AsType(0, "__require_clr_impl", DataType.String, false);
+            LuaValue v = args.AsType(
+                executionContext,
+                0,
+                "__require_clr_impl",
+                DataType.String,
+                false
+            );
 
             // Check module access restrictions
             CheckModuleAccess(s, v.String);

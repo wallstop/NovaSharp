@@ -535,6 +535,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Gets the specified argument as the requested type, coercing numbers to strings with
+        /// the running script's number format. Reference Lua's <c>luaL_checklstring</c> coercion
+        /// is version-sensitive: Lua 5.1/5.2 render <c>42</c> where 5.3+ render <c>42.0</c>, so
+        /// string-typed argument validation must pass the execution context.
+        /// </summary>
+        public LuaValue AsType(
+            ScriptExecutionContext executionContext,
+            int argNum,
+            string funcName,
+            DataType type,
+            bool allowNil = false
+        )
+        {
+            return CallbackArguments.CheckTypeWithOwner(
+                this[argNum],
+                funcName,
+                type,
+                argNum,
+                allowNil
+                    ? TypeValidationOptions.AllowNil | TypeValidationOptions.AutoConvert
+                    : TypeValidationOptions.AutoConvert,
+                executionContext?.Script
+            );
+        }
+
+        /// <summary>
         /// Converts the arguments to an array.
         /// </summary>
         public LuaValue[] GetArray(int skip = 0)

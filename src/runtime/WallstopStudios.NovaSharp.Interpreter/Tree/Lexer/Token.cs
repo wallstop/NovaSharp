@@ -650,11 +650,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         }
 
         /// <summary>
-        /// Parses the numeric literal carried by this token.
+        /// Parses the decimal numeric literal carried by this token. Hexadecimal numerals are
+        /// version-sensitive and are materialized by <c>LiteralExpression</c> through
+        /// <see cref="DataTypes.LuaNumber" /> instead.
         /// </summary>
         /// <returns>The literal value as a <see cref="double" />.</returns>
         /// <exception cref="NotSupportedException">
-        /// Thrown when the token is not numeric (decimal, hexadecimal integer, or hexadecimal float).
+        /// Thrown when the token is not a decimal numeral.
         /// </exception>
         public double GetNumberValue()
         {
@@ -662,88 +664,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
             {
                 return LexerUtils.ParseNumber(this);
             }
-            else if (type == TokenType.NumberHex)
-            {
-                return LexerUtils.ParseHexInteger(this);
-            }
-            else if (type == TokenType.NumberHexFloat)
-            {
-                return LexerUtils.ParseHexFloat(this);
-            }
             else
             {
                 throw new NotSupportedException(
-                    "GetNumberValue is supported only on numeric tokens"
-                );
-            }
-        }
-
-        /// <summary>
-        /// Attempts to parse the numeric literal as a 64-bit signed integer without intermediate double conversion.
-        /// This is required for exact representation of large integers like long.MaxValue which cannot be
-        /// exactly represented in IEEE 754 double precision.
-        /// </summary>
-        /// <param name="value">When successful, contains the parsed integer value.</param>
-        /// <returns>true if the token represents an integer in the long.MinValue to long.MaxValue range; false otherwise.</returns>
-        /// <exception cref="NotSupportedException">
-        /// Thrown when the token is not numeric.
-        /// </exception>
-        public bool TryGetIntegerValue(out long value)
-        {
-            if (type == TokenType.NumberHex)
-            {
-                return LexerUtils.TryParseHexIntegerAsLong(this, out value);
-            }
-            else if (type == TokenType.Number && !IsFloatLiteralSyntax())
-            {
-                return long.TryParse(
-                    text,
-                    System.Globalization.NumberStyles.None,
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    out value
-                );
-            }
-            else
-            {
-                value = 0;
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Determines whether the numeric token uses float syntax (contains decimal point or exponent).
-        /// For Lua 5.3+ compliance, literals like "1.0" or "1e5" should be floats,
-        /// while literals like "1" or "0x10" should be integers.
-        /// </summary>
-        /// <returns>
-        /// <c>true</c> if the token contains a decimal point or exponent;
-        /// <c>false</c> for pure integer syntax (decimal or hex).
-        /// </returns>
-        /// <exception cref="NotSupportedException">
-        /// Thrown when the token is not numeric.
-        /// </exception>
-        public bool IsFloatLiteralSyntax()
-        {
-            if (type == TokenType.NumberHexFloat)
-            {
-                return true;
-            }
-            else if (type == TokenType.NumberHex)
-            {
-                return false;
-            }
-            else if (type == TokenType.Number)
-            {
-                // Check if the text contains a decimal point or exponent indicator
-                // Examples: "1.0" -> true, "1e5" -> true, "1" -> false, "123" -> false
-                return text.Contains('.', StringComparison.Ordinal)
-                    || text.Contains('e', StringComparison.OrdinalIgnoreCase)
-                    || text.Contains('E', StringComparison.Ordinal);
-            }
-            else
-            {
-                throw new NotSupportedException(
-                    "IsFloatLiteralSyntax is supported only on numeric tokens"
+                    "GetNumberValue is supported only on decimal number tokens"
                 );
             }
         }

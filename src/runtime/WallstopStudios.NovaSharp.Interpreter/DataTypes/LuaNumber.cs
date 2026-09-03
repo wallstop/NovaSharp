@@ -277,12 +277,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
             if (
-                resolved >= LuaCompatibilityVersion.Lua52
-                && index + 1 < span.Length
+                index + 1 < span.Length
                 && span[index] == '0'
                 && (span[index + 1] == 'x' || span[index + 1] == 'X')
             )
             {
+                // Hexadecimal numerals parse in every version: Lua 5.1 converts strings
+                // through strtod (which accepts hex), and 5.2+ scan hex numerals directly.
                 return TryParseHexLuaNumeral(span, index + 2, negative, resolved, out value);
             }
 
@@ -1112,11 +1113,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="version">The Lua compatibility version to use for formatting.</param>
         /// <returns>The number formatted as a Lua string.</returns>
         /// <remarks>
-        /// Formatting differences by version:
-        /// - Lua 5.1/5.2: Integer-like floats (e.g., 42.0) format as "42" (no decimal indicator)
-        /// - Lua 5.3+: Integer-like floats format as "42.0" (decimal indicator preserved)
-        /// - All versions: Integers always format without decimal point
-        /// - All versions: Non-integer floats use standard "shortest representation" formatting
+        /// Formatting follows reference Lua exactly:
+        /// - Integers always format without a decimal point.
+        /// - Lua 5.1-5.4 print floats with <c>%.14g</c>; Lua 5.5 starts from <c>%.15g</c> and
+        ///   falls back to <c>%.17g</c> when the shorter form does not round-trip.
+        /// - Lua 5.3+ append <c>.0</c> when the formatted float looks like an integer, keeping
+        ///   the textual distinction between <c>2</c> and <c>2.0</c>; Lua 5.1/5.2 do not.
         /// </remarks>
         public string ToLuaString(LuaCompatibilityVersion version)
         {
@@ -1141,34 +1143,90 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return "-inf";
             }
 
-            // For integer-like floats, Lua 5.3+ adds ".0" suffix to distinguish from integers
-            // Lua 5.1/5.2 does not have this distinction (all numbers are floats)
-            if (_float == Math.Floor(_float) && !double.IsInfinity(_float))
+            LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
+            string formatted =
+                resolved >= LuaCompatibilityVersion.Lua55
+                    ? ToSignificantDigitsRoundTrip()
+                    : ToSignificantDigits("G14");
+            if (resolved >= LuaCompatibilityVersion.Lua53 && LooksLikeIntegerLiteral(formatted))
             {
-                LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
-                if (resolved >= LuaCompatibilityVersion.Lua53)
-                {
-                    return _float.ToString("0.0", CultureInfo.InvariantCulture);
-                }
-                // Lua 5.1/5.2: format without decimal point for integer-like floats
-                // Special case: negative zero must print as "-0" not "0"
-                // Casting -0.0 to long produces 0, losing the sign
-                if (_float == 0.0 && double.IsNegative(_float))
-                {
-                    return "-0";
-                }
-                // Only cast to long if the value is within long range to avoid overflow
-                if (_float >= long.MinValue && _float <= long.MaxValue)
-                {
-                    return ((long)_float).ToString(CultureInfo.InvariantCulture);
-                }
-                // For values outside long range, use standard float formatting
-                return _float.ToString(CultureInfo.InvariantCulture);
+                formatted += ".0";
             }
 
-            // Use standard "shortest representation" formatting - matches Lua's behavior
-            // and preserves backward compatibility with the original Number.ToString() call
-            return _float.ToString(CultureInfo.InvariantCulture);
+            return formatted;
+        }
+
+        /// <summary>
+        /// Formats the number for <c>io.write</c>/<c>f:write</c>: Lua 5.1-5.4 write floats
+        /// with plain <c>%.14g</c> (no <c>.0</c> suffix), while Lua 5.5 uses the tostring
+        /// format through <c>lua_numbertocstring</c>.
+        /// </summary>
+        internal string ToIoWriteString(LuaCompatibilityVersion version)
+        {
+            if (IsInteger || LuaVersionDefaults.Resolve(version) >= LuaCompatibilityVersion.Lua55)
+            {
+                return ToLuaString(version);
+            }
+
+            return ToSignificantDigits("G14");
+        }
+
+        /// <summary>
+        /// Formats the float with the given .NET general format string, matching Lua's
+        /// <c>%g</c> conventions (exponent form for large or small magnitudes, trailing
+        /// zeros stripped, lowercase exponent marker).
+        /// </summary>
+        private string ToSignificantDigits(string format)
+        {
+            // .NET emits an uppercase exponent marker ("1E+15"); C printf uses lowercase.
+            return _float.ToString(format, CultureInfo.InvariantCulture).Replace('E', 'e');
+        }
+
+        /// <summary>
+        /// Formats the float like Lua 5.5: with <c>%.15g</c> precision, reformatting at
+        /// <c>%.17g</c> when the shorter digits do not convert back to the same float.
+        /// </summary>
+        private string ToSignificantDigitsRoundTrip()
+        {
+            const string CompactFormat = "G15";
+            const string ExactFormat = "G17";
+            string compact = ToSignificantDigits(CompactFormat);
+            if (
+                double.TryParse(
+                    compact,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out double check
+                )
+                && BitConverter.DoubleToInt64Bits(check) == BitConverter.DoubleToInt64Bits(_float)
+            )
+            {
+                return compact;
+            }
+
+            return ToSignificantDigits(ExactFormat);
+        }
+
+        /// <summary>
+        /// Determines whether a formatted number consists solely of digits and a minus sign,
+        /// mirroring Lua's <c>strspn(buff, "-0123456789")</c> check for integer-looking output.
+        /// </summary>
+        private static bool LooksLikeIntegerLiteral(string formatted)
+        {
+            if (formatted.Length == 0)
+            {
+                return false;
+            }
+
+            foreach (char c in formatted)
+            {
+                if ((c < '0' || c > '9') && c != '-')
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <inheritdoc />

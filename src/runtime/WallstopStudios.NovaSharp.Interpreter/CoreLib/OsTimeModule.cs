@@ -301,7 +301,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             DateTime reference = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
 
-            LuaValue vformat = args.AsType(0, "date", DataType.String, true);
+            LuaValue vformat = args.AsType(executionContext, 0, "date", DataType.String, true);
             LuaValue vtime = args.AsType(1, "date", DataType.Number, true);
 
             // Lua 5.3+: time argument must have integer representation

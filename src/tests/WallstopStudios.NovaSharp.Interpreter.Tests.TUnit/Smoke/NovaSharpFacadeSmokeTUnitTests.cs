@@ -29,7 +29,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
 
             LuaValue result = lua.Run("return 40 + 2");
 
-            await Assert.That(result.Kind).IsEqualTo(LuaKind.Integer).ConfigureAwait(false);
+            // Lua 5.1/5.2 integer-syntax literals materialize as floats
+            LuaKind expectedKind =
+                version >= LuaCompatibilityVersion.Lua53 ? LuaKind.Integer : LuaKind.Float;
+            await Assert.That(result.Kind).IsEqualTo(expectedKind).ConfigureAwait(false);
             await Assert.That(result.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
         }
 
@@ -290,7 +293,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
         }
 
         [Test]
-        public async Task AsIntegerRejectsFloatSubtype()
+        public async Task AsIntegerRejectsNonIntegralNumbers()
         {
             using LuaEngine lua = LuaEngine.Create();
             LuaValue value = lua.Run("return 1.5");
@@ -308,11 +311,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
                 .That(() => value.AsInteger())
                 .Throws<InvalidOperationException>()
                 .ConfigureAwait(false);
-            await Assert.That(exception.Message).Contains("requires Integer").ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("integer-representable number")
+                .ConfigureAwait(false);
             await Assert
                 .That(numberException.Message)
                 .Contains("requires Number")
                 .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task AsIntegerConvertsIntegralFloats()
+        {
+            // Lua 5.1/5.2 numbers are always floats, so exact integral values convert
+            using LuaEngine lua = LuaEngine.Create(
+                new LuaEngineOptions { Version = ToLuaVersion(LuaCompatibilityVersion.Lua51) }
+            );
+            LuaValue value = lua.Run("return 42");
+            LuaValue negativeZero = lua.Run("return -0.0");
+
+            await Assert.That(value.Kind).IsEqualTo(LuaKind.Float).ConfigureAwait(false);
+            await Assert.That(value.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+            // Negative zero converts to zero like math.tointeger
+            await Assert.That(negativeZero.AsInteger()).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [Test]

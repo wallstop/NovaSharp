@@ -74,7 +74,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
                 else
                 {
-                    LuaValue vs = args.AsType(0, "dynamic.eval", DataType.String, false);
+                    LuaValue vs = args.AsType(
+                        executionContext,
+                        0,
+                        "dynamic.eval",
+                        DataType.String,
+                        false
+                    );
                     DynamicExpression expression = executionContext.Script.CreateDynamicExpression(
                         vs.String
                     );
@@ -113,7 +119,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             try
             {
-                LuaValue vs = args.AsType(0, "dynamic.prepare", DataType.String, false);
+                LuaValue vs = args.AsType(
+                    executionContext,
+                    0,
+                    "dynamic.prepare",
+                    DataType.String,
+                    false
+                );
                 DynamicExpression expression = executionContext.Script.CreateDynamicExpression(
                     vs.String
                 );

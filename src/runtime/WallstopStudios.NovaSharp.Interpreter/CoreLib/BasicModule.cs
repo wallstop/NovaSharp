@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System.Collections.Generic;
     using System.IO;
     using System.Runtime.CompilerServices;
+    using System.Runtime.InteropServices;
     using System.Text;
     using global::NovaSharp;
     using Cysharp.Text;
@@ -180,7 +181,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue message = args.AsType(0, "error", DataType.String, false);
+            LuaValue message = args.AsType(executionContext, 0, "error", DataType.String, false);
             LuaValue level = args.AsType(1, "error", DataType.Number, true);
 
             // Lua 5.3+: level must have integer representation
@@ -491,62 +492,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (b.IsNil)
             {
-                if (e.Type == DataType.Number)
-                {
-                    return e;
-                }
-
-                if (e.Type != DataType.String)
-                {
-                    return LuaValue.Nil;
-                }
-
-                // Lua 5.2+ tonumber without base parses hex literals (0x/0X prefix) per §3.1
-                // Lua 5.1 does NOT support hex parsing without explicit base
-                if (
-                    LuaNumber.TryParse(
-                        e.String,
-                        executionContext.Script.CompatibilityVersion,
-                        out LuaNumber luaNum
-                    )
-                )
-                {
-                    return LuaValue.NewNumber(luaNum);
-                }
-                return LuaValue.Nil;
+                return TryConvertStandardNumeral(e, executionContext.Script);
             }
             else
             {
-                LuaValue numeral =
-                    args[0].Type != DataType.Number
-                        ? args.AsType(0, "tonumber", DataType.String, false)
-                        // Use LuaNumber.ToString() to properly format infinity as "inf" and NaN as "nan"
-                        : LuaValue.NewString(args[0].LuaNumber.ToString());
+                LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(
+                    executionContext.Script.CompatibilityVersion
+                );
 
-                double baseValue = b.Number;
-                if (double.IsNaN(baseValue) || double.IsInfinity(baseValue))
+                int bb;
+                if (resolved >= LuaCompatibilityVersion.Lua53)
                 {
-                    throw ScriptRuntimeException.BadArgument(
-                        1,
-                        "tonumber",
-                        "integer",
-                        "number",
-                        false
-                    );
-                }
+                    // Lua 5.3+ require the base to have an exact integer representation
+                    if (!b.LuaNumber.TryToInteger(out long baseInteger))
+                    {
+                        throw new ScriptRuntimeException(
+                            "bad argument #2 to 'tonumber' (number has no integer representation)"
+                        );
+                    }
 
-                if (Math.Truncate(baseValue) != baseValue)
+                    if (baseInteger < 2 || baseInteger > 36)
+                    {
+                        throw new ScriptRuntimeException(
+                            "bad argument #2 to 'tonumber' (base out of range)"
+                        );
+                    }
+
+                    bb = (int)baseInteger;
+                }
+                else
                 {
-                    throw ScriptRuntimeException.BadArgument(
-                        1,
-                        "tonumber",
-                        "integer",
-                        "number",
-                        false
-                    );
-                }
+                    // Lua 5.1/5.2 truncate a fractional base (luaL_checkint) and report
+                    // NaN/Infinity conversions as out of range
+                    double baseValue = b.Number;
+                    if (double.IsNaN(baseValue) || double.IsInfinity(baseValue))
+                    {
+                        throw new ScriptRuntimeException(
+                            "bad argument #2 to 'tonumber' (base out of range)"
+                        );
+                    }
 
-                int bb = (int)baseValue;
+                    bb = (int)Math.Truncate(baseValue);
+                }
 
                 if (bb < 2 || bb > 36)
                 {
@@ -555,14 +542,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     );
                 }
 
-                ReadOnlySpan<char> numeralSpan = numeral.String.AsSpan().TrimWhitespace();
-
-                if (numeralSpan.IsEmpty)
+                // Lua 5.1 converts an explicit base 10 like the base-less form:
+                // strtod semantics, so hexadecimal and float syntax are accepted
+                if (resolved == LuaCompatibilityVersion.Lua51 && bb == 10)
                 {
-                    return LuaValue.Nil;
+                    return TryConvertStandardNumeral(e, executionContext.Script);
                 }
 
-                if (TryParseIntegerInBase(numeralSpan, bb, out double parsedValue))
+                string numeral = GetBaseNumeralText(e, resolved);
+
+                if (TryParseIntegerInBase(numeral, bb, resolved, out LuaNumber parsedValue))
                 {
                     return LuaValue.NewNumber(parsedValue);
                 }
@@ -571,14 +560,59 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
         }
 
+        /// <summary>
+        /// Applies the base-less <c>tonumber</c> conversion: numbers pass through, strings parse
+        /// with the script's numeral grammar, and every other type yields <c>nil</c>.
+        /// </summary>
+        private static LuaValue TryConvertStandardNumeral(LuaValue e, Script script)
+        {
+            if (e.Type == DataType.Number)
+            {
+                return e;
+            }
+
+            if (e.Type != DataType.String)
+            {
+                return LuaValue.Nil;
+            }
+
+            if (LuaNumber.TryParse(e.String, script.CompatibilityVersion, out LuaNumber luaNum))
+            {
+                return LuaValue.NewNumber(luaNum);
+            }
+
+            return LuaValue.Nil;
+        }
+
+        /// <summary>
+        /// Resolves the numeral text for <c>tonumber(v, base)</c>. Lua 5.1/5.2 coerce number
+        /// arguments to strings with the version's <c>tostring</c> formatting (like
+        /// <c>luaL_checkstring</c>); Lua 5.3+ require a string argument.
+        /// </summary>
+        private static string GetBaseNumeralText(LuaValue e, LuaCompatibilityVersion resolved)
+        {
+            if (e.Type == DataType.String)
+            {
+                return e.String;
+            }
+
+            if (e.Type == DataType.Number && resolved < LuaCompatibilityVersion.Lua53)
+            {
+                return e.ToPrintString(resolved);
+            }
+
+            throw ScriptRuntimeException.BadArgument(0, "tonumber", DataType.String, e.Type, false);
+        }
+
         private static bool TryParseIntegerInBase(
-            ReadOnlySpan<char> text,
+            string text,
             int numberBase,
-            out double value
+            LuaCompatibilityVersion resolved,
+            out LuaNumber value
         )
         {
-            value = 0;
-            ReadOnlySpan<char> span = text.TrimWhitespace();
+            value = LuaNumber.Zero;
+            ReadOnlySpan<char> span = text.AsSpan().TrimWhitespace();
             if (span.IsEmpty)
             {
                 return false;
@@ -593,16 +627,97 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 index++;
             }
 
+            // Lua 5.1 defers to strtoul, which accepts an optional 0x/0X prefix in base 16
+            if (
+                numberBase == 16
+                && resolved == LuaCompatibilityVersion.Lua51
+                && index + 1 < span.Length
+                && span[index] == '0'
+                && (span[index + 1] == 'x' || span[index + 1] == 'X')
+            )
+            {
+                index += 2;
+            }
+
             if (index >= span.Length)
             {
                 return false;
             }
 
+            if (resolved >= LuaCompatibilityVersion.Lua53)
+            {
+                // Lua 5.3+ accumulate modulo 2^64 and keep the integer subtype
+                ulong bits = 0;
+                for (; index < span.Length; index++)
+                {
+                    int digit = GetDigitValue(span[index]);
+                    if (digit < 0 || digit >= numberBase)
+                    {
+                        return false;
+                    }
+
+                    bits = unchecked((bits * (ulong)numberBase) + (ulong)digit);
+                }
+
+                if (negative)
+                {
+                    bits = unchecked(0UL - bits);
+                }
+
+                value = LuaNumber.FromInteger(unchecked((long)bits));
+                return true;
+            }
+
+            if (resolved == LuaCompatibilityVersion.Lua51)
+            {
+                // Lua 5.1 uses strtoul: valid digits accumulate in unsigned long,
+                // saturating at the platform's unsigned long width on overflow
+                // (regardless of sign), with the sign otherwise applied through
+                // unsigned wraparound. Reference Windows builds have a 32-bit
+                // unsigned long; LP64 platforms (Linux/macOS) have 64 bits.
+                ulong unsignedMax = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                    ? 0xFFFF_FFFFUL
+                    : ulong.MaxValue;
+                ulong magnitude = 0;
+                bool saturated = false;
+                for (; index < span.Length; index++)
+                {
+                    int digit = GetDigitValue(span[index]);
+                    if (digit < 0 || digit >= numberBase)
+                    {
+                        return false;
+                    }
+
+                    if (saturated)
+                    {
+                        continue;
+                    }
+
+                    if (magnitude > (unsignedMax - (ulong)digit) / (ulong)numberBase)
+                    {
+                        saturated = true;
+                        magnitude = unsignedMax;
+                        continue;
+                    }
+
+                    magnitude = (magnitude * (ulong)numberBase) + (ulong)digit;
+                }
+
+                ulong result =
+                    saturated ? unsignedMax
+                    : negative
+                        ? magnitude == 0 ? 0
+                            : (unsignedMax - magnitude) + 1
+                    : magnitude;
+                value = LuaNumber.FromFloat(result);
+                return true;
+            }
+
+            // Lua 5.2 accumulates in double precision with a signed negation
             double accumulator = 0;
             for (; index < span.Length; index++)
             {
                 int digit = GetDigitValue(span[index]);
-
                 if (digit < 0 || digit >= numberBase)
                 {
                     return false;
@@ -611,7 +726,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 accumulator = (accumulator * numberBase) + digit;
             }
 
-            value = negative ? -accumulator : accumulator;
+            value = LuaNumber.FromFloat(negative ? -accumulator : accumulator);
             return true;
         }
 
@@ -1153,7 +1268,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         )
         {
             Script script = executionContext.Script;
-            LuaValue firstArgument = args.AsType(0, "warn", DataType.String);
+            LuaValue firstArgument = args.AsType(executionContext, 0, "warn", DataType.String);
 
             if (args.Count == 1 && firstArgument.String.StartsWith('@'))
             {

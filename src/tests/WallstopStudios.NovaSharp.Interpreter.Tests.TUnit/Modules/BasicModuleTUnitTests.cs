@@ -779,25 +779,16 @@ warn('disabled-again')
             await Assert.That(double.IsPositiveInfinity(overflow.Number)).IsTrue();
             await Assert.That(underflow.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
             await Assert.That(underflow.Number).IsEqualTo(0d).ConfigureAwait(false);
-            if (version == LuaCompatibilityVersion.Lua51)
-            {
-                await Assert.That(compensatedHexFloat.IsNil).IsTrue().ConfigureAwait(false);
-                await Assert.That(subnormalHexFloat.IsNil).IsTrue().ConfigureAwait(false);
-                await Assert.That(roundingHexFloat.IsNil).IsTrue().ConfigureAwait(false);
-            }
-            else
-            {
-                await Assert.That(compensatedHexFloat.Number).IsEqualTo(1d).ConfigureAwait(false);
-                await Assert
-                    .That(subnormalHexFloat.Number)
-                    .IsEqualTo(double.Epsilon)
-                    .ConfigureAwait(false);
-                long expectedRoundingBits = ((long)(441 + 1023) << 52) | 0x107043C1ADC93L;
-                await Assert
-                    .That(BitConverter.DoubleToInt64Bits(roundingHexFloat.Number))
-                    .IsEqualTo(expectedRoundingBits)
-                    .ConfigureAwait(false);
-            }
+            await Assert.That(compensatedHexFloat.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert
+                .That(subnormalHexFloat.Number)
+                .IsEqualTo(double.Epsilon)
+                .ConfigureAwait(false);
+            long expectedRoundingBits = ((long)(441 + 1023) << 52) | 0x107043C1ADC93L;
+            await Assert
+                .That(BitConverter.DoubleToInt64Bits(roundingHexFloat.Number))
+                .IsEqualTo(expectedRoundingBits)
+                .ConfigureAwait(false);
             await Assert.That(unicodeExponent.IsNil).IsTrue().ConfigureAwait(false);
             if (version <= LuaCompatibilityVersion.Lua52)
             {
@@ -933,8 +924,8 @@ warn('disabled-again')
 
         // ========================================
         // Version-Specific Hex Parsing Tests (Lua §3.1)
-        // Lua 5.1 does NOT support hex string parsing in tonumber without explicit base.
-        // Hex parsing (0x prefix) was added in Lua 5.2.
+        // Every reference Lua accepts hexadecimal numerals in tonumber string conversions:
+        // Lua 5.1 converts through strtod (hex-capable), and Lua 5.2+ scan hex directly.
         // ========================================
 
         [global::TUnit.Core.Test]
@@ -943,26 +934,9 @@ warn('disabled-again')
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task ToNumberReturnsNilForHexStringInLua51(LuaCompatibilityVersion version)
+        public async Task ToNumberParsesHexStringInEveryVersion(LuaCompatibilityVersion version)
         {
-            // In Lua 5.1, tonumber('0xFF') without a base should return nil
-            Script script = CreateScript(LuaCompatibilityVersion.Lua51);
-            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            CallbackArguments args = new(new[] { LuaValue.NewString("0xFF") }, isMethodCall: false);
-
-            LuaValue result = BasicModule.ToNumber(context, args);
-
-            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
-        }
-
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task ToNumberParsesHexStringInLua52Plus(LuaCompatibilityVersion version)
-        {
-            // In Lua 5.2+, tonumber('0xFF') without a base should parse the hex string
+            // tonumber('0xFF') parses in all versions: float 255.0 pre-5.3, integer 255 in 5.3+
             Script script = new Script(version, CoreModulePresets.Complete);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(new[] { LuaValue.NewString("0xFF") }, isMethodCall: false);
@@ -970,6 +944,10 @@ warn('disabled-again')
             LuaValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(result.Number).IsEqualTo(255d).ConfigureAwait(false);
+            await Assert
+                .That(result.IsInteger)
+                .IsEqualTo(version >= LuaCompatibilityVersion.Lua53)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -978,12 +956,11 @@ warn('disabled-again')
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task ToNumberReturnsNilForNegativeHexStringInLua51(
+        public async Task ToNumberParsesNegativeHexStringInEveryVersion(
             LuaCompatibilityVersion version
         )
         {
-            // In Lua 5.1, tonumber('-0x10') without a base should return nil
-            Script script = CreateScript(LuaCompatibilityVersion.Lua51);
+            Script script = new Script(version, CoreModulePresets.Complete);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             CallbackArguments args = new(
                 new[] { LuaValue.NewString("-0x10") },
@@ -992,7 +969,7 @@ warn('disabled-again')
 
             LuaValue result = BasicModule.ToNumber(context, args);
 
-            await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(-16d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1001,7 +978,7 @@ warn('disabled-again')
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task ToNumberReturnsNilForHexFloatInLua51(LuaCompatibilityVersion version)
+        public async Task ToNumberParsesHexFloatsInEveryVersion(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
@@ -1024,20 +1001,11 @@ warn('disabled-again')
                 )
             );
 
-            if (version == LuaCompatibilityVersion.Lua51)
-            {
-                await Assert.That(normal.IsNil).IsTrue().ConfigureAwait(false);
-                await Assert.That(overflow.IsNil).IsTrue().ConfigureAwait(false);
-                await Assert.That(underflow.IsNil).IsTrue().ConfigureAwait(false);
-            }
-            else
-            {
-                await Assert.That(normal.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
-                await Assert.That(normal.Number).IsEqualTo(1.5d).ConfigureAwait(false);
-                await Assert.That(double.IsPositiveInfinity(overflow.Number)).IsTrue();
-                await Assert.That(underflow.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
-                await Assert.That(underflow.Number).IsEqualTo(0d).ConfigureAwait(false);
-            }
+            await Assert.That(normal.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(normal.Number).IsEqualTo(1.5d).ConfigureAwait(false);
+            await Assert.That(double.IsPositiveInfinity(overflow.Number)).IsTrue();
+            await Assert.That(underflow.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(underflow.Number).IsEqualTo(0d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1061,12 +1029,9 @@ warn('disabled-again')
 
             LuaValue result = BasicModule.ToNumber(context, args);
 
-            if (version == LuaCompatibilityVersion.Lua51)
+            if (version <= LuaCompatibilityVersion.Lua52)
             {
-                await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
-            }
-            else if (version == LuaCompatibilityVersion.Lua52)
-            {
+                // Lua 5.1/5.2 convert hex strings through strtod into doubles
                 await Assert.That(result.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
                 await Assert.That(result.Number).IsGreaterThan(9e18).ConfigureAwait(false);
             }
@@ -1100,11 +1065,7 @@ warn('disabled-again')
 
             LuaValue result = BasicModule.ToNumber(context, args);
 
-            if (version == LuaCompatibilityVersion.Lua51)
-            {
-                await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
-            }
-            else if (version == LuaCompatibilityVersion.Lua52)
+            if (version <= LuaCompatibilityVersion.Lua52)
             {
                 await Assert.That(result.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
                 await Assert.That(result.Number).IsGreaterThan(8e16).ConfigureAwait(false);
@@ -1160,14 +1121,7 @@ warn('disabled-again')
                 )
             );
 
-            if (version == LuaCompatibilityVersion.Lua51)
-            {
-                await Assert.That(fullMask.IsNil).IsTrue().ConfigureAwait(false);
-                await Assert.That(wrappedZero.IsNil).IsTrue().ConfigureAwait(false);
-                await Assert.That(negativeFullMask.IsNil).IsTrue().ConfigureAwait(false);
-                await Assert.That(roundingValue.IsNil).IsTrue().ConfigureAwait(false);
-            }
-            else if (version == LuaCompatibilityVersion.Lua52)
+            if (version <= LuaCompatibilityVersion.Lua52)
             {
                 await Assert.That(fullMask.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
                 await Assert.That(fullMask.Number).IsGreaterThan(1.8e19).ConfigureAwait(false);
@@ -1232,11 +1186,7 @@ warn('disabled-again')
 
             LuaValue result = BasicModule.ToNumber(context, args);
 
-            if (version == LuaCompatibilityVersion.Lua51)
-            {
-                await Assert.That(result.IsNil).IsTrue().ConfigureAwait(false);
-            }
-            else if (version == LuaCompatibilityVersion.Lua52)
+            if (version <= LuaCompatibilityVersion.Lua52)
             {
                 await Assert.That(result.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
                 await Assert.That(result.Number).IsLessThan(-9e18).ConfigureAwait(false);

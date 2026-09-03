@@ -71,7 +71,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                 "string.pack"
             );
 
-            LuaValue fmtArg = args.AsType(0, "pack", DataType.String, false);
+            LuaValue fmtArg = args.AsType(executionContext, 0, "pack", DataType.String, false);
             string fmt = fmtArg.String;
 
             // Estimate buffer size based on format string
@@ -341,8 +341,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                 "string.unpack"
             );
 
-            LuaValue fmtArg = args.AsType(0, "unpack", DataType.String, false);
-            LuaValue dataArg = args.AsType(1, "unpack", DataType.String, false);
+            LuaValue fmtArg = args.AsType(executionContext, 0, "unpack", DataType.String, false);
+            LuaValue dataArg = args.AsType(executionContext, 1, "unpack", DataType.String, false);
             LuaValue suppliedPosition = args[2];
             LuaValue posArg;
             if (suppliedPosition.Type == DataType.String)
@@ -669,7 +669,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
                 "string.packsize"
             );
 
-            LuaValue fmtArg = args.AsType(0, "packsize", DataType.String, false);
+            LuaValue fmtArg = args.AsType(executionContext, 0, "packsize", DataType.String, false);
             string fmt = fmtArg.String;
 
             int size = 0;

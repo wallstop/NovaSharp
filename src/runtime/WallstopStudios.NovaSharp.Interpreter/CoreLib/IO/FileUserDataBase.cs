@@ -211,16 +211,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         {
             try
             {
+                LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
                 for (int i = 0; i < args.Count; i++)
                 {
-                    string str = args.AsType(i, "write", DataType.String, false).String;
+                    // io.write formats numbers itself: Lua 5.1-5.4 use plain %.14g (no
+                    // ".0" suffix) while 5.5 uses the tostring format; other values
+                    // coerce like luaL_checklstring
+                    LuaValue argument = args[i];
+                    string str =
+                        argument.Type == DataType.Number
+                            ? argument.LuaNumber.ToIoWriteString(version)
+                            : args.AsType(i, "write", DataType.String, false).String;
                     Write(str);
                 }
 
-                LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
-                    executionContext.Script.CompatibilityVersion
-                );
-                if (version == LuaCompatibilityVersion.Lua51)
+                if (LuaVersionDefaults.Resolve(version) == LuaCompatibilityVersion.Lua51)
                 {
                     return LuaValue.True;
                 }

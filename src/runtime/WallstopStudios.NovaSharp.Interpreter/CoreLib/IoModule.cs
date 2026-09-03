@@ -431,7 +431,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return defaultInput.Lines(executionContext, args);
             }
 
-            string filename = args.AsType(0, "lines", DataType.String, false).String;
+            string filename = args.AsType(
+                executionContext,
+                0,
+                "lines",
+                DataType.String,
+                false
+            ).String;
 
             try
             {
@@ -517,9 +523,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            string filename = args.AsType(0, "open", DataType.String, false).String;
-            LuaValue vmode = args.AsType(1, "open", DataType.String, true);
-            LuaValue vencoding = args.AsType(2, "open", DataType.String, true);
+            string filename = args.AsType(
+                executionContext,
+                0,
+                "open",
+                DataType.String,
+                false
+            ).String;
+            LuaValue vmode = args.AsType(executionContext, 1, "open", DataType.String, true);
+            LuaValue vencoding = args.AsType(executionContext, 2, "open", DataType.String, true);
 
             string mode = vmode.IsNil ? "r" : vmode.String;
 

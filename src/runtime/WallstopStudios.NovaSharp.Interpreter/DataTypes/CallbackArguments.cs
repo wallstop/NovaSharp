@@ -462,6 +462,60 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Gets the specified argument as the requested type, coercing numbers to strings with
+        /// the running script's number format. Reference Lua's <c>luaL_checklstring</c> coercion
+        /// is version-sensitive: Lua 5.1/5.2 render <c>42</c> where 5.3+ render <c>42.0</c>, so
+        /// string-typed argument validation must pass the execution context.
+        /// </summary>
+        /// <param name="executionContext">Context supplying the running script's version.</param>
+        /// <param name="argNum">The argument number.</param>
+        /// <param name="funcName">Name of the function.</param>
+        /// <param name="type">The type desired.</param>
+        /// <param name="allowNil">if set to <c>true</c> nil values are allowed.</param>
+        /// <returns></returns>
+        public LuaValue AsType(
+            ScriptExecutionContext executionContext,
+            int argNum,
+            string funcName,
+            DataType type,
+            bool allowNil = false
+        )
+        {
+            return CheckTypeWithOwner(
+                this[argNum],
+                funcName,
+                type,
+                argNum,
+                allowNil
+                    ? TypeValidationOptions.AllowNil | TypeValidationOptions.AutoConvert
+                    : TypeValidationOptions.AutoConvert,
+                executionContext?.Script
+            );
+        }
+
+        /// <summary>
+        /// Validates or converts a single argument, coercing numbers to strings with the given
+        /// script's number format. Reference Lua's <c>luaL_checklstring</c> coercion is
+        /// version-sensitive.
+        /// </summary>
+        internal static LuaValue CheckTypeWithOwner(
+            LuaValue value,
+            string funcName,
+            DataType type,
+            int argNum,
+            TypeValidationOptions flags,
+            Script ownerScript
+        )
+        {
+            if (type == DataType.String && ownerScript != null && value.Type == DataType.Number)
+            {
+                return LuaValue.NewString(value.CastToString(ownerScript.CompatibilityVersion));
+            }
+
+            return value.CheckType(funcName, type, argNum, flags);
+        }
+
+        /// <summary>
         /// Gets the specified argument as as an argument of the specified user data type. If not possible,
         /// an exception is raised.
         /// </summary>
