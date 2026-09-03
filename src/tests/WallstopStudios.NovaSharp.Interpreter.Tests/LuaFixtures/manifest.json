@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1987,
+  "total_snippets": 1990,
   "novasharp_only": 493,
-  "comparable": 1494,
+  "comparable": 1497,
   "by_version": {
     "5.1": 997,
-    "5.2": 697,
-    "5.3": 940,
-    "5.4": 1009,
-    "5.5": 1050
+    "5.2": 699,
+    "5.3": 943,
+    "5.4": 1012,
+    "5.5": 1053
   },
   "snippets": [
     {
@@ -22046,6 +22046,44 @@
       "path": "NumericForLoopTUnitTests/ZeroStepReportedBeforeInvalidLimitFromLua54.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:540",
       "test": "NumericForLoopTUnitTests.ZeroStepReportedBeforeInvalidLimitFromLua54",
+      "lua_versions": [
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/StringCoercibleControlsIterateLikeReferenceBeforeLua53.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:642",
+      "test": "NumericForLoopTUnitTests.StringCoercibleControlsIterateLikeReferenceBeforeLua53",
+      "lua_versions": [
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/StringCoercibleControlsIterateLikeReferenceBeforeLua53_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:647",
+      "test": "NumericForLoopTUnitTests.StringCoercibleControlsIterateLikeReferenceBeforeLua53",
+      "lua_versions": [
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/StringControlsProduceFloatLoopFromLua53.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:665",
+      "test": "NumericForLoopTUnitTests.StringControlsProduceFloatLoopFromLua53",
       "lua_versions": [
         "5.3",
         "5.4",

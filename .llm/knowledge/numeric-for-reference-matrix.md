@@ -27,9 +27,12 @@ empirical probes on the installed `lua5.1`-`lua5.5`, plus `lvm.c` from the offic
   descents) — a known upstream bug fixed by 5.4's counter. NovaSharp follows 5.4
   semantics in 5.3 profiles deliberately; comparison fixtures covering extremes are
   therefore scoped 5.4+.
-- **NaN bounds, float loops**: 5.4+ enter for exactly one iteration (entry uses
-  lt-forms that never reject NaN); 5.1-5.3 never start (entry effectively demands the
-  le-condition, and a NaN step poisons 5.1-5.3's `(init-step)+step` entry index).
+- **NaN bounds, float loops**: with a NaN *limit or init*, 5.4+ enter for exactly one
+  iteration (entry uses lt-forms that never reject NaN) while 5.1-5.3 never start
+  (entry effectively demands the le-condition, and a NaN step poisons 5.1-5.3's
+  `(init-step)+step` entry index). A NaN *step* takes the descending entry branch
+  everywhere (`NaN > 0` is false), so only `init > limit` forms enter — one iteration
+  on 5.4+, none before.
 - **NaN limit, integer loop (5.3+)**: ascending skips; descending clamps the limit to
   `mininteger` via `forlimit` and effectively never terminates.
 - **Float limits in integer loops** convert with floor (ascending) / ceil (descending)

@@ -1329,9 +1329,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             // Reference Lua stores all three controls of a float loop as floats; NovaSharp
             // normalizes the same way from Lua 5.3 on, so the body observes float control
             // values from the very first iteration. Lua 5.1/5.2 have a single number
-            // type, so their controls keep the coerced subtypes and only the limit slot
-            // is forced to the float subtype, which marks the comparison-driven protocol
-            // for JFor and Incr.
+            // type, so their controls keep the coerced subtypes. Either way the coerced
+            // numbers must replace the raw expression results in their slots: a
+            // string-coercible control leaves a String behind otherwise, which Incr and
+            // JFor cannot operate on. The float limit slot itself also marks the
+            // comparison-driven protocol in every profile.
             if (version >= LuaCompatibilityVersion.Lua53)
             {
                 _valueStack.Set(
@@ -1342,6 +1344,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     1,
                     LuaValue.NewNumber(LuaNumber.FromFloat(coercedStep.Value.AsFloat))
                 );
+            }
+            else
+            {
+                _valueStack.Set(0, LuaValue.NewNumber(coercedIndex.Value));
+                _valueStack.Set(1, LuaValue.NewNumber(coercedStep.Value));
             }
 
             _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.FromFloat(coercedLimit.Value.AsFloat)));
