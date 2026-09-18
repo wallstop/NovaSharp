@@ -25,6 +25,14 @@ duplicated issue bodies. Delete obsolete and rejected work.
 Write a future deadline as an action followed by `by YYYY-MM-DD`. Date-led lines
 are history-shaped and mechanically rejected, even when intended as future work.
 
+## Session scoping
+
+Agent sessions target **under 2 hours** end to end, including CI polling. Scope
+`Now` items so the next falsifiable slice — implement, verify, PR open and
+green — fits that budget. When a slice would overrun, cut it at a dependency
+boundary: finish the smaller scope, record the remainder as its own `Now` or
+issue entry, and hand off cleanly instead of leaving a half-finished branch.
+
 ## Route information once
 
 | Information                                                            | Canonical destination               |

@@ -117,7 +117,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         public async Task ConstructorThrowsWhenArgumentsMissing()
         {
             Script script = new();
-            ScriptLoadingContext context = new(script) { Lexer = new Lexer(0, string.Empty, true) };
+            ScriptLoadingContext context = new(script)
+            {
+                Lexer = new Lexer(0, string.Empty, true, script.CompatibilityVersion),
+            };
             Expression callee = new FunctionExpressionStub(context, "broken::callee");
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
@@ -138,7 +141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             script = new Script();
             ScriptLoadingContext context = new(script)
             {
-                Lexer = new Lexer(0, argumentSource, true),
+                Lexer = new Lexer(0, argumentSource, true, script.CompatibilityVersion),
             };
             Expression callee = new FunctionExpressionStub(context, "stub::callee");
             Token? methodToken =

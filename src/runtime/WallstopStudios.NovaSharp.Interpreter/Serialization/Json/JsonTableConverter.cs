@@ -341,7 +341,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
         /// <returns>A table containing the representation of the given json.</returns>
         public static Table JsonToTable(string json, Script script = null)
         {
-            Lexer l = new(0, json, false);
+            // JSON numeral grammar is version-independent; the default profile keeps the
+            // lexer's number scanner from depending on an optional script reference.
+            Lexer l = new(0, json, false, LuaVersionDefaults.CurrentDefault);
 
             if (l.Current.type == TokenType.BrkOpenCurly)
             {

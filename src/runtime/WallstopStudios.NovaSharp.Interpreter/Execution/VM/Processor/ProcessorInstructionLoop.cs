@@ -1213,6 +1213,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             LuaCompatibilityVersion version = _script.Options.CompatibilityVersion;
             LuaValue rawIndex = _valueStack.Peek(0).ToScalar();
             LuaValue rawStep = _valueStack.Peek(1).ToScalar();
+            LuaValue rawLimit = _valueStack.Peek(2).ToScalar();
 
             bool integerLoop =
                 version >= LuaCompatibilityVersion.Lua53
@@ -1231,15 +1232,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     throw ScriptRuntimeException.ForStepIsZero();
                 }
 
-                LuaNumber? limit = _valueStack.Peek(2).ToScalar().CastToLuaNumber(version);
-                if (!limit.HasValue)
-                {
-                    throw ScriptRuntimeException.ForControlNotANumber(
-                        3,
-                        _valueStack.Peek(2).ToScalar().Type,
-                        version
-                    );
-                }
+                LuaNumber limit = CoerceForControlOrThrow(rawLimit, 3, version);
 
                 if (stepVal == 0)
                 {
@@ -1247,7 +1240,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     return i.NumVal;
                 }
 
-                if (!TryResolveIntegerForLimit(limit.Value, stepVal > 0, out long resolvedLimit))
+                if (!TryResolveIntegerForLimit(limit, stepVal > 0, out long resolvedLimit))
                 {
                     _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.Zero));
                     return i.NumVal;
@@ -1294,29 +1287,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return instructionPtr;
             }
 
-            LuaNumber? coercedLimit = _valueStack.Peek(2).ToScalar().CastToLuaNumber(version);
-            if (!coercedLimit.HasValue)
+            // Reference Lua's control validation order is version-specific: Lua
+            // 5.1/5.2 FORPREP converts the initial value first, then the limit, then
+            // the step (lvm.c), so the initial value's error wins when several
+            // controls are invalid; Lua 5.3+ validate the limit, then the step, then
+            // the initial value (verified against lua5.1-lua5.4).
+            LuaNumber coercedIndex;
+            LuaNumber coercedLimit;
+            LuaNumber coercedStep;
+            if (version <= LuaCompatibilityVersion.Lua52)
             {
-                throw ScriptRuntimeException.ForControlNotANumber(
-                    3,
-                    _valueStack.Peek(2).ToScalar().Type,
-                    version
-                );
+                coercedIndex = CoerceForControlOrThrow(rawIndex, 1, version);
+                coercedLimit = CoerceForControlOrThrow(rawLimit, 3, version);
+                coercedStep = CoerceForControlOrThrow(rawStep, 2, version);
+            }
+            else
+            {
+                coercedLimit = CoerceForControlOrThrow(rawLimit, 3, version);
+                coercedStep = CoerceForControlOrThrow(rawStep, 2, version);
+                coercedIndex = CoerceForControlOrThrow(rawIndex, 1, version);
             }
 
-            LuaNumber? coercedStep = rawStep.CastToLuaNumber(version);
-            if (!coercedStep.HasValue)
-            {
-                throw ScriptRuntimeException.ForControlNotANumber(2, rawStep.Type, version);
-            }
-
-            LuaNumber? coercedIndex = rawIndex.CastToLuaNumber(version);
-            if (!coercedIndex.HasValue)
-            {
-                throw ScriptRuntimeException.ForControlNotANumber(1, rawIndex.Type, version);
-            }
-
-            if (coercedStep.Value.AsFloat == 0.0 && version >= LuaCompatibilityVersion.Lua54)
+            if (coercedStep.AsFloat == 0.0 && version >= LuaCompatibilityVersion.Lua54)
             {
                 throw ScriptRuntimeException.ForStepIsZero();
             }
@@ -1336,22 +1328,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             // comparison-driven protocol in every profile.
             if (version >= LuaCompatibilityVersion.Lua53)
             {
-                _valueStack.Set(
-                    0,
-                    LuaValue.NewNumber(LuaNumber.FromFloat(coercedIndex.Value.AsFloat))
-                );
-                _valueStack.Set(
-                    1,
-                    LuaValue.NewNumber(LuaNumber.FromFloat(coercedStep.Value.AsFloat))
-                );
+                _valueStack.Set(0, LuaValue.NewNumber(LuaNumber.FromFloat(coercedIndex.AsFloat)));
+                _valueStack.Set(1, LuaValue.NewNumber(LuaNumber.FromFloat(coercedStep.AsFloat)));
             }
             else
             {
-                _valueStack.Set(0, LuaValue.NewNumber(coercedIndex.Value));
-                _valueStack.Set(1, LuaValue.NewNumber(coercedStep.Value));
+                _valueStack.Set(0, LuaValue.NewNumber(coercedIndex));
+                _valueStack.Set(1, LuaValue.NewNumber(coercedStep));
             }
 
-            _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.FromFloat(coercedLimit.Value.AsFloat)));
+            _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.FromFloat(coercedLimit.AsFloat)));
 
             // Lua 5.4+ enters the body unless the limit is provably beyond the initial
             // value, so a NaN bound runs exactly one iteration before the bottom
@@ -1359,9 +1345,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             // decision through their bottom check on the index re-computed as
             // (init - step) + step, so a NaN step poisons the entry comparison and the
             // loop never starts; for every non-NaN operand the two forms agree.
-            LuaNumber limitN = coercedLimit.Value;
-            LuaNumber stepN = coercedStep.Value;
-            LuaNumber indexN = coercedIndex.Value;
+            LuaNumber limitN = coercedLimit;
+            LuaNumber stepN = coercedStep;
+            LuaNumber indexN = coercedIndex;
             bool stepPositive = stepN.AsFloat > 0.0;
             bool skip;
             if (version >= LuaCompatibilityVersion.Lua54)
@@ -1378,6 +1364,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             return skip ? i.NumVal : instructionPtr;
+        }
+
+        /// <summary>
+        /// Coerces a numeric <c>for</c>-loop control to a number or throws the
+        /// version-appropriate "control must be a number" runtime error naming the
+        /// invalid control (1 = initial value, 2 = step, 3 = limit; see
+        /// <see cref="ScriptRuntimeException.ForControlNotANumber"/>).
+        /// </summary>
+        private static LuaNumber CoerceForControlOrThrow(
+            LuaValue value,
+            int operand,
+            LuaCompatibilityVersion version
+        )
+        {
+            LuaNumber? coerced = value.CastToLuaNumber(version);
+            if (!coerced.HasValue)
+            {
+                throw ScriptRuntimeException.ForControlNotANumber(operand, value.Type, version);
+            }
+
+            return coerced.Value;
         }
 
         /// <summary>

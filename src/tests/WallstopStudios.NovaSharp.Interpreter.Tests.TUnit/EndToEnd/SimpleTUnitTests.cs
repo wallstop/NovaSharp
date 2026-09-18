@@ -1751,8 +1751,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 .ConfigureAwait(false);
         }
 
+        // Reference Lua 5.1 rejects hex-float source syntax at the lexer (malformed
+        // number); hex floats are a Lua 5.2+ feature, so these tests are 5.2+ scoped.
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task HexFloats1(LuaCompatibilityVersion version)
         {
             string script = "return 0x0.1E";
@@ -1765,7 +1767,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task HexFloats2(LuaCompatibilityVersion version)
         {
             string compensatedLiteral = "0x" + new string('f', 400) + "p-1600";
@@ -1790,7 +1792,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task HexFloats3(LuaCompatibilityVersion version)
         {
             string script = "return 0X1.921FB54442D18P+1";

@@ -68,7 +68,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             {
                 IsDynamicExpression = true,
                 Scope = new BuildTimeScope(),
-                Lexer = new Lexer(0, string.Empty, true),
+                Lexer = new Lexer(0, string.Empty, true, script.CompatibilityVersion),
             };
 
             context.Scope.PushFunction(new PassthroughClosureBuilder(), hasVarArgs);

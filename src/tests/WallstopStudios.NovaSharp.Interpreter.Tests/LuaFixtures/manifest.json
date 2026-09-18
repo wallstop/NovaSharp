@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1996,
+  "total_snippets": 1998,
   "novasharp_only": 498,
-  "comparable": 1498,
+  "comparable": 1500,
   "by_version": {
-    "5.1": 997,
-    "5.2": 700,
-    "5.3": 944,
-    "5.4": 1013,
-    "5.5": 1054
+    "5.1": 999,
+    "5.2": 702,
+    "5.3": 946,
+    "5.4": 1015,
+    "5.5": 1056
   },
   "snippets": [
     {
@@ -22144,6 +22144,34 @@
       "lua_versions": [],
       "novasharp_only": true,
       "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/InvalidInitReportedBeforeInvalidLimit.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:644",
+      "test": "NumericForLoopTUnitTests.InvalidInitReportedBeforeInvalidLimit",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "NumericForLoopTUnitTests/InvalidInitReportedBeforeInvalidStep.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:666",
+      "test": "NumericForLoopTUnitTests.InvalidInitReportedBeforeInvalidStep",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
     }
   ]
 }

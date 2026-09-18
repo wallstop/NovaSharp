@@ -1,7 +1,10 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
 {
+    using global::NovaSharp;
     using Cysharp.Text;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
+    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     /// <summary>
@@ -23,8 +26,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         private int _col;
         private readonly int _sourceId;
         private bool _autoSkipComments;
+        private readonly LuaCompatibilityVersion _compatibilityVersion;
 
-        public Lexer(int sourceId, string scriptContent, bool autoSkipComments)
+        /// <summary>
+        /// Characters that turn a hexadecimal numeral into hex-float form (a fractional
+        /// part or a p-exponent).
+        /// </summary>
+        private static readonly char[] FloatFormMarkers = { '.', 'p', 'P' };
+
+        public Lexer(
+            int sourceId,
+            string scriptContent,
+            bool autoSkipComments,
+            LuaCompatibilityVersion compatibilityVersion
+        )
         {
             _code = scriptContent;
             _sourceId = sourceId;
@@ -36,6 +51,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
             }
 
             _autoSkipComments = autoSkipComments;
+            _compatibilityVersion = compatibilityVersion;
         }
 
         /// <summary>
@@ -485,68 +501,153 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
 
         private Token ReadNumberToken(int fromLine, int fromCol, bool leadingDot)
         {
+            // Reference Lua's numeral scanner differs by version (llex.c read_numeral):
+            // Lua 5.1 consumes digits and dots, an optional Ee exponent with one optional
+            // sign, then a trailing alphanumeric/underscore run and lets strtod accept or
+            // reject the whole buffer; Lua 5.2+ scan exponent marks, hexadecimal digits,
+            // and dots after an optional 0x prefix, and only Lua 5.4+ fold trailing
+            // alphanumerics into the token as malformed-number garbage.
+            return _compatibilityVersion == LuaCompatibilityVersion.Lua51
+                ? ReadNumberTokenLua51(fromLine, fromCol, leadingDot)
+                : ReadNumberTokenLua52Plus(fromLine, fromCol, leadingDot);
+        }
+
+        /// <summary>
+        /// Scans a numeral exactly like reference Lua 5.1.5 (<c>llex.c</c>
+        /// <c>read_numeral</c>). Whether the scanned text is a valid numeral is decided
+        /// later by <see cref="LuaNumber.TryParse"/>, which reproduces reference 5.1
+        /// accepting <c>0x1p4</c> (strtod hex-float) while rejecting <c>0x1.5</c>
+        /// (scanned as <c>0x1</c> then <c>.5</c>), <c>0x.8</c> (buffer <c>0x</c>), and
+        /// <c>0x8p-3</c> (buffer <c>0x8p</c>; the signed exponent stops the scan).
+        /// </summary>
+        private Token ReadNumberTokenLua51(int fromLine, int fromCol, bool leadingDot)
+        {
             using Utf16ValueStringBuilder text = ZStringBuilder.CreateNested();
-
-            //INT : Digit+
-            //HEX : '0' [xX] HexDigit+
-            //FLOAT : Digit+ '.' Digit* ExponentPart?
-            //		| '.' Digit+ ExponentPart?
-            //		| Digit+ ExponentPart
-            //HEX_FLOAT : '0' [xX] HexDigit+ '.' HexDigit* HexExponentPart?
-            //			| '0' [xX] '.' HexDigit+ HexExponentPart?
-            //			| '0' [xX] HexDigit+ HexExponentPart
-            //
-            // ExponentPart : [eE] [+-]? Digit+
-            // HexExponentPart : [pP] [+-]? Digit+
-
-            bool isHex = false;
-            bool dotAdded = false;
-            bool exponentPart = false;
-            bool exponentSignAllowed = false;
 
             if (leadingDot)
             {
-                text.Append("0.");
+                // The leading dot stays in the token text; reference reports the raw
+                // source text ('.5e', not '0.5e') in malformed-number errors.
+                text.Append('.');
             }
-            else if (CursorChar() == '0')
+
+            // Reference 5.1 has no 0x prefix check: the digits-and-dots scan runs first
+            // (consuming just '0' of '0x1A'), so '0x1.5' keeps its dot for the next
+            // token instead of scanning as one hex float.
+            bool floatForm = false;
+            for (
+                char c = CursorChar();
+                CursorNotEof() && (LexerUtils.CharIsDigit(c) || c == '.');
+                c = CursorCharNext()
+            )
+            {
+                text.Append(c);
+            }
+
+            if (CursorNotEof() && (CursorChar() == 'e' || CursorChar() == 'E'))
             {
                 text.Append(CursorChar());
-                char secondChar = CursorCharNext();
-
-                if (secondChar == 'x' || secondChar == 'X')
+                CursorCharNext();
+                char exponentSign = CursorChar();
+                if (CursorNotEof() && (exponentSign == '+' || exponentSign == '-'))
                 {
-                    isHex = true;
-                    text.Append(CursorChar());
+                    text.Append(exponentSign);
                     CursorCharNext();
                 }
             }
 
-            for (char c = CursorChar(); CursorNotEof(); c = CursorCharNext())
+            // The trailing alphanumeric/underscore run is what consumes the '0x' prefix
+            // and any p-exponent; strtod then accepts ('0x1p4') or rejects ('0xg') the
+            // whole buffer exactly like reference.
+            for (
+                char c = CursorChar();
+                CursorNotEof() && IsAsciiAlphaNumericOrUnderscore(c);
+                c = CursorCharNext()
+            )
             {
-                if (exponentSignAllowed && (c == '+' || c == '-'))
+                text.Append(c);
+            }
+
+            string tokenStr = text.ToString();
+            bool isHex =
+                tokenStr.Length >= 2
+                && tokenStr[0] == '0'
+                && (tokenStr[1] == 'x' || tokenStr[1] == 'X');
+            if (isHex && tokenStr.IndexOfAny(FloatFormMarkers) >= 0)
+            {
+                floatForm = true;
+            }
+
+            return CreateValidatedNumberToken(
+                ClassifyNumberTokenType(isHex, floatForm),
+                fromLine,
+                fromCol,
+                tokenStr
+            );
+        }
+
+        /// <summary>
+        /// Scans a numeral like reference Lua 5.2-5.5 (<c>llex.c</c> <c>read_numeral</c>):
+        /// an optional <c>0x</c>/<c>0X</c> prefix switches the exponent marker from
+        /// <c>e</c>/<c>E</c> to <c>p</c>/<c>P</c>; the scan then consumes exponent marks
+        /// (each with one optional sign) or hexadecimal digits and dots. Lua 5.4+
+        /// additionally folds trailing alphanumerics into the token so garbage like
+        /// <c>0x1g</c> or <c>1e5x</c> raises a malformed-number error, while Lua
+        /// 5.2/5.3 split it off as a name.
+        /// </summary>
+        private Token ReadNumberTokenLua52Plus(int fromLine, int fromCol, bool leadingDot)
+        {
+            using Utf16ValueStringBuilder text = ZStringBuilder.CreateNested();
+
+            bool isHex = false;
+            bool floatForm = false;
+            char exponentMarkLower = 'e';
+            char exponentMarkUpper = 'E';
+            if (leadingDot)
+            {
+                // The leading dot stays in the token text; reference reports the raw
+                // source text ('.5e', not '0.5e') in malformed-number errors.
+                text.Append('.');
+            }
+
+            char firstChar = CursorChar();
+            text.Append(firstChar);
+            char secondChar = CursorCharNext();
+            if (firstChar == '0' && (secondChar == 'x' || secondChar == 'X'))
+            {
+                isHex = true;
+                exponentMarkLower = 'p';
+                exponentMarkUpper = 'P';
+                text.Append(secondChar);
+                CursorCharNext();
+            }
+
+            bool foldsTrailingGarbage = _compatibilityVersion >= LuaCompatibilityVersion.Lua54;
+            while (CursorNotEof())
+            {
+                char c = CursorChar();
+                if (c == exponentMarkLower || c == exponentMarkUpper)
                 {
-                    exponentSignAllowed = false;
+                    floatForm |= isHex;
                     text.Append(c);
+                    CursorCharNext();
+                    char exponentSign = CursorChar();
+                    if (CursorNotEof() && (exponentSign == '+' || exponentSign == '-'))
+                    {
+                        text.Append(exponentSign);
+                        CursorCharNext();
+                    }
                 }
-                else if (LexerUtils.CharIsDigit(c))
+                else if (LexerUtils.CharIsHexDigit(c) || c == '.')
                 {
+                    floatForm |= isHex && c == '.';
                     text.Append(c);
+                    CursorCharNext();
                 }
-                else if (c == '.' && !dotAdded)
-                {
-                    dotAdded = true;
-                    text.Append(c);
-                }
-                else if (LexerUtils.CharIsHexDigit(c) && isHex && !exponentPart)
+                else if (foldsTrailingGarbage && IsAsciiAlphaNumeric(c))
                 {
                     text.Append(c);
-                }
-                else if (c == 'e' || c == 'E' || (isHex && (c == 'p' || c == 'P')))
-                {
-                    text.Append(c);
-                    exponentPart = true;
-                    exponentSignAllowed = true;
-                    dotAdded = true;
+                    CursorCharNext();
                 }
                 else
                 {
@@ -554,19 +655,56 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
                 }
             }
 
-            TokenType numberType = TokenType.Number;
+            return CreateValidatedNumberToken(
+                ClassifyNumberTokenType(isHex, floatForm),
+                fromLine,
+                fromCol,
+                text.ToString()
+            );
+        }
 
-            if (isHex && (dotAdded || exponentPart))
+        /// <summary>
+        /// Creates a numeral token, raising the reference-shaped
+        /// <c>malformed number near '&lt;text&gt;'</c> syntax error immediately when the
+        /// scanned text is not a numeral of the running profile. Reference Lua detects
+        /// malformed numerals in the lexer, before the parser observes the token (e.g.
+        /// <c>print(0xA.8p0)</c> reports the malformed <c>.8p0</c>, not a missing
+        /// parenthesis), so NovaSharp validates at the same point.
+        /// </summary>
+        private Token CreateValidatedNumberToken(
+            TokenType tokenType,
+            int fromLine,
+            int fromCol,
+            string tokenStr
+        )
+        {
+            Token token = CreateToken(tokenType, fromLine, fromCol, tokenStr);
+            if (!LuaNumber.TryParse(tokenStr, _compatibilityVersion, out _))
             {
-                numberType = TokenType.NumberHexFloat;
-            }
-            else if (isHex)
-            {
-                numberType = TokenType.NumberHex;
+                throw new SyntaxErrorException(token, "malformed number near '{0}'", tokenStr);
             }
 
-            string tokenStr = text.ToString();
-            return CreateToken(numberType, fromLine, fromCol, tokenStr);
+            return token;
+        }
+
+        private static TokenType ClassifyNumberTokenType(bool isHex, bool floatForm)
+        {
+            if (!isHex)
+            {
+                return TokenType.Number;
+            }
+
+            return floatForm ? TokenType.NumberHexFloat : TokenType.NumberHex;
+        }
+
+        private static bool IsAsciiAlphaNumeric(char c)
+        {
+            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || LexerUtils.CharIsDigit(c);
+        }
+
+        private static bool IsAsciiAlphaNumericOrUnderscore(char c)
+        {
+            return IsAsciiAlphaNumeric(c) || c == '_';
         }
 
         private Token CreateSingleCharToken(TokenType tokenType, int fromLine, int fromCol)
