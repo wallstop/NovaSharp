@@ -20,10 +20,24 @@ implements this matrix in `LiteralExpression` → `LuaNumber.TryParse`,
   `1e+20` on every version).
 - Lua 5.1 accepts hex *source literals* (`0x1A` → 26) even though stock 5.1 docs read
   as if hex arrived in 5.2; the lexer always scans `0x`, and `luaO_str2d`→strtod
-  parses it. 5.1's lexer also consumes `p`-exponent hex literals through strtod
-  (`0x1p4` → 16) but rejects `.`-forms and signed exponents (`0x1.5`, `0x.8`,
-  `0x8p-3` are syntax errors); NovaSharp's lexer accepts all of them in every
-  profile — a known pre-version-gating gap.
+  parses it. The numeral *scanner* is version-banded (mirrored in
+  `Tree/Lexer/Lexer.cs` from `llex.c` `read_numeral`):
+  - **5.1**: digits+dots, optional `Ee` + one sign, then a trailing
+    alphanumeric/underscore run — `strtod` decides validity. `0x1p4` → 16, but
+    `0x1.5` splits into `0x1` + `.5` (downstream parser error), `0x.8` →
+    `malformed number near '0x'`, `0x8p-3` → `malformed number near '0x8p'`,
+    `0xg` → `malformed number near '0xg'`, `1..2`/`.5e`/`123abc` are one
+    malformed token each.
+  - **5.2/5.3**: `0x` switches the exponent mark to `p`/`P`; the scan eats
+    exponent signs, hex digits, and dots; trailing garbage splits off as a name
+    (`0x1g` → `')' expected near 'g'`).
+  - **5.4/5.5**: same, plus trailing alphanumerics fold into the token
+    (`0x1g`, `1e5x`, `123abc` → malformed-number errors; `'near 0xg'`, not
+    `'near 0x'`).
+  - Malformed numerals raise at **lex time** (reference ordering), so
+    `print(0xA.8p0)` reports `malformed number near '.8p0'` rather than a
+    parser error; leading-dot numerals keep raw source text (`.5e`, never
+    `0.5e`).
 
 ## Float→string (`tostring`, `print`, concat, `%s`)
 
