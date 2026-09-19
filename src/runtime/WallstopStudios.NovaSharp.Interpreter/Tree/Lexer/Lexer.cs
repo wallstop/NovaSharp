@@ -51,7 +51,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
             }
 
             _autoSkipComments = autoSkipComments;
-            _compatibilityVersion = compatibilityVersion;
+
+            // The numeral scanners branch on concrete version bands, so resolve the
+            // Latest alias to its concrete profile up front.
+            _compatibilityVersion = LuaVersionDefaults.Resolve(compatibilityVersion);
         }
 
         /// <summary>

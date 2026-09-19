@@ -137,6 +137,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         }
 
         [global::TUnit.Core.Test]
+        public async Task DefaultProfileUsesLua54NumeralScanning()
+        {
+            // The default profile resolves Latest to Lua 5.4, whose scanner folds
+            // trailing alphanumeric garbage into the numeral.
+            Script script = new();
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                script.DoString("return 0x1G")
+            )!;
+
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("malformed number near '0x1G'")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task MalformedHexLiteralThrowsSyntaxError(LuaCompatibilityVersion version)
         {

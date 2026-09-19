@@ -40,6 +40,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
 
         private static LuaCompatibilityVersion? GetTestMoreCompatibilityOverride(string path)
         {
+            // 014-fornum.t and 202-expr.t are Lua 5.1-era suites: they expect a zero
+            // numeric-for step to run the body once and pre-5.4 "must be a number"
+            // control error text. The default profile is Lua 5.4, so pin them.
+            if (IsLua51ForNumSuite(path) || IsLua51ExprSuite(path))
+            {
+                return LuaCompatibilityVersion.Lua51;
+            }
+
             if (IsBit32Suite(path))
             {
                 return LuaCompatibilityVersion.Lua52;
@@ -87,6 +95,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
             return string.Equals(
                 path,
                 "TestMore/StandardLibrary/301-basic.t",
+                StringComparison.OrdinalIgnoreCase
+            );
+        }
+
+        private static bool IsLua51ForNumSuite(string path)
+        {
+            return string.Equals(
+                path,
+                "TestMore/ControlFlow/014-fornum.t",
+                StringComparison.OrdinalIgnoreCase
+            );
+        }
+
+        private static bool IsLua51ExprSuite(string path)
+        {
+            return string.Equals(
+                path,
+                "TestMore/CoreLanguage/202-expr.t",
                 StringComparison.OrdinalIgnoreCase
             );
         }

@@ -1210,7 +1210,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// body must not run.</returns>
         private int ExecForPrep(Instruction i, int instructionPtr)
         {
-            LuaCompatibilityVersion version = _script.Options.CompatibilityVersion;
+            // The validation order and integer-loop gates branch on concrete version
+            // bands, so resolve the Latest alias to its concrete profile first.
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                _script.Options.CompatibilityVersion
+            );
             LuaValue rawIndex = _valueStack.Peek(0).ToScalar();
             LuaValue rawStep = _valueStack.Peek(1).ToScalar();
             LuaValue rawLimit = _valueStack.Peek(2).ToScalar();
