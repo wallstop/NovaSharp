@@ -1169,6 +1169,19 @@
       "nova_error_excerpt": "LuaFixtures/NovaSharpHideMemberAttributeTUnitTests/HiddenMembersPropagateThroughInheritance_1.lua:(6,0-28): attempt to index a nil value [compatibility: Lua 5.1]"
     },
     {
+      "file": "NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "70a51c16814a3c2fb9f2cdb1e5efa22b9cbd062328b170b28e903374746def0c",
+      "nova_error_sha256": "4bcffb48641bc7bee602f58c89d0c2c615bc65500765d0d46b48669dee46f22c",
+      "lua_error_excerpt": "lua: ...pTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:<line>: 'for' initial value must be a number | stack traceback: | \t...pTUnitTests/DefaultProfileReportsLimitBeforeIn...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:(6,0-21): 'for' initial value must be a number [compatibility: Lua 5.1]",
+      "lua_error": "/home/runner/work/NovaSharp/NovaSharp/.lua-cache/Linux/lua-5.1/bin/lua5.1: ...pTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:6: 'for' initial value must be a number\nstack traceback:\n\t...pTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:6: in main chunk\n\t[C]: ?\n",
+      "nova_error": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures/NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:(6,0-21): 'for' initial value must be a number [compatibility: Lua 5.1]\n"
+    },
+    {
       "file": "NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua",
       "lua_version": "5.1",
       "classification": "unclassified",
@@ -1523,6 +1536,19 @@
       "nova_error_sha256": "53776dabbf55ea365fece8ce376d85f59e99811d897515cf838be7dcf65ddfcc",
       "lua_error_excerpt": "lua: ...aFixtures/ParserTUnitTests/DecimalEscapeTooLargeThrowsHelpfulMessage.lua:<line>: escape sequence too large near '\"'",
       "nova_error_excerpt": "decimal escape too large near '/400'"
+    },
+    {
+      "file": "ParserTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "58bf5ed2fb39db8b60ff0c03c773323bfe5ee900e21c0a365f57882a8ae721d9",
+      "nova_error_sha256": "cbd7809d8400d6ac0e794242a6fd067a1ff72d91944900132265a2cb456daf9c",
+      "lua_error_excerpt": "lua: LuaFixtures/ParserTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua:<line>: malformed number near '<addr>G'",
+      "nova_error_excerpt": "malformed number near '<addr>G'",
+      "lua_error": "/home/runner/work/NovaSharp/NovaSharp/.lua-cache/Linux/lua-5.1/bin/lua5.1: .../LuaFixtures/ParserTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua:7: malformed number near '0x1G'\n",
+      "nova_error": "malformed number near '0x1G'\n"
     },
     {
       "file": "ParserTUnitTests/Lua51HexFloatDotOnly.lua",
@@ -3567,6 +3593,19 @@
       "nova_error_excerpt": "LuaFixtures/NovaSharpHideMemberAttributeTUnitTests/HiddenMembersPropagateThroughInheritance_1.lua:(6,0-28): attempt to index a nil value [compatibility: Lua 5.2]"
     },
     {
+      "file": "NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "5f862d3b73627ef5294ad6ec5343642e4d3fe19f7363c9a49c5bc2cb44960247",
+      "nova_error_sha256": "78d962366925ca735d28f5e4e9c55a8e226c2833d2183f812238629ec3f197b4",
+      "lua_error_excerpt": "lua: ...rLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:<line>: 'for' initial value must be a number | stack traceback: | \t...rLoopTUnitTests/DefaultProfileReportsLimit...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:(6,0-21): 'for' initial value must be a number [compatibility: Lua 5.2]",
+      "lua_error": "/home/runner/work/NovaSharp/NovaSharp/.lua-cache/Linux/lua-5.2/bin/lua5.2: ...rLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:6: 'for' initial value must be a number\nstack traceback:\n\t...rLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:6: in main chunk\n\t[C]: in ?\n",
+      "nova_error": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures/NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:(6,0-21): 'for' initial value must be a number [compatibility: Lua 5.2]\n"
+    },
+    {
       "file": "NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua",
       "lua_version": "5.2",
       "classification": "unclassified",
@@ -3657,6 +3696,19 @@
       "nova_error_sha256": "53776dabbf55ea365fece8ce376d85f59e99811d897515cf838be7dcf65ddfcc",
       "lua_error_excerpt": "lua: ...TUnitTests/DecimalEscapeTooLargeThrowsHelpfulMessage.lua:<line>: decimal escape too large near '/400'",
       "nova_error_excerpt": "decimal escape too large near '/400'"
+    },
+    {
+      "file": "ParserTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "3b4a349818ae96e0668e849dab3736466bc96fda3ceec9f188ea1630e4d86680",
+      "nova_error_sha256": "1d436862f29142f6799061103d793c41a83d79d260e98765c347204cab685517",
+      "lua_error_excerpt": "lua: ...serTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua:<line>: <eof> expected near 'G'",
+      "nova_error_excerpt": "<eof> expected near 'G'",
+      "lua_error": "/home/runner/work/NovaSharp/NovaSharp/.lua-cache/Linux/lua-5.2/bin/lua5.2: ...serTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua:7: <eof> expected near 'G'\n",
+      "nova_error": "<eof> expected near 'G'\n"
     },
     {
       "file": "ParserTUnitTests/MalformedHexLiteralThrowsSyntaxError.lua",
@@ -6030,6 +6082,19 @@
       "nova_error_excerpt": "LuaFixtures/NovaSharpHideMemberAttributeTUnitTests/HiddenMembersPropagateThroughInheritance_1.lua:(6,0-28): attempt to index a nil value [compatibility: Lua 5.3]"
     },
     {
+      "file": "NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "40e1af14dd195824ee2b13fb04ad9e8d75c03cb2fe200b01b82ed7b1de29b4ff",
+      "nova_error_sha256": "86e8adbef80f381c4d396292a1e2c1f0739b28221a00a99a798511b2546ec0c8",
+      "lua_error_excerpt": "lua: ...rLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:<line>: 'for' limit must be a number | stack traceback: | \t...rLoopTUnitTests/DefaultProfileReportsLimitBeforeIn...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:(6,0-21): 'for' limit must be a number [compatibility: Lua 5.3]",
+      "lua_error": "/home/runner/work/NovaSharp/NovaSharp/.lua-cache/Linux/lua-5.3/bin/lua5.3: ...rLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:6: 'for' limit must be a number\nstack traceback:\n\t...rLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:6: in main chunk\n\t[C]: in ?\n",
+      "nova_error": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures/NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:(6,0-21): 'for' limit must be a number [compatibility: Lua 5.3]\n"
+    },
+    {
       "file": "NumericForLoopTUnitTests/ForControlErrorsBeforeLua54.lua",
       "lua_version": "5.3",
       "classification": "unclassified",
@@ -6164,6 +6229,19 @@
       "nova_error_sha256": "53776dabbf55ea365fece8ce376d85f59e99811d897515cf838be7dcf65ddfcc",
       "lua_error_excerpt": "lua: ...TUnitTests/DecimalEscapeTooLargeThrowsHelpfulMessage.lua:<line>: decimal escape too large near '\"/400\"'",
       "nova_error_excerpt": "decimal escape too large near '/400'"
+    },
+    {
+      "file": "ParserTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "3b4a349818ae96e0668e849dab3736466bc96fda3ceec9f188ea1630e4d86680",
+      "nova_error_sha256": "1d436862f29142f6799061103d793c41a83d79d260e98765c347204cab685517",
+      "lua_error_excerpt": "lua: ...serTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua:<line>: <eof> expected near 'G'",
+      "nova_error_excerpt": "<eof> expected near 'G'",
+      "lua_error": "/home/runner/work/NovaSharp/NovaSharp/.lua-cache/Linux/lua-5.3/bin/lua5.3: ...serTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua:7: <eof> expected near 'G'\n",
+      "nova_error": "<eof> expected near 'G'\n"
     },
     {
       "file": "ParserTUnitTests/MalformedHexLiteralThrowsSyntaxError.lua",
@@ -9285,6 +9363,19 @@
       "nova_error_excerpt": "LuaFixtures/NovaSharpHideMemberAttributeTUnitTests/HiddenMembersPropagateThroughInheritance_1.lua:(6,0-28): attempt to index a nil value [compatibility: Lua 5.4]"
     },
     {
+      "file": "NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "27ae7babb65aa8a0c6eadc56cf2dca81a03a66f1ea4b6224bfc1e6b2bda82b18",
+      "nova_error_sha256": "a7e3cc2d7f1a5db66cbfddc91087691cd3c0759a5af6c90021f84812cd3b1ab7",
+      "lua_error_excerpt": "lua: ...rLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:<line>: bad 'for' limit (number expected, got table) | stack traceback: | \t...rLoopTUnitTests/DefaultProfileRepo...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:(6,0-21): bad 'for' limit (number expected, got table) [compatibility: Lua 5.4]",
+      "lua_error": "/home/runner/work/NovaSharp/NovaSharp/.lua-cache/Linux/lua-5.4/bin/lua5.4: ...rLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:6: bad 'for' limit (number expected, got table)\nstack traceback:\n\t...rLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:6: in main chunk\n\t[C]: in ?\n",
+      "nova_error": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures/NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:(6,0-21): bad 'for' limit (number expected, got table) [compatibility: Lua 5.4]\n"
+    },
+    {
       "file": "NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua",
       "lua_version": "5.4",
       "classification": "unclassified",
@@ -9463,6 +9554,19 @@
       "nova_error_sha256": "53776dabbf55ea365fece8ce376d85f59e99811d897515cf838be7dcf65ddfcc",
       "lua_error_excerpt": "lua: ...TUnitTests/DecimalEscapeTooLargeThrowsHelpfulMessage.lua:<line>: decimal escape too large near '\"/400\"'",
       "nova_error_excerpt": "decimal escape too large near '/400'"
+    },
+    {
+      "file": "ParserTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "c52aadfcea6f598eb02f073d03b92b0a189a6e6d492e861c2996273f62096a40",
+      "nova_error_sha256": "cbd7809d8400d6ac0e794242a6fd067a1ff72d91944900132265a2cb456daf9c",
+      "lua_error_excerpt": "lua: ...serTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua:<line>: malformed number near '<addr>G'",
+      "nova_error_excerpt": "malformed number near '<addr>G'",
+      "lua_error": "/home/runner/work/NovaSharp/NovaSharp/.lua-cache/Linux/lua-5.4/bin/lua5.4: ...serTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua:7: malformed number near '0x1G'\n",
+      "nova_error": "malformed number near '0x1G'\n"
     },
     {
       "file": "ParserTUnitTests/MalformedHexLiteralThrowsSyntaxError.lua",
@@ -12652,6 +12756,19 @@
       "nova_error_excerpt": "LuaFixtures/NovaSharpHideMemberAttributeTUnitTests/HiddenMembersPropagateThroughInheritance_1.lua:(6,0-28): attempt to index a nil value [compatibility: Lua 5.5]"
     },
     {
+      "file": "NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "27ae7babb65aa8a0c6eadc56cf2dca81a03a66f1ea4b6224bfc1e6b2bda82b18",
+      "nova_error_sha256": "065f255855048c3697b70b65bda34da41d602167fbc004ac9e808290eb905cbb",
+      "lua_error_excerpt": "lua: ...rLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:<line>: bad 'for' limit (number expected, got table) | stack traceback: | \t...rLoopTUnitTests/DefaultProfileRepo...",
+      "nova_error_excerpt": "LuaFixtures/NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:(6,0-21): bad 'for' limit (number expected, got table) [compatibility: Lua 5.5]",
+      "lua_error": "/home/runner/work/NovaSharp/NovaSharp/.lua-cache/Linux/lua-5.5/bin/lua5.5: ...rLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:6: bad 'for' limit (number expected, got table)\nstack traceback:\n\t...rLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:6: in main chunk\n\t[C]: in ?\n",
+      "nova_error": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures/NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua:(6,0-21): bad 'for' limit (number expected, got table) [compatibility: Lua 5.5]\n"
+    },
+    {
       "file": "NumericForLoopTUnitTests/ForControlErrorsFromLua54.lua",
       "lua_version": "5.5",
       "classification": "unclassified",
@@ -12830,6 +12947,19 @@
       "nova_error_sha256": "53776dabbf55ea365fece8ce376d85f59e99811d897515cf838be7dcf65ddfcc",
       "lua_error_excerpt": "lua: ...TUnitTests/DecimalEscapeTooLargeThrowsHelpfulMessage.lua:<line>: decimal escape too large near '\"/400\"'",
       "nova_error_excerpt": "decimal escape too large near '/400'"
+    },
+    {
+      "file": "ParserTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "c52aadfcea6f598eb02f073d03b92b0a189a6e6d492e861c2996273f62096a40",
+      "nova_error_sha256": "cbd7809d8400d6ac0e794242a6fd067a1ff72d91944900132265a2cb456daf9c",
+      "lua_error_excerpt": "lua: ...serTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua:<line>: malformed number near '<addr>G'",
+      "nova_error_excerpt": "malformed number near '<addr>G'",
+      "lua_error": "/home/runner/work/NovaSharp/NovaSharp/.lua-cache/Linux/lua-5.5/bin/lua5.5: ...serTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua:7: malformed number near '0x1G'\n",
+      "nova_error": "malformed number near '0x1G'\n"
     },
     {
       "file": "ParserTUnitTests/MalformedHexLiteralThrowsSyntaxError.lua",
