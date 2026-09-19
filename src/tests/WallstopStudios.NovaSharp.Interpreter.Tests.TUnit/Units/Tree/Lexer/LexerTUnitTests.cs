@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
     using global::NovaSharp;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
@@ -89,7 +90,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
             for (int i = 0; i < ReservedKeywordCases.Length; i++)
             {
                 (string keyword, TokenType expectedType) = ReservedKeywordCases[i];
-                Lexer lexer = new(sourceId: 0, keyword, autoSkipComments: true);
+                Lexer lexer = new(
+                    sourceId: 0,
+                    keyword,
+                    autoSkipComments: true,
+                    LuaVersionDefaults.CurrentDefault
+                );
 
                 Token token = lexer.Current;
 
@@ -105,7 +111,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
             {
                 (string source, TokenType expectedType, string expectedText) =
                     FixedSyntaxTokenCases[i];
-                Lexer lexer = new(sourceId: 0, source, autoSkipComments: true);
+                Lexer lexer = new(
+                    sourceId: 0,
+                    source,
+                    autoSkipComments: true,
+                    LuaVersionDefaults.CurrentDefault
+                );
 
                 Token token = lexer.Current;
 
@@ -138,7 +149,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
             for (int i = 0; i < names.Length; i++)
             {
                 string name = names[i];
-                Lexer lexer = new(sourceId: 0, name, autoSkipComments: true);
+                Lexer lexer = new(
+                    sourceId: 0,
+                    name,
+                    autoSkipComments: true,
+                    LuaVersionDefaults.CurrentDefault
+                );
 
                 Token token = lexer.Current;
 
@@ -244,7 +260,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
 
             for (int iteration = 0; iteration < iterations; iteration++)
             {
-                Lexer lexer = new(sourceId: 0, source, autoSkipComments: true);
+                Lexer lexer = new(
+                    sourceId: 0,
+                    source,
+                    autoSkipComments: true,
+                    LuaVersionDefaults.CurrentDefault
+                );
                 int tokenCount = 0;
                 while (true)
                 {

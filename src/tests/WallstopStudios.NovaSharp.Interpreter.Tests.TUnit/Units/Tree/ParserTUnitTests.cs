@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
 {
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using global::NovaSharp;
     using global::TUnit.Assertions;
@@ -14,6 +15,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
 
     public sealed class ParserTUnitTests
     {
+        private static readonly LuaCompatibilityVersion[] AllVersions =
+        {
+            LuaCompatibilityVersion.Lua51,
+            LuaCompatibilityVersion.Lua52,
+            LuaCompatibilityVersion.Lua53,
+            LuaCompatibilityVersion.Lua54,
+            LuaCompatibilityVersion.Lua55,
+        };
+
         [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task SyntaxErrorsIncludeLineInformation(LuaCompatibilityVersion version)
@@ -61,9 +71,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         }
 
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task HexFloatLiteralParsesToExpectedNumber(LuaCompatibilityVersion version)
         {
+            // Reference Lua 5.1 rejects hex-float source syntax at the lexer; only
+            // Lua 5.2+ scan a dot or p-exponent inside a hex numeral.
             Script script = CreateScript(version);
             LuaValue result = script.DoString("return 0x1.fp3");
 
@@ -125,18 +137,134 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         }
 
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
-        public async Task MalformedHexLiteralThrowsSyntaxError(LuaCompatibilityVersion version)
+        public async Task DefaultProfileUsesLua54NumeralScanning()
         {
-            Script script = CreateScript(version);
+            // The default profile resolves Latest to Lua 5.4, whose scanner folds
+            // trailing alphanumeric garbage into the numeral.
+            Script script = new();
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString("return 0x1G")
             )!;
 
             await Assert
                 .That(exception.DecoratedMessage)
-                .Contains("near 'G'")
+                .Contains("malformed number near '0x1G'")
                 .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task MalformedHexLiteralThrowsSyntaxError(LuaCompatibilityVersion version)
+        {
+            // Reference 5.1 and 5.4+ fold trailing alphanumeric garbage into the numeral
+            // and reject it as a malformed number; reference 5.2/5.3 split 'G' off as a
+            // name, so the parser reports the unexpected token instead (verified against
+            // lua5.1-lua5.5).
+            Script script = CreateScript(version);
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                script.DoString("return 0x1G")
+            )!;
+
+            string expectedNear =
+                version == LuaCompatibilityVersion.Lua51 || version >= LuaCompatibilityVersion.Lua54
+                    ? "malformed number near '0x1G'"
+                    : "<eof> expected near 'G'";
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains(expectedNear)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [MethodDataSource(nameof(Lua51HexFloatRejectionData))]
+        public async Task HexFloatSourceSyntaxIsRejectedByLua51(string source, string expectedNear)
+        {
+            // Reference Lua 5.1's numeral scanner stops at the dot of a hex fraction and
+            // hands a trailing-alphanumeric buffer to strtod, so every hex-float form
+            // with '.' or a signed p-exponent raises a malformed-number error quoting
+            // the exact buffer, while the value materializes as separate tokens.
+            Script script = new(LuaCompatibilityVersion.Lua51);
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                script.DoString(source)
+            )!;
+
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains(expectedNear)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [MethodDataSource(nameof(MalformedNumeralData))]
+        public async Task MalformedNumeralsQuoteRawSourceText(
+            LuaCompatibilityVersion version,
+            string source,
+            string expectedNear
+        )
+        {
+            // Every reference version reports malformed numerals with the raw source
+            // text: 5.1 scans digits and dots, then trailing alphanumerics, and lets
+            // strtod reject the buffer; 5.2+ fold garbage into the token and demand
+            // full-string consumption. NovaSharp used to rewrite '.5e' to '0.5e' and
+            // split '1..2' into a concatenation.
+            Script script = new(version);
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                script.DoString(source)
+            )!;
+
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains(expectedNear)
+                .ConfigureAwait(false);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "TUnit MethodDataSource requires method"
+        )]
+        public static IEnumerable<(string Source, string ExpectedNear)> Lua51HexFloatRejectionData()
+        {
+            (string source, string expectedNear)[] cases =
+            {
+                ("return 0x0.1E", "malformed number near '.1E'"),
+                ("return 0x.8", "malformed number near '0x'"),
+                ("return 0xA23p-4", "malformed number near '0xA23p'"),
+                ("return 0x1.921FB54442D18P+1", "malformed number near '.921FB54442D18P'"),
+                ("return 0x8p-3", "malformed number near '0x8p'"),
+            };
+
+            foreach ((string source, string expectedNear) in cases)
+            {
+                yield return (source, expectedNear);
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "TUnit MethodDataSource requires method"
+        )]
+        public static IEnumerable<(
+            LuaCompatibilityVersion Version,
+            string Source,
+            string ExpectedNear
+        )> MalformedNumeralData()
+        {
+            (string source, string expectedNear)[] cases =
+            {
+                ("return 1..2", "malformed number near '1..2'"),
+                ("return .5e", "malformed number near '.5e'"),
+                ("return 123abc", "malformed number near '123abc'"),
+            };
+
+            foreach (LuaCompatibilityVersion version in AllVersions)
+            {
+                foreach ((string source, string expectedNear) in cases)
+                {
+                    yield return (version, source, expectedNear);
+                }
+            }
         }
 
         [global::TUnit.Core.Test]

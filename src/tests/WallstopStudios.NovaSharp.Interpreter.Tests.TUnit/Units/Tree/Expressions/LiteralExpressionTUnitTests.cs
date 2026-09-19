@@ -99,7 +99,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             {
                 Source = source,
                 Scope = new BuildTimeScope(),
-                Lexer = new Lexer(source.SourceId, code, true),
+                Lexer = new Lexer(source.SourceId, code, true, script.CompatibilityVersion),
             };
             context.Scope.PushFunction(new DummyClosureBuilder(), hasVarArgs: false);
             context.Scope.PushBlock();

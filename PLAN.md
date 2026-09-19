@@ -1,7 +1,8 @@
 # NovaSharp Plan
 
 This file is the execution queue. Repository priorities and closure gates live in
-[`.llm/context.md`](.llm/context.md); planning rules live in the
+[`.llm/context.md`](.llm/context.md); planning rules — including the under-2-hour
+session scoping target — live in the
 [plan-maintenance skill](.llm/skills/plan-maintenance/SKILL.md). Design evidence
 belongs in domain documentation, completed work in `progress/`, and the full
 backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
@@ -73,10 +74,12 @@ backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
    in the same study.
 1. Lua parity backlog: [call-context error names](https://github.com/wallstop/NovaSharp/issues/124),
    [optional-argument validation](https://github.com/wallstop/NovaSharp/issues/125),
+   [residual number/string parity nits](https://github.com/wallstop/NovaSharp/issues/138),
    other error formats, [Lua 5.5 const loop-variable enforcement](https://github.com/wallstop/NovaSharp/issues/130),
    `__gc`, Lua 5.4 garbage collector options, version-migration docs, and explicit
    compatibility-version matrix coverage; retain the
    [host-GC and byte-fidelity constraints](docs/proposals/runtime-research-gates.md#host-gc-and-string-fidelity).
 1. Maintenance backlog: complete TUnit data-driving migration and numeric
    conversion boundary audits; consolidate repeated error-message and module-name
-   literals incrementally when touched.
+   literals incrementally when touched; harden the Phase A0 baseline against
+   compile-P95 runner noise with a multi-run median capture.

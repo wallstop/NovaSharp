@@ -630,6 +630,105 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
         }
 
+        // Reference Lua 5.1/5.2 FORPREP converts the initial value first, so its error
+        // wins when the initial value and another control are both invalid; Lua 5.3+
+        // validate the limit and step first. (Verified against lua5.1-lua5.5.)
+        [global::TUnit.Core.Test]
+        public async Task DefaultProfileReportsLimitBeforeInit()
+        {
+            // The default profile resolves Latest to Lua 5.4, which validates the
+            // limit before the initial value.
+            Script script = new();
+            ScriptRuntimeException captured = null;
+            try
+            {
+                script.DoString("for i = {}, {}, {} do end");
+            }
+            catch (ScriptRuntimeException ex)
+            {
+                captured = ex;
+            }
+
+            await Assert.That(captured).IsNotNull().ConfigureAwait(false);
+            await Assert
+                .That(captured.Message)
+                .IsEqualTo("bad 'for' limit (number expected, got table)")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [MethodDataSource(nameof(AllVersionsAsCases))]
+        public async Task InvalidInitReportedBeforeInvalidLimit(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            ScriptRuntimeException captured = null;
+            try
+            {
+                script.DoString("for i = {}, {}, {} do end");
+            }
+            catch (ScriptRuntimeException ex)
+            {
+                captured = ex;
+            }
+
+            await Assert.That(captured).IsNotNull().ConfigureAwait(false);
+            await Assert
+                .That(captured.Message)
+                .IsEqualTo(GetControlErrorMessage(version, "initial value", "limit"))
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [MethodDataSource(nameof(AllVersionsAsCases))]
+        public async Task InvalidInitReportedBeforeInvalidStep(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            ScriptRuntimeException captured = null;
+            try
+            {
+                script.DoString("for i = {}, 10, {} do end");
+            }
+            catch (ScriptRuntimeException ex)
+            {
+                captured = ex;
+            }
+
+            await Assert.That(captured).IsNotNull().ConfigureAwait(false);
+            await Assert
+                .That(captured.Message)
+                .IsEqualTo(GetControlErrorMessage(version, "initial value", "step"))
+                .ConfigureAwait(false);
+        }
+
+        private static string GetControlErrorMessage(
+            LuaCompatibilityVersion version,
+            string pre53Control,
+            string post52Control
+        )
+        {
+            if (version <= LuaCompatibilityVersion.Lua52)
+            {
+                return $"'for' {pre53Control} must be a number";
+            }
+
+            return version == LuaCompatibilityVersion.Lua53
+                ? $"'for' {post52Control} must be a number"
+                : $"bad 'for' {post52Control} (number expected, got table)";
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "TUnit MethodDataSource requires method"
+        )]
+        public static IEnumerable<LuaCompatibilityVersion> AllVersionsAsCases()
+        {
+            foreach (LuaCompatibilityVersion version in AllVersions)
+            {
+                yield return version;
+            }
+        }
+
         [global::TUnit.Core.Test]
         [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task StringCoercibleControlsIterateLikeReferenceBeforeLua53(

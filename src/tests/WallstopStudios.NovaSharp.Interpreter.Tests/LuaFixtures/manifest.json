@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1996,
+  "total_snippets": 2000,
   "novasharp_only": 498,
-  "comparable": 1498,
+  "comparable": 1502,
   "by_version": {
-    "5.1": 997,
-    "5.2": 700,
-    "5.3": 944,
-    "5.4": 1013,
-    "5.5": 1054
+    "5.1": 1001,
+    "5.2": 704,
+    "5.3": 948,
+    "5.4": 1017,
+    "5.5": 1058
   },
   "snippets": [
     {
@@ -22144,6 +22144,62 @@
       "lua_versions": [],
       "novasharp_only": true,
       "expects_error": false
+    },
+    {
+      "path": "NumericForLoopTUnitTests/InvalidInitReportedBeforeInvalidLimit.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:644",
+      "test": "NumericForLoopTUnitTests.InvalidInitReportedBeforeInvalidLimit",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "NumericForLoopTUnitTests/InvalidInitReportedBeforeInvalidStep.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:666",
+      "test": "NumericForLoopTUnitTests.InvalidInitReportedBeforeInvalidStep",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "NumericForLoopTUnitTests/DefaultProfileReportsLimitBeforeInit.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/NumericForLoopTUnitTests.cs:645",
+      "test": "NumericForLoopTUnitTests.DefaultProfileReportsLimitBeforeInit",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "ParserTUnitTests/DefaultProfileUsesLua54NumeralScanning.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Tree/ParserTUnitTests.cs:146",
+      "test": "ParserTUnitTests.DefaultProfileUsesLua54NumeralScanning",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
     }
   ]
 }

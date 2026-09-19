@@ -416,7 +416,7 @@
       "name": "plan-maintenance",
       "description": "Keep NovaSharp PLAN.md as a lean execution queue by auditing active and future work, routing context and history to canonical artifacts, and removing completed or obsolete entries. Use when creating, reviewing, or updating plans, roadmaps, milestones, or session progress.",
       "file_path": ".llm/skills/plan-maintenance/SKILL.md",
-      "line_count": 67,
+      "line_count": 75,
       "category": "workflow",
       "related": [
         "systematic-investigation",

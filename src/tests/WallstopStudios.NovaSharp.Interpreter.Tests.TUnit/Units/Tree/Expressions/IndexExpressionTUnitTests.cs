@@ -247,7 +247,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             {
                 Source = source,
                 Scope = new BuildTimeScope(),
-                Lexer = new Lexer(source.SourceId, string.Empty, true),
+                Lexer = new Lexer(source.SourceId, string.Empty, true, script.CompatibilityVersion),
             };
 
             context.Scope.PushFunction(new PassthroughClosureBuilder(), hasVarArgs: false);

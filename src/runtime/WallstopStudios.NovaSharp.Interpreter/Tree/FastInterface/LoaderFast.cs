@@ -64,7 +64,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.FastInterface
             {
                 Scope = new BuildTimeScope(),
                 Source = source,
-                Lexer = new Lexer(source.SourceId, source.Code, true),
+                Lexer = new Lexer(source.SourceId, source.Code, true, script.CompatibilityVersion),
             };
         }
 

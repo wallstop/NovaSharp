@@ -21,6 +21,7 @@
 1. **No Legacy Host API Compatibility** - Freely improve or remove public APIs; update repository-owned callers atomically and do not add shims, obsolete aliases, migration adapters, deprecation windows, or other legacy API layers. Lua-version behavior and supported-platform compatibility remain required.
 1. **Pre-Commit Validation Allowed** - `bash ./scripts/dev/pre-commit.sh` is expected before commits and may restage files it auto-formats or regenerates.
 1. **No false green-lighting** - Only say `green`, `verified`, `passes`, or `complete` after the exact local checks and PR CI were observed passing. Otherwise report the check as `not run` or failing residual risk.
+1. **Session length target: under 2 hours** - Scope each session to one shippable, green PR covering a falsifiable slice; hand off remainders via `PLAN.md`, `progress/`, and issues instead of over-running. See [`.llm/skills/plan-maintenance/SKILL.md`](.llm/skills/plan-maintenance/SKILL.md).
 1. **Mandatory post-work improvement gate** - After every large change or investigation, and before declaring it complete, follow [`.llm/skills/post-work-reflection/SKILL.md`](.llm/skills/post-work-reflection/SKILL.md). Fix discovered defects, capture reusable techniques or durable knowledge in the appropriate `.llm` artifact, and obtain an independent review when agents are available.
 
 ## Build & Test

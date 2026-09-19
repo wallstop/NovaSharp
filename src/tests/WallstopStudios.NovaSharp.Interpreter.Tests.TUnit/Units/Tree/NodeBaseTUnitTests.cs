@@ -182,7 +182,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
             Script script = new();
             ScriptLoadingContext context = new(script)
             {
-                Lexer = new TreeLexer.Lexer(0, code, autoSkipComments: true),
+                Lexer = new TreeLexer.Lexer(
+                    0,
+                    code,
+                    autoSkipComments: true,
+                    script.CompatibilityVersion
+                ),
             };
             context.Lexer.Next();
             return context;

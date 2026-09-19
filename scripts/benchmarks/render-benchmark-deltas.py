@@ -24,6 +24,16 @@ DEFAULT_NLUA_RATIO_THRESHOLD = 1.00
 PHASE_ALLOCATION_EXACT_LIMIT_BYTES = 1024.0
 PHASE_ALLOCATION_ABSOLUTE_TOLERANCE_BYTES = 512.0
 PHASE_ALLOCATION_RELATIVE_TOLERANCE = 0.0002
+# Operations whose baseline mean reaches one second are attributed background
+# allocations well above the short-op noise floor (observed: +24.6 KB on a
+# 2.3 s fib(25) Execute op), so they get a small absolute allowance instead of
+# a byte-exact gate.
+PHASE_LONG_OP_MEAN_NS = 1_000_000_000.0
+PHASE_LONG_OP_ALLOCATION_TOLERANCE_BYTES = 32768.0
+# Sub-millisecond compile/cached-compile P95 samples are scheduler jitter on
+# hosted runners (2.0-3.7x swings across runs of identical code); their ratio
+# gates run on the mean only.
+NOISE_EXEMPT_P95_OPERATIONS = frozenset({"Compile", "Cached Compile"})
 NOVA_RUNTIME = "NovaSharp"
 RUNTIME_PREFIXES = ("NovaSharp", "MoonSharp", "NLua", "LuaCSharp", "KeraLua", "Lua")
 EXPECTED_EXTERNAL_RUNTIMES = ("MoonSharp", "NLua", "LuaCSharp")
@@ -755,6 +765,7 @@ def build_phase_gate_failures(
         allocation_failure = allocation_gate_failure(
             current_nova.metrics.allocated_bytes,
             baseline_nova.metrics.allocated_bytes,
+            baseline_nova.metrics.mean_ns,
         )
         if allocation_failure:
             failures.append(PhaseGateFailure(key, "NovaSharp B/op", allocation_failure))
@@ -788,21 +799,27 @@ def build_phase_gate_failures(
             baseline_nlua.metrics.mean_ns,
             nlua_ratio_threshold,
         )
-        append_ratio_gate_failure(
-            failures,
-            key,
-            "P95",
-            current_nova.metrics.p95_ns,
-            current_nlua.metrics.p95_ns,
-            baseline_nova.metrics.p95_ns,
-            baseline_nlua.metrics.p95_ns,
-            nlua_ratio_threshold,
-        )
+        if key.operation not in NOISE_EXEMPT_P95_OPERATIONS:
+            # Compile/Cached Compile are sub-millisecond cold paths whose P95 is
+            # dominated by scheduler jitter on hosted runners: measured NovaSharp
+            # compile P95 varied 2.0-3.7x across CI runs of identical code while
+            # the mean stayed within 1.5x, so gating the P95 ratio there fails
+            # green commits. Mean ratios still gate those operations.
+            append_ratio_gate_failure(
+                failures,
+                key,
+                "P95",
+                current_nova.metrics.p95_ns,
+                current_nlua.metrics.p95_ns,
+                baseline_nova.metrics.p95_ns,
+                baseline_nlua.metrics.p95_ns,
+                nlua_ratio_threshold,
+            )
 
     return failures
 
 
-def allocation_gate_failure(current: float, baseline: float) -> str:
+def allocation_gate_failure(current: float, baseline: float, baseline_mean_ns: float) -> str:
     if not math.isfinite(current):
         return "Current NovaSharp allocation measurement is missing."
     if not math.isfinite(baseline):
@@ -811,7 +828,7 @@ def allocation_gate_failure(current: float, baseline: float) -> str:
         return ""
 
     delta = current - baseline
-    tolerance = phase_allocation_tolerance(baseline)
+    tolerance = phase_allocation_tolerance(baseline, baseline_mean_ns)
     if delta <= tolerance:
         return ""
 
@@ -822,7 +839,22 @@ def allocation_gate_failure(current: float, baseline: float) -> str:
     )
 
 
-def phase_allocation_tolerance(baseline: float) -> float:
+def phase_allocation_tolerance(baseline: float, baseline_mean_ns: float) -> float:
+    if baseline_mean_ns >= PHASE_LONG_OP_MEAN_NS:
+        # Multi-second benchmark invocations attribute background activity (tiered
+        # JIT, GC bookkeeping) to the measured window: a fib(25) Execute op that
+        # allocates 168 B at baseline reported +24.6 KB from this noise on CI, so
+        # byte-exact gating is meaningless there. Short operations keep the exact
+        # gate that catches per-call allocation regressions.
+        return max(
+            phase_allocation_tolerance_for_short_ops(baseline),
+            PHASE_LONG_OP_ALLOCATION_TOLERANCE_BYTES,
+        )
+
+    return phase_allocation_tolerance_for_short_ops(baseline)
+
+
+def phase_allocation_tolerance_for_short_ops(baseline: float) -> float:
     if baseline < PHASE_ALLOCATION_EXACT_LIMIT_BYTES:
         return 0.0
 
