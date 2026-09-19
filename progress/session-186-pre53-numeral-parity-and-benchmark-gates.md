@@ -98,3 +98,29 @@ one green PR.
   change, deferred).
 - #124-class error-prefix divergence (`file:line:` vs NovaSharp's decorated
   form) is the reason new error fixtures land as both-error ratchet entries.
+
+## Post-merge gate calibration (adversarial review follow-ups)
+
+The independent adversarial review and the first PR CI runs surfaced two
+residual defects, both fixed in this PR:
+
+1. **`Latest` alias leaked into the new version bands**: the default profile
+   (`LuaCompatibilityVersion.Latest = 0`) fell into the `<= Lua52` for-loop
+   order branch and missed 5.4 numeral scanning. `ExecForPrep` and the
+   `Lexer` constructor now `LuaVersionDefaults.Resolve` the alias; the two
+   Lua 5.1-era TestMore TAP suites that had been passing against the old
+   accidental pre-5.4 default (zero-step tolerance, "must be a number" text)
+   are pinned to Lua 5.1 in `TapSuiteCatalog` like the existing overrides;
+   default-profile regression tests pin the 5.4 behaviors.
+2. **Gate calibration from observed CI noise** (run 35410624316):
+   - fib Execute B/op 168 → 24,792 B is attribution noise in a 2.3 s op
+     (locally the same benchmark allocates 168/192 B; compile B/op unchanged),
+     so operations with a baseline mean ≥ 1 s get a 32 KiB allocation
+     allowance; short operations keep the byte-exact gate.
+   - NBody Compile NLua P95 ratio +103.77% is the documented compile-P95
+     jitter class (2.0-3.7x swings on identical code, mean ≤ 1.5x), so
+     Compile/Cached Compile rows gate on the mean ratio only.
+
+Validated: 0 gate failures against three historical artifact sets
+(33809928739, 33818054037, 35410624316) while synthetic NovaSharp-only 3x
+regressions still fail (Execute via mean+P95, Compile via mean).
