@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788428022088,
+  "lastUpdate": 1789787805578,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -3262,6 +3262,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 624.729,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a906b22f9304731d28a774c6305def2001d97965",
+          "message": "Match reference numeral scanning and for-loop validation per version (#134, #137) (#139)\n\n## Summary\n\nSingle PR closing three issues, verified red-to-green against reference\nLua 5.1-5.5.\n\n- **#134** — numeric `for`-loop control validation order is now\nversion-banded: Lua 5.1/5.2 report the *initial value* error first (init\n→ limit → step, matching `FORPREP` in lvm.c), 5.3+ keep limit → step →\ninit. Verified against `lua5.1`-`lua5.5` for the multi-invalid matrix.\n- **#137** — the lexer now scans numerals exactly like each reference\nband (llex.c `read_numeral`):\n- Lua 5.1: digits+dots, optional `Ee`+sign, trailing alnum/underscore\nrun handed to strtod — `0x1p4` → 16 stays; `0x1.5`, `0x.8`, `0x8p-3`,\n`0xg` now produce reference-matching errors/splits.\n- Lua 5.2/5.3: `0x` switches the exponent mark to `p`/`P`; `0x1g`/`1e5x`\nsplit into numeral + name.\n- Lua 5.4/5.5: trailing alphanumeric garbage folds into the token\n(`0x1g`, `1e5x`, `123abc` → malformed number).\n- Malformed numerals raise at lex time (reference ordering:\n`print(0xA.8p0)` → `malformed number near '.8p0'`), and leading-dot\nnumerals quote raw source text (`.5e`, not `0.5e`) — which also fixes\nthe malformed-numeral-text item of **#138** (commented; items 2-3 remain\nopen there).\n- **#135** — RCA from the cited run artifacts: the downloads **succeed**\n(the `digest-mismatch: error` log lines print even when recorded and\ndownloaded digests are byte-identical, and the download steps conclude\n`success`); the chronic red is a Phase A0 NLua-ratio gate poisoned by a\nnoise-low NovaSharp compile P95 frozen into the baseline (0.201 ms vs\n0.439/0.470 ms in sibling runs of the same commit). Baseline re-captured\nfrom main's latest run and validated red-to-green: 0 gate failures\nagainst both sibling runs' artifacts, while a synthetic NovaSharp-only\n3x regression still fails the gate (uniform all-runtime slowdowns\ncorrectly pass). The P95 gate for compile ops remains\nvariance-sensitive; a multi-run median baseline is queued in PLAN.md.\n\n## CI cost\n\nNo new workflows; the runner adds ~10 small fixtures (sub-second per\ncomparison job) and the benchmark gate stops failing spuriously — fewer\nfull 20-job benchmark reruns, no coverage change.\n\n## Verification\n\n- `./scripts/build/quick.sh --all` green; full TUnit suite\n15,714/15,714.\n- Enforced Lua comparison matrix re-run locally for 5.1-5.5: all `[OK]`;\nnew both-error entries (known chunk-prefix divergence class, #124)\nmerged into `docs/testing/lua-error-ratchet.json`.\n- New curated fixtures: for-loop order matrix (2), Lua 5.1 hex-float\nrejection (5), raw-text malformed numerals (3); HexFloats1-3 and\n`HexFloatLiteralParsesToExpectedNumber` re-scoped to 5.2+ (fixtures were\nalready curated 5.2+; only the C# attributes were wrong).\n\n## Guidance updates\n\nSession-length target (<2 hours, one shippable PR slice) added to\n`AGENTS.md`, `.llm/context.md`, `PLAN.md`, and the plan-maintenance\nskill (\"Session scoping\").\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Changes lexer tokenization and numeric-for error ordering across all\nLua profiles—broad compile-time and runtime surface—but behavior is\nspec-driven with expanded comparison fixtures and ratchet updates.\n> \n> **Overview**\n> Closes **#134**, **#137**, and **#135** by aligning lexer numeral\nscanning and numeric `for` control validation with reference Lua per\ncompatibility version, plus refreshing the Phase A0 benchmark baseline.\n> \n> **Lexer (#137):** `Lexer.cs` now branches on Lua version like `llex.c`\n`read_numeral`—5.1 uses the digits/dots + optional `Ee` + trailing alnum\nscan (fixing the prior “accept all hex float forms everywhere” gap);\n5.2/5.3 use `p`/`P` after `0x` and split trailing garbage as names;\n5.4/5.5 fold trailing alphanumerics so errors are **`malformed number`**\nat **lex time** with raw source snippets (e.g. `.5e`, `0x1G`). Knowledge\nin `.llm/knowledge/numeric-literal-materialization.md` documents the\nbands; ratchet entries and new parser/for-loop fixtures record the new\nerror shapes.\n> \n> **Numeric `for` (#134):** Control coercion/validation order is\nversion-banded—Lua **5.1/5.2** report invalid **initial** before\nlimit/step; **5.3+** keep limit → step → init (5.4+ typed messages\nunchanged in spirit).\n> \n> **CI/benchmarks (#135):**\n`progress/benchmarks/phase-a0-scoreboard-baseline.json` is re-captured\nso the compile P95 gate stops failing on a noise-low frozen baseline;\nPLAN adds follow-up to harden with multi-run median capture.\n> \n> **Process docs:** Adds an under-2-hour session scoping rule to\n`AGENTS.md`, `.llm/context.md`, `PLAN.md`, and plan-maintenance skill;\nlinks residual number/string nits to **#138**.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\nb1ec5aba0c3b8d40cb5525ce7ab9c5a5aa680f3d. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-09-18T20:11:18-07:00",
+          "tree_id": "74bc0c1d366518155e0f8126364bc1cd07e634cc",
+          "url": "https://github.com/wallstop/NovaSharp/commit/a906b22f9304731d28a774c6305def2001d97965"
+        },
+        "date": 1789787804757,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 373.449,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 447.867,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 416.891,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 593.319,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 791.38,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 629.915,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 638.977,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 696.815,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 696.143,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 674.012,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 735.25,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 742.28,
             "unit": "ns",
             "extra": ""
           }
