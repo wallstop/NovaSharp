@@ -1,3 +1,27 @@
 [mcp_servers.github-mcp-server]
 url = "https://api.githubcopilot.com/mcp/"
 bearer_token_env_var = "GITHUB_PERSONAL_ACCESS_TOKEN"
+http_headers = { "X-MCP-Readonly" = "true" }
+
+[mcp_servers.zai-vision]
+command = "zai-mcp-vision"
+args = []
+env_vars = ["ZAI_API_KEY"]
+
+[mcp_servers.zai-web-search]
+command = "zai-mcp-remote"
+args = ["web-search"]
+env_vars = ["ZAI_API_KEY"]
+
+[shell_environment_policy]
+filters = { GITHUB_PERSONAL_ACCESS_TOKEN = "exclude", ZAI_API_KEY = "exclude", Z_AI_API_KEY = "exclude" }
+
+[mcp_servers.zai-web-reader]
+command = "zai-mcp-remote"
+args = ["web-reader"]
+env_vars = ["ZAI_API_KEY"]
+
+[mcp_servers.zai-zread]
+command = "zai-mcp-remote"
+args = ["zread"]
+env_vars = ["ZAI_API_KEY"]

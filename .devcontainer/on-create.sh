@@ -19,6 +19,9 @@ fi
 
 cd "${WORKSPACE_DIR}"
 
+# Repair the persistent NuGet cache before any dotnet command can read it.
+bash .devcontainer/ensure-nuget-cache.sh
+
 run_with_retries() {
     local max_attempts="$1"
     shift

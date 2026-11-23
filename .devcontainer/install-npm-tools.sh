@@ -24,12 +24,18 @@ readonly NPM_TOOL_PACKAGES=(
     "opencode-ai@latest"
     "@openai/codex@latest"
     "@anthropic-ai/claude-code@latest"
+    "@github/copilot@latest"
+    "mcp-remote@latest"
+    "@z_ai/mcp-server@latest"
 )
 readonly NPM_TOOL_COMMANDS=(
     "nanocoder"
     "opencode"
     "codex"
     "claude"
+    "copilot"
+    "mcp-remote"
+    "zai-mcp-server"
 )
 
 run_with_retries() {
@@ -214,10 +220,17 @@ for package_index in "${!NPM_TOOL_COMMANDS[@]}"; do
         echo "❌ Expected ${command_name} from ${expected_command}, but PATH resolved ${resolved_command:-nothing}." >&2
         exit 1
     fi
-    if ! tool_version="$(timeout 30 "${resolved_command}" --version 2>&1)"; then
-        echo "❌ ${command_name} is installed but failed its version check:" >&2
-        echo "${tool_version}" >&2
-        exit 1
+    if [ "${command_name}" = "zai-mcp-server" ]; then
+        tool_version="$(
+            node -e 'process.stdout.write(require(process.argv[1]).version)' \
+                "${npm_prefix}/lib/node_modules/@z_ai/mcp-server/package.json"
+        )"
+    else
+        if ! tool_version="$(timeout 30 "${resolved_command}" --version 2>&1)"; then
+            echo "❌ ${command_name} is installed but failed its version check:" >&2
+            echo "${tool_version}" >&2
+            exit 1
+        fi
     fi
     tool_versions+=("${tool_version}")
 done
@@ -226,6 +239,9 @@ printf "   %-11s %s\n" "nanocoder:" "${tool_versions[0]}"
 printf "   %-11s %s\n" "opencode:" "${tool_versions[1]}"
 printf "   %-11s %s\n" "codex:" "${tool_versions[2]}"
 printf "   %-11s %s\n" "claude:" "${tool_versions[3]}"
+printf "   %-11s %s\n" "copilot:" "${tool_versions[4]}"
+printf "   %-11s %s\n" "mcp-remote:" "${tool_versions[5]}"
+printf "   %-11s %s\n" "zai-mcp:" "${tool_versions[6]}"
 
 if [ "${clean_tool_cache}" = "1" ] || [ "${NOVA_NPM_CLEAN_CACHE:-0}" = "1" ]; then
     npm cache clean --force

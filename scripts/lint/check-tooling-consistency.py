@@ -24,7 +24,10 @@ DEVCONTAINER_JSON = REPO_ROOT / ".devcontainer" / "devcontainer.json"
 DEVCONTAINER_NPM_INSTALLER = REPO_ROOT / ".devcontainer" / "install-npm-tools.sh"
 DEVCONTAINER_ARTIFACT_CLEANER = REPO_ROOT / ".devcontainer" / "cleanup-artifacts.sh"
 DEVCONTAINER_ON_CREATE = REPO_ROOT / ".devcontainer" / "on-create.sh"
+DEVCONTAINER_UPDATE_CONTENT = REPO_ROOT / ".devcontainer" / "update-content.sh"
+DEVCONTAINER_POST_CREATE = REPO_ROOT / ".devcontainer" / "post-create.sh"
 DEVCONTAINER_POST_START = REPO_ROOT / ".devcontainer" / "post-start.sh"
+DEVCONTAINER_NUGET_CACHE_GUARD = REPO_ROOT / ".devcontainer" / "ensure-nuget-cache.sh"
 DEVCONTAINER_LIFECYCLE_TEST = REPO_ROOT / "scripts" / "lint" / "test-devcontainer-lifecycle.sh"
 DEVCONTAINER_BUILD_CACHE_TEST = REPO_ROOT / "scripts" / "lint" / "test-devcontainer-build-cache.sh"
 DEVCONTAINER_AI_BACKENDS_TEST = REPO_ROOT / "scripts" / "lint" / "test-ai-backends.sh"
@@ -41,6 +44,9 @@ LATEST_NPM_TOOLS = (
     "@nanocollective/nanocoder@latest",
     "opencode-ai@latest",
     "@openai/codex@latest",
+    "@github/copilot@latest",
+    "mcp-remote@latest",
+    "@z_ai/mcp-server@latest",
 )
 
 
@@ -378,6 +384,85 @@ def check_devcontainer_artifact_cleanup(violations: list[str]) -> None:
         )
 
 
+def strip_jsonc_comments(text: str) -> str:
+    return "\n".join(
+        line for line in text.splitlines() if not line.lstrip().startswith("//")
+    )
+
+
+def first_command_line(text: str, pattern: str) -> int:
+    compiled = re.compile(pattern)
+    for index, line in enumerate(text.splitlines()):
+        if line.lstrip().startswith("#"):
+            continue
+        if compiled.search(line):
+            return index
+    return -1
+
+
+def check_devcontainer_nuget_cache(violations: list[str]) -> None:
+    if not DEVCONTAINER_NUGET_CACHE_GUARD.is_file():
+        violations.append(
+            f"{repo_path(DEVCONTAINER_NUGET_CACHE_GUARD)} is missing. "
+            "The NuGet cache volume must be repaired before any lifecycle command uses dotnet."
+        )
+        return
+
+    guard = read_text(DEVCONTAINER_NUGET_CACHE_GUARD)
+    if "$(id -u)" not in guard or "$(id -g)" not in guard:
+        violations.append(
+            f"{repo_path(DEVCONTAINER_NUGET_CACHE_GUARD)} must use the runtime UID/GID "
+            "so ownership repair survives updateRemoteUserUID."
+        )
+
+    dockerfile = read_text(DEVCONTAINER_DOCKERFILE)
+    dockerfile_instructions = "\n".join(
+        line for line in dockerfile.splitlines() if not line.lstrip().startswith("#")
+    )
+    seed_pattern = (
+        r"^\s*RUN\s+install\s+-d\b"
+        r"(?=[^\n]*\s-o\s+vscode\b)"
+        r"(?=[^\n]*\s-g\s+vscode\b)"
+        r"[^\n]*/home/vscode/\.nuget\b"
+    )
+    if not re.search(seed_pattern, dockerfile_instructions, flags=re.MULTILINE):
+        violations.append(
+            f"{repo_path(DEVCONTAINER_DOCKERFILE)} must seed /home/vscode/.nuget with "
+            "vscode ownership so Docker initializes new named volumes correctly."
+        )
+
+    devcontainer = strip_jsonc_comments(read_text(DEVCONTAINER_JSON))
+    if not re.search(r'\btarget=/home/vscode/\.nuget(?:,|")', devcontainer):
+        violations.append(
+            f"{repo_path(DEVCONTAINER_JSON)} must keep the NuGet cache volume at "
+            "/home/vscode/.nuget so the image seed applies."
+        )
+
+    guard_pattern = r"^\s*(?:bash\s+)?(?:\./)?\.devcontainer/ensure-nuget-cache\.sh(?:\s|$)"
+    dotnet_pattern = r"(?:^\s*(?:run_with_retries\s+\d+\s+)?|\$\(\s*)dotnet\b"
+    for lifecycle_path in (
+        DEVCONTAINER_ON_CREATE,
+        DEVCONTAINER_UPDATE_CONTENT,
+        DEVCONTAINER_POST_CREATE,
+        DEVCONTAINER_POST_START,
+    ):
+        lifecycle = read_text(lifecycle_path)
+        guard_line = first_command_line(lifecycle, guard_pattern)
+        if guard_line < 0:
+            violations.append(
+                f"{repo_path(lifecycle_path)} must run "
+                f"{repo_path(DEVCONTAINER_NUGET_CACHE_GUARD)} before using dotnet."
+            )
+            continue
+
+        dotnet_line = first_command_line(lifecycle, dotnet_pattern)
+        if dotnet_line >= 0 and guard_line > dotnet_line:
+            violations.append(
+                f"{repo_path(lifecycle_path)} must repair the NuGet cache volume "
+                f"before its first dotnet command."
+            )
+
+
 def check_devcontainer_lifecycle_behavior(violations: list[str]) -> None:
     if not DEVCONTAINER_LIFECYCLE_TEST.is_file():
         violations.append(f"{repo_path(DEVCONTAINER_LIFECYCLE_TEST)} is missing.")
@@ -456,6 +541,7 @@ def check_github_mcp_configs(violations: list[str]) -> None:
         return
 
     expected_authorization = f"Bearer ${{{GITHUB_MCP_TOKEN_ENV}}}"
+    expected_vscode_authorization = f"Bearer ${{env:{GITHUB_MCP_TOKEN_ENV}}}"
     expected_opencode_authorization = f"Bearer {{env:{GITHUB_MCP_TOKEN_ENV}}}"
 
     codex = load_toml(CODEX_MCP_CONFIG)
@@ -466,6 +552,8 @@ def check_github_mcp_configs(violations: list[str]) -> None:
         violations.append(
             f"{repo_path(CODEX_MCP_CONFIG)} must read its GitHub token from {GITHUB_MCP_TOKEN_ENV}."
         )
+    if codex_server.get("http_headers", {}).get("X-MCP-Readonly") != "true":
+        violations.append(f"{repo_path(CODEX_MCP_CONFIG)} must keep GitHub MCP read-only by default.")
 
     shared = load_json(SHARED_MCP_CONFIG)
     shared_server = shared.get("mcpServers", {}).get(GITHUB_MCP_SERVER_NAME, {})
@@ -480,15 +568,19 @@ def check_github_mcp_configs(violations: list[str]) -> None:
         violations.append(
             f"{repo_path(SHARED_MCP_CONFIG)} must reference {GITHUB_MCP_TOKEN_ENV}; never store a PAT."
         )
+    if shared_server.get("headers", {}).get("X-MCP-Readonly") != "true":
+        violations.append(f"{repo_path(SHARED_MCP_CONFIG)} must keep GitHub MCP read-only by default.")
 
     vscode = load_json(VSCODE_MCP_CONFIG)
     vscode_server = vscode.get("servers", {}).get(GITHUB_MCP_SERVER_NAME, {})
     if vscode_server.get("url") != GITHUB_MCP_URL:
         violations.append(f"{repo_path(VSCODE_MCP_CONFIG)} must configure the hosted GitHub MCP URL.")
-    if "headers" in vscode_server:
+    if vscode_server.get("headers", {}).get("Authorization") != expected_vscode_authorization:
         violations.append(
-            f"{repo_path(VSCODE_MCP_CONFIG)} must use VS Code OAuth instead of a committed token header."
+            f"{repo_path(VSCODE_MCP_CONFIG)} must reference {GITHUB_MCP_TOKEN_ENV}; never store a PAT."
         )
+    if vscode_server.get("headers", {}).get("X-MCP-Readonly") != "true":
+        violations.append(f"{repo_path(VSCODE_MCP_CONFIG)} must keep GitHub MCP read-only by default.")
 
     opencode = load_json(OPENCODE_CONFIG)
     opencode_server = opencode.get("mcp", {}).get(GITHUB_MCP_SERVER_NAME, {})
@@ -505,13 +597,13 @@ def check_github_mcp_configs(violations: list[str]) -> None:
         violations.append(
             f"{repo_path(OPENCODE_CONFIG)} must reference {GITHUB_MCP_TOKEN_ENV}; never store a PAT."
         )
+    if opencode_server.get("headers", {}).get("X-MCP-Readonly") != "true":
+        violations.append(f"{repo_path(OPENCODE_CONFIG)} must keep GitHub MCP read-only by default.")
 
     devcontainer = read_text(DEVCONTAINER_JSON)
-    token_forwarding = f'"{GITHUB_MCP_TOKEN_ENV}": "${{localEnv:{GITHUB_MCP_TOKEN_ENV}}}"'
-    if token_forwarding not in devcontainer:
+    if '"--env-file", "${localWorkspaceFolder}/.devcontainer/.mcp.env"' not in devcontainer:
         violations.append(
-            f"{repo_path(DEVCONTAINER_JSON)} must forward a host {GITHUB_MCP_TOKEN_ENV} to the "
-            "remote user environment."
+            f"{repo_path(DEVCONTAINER_JSON)} must load the filtered runtime MCP environment."
         )
 
     gitignore = read_text(REPO_ROOT / ".gitignore")
@@ -627,6 +719,7 @@ def main() -> int:
     check_devcontainer_uses_local_tools(violations)
     check_devcontainer_npm_tooling(violations)
     check_devcontainer_artifact_cleanup(violations)
+    check_devcontainer_nuget_cache(violations)
     check_devcontainer_lifecycle_behavior(violations)
     check_devcontainer_build_cache_behavior(violations)
     check_devcontainer_ai_backends(violations)

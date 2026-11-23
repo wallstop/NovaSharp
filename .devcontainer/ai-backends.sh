@@ -3,9 +3,16 @@
 
 set -euo pipefail
 
+# Prevent an imported lowercase variable from retaining its export attribute
+# when a function-local variable temporarily holds the real credential.
+export -n zai_key 2>/dev/null || true
+
 readonly PROFILE_NAME="devcontainer-zai"
 readonly ZAI_RESPONSES_URL="https://api.z.ai/api/v1"
 readonly ZAI_ANTHROPIC_URL="https://api.z.ai/api/anthropic"
+AI_BACKENDS_SOURCE_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+readonly AI_BACKENDS_SOURCE_DIR
+readonly CLAUDE_ZAI_MCP_CONFIG="${AI_BACKENDS_SOURCE_DIR}/claude-zai.mcp.json"
 
 die() {
     printf '[ai-backends] ERROR: %s\n' "$*" >&2
@@ -162,7 +169,9 @@ launch_codex_zai() {
     local catalog_file codex_home model reasoning_effort zai_key
     command -v codex >/dev/null 2>&1 || die "codex is not installed."
     zai_key="$(resolve_zai_key)"
+    export -n zai_key 2>/dev/null || true
     export ZAI_API_KEY="${zai_key}"
+    zai_key=""
 
     codex_home="${CODEX_HOME:-${HOME}/.codex}"
     catalog_file="${codex_home}/${PROFILE_NAME}-models.json"
@@ -186,10 +195,11 @@ launch_codex_zai() {
 }
 
 launch_claude_zai() {
-    local config_dir container_mode subprocess_scrub timeout_ms zai_key
+    local claude_settings config_dir container_mode subprocess_scrub timeout_ms zai_key
     local -a claude_args=()
     command -v claude >/dev/null 2>&1 || die "claude is not installed."
     zai_key="$(resolve_zai_key)"
+    export -n zai_key 2>/dev/null || true
     config_dir="${CLAUDE_ZAI_CONFIG_DIR:-${HOME}/.claude-zai}"
     timeout_ms="${ZAI_API_TIMEOUT_MS:-300000}"
     case "${timeout_ms}" in
@@ -198,6 +208,9 @@ launch_claude_zai() {
     esac
     mkdir -p "${config_dir}"
     chmod 700 "${config_dir}"
+    [ -f "${CLAUDE_ZAI_MCP_CONFIG}" ] \
+        || die "Claude Z.ai MCP config is missing: ${CLAUDE_ZAI_MCP_CONFIG}"
+    claude_args+=(--mcp-config "${CLAUDE_ZAI_MCP_CONFIG}" --strict-mcp-config)
 
     container_mode="${AI_BACKENDS_CONTAINER_MODE:-auto}"
     case "${container_mode}" in
@@ -237,14 +250,17 @@ launch_claude_zai() {
             || die "Claude subprocess isolation cannot create its nested sandbox. Set CLAUDE_ZAI_SUBPROCESS_ENV_SCRUB=0 to rely on the outer devcontainer boundary."
     fi
 
+    claude_settings='{"enabledMcpjsonServers":["github-mcp-server","zai-vision","zai-web-search","zai-web-reader","zai-zread"]}'
     if [ "${container_mode}" = "yes" ]; then
         # The outer devcontainer is the primary isolation boundary. Anthropic's
         # weaker mode still needs blocked namespaces, so keep the inner sandbox
         # off unless the caller explicitly opts into the scrubber and preflight.
-        claude_args+=(--settings '{"sandbox":{"enabled":false,"enableWeakerNestedSandbox":true}}')
+        claude_settings='{"enabledMcpjsonServers":["github-mcp-server","zai-vision","zai-web-search","zai-web-reader","zai-zread"],"sandbox":{"enabled":false,"enableWeakerNestedSandbox":true}}'
     fi
+    claude_args+=(--settings "${claude_settings}")
 
     unset ANTHROPIC_API_KEY \
+        CLAUDE_CODE_OAUTH_TOKEN \
         ANTHROPIC_MODEL \
         ANTHROPIC_DEFAULT_MODEL \
         ANTHROPIC_DEFAULT_HAIKU_MODEL \
@@ -259,7 +275,8 @@ launch_claude_zai() {
         CLAUDE_CODE_USE_MANTLE \
         CLAUDE_CODE_USE_GATEWAY
     export ANTHROPIC_AUTH_TOKEN="${zai_key}"
-    unset ZAI_API_KEY Z_AI_API_KEY
+    zai_key=""
+    unset ZAI_API_KEY Z_AI_API_KEY ZAI_MCP_API_KEY
     export ANTHROPIC_BASE_URL="${ZAI_ANTHROPIC_URL}"
     export ANTHROPIC_DEFAULT_HAIKU_MODEL="${CLAUDE_ZAI_HAIKU_MODEL:-glm-5.3-flash[1m]}"
     export ANTHROPIC_DEFAULT_SONNET_MODEL="${CLAUDE_ZAI_SONNET_MODEL:-glm-5.3[1m]}"

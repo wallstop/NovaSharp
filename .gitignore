@@ -5,6 +5,10 @@
 *.suo
 *.user
 *.sln.docstates
+/.env.local*
+!/.env.local.example
+/.devcontainer/.mcp.env
+/.devcontainer/.mcp.env.*
 
 tools/LuaCorpusExtractor/__pycache__/**
 tools/LuaCorpusExtractor/__pycache__
@@ -242,4 +246,3 @@ manual-review.txt
 # Unity Package Manager sample source templates use a literal Samples~ directory.
 !src/unity/com.wallstop-studios.novasharp/Samples~/
 !src/unity/com.wallstop-studios.novasharp/Samples~/**
-GOAL.md

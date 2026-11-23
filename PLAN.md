@@ -83,3 +83,6 @@ backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
    conversion boundary audits; consolidate repeated error-message and module-name
    literals incrementally when touched; harden the Phase A0 baseline against
    compile-P95 runner noise with a multi-run median capture.
+1. Add a Docker-backed devcontainer startup smoke test with fake credentials
+   and fresh and previously root-owned NuGet volumes. See
+   [#150](https://github.com/wallstop/NovaSharp/issues/150).

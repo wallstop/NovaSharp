@@ -1,0 +1,3 @@
+# Host-generated runtime credentials must never enter the image build context.
+.mcp.env
+.mcp.env.*

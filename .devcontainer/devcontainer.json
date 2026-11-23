@@ -11,16 +11,20 @@
             "--no-cache"
         ]
     },
-    // Forward a host-provided PAT to terminal harnesses without storing it in the image.
-    // VS Code authenticates its GitHub MCP connection separately through OAuth.
+    // Validate the ignored credential file before Docker consumes it.
+    "initializeCommand": ["bash", "${localWorkspaceFolder}/.devcontainer/check-mcp-env.sh", "${localWorkspaceFolder}"],
+    // Inject credentials only at container runtime; they never enter image layers.
+    "runArgs": ["--env-file", "${localWorkspaceFolder}/.devcontainer/.mcp.env"],
+    // Nanocoder otherwise resolves .mcp.json only from the launch directory.
     "remoteEnv": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${localEnv:GITHUB_PERSONAL_ACCESS_TOKEN}"
+        "NANOCODER_MCPSERVERS_FILE": "${containerWorkspaceFolder}/.mcp.json"
     },
     // Block attach until onCreate finishes so extension activation sees a restored solution.
     "waitFor": "onCreateCommand",
     // Mount configuration for better performance
     "mounts": [
-        // Cache NuGet packages in a named volume for persistence across rebuilds
+        // Cache NuGet packages in a named volume. The Dockerfile seeds the mount
+        // point with vscode ownership; ensure-nuget-cache.sh repairs old volumes.
         "source=novasharp-nuget-cache,target=/home/vscode/.nuget,type=volume"
     ],
     // VS Code customizations
