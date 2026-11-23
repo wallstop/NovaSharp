@@ -226,5 +226,7 @@ RUN echo "=== Environment Verification ===" \
 
 COPY --chmod=0755 zai-mcp-vision.sh /usr/local/bin/zai-mcp-vision
 COPY --chmod=0755 zai-mcp-remote.sh /usr/local/bin/zai-mcp-remote
+# Installed Claude launchers always use container-owned files, including on NTFS mounts.
+COPY mcp_credentials.py /usr/local/bin/read-claude-mcp-key.py
 
 USER vscode

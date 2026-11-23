@@ -115,6 +115,11 @@ Z.ai backend starts, custom `CODEX_HOME` profiles are installed with restrictive
 permissions, missing credentials fail closed, arguments are forwarded verbatim,
 and existing non-symlink launchers are never replaced.
 
+The managed credential tests also exercise the installed Claude wrappers with
+project-specific credentials. On Windows, run
+`pwsh -File scripts/lint/test-devcontainer-windows-preflight.ps1` to exercise
+the configured host command from a spaced path and check the native ACLs.
+
 ```bash
 python scripts/lint/check-tooling-consistency.py
 ```

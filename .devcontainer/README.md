@@ -1,6 +1,20 @@
 # NovaSharp devcontainer maintenance
 
-Host initialization requires Bash.
+Host initialization requires Bash. From PowerShell in the checkout, start the
+container and open an interactive login shell with:
+
+```powershell
+npx --yes --package=@devcontainers/cli -- devcontainer up --workspace-folder "$PWD"
+npx --yes --package=@devcontainers/cli -- devcontainer exec --workspace-folder "$PWD" zsh -il
+```
+
+Run the second command after the first succeeds. The host hook runs relative to
+the workspace, so either WSL Bash or Git Bash can find it on a Windows drive.
+Docker receives its env-file path in the host's native format.
+
+When cloning with Git for Windows, enable symlink support and use
+`git clone -c core.symlinks=true` with the repository URL. This preserves the
+two skill-directory links checked by the project's pre-commit hook.
 
 The devcontainer installs the current npm `latest` dist-tag for these coding
 tools:
@@ -80,8 +94,9 @@ Z.ai's recommended GLM models; override them with `CLAUDE_ZAI_HAIKU_MODEL`,
 `CLAUDE_ZAI_SONNET_MODEL`, and `CLAUDE_ZAI_OPUS_MODEL`. Ordinary shell and
 unrelated MCP children do not inherit the model-server credential. The trusted
 Z.ai MCP servers receive only their required credential. For Claude, their
-wrappers read the filtered mode-`0600` runtime file through `CLAUDE_PROJECT_DIR`;
-Codex explicitly forwards only `ZAI_API_KEY` through its stdio MCP allowlist.
+wrappers use `CLAUDE_PROJECT_DIR` to select a private, workspace-specific copy
+of the Z.ai key in the container user's home directory. Codex explicitly
+forwards only `ZAI_API_KEY` through its stdio MCP allowlist.
 The wrappers scrub the canonical key and unrelated tokens before starting the
 MCP process.
 Reinstall the launchers manually after moving the checkout:
@@ -259,11 +274,13 @@ repository root still discovers every server.
 
 No credential is committed or stored in an image layer. Before container
 creation, the host preflight reads only the two allowlisted values from the
-ignored `.env.local`, writes them to an ignored mode-`0600` Docker env file,
-and never displays them. Each credential is optional, and unrelated values are
-ignored. A failed preflight stops that launch and leaves the last published env
-file available for other launches. Removing a credential and successfully
-rebuilding publishes an env file without it:
+ignored `.env.local` and atomically publishes an ignored Docker env file.
+The preflight restricts access to both files with an owner-only Windows ACL on
+Windows drives and mode `0600` on POSIX filesystems. Each credential is optional.
+A failed preflight stops the launch and preserves the last published contents.
+Docker captures the environment at creation. After adding, changing, or removing
+a credential, recreate the container with **Dev Containers: Rebuild Container**
+or `devcontainer up --workspace-folder . --remove-existing-container`.
 
 ```bash
 [ -e .env.local ] || cp .env.local.example .env.local

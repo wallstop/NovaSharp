@@ -23,15 +23,8 @@ command -v mcp-remote >/dev/null 2>&1 \
 
 unset token zai_mcp_token
 if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
-    runtime_env="${CLAUDE_PROJECT_DIR}/.devcontainer/.mcp.env"
-    [ -f "${runtime_env}" ] && [ ! -L "${runtime_env}" ] \
-        || fail "Filtered MCP credentials are missing; rebuild the devcontainer."
-    [ "$(stat -c '%a' "${runtime_env}")" = "600" ] \
-        || fail "Filtered MCP credentials must have mode 600; rebuild the devcontainer."
-    definition_count="$({ grep -Ec '^ZAI_API_KEY=' "${runtime_env}" || true; })"
-    [ "${definition_count}" = "1" ] \
-        || fail "Filtered MCP credentials contain an invalid ZAI_API_KEY."
-    zai_mcp_token="$(sed -n 's/^ZAI_API_KEY=//p' "${runtime_env}")"
+    launcher_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+    zai_mcp_token="$(python3 -EsB "${launcher_dir}/read-claude-mcp-key.py" read "${CLAUDE_PROJECT_DIR}")"
 elif [ -n "${ZAI_API_KEY:-}" ]; then
     # Codex explicitly forwards only this key through the server's env_vars.
     zai_mcp_token="${ZAI_API_KEY}"

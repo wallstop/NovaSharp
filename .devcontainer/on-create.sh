@@ -19,6 +19,15 @@ fi
 
 cd "${WORKSPACE_DIR}"
 
+# Docker Desktop can present a trusted host checkout as root-owned to vscode.
+if [ -e .git ] && { [ ! -O . ] || [ ! -O .git ]; }; then
+    workspace_path="$(pwd -P)"
+    git config --global --fixed-value --replace-all safe.directory "${workspace_path}" "${workspace_path}"
+fi
+
+# Use Docker's creation-time environment before extensions can launch Claude MCP.
+python3 .devcontainer/mcp_credentials.py stage .
+
 # Repair the persistent NuGet cache before any dotnet command can read it.
 bash .devcontainer/ensure-nuget-cache.sh
 

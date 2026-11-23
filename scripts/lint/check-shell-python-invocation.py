@@ -72,6 +72,9 @@ def check_script(path: Path) -> list[tuple[int, str]]:
         # Skip comments and empty lines
         if not stripped or stripped.startswith("#"):
             continue
+        # Copying a Python file as fixture data does not execute it.
+        if re.fullmatch(r"cp\s+[^;&|`<>\n()]+", stripped):
+            continue
         # Check if this line directly executes a .py file without python
         if stripped.endswith(".py") or stripped.endswith('.py"') or stripped.endswith(".py'"):
             # Make sure it's not prefixed with python
