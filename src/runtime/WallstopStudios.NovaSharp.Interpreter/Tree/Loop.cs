@@ -32,8 +32,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         /// Emits the bytecode for a `break` statement within this loop and records the jump for later patching.
         /// </summary>
         /// <param name="bc">Bytecode stream receiving the exit and jump instructions.</param>
-        public void CompileBreak(ByteCode bc)
+        /// <param name="block">Lexical block containing the break.</param>
+        public void CompileBreak(ByteCode bc, BuildTimeScopeBlock block)
         {
+            for (; block.ScopeBlock != Scope; block = block.Parent)
+            {
+                bc.EmitExit(block.ScopeBlock);
+            }
+
             bc.EmitExit(Scope);
             BreakJumps.Add(bc.EmitJump(OpCode.Jump, -1));
         }
@@ -78,7 +84,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         /// <summary>
         /// Throws because boundary sentinels should never emit `break` bytecode.
         /// </summary>
-        public void CompileBreak(ByteCode bc)
+        public void CompileBreak(ByteCode bc, BuildTimeScopeBlock block)
         {
             throw new InternalErrorException("CompileBreak called on LoopBoundary");
         }

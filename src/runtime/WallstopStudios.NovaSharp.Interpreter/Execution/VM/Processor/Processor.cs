@@ -481,6 +481,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     Diagnostics.PerformanceCounter.Execution
                 );
 
+                bool previousCanYield = _canYield;
                 _canYield = false;
 
                 try
@@ -495,7 +496,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 finally
                 {
-                    _canYield = true;
+                    _canYield = previousCanYield;
 
                     if (stopwatch != null)
                     {
@@ -606,14 +607,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return Call(function, new ClrCallArguments(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
         }
 
-        private LuaValue Call(LuaValue function, ClrCallArguments args)
+        private LuaValue Call(
+            LuaValue function,
+            ClrCallArguments args,
+            SourceRef callingSource = null
+        )
         {
             List<Processor> coroutinesStack =
                 _parent != null ? _parent._coroutinesStack : _coroutinesStack;
 
             if (coroutinesStack.Count > 0 && coroutinesStack[^1] != this)
             {
-                return coroutinesStack[^1].Call(function, args);
+                return coroutinesStack[^1].Call(function, args, callingSource);
             }
 
             EnterProcessor();
@@ -624,6 +629,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     Diagnostics.PerformanceCounter.Execution
                 );
 
+                bool previousCanYield = _canYield;
                 _canYield = false;
 
                 try
@@ -633,11 +639,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         function,
                         args
                     );
+                    if (callingSource != null)
+                    {
+                        _executionStack.Peek().CallingSourceRef = callingSource;
+                    }
                     return ProcessingLoop(entrypoint);
                 }
                 finally
                 {
-                    _canYield = true;
+                    _canYield = previousCanYield;
 
                     if (stopwatch != null)
                     {

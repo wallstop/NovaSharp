@@ -12,7 +12,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// Emits the bytecode required to exit the loop when a <c>break</c> is parsed.
         /// </summary>
         /// <param name="bc">The bytecode buffer currently being built.</param>
-        public void CompileBreak(ByteCode bc);
+        /// <param name="block">Lexical block containing the break.</param>
+        public void CompileBreak(ByteCode bc, BuildTimeScopeBlock block);
 
         /// <summary>
         /// Gets a value indicating whether the current loop is a boundary (breaks cannot escape past it).

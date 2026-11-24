@@ -244,7 +244,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         }
 
         /// <inheritdoc />
-        protected override string Close()
+        protected override string CloseCore()
         {
             CheckFileIsNotClosed();
 

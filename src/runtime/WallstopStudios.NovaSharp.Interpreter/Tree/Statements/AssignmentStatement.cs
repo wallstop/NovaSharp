@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
 {
     using System;
     using System.Collections.Generic;
+    using global::NovaSharp;
     using Debugging;
     using Expressions;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -53,7 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             }
             else
             {
-                _rValues = new List<Expression>();
+                _rValues = new List<Expression> { new LiteralExpression(lcontext, LuaValue.Nil) };
             }
 
             foreach ((Token nameToken, SymbolRefAttributes flags) in locals)

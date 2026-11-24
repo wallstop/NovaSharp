@@ -862,9 +862,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
 
                 string loc =
-                    wi.Location != null
-                        ? wi.Location.FormatLocation(executionContext.Script)
-                        : "[clr]";
+                    wi.IsIteratorMetamethodDispatcher ? "[C]"
+                    : wi.Location != null ? wi.Location.FormatLocation(executionContext.Script)
+                    : "[clr]";
                 sb.Append('\t');
                 sb.Append(loc);
                 sb.Append(": in ");
@@ -1061,6 +1061,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
             }
 
+            if (frame.IsIteratorMetamethodDispatcher)
+            {
+                return locationIndex == 1 && frame.LocalScope != null
+                    ? LuaValue.NewTuple(
+                        GetIteratorDispatcherLocalName(executionContext.Script),
+                        frame.LocalScope[CallStackItem.IteratorDispatcherSubjectSlot].Value
+                    )
+                    : LuaValue.Nil;
+            }
+
             return GetLocalFromFrame(frame, locationIndex);
         }
 
@@ -1114,7 +1124,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgument(0, "setlocal", "level out of range");
             }
 
+            if (frame.IsIteratorMetamethodDispatcher)
+            {
+                if (locationIndex != 1 || frame.LocalScope == null)
+                {
+                    return LuaValue.Nil;
+                }
+
+                frame.LocalScope[CallStackItem.IteratorDispatcherSubjectSlot].Assign(newValue);
+                return GetIteratorDispatcherLocalName(executionContext.Script);
+            }
+
             return SetLocalOnFrame(frame, locationIndex, newValue);
+        }
+
+        private static LuaValue GetIteratorDispatcherLocalName(Script script)
+        {
+            return LuaValue.NewString(
+                LuaVersionDefaults.Resolve(script.CompatibilityVersion)
+                >= LuaCompatibilityVersion.Lua54
+                    ? "(C temporary)"
+                    : "(*temporary)"
+            );
         }
 
         private static LuaValue BuildStackInfo(
@@ -1221,7 +1252,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (ContainsWhatFlag(what, 'l'))
             {
-                int currentLine = frame.Location?.FromLine ?? -1;
+                int currentLine = frame.IsIteratorMetamethodDispatcher
+                    ? -1
+                    : frame.Location?.FromLine ?? -1;
                 info.Set("currentline", LuaValue.NewNumber(currentLine));
             }
 
@@ -1565,7 +1598,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 depth++
             )
             {
-                if (candidate.ClrFunction != null)
+                if (candidate.ClrFunction != null || candidate.IsHiddenFromDebugger)
                 {
                     continue;
                 }

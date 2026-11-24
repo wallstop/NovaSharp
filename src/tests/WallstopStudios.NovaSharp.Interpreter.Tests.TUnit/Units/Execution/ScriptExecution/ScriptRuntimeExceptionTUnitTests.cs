@@ -649,25 +649,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             }
         }
 
-        // ====== CloseMetamethodExpected branch coverage ======
-
-        [global::TUnit.Core.Test]
-        public async Task CloseMetamethodExpectedHandlesNullValue()
-        {
-            ScriptRuntimeException ex = ScriptRuntimeException.CloseMetamethodExpected(
-                LuaValue.Nil
-            );
-            await Assert.That(ex.Message).IsEqualTo("__close metamethod expected (got nil)");
-        }
-
-        [global::TUnit.Core.Test]
-        public async Task CloseMetamethodExpectedHandlesNonNullValue()
-        {
-            LuaValue value = LuaValue.NewNumber(42);
-            ScriptRuntimeException ex = ScriptRuntimeException.CloseMetamethodExpected(value);
-            await Assert.That(ex.Message).IsEqualTo("__close metamethod expected (got number)");
-        }
-
         private static TException ExpectException<TException>(Action action)
             where TException : Exception
         {

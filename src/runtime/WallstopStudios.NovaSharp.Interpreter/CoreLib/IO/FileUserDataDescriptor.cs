@@ -2,16 +2,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
 {
     using System;
     using global::NovaSharp;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
 
     /// <summary>
-    /// Wraps the default file userdata descriptor to align Lua semantics for numeric indexing.
+    /// Provides Lua file methods, numeric indexing behavior, and scope-exit closing.
     /// </summary>
     internal sealed class FileUserDataDescriptor : IUserDataDescriptorTryAccess
     {
+        private static readonly LuaValue CloseOnExitCallback = LuaValue.NewCallback(
+            CallbackFunction.FromArgumentView(CloseOnExit, Metamethods.Close)
+        );
+
         private readonly IUserDataDescriptor _inner;
 
         internal FileUserDataDescriptor(IUserDataDescriptor inner)
@@ -91,7 +96,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
             CallbackArgumentsView args
         )
         {
-            return GetFile(executionContext).Close(executionContext, args.SkipMethodCall());
+            return GetFile(executionContext).Close();
+        }
+
+        private static LuaValue CloseOnExit(CallbackArgumentsView args)
+        {
+            FileUserDataBase file = args[0]
+                .CheckUserDataType<FileUserDataBase>(Metamethods.Close, 0);
+            if (file.IsOpen())
+            {
+                file.Close();
+            }
+
+            return LuaValue.Void;
         }
 
         private static LuaValue Flush(
@@ -192,6 +209,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
 
         public bool TryMetaIndex(Script script, object obj, string metaname, out LuaValue value)
         {
+            if (metaname == Metamethods.Close && obj is FileUserDataBase)
+            {
+                value = CloseOnExitCallback;
+                return true;
+            }
+
             return UserDataAccess.TryMetaIndex(_inner, script, obj, metaname, out value);
         }
 

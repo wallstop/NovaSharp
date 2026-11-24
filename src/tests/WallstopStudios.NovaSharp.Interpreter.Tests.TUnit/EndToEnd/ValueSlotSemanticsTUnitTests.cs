@@ -1,8 +1,10 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
@@ -72,6 +74,330 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             await EndToEndDynValueAssert
                 .ExpectAsync(script.DoString(code), 1, 2, 3, 1, 2, 3)
                 .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public void GenericForLocalsStartAsNil(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                local state = { 10, 20 }
+                local function step(s, previous)
+                    assert(s == state, 'iterator state')
+                    local index = previous + 1
+                    if s[index] then return index, s[index] end
+                end
+
+                local readers = {}
+                for index, value in step, state, 0 do
+                    local first, second, third, fourth
+                    assert(first == nil, 'first local captured iterator state')
+                    assert(second == nil and third == nil and fourth == nil, 'remaining locals')
+                    for _, nestedValue in ipairs({ value }) do
+                        local nested
+                        assert(nested == nil and nestedValue == value, 'nested iterator')
+                    end
+                    readers[index] = function() return first, second end
+                    if index == 1 then first, second = value, index end
+                end
+
+                local first, second = readers[1]()
+                assert(first == 10 and second == 1, 'first iteration capture')
+                first, second = readers[2]()
+                assert(first == nil and second == nil, 'second iteration capture')
+
+                for index = 1, 1 do
+                    local fresh
+                    assert(fresh == nil, 'numeric loop control')
+                end
+
+                local function empty() end
+                for index in step, state, 0 do
+                    local explicit = nil
+                    local fromEmpty = empty()
+                    assert(explicit == nil and fromEmpty == nil, 'explicit initializers')
+                    break
+                end
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public void GenericForClosingValueLivesUntilExit(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                local hasClose = _VERSION == 'Lua 5.4' or _VERSION == 'Lua 5.5'
+                local closed, closeError
+                local closer = setmetatable({}, {__close = function(...)
+                    local self, err = ...
+                    local expectedCount = _VERSION == 'Lua 5.5' and err == nil and 1 or 2
+                    assert(select('#', ...) == expectedCount, 'closing argument count')
+                    closed = closed + 1
+                    closeError = err
+                end})
+                local function step(limit, previous)
+                    if previous < limit then return previous + 1 end
+                end
+                local function controls(limit)
+                    return step, limit, 0, closer, true
+                end
+                local function run(mode)
+                    if mode == 'iterator error' then
+                        local function fail() error('iterator failed', 0) end
+                        for _ in fail, nil, nil, closer do error('unreachable') end
+                        return
+                    end
+                    for i in controls(mode == 'empty' and 0 or 2) do
+                        assert(closed == 0, 'premature close')
+                        if mode == 'break' then break end
+                        if mode == 'return' then return i end
+                        if mode == 'body error' then error('body failed', 0) end
+                    end
+                end
+
+                for _, mode in ipairs({'empty', 'exhausted', 'break', 'return', 'body error', 'iterator error'}) do
+                    closed, closeError = 0, nil
+                    local expectedError = ({['body error'] = 'body failed', ['iterator error'] = 'iterator failed'})[mode]
+                    local ok, result = pcall(run, mode)
+                    assert(ok == (expectedError == nil), mode)
+                    assert(closed == (hasClose and 1 or 0), 'close count: ' .. mode)
+                    if mode == 'return' then assert(result == 1) end
+                    assert(closeError == (hasClose and expectedError or nil), 'active error: ' .. mode)
+                end
+
+                local function checkInvalid()
+                    for _ in step, 0, 0, true do error('unreachable') end
+                end
+                local ok, message = pcall(checkInvalid)
+                assert(ok == not hasClose, 'invalid closer')
+                if hasClose then
+                    assert(string.find(message, ""variable '(for state)' got a non-closable value"", 1, true))
+                end
+                for _ in step, 0, 0, false do error('unreachable') end
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public void GenericForClosingValueFollowsLexicalExitOrder(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                local log = {}
+                local function closer(name)
+                    return setmetatable({}, {__close = function() log[#log + 1] = name end})
+                end
+                local function once(_, previous)
+                    if previous == 0 then return 1 end
+                end
+
+                do
+                    local surrounding <close> = closer('surrounding')
+                    for _ in once, nil, 0, closer('iterator') do
+                        if true then
+                            local inner <close> = closer('inner')
+                            do break end
+                        end
+                    end
+                    log[#log + 1] = 'after break'
+                end
+
+                for _ in once, nil, 0, closer('goto iterator') do
+                    do
+                        local inner <close> = closer('goto inner')
+                        goto finished
+                    end
+                end
+                ::finished::
+                assert(table.concat(log, ',') == 'inner,iterator,after break,surrounding,goto inner,goto iterator')
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public void GenericForDispatchesCloseMetamethodAtExit(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                local resource
+                local seenCoroutine
+                local called = false
+                local target = setmetatable({}, {__call = function(_, value, err)
+                    assert(value == resource and err == nil)
+                    seenCoroutine = coroutine.running()
+                    called = true
+                end})
+                local meta = {__close = target}
+                resource = setmetatable({}, meta)
+                local function once(_, previous)
+                    if previous == 0 then return 1 end
+                end
+                for _ in once, nil, 0, resource do assert(not called) end
+                assert(called, 'callable close')
+
+                local function checkInvalid(replacement, errorType)
+                    meta.__close = target
+                    local ok, message = pcall(function()
+                        for _ in once, nil, 0, resource do meta.__close = replacement end
+                    end)
+                    local expected = 'attempt to call a ' .. errorType .. "" value (metamethod 'close')""
+                    assert(not ok and string.find(message, expected, 1, true), tostring(message))
+                end
+                checkInvalid(false, 'boolean')
+                checkInvalid(nil, 'nil')
+                checkInvalid(setmetatable({}, {__call = false}), 'boolean')
+
+                called = false
+                meta.__close = target
+                local task = coroutine.create(function()
+                    for _ in once, nil, 0, resource do coroutine.yield() end
+                end)
+                assert(coroutine.resume(task) and not called)
+                assert(coroutine.close(task) and called, 'close suspended loop')
+
+                local completed = coroutine.create(function()
+                    for _ in once, nil, 0, resource do end
+                end)
+                assert(coroutine.resume(completed) and seenCoroutine == completed, 'active coroutine')
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public void GenericForNativeCloseRunsOnActiveCoroutine(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.Globals.Set(
+                "nativeCloser",
+                LuaValue.NewCallbackView(script, static (context, args) =>
+                {
+                    context.Script.Globals.Set(
+                        "closeThread",
+                        LuaValue.NewCoroutine(context.CallingCoroutine)
+                    );
+                    context.Script.Globals.Set(
+                        "closeArgumentCount",
+                        LuaValue.FromNumber(args.Count)
+                    );
+                    return LuaValue.Void;
+                })
+            );
+            script.DoString(
+                @"
+                local nested = setmetatable({}, {__call = nativeCloser})
+                local indirect = setmetatable({}, {__call = nested})
+                local function done() end
+                local function check(closer, expectedCount)
+                    local thread = coroutine.create(function()
+                        local value = setmetatable({}, {__close = closer})
+                        for _ in done, nil, nil, value do end
+                    end)
+                    local ok, err = coroutine.resume(thread)
+                    assert(ok, err)
+                    assert(closeThread == thread and closeArgumentCount == expectedCount)
+                end
+                local closeArity = _VERSION == 'Lua 5.5' and 1 or 2
+                check(nativeCloser, closeArity)
+                check(indirect, closeArity + 2)
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public void GenericForCloseSupportsDeepCallableChains(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                local resource
+                local isLua55 = _VERSION == 'Lua 5.5'
+                local depth = isLua55 and 15 or 32
+                local caller = debug.getinfo(1, 'fS')
+                local called = false
+                local closer = function(...)
+                    local frame = debug.getinfo(2, 'fS')
+                    assert(frame.func == caller.func and frame.what == caller.what)
+                    local count = select('#', ...)
+                    assert(count == depth + (isLua55 and 1 or 2))
+                    assert(select(depth + 1, ...) == resource)
+                    if not isLua55 then assert(select(depth + 2, ...) == nil) end
+                    called = true
+                end
+                for _ = 1, depth do closer = setmetatable({}, {__call = closer}) end
+                resource = setmetatable({}, {__close = closer})
+                for _ in function() end, nil, nil, resource do end
+                assert(called)
+
+                if isLua55 then
+                    resource = setmetatable({}, {__close = setmetatable({}, {__call = closer})})
+                    local ok, message = pcall(function()
+                        for _ in function() end, nil, nil, resource do end
+                    end)
+                    assert(not ok and string.find(message, ""'__call' chain too long"", 1, true))
+                end
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public void GenericForCloseCompletesNativeTailRequests(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue target = script.LoadString(
+                """
+                local self, resource, err = ...
+                tailThread = coroutine.running()
+                tailSelf = self
+                tailResource = resource
+                tailError = err
+                return 17
+                """
+            );
+            script.Globals.Set("tailCloser", LuaValue.NewCallbackView(script, (context, args) =>
+                {
+                    bool chained = context.Script.Globals.Get("chainedCloser").Boolean;
+                    LuaValue request = chained
+                        ? LuaValue.NewTailCallReq(target, args[0], args[1], args[2])
+                        : LuaValue.NewTailCallReq(target, LuaValue.Nil, args[0], args[1]);
+                    request.TailCallData.Continuation = CallbackFunction.FromArgumentView(
+                        static (context, results) =>
+                        {
+                            context.Script.Globals.Set("tailContinuation", results[0]);
+                            return LuaValue.Void;
+                        }
+                    );
+                    return request;
+                }));
+            script.DoString(
+                @"
+                for _, chained in ipairs({false, true}) do
+                    chainedCloser = chained
+                    tailContinuation = nil
+                    local callable = chained and setmetatable({}, {__call = tailCloser})
+                    local resource = setmetatable({}, {__close = callable or tailCloser})
+                    local thread = coroutine.create(function()
+                        for _ in function() end, nil, nil, resource do end
+                    end)
+                    local ok, err = coroutine.resume(thread)
+                    assert(ok, err)
+                    assert(tailThread == thread and tailSelf == (callable or nil))
+                    assert(tailResource == resource and tailError == nil)
+                    assert(tailContinuation == 17)
+                end
+                "
+            );
         }
 
         /// <summary>

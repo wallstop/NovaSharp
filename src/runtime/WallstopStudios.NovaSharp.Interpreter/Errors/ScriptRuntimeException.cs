@@ -500,15 +500,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         }
 
         /// <summary>
-        /// Creates the Lua 5.4 "__close" error raised when a variable marked with &lt;close&gt; resolves to a value
-        /// without a callable <c>__close</c> metamethod (§3.3.8).
+        /// Reports a metamethod whose value cannot be called.
         /// </summary>
-        /// <param name="value">Value associated with the <c>__close</c> lookup.</param>
-        /// <returns>The exception to be raised.</returns>
-        public static ScriptRuntimeException CloseMetamethodExpected(LuaValue value)
+        internal static ScriptRuntimeException AttemptToCallMetamethod(
+            DataType type,
+            string metamethodName
+        )
         {
-            string typeName = value.Type.ToLuaTypeString();
-            return new ScriptRuntimeException("__close metamethod expected (got {0})", typeName);
+            return new ScriptRuntimeException(
+                "attempt to call a {0} value (metamethod '{1}')",
+                type.ToErrorTypeString(),
+                metamethodName
+            );
         }
 
         /// <summary>

@@ -24,6 +24,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         private BuildTimeScopeFrame CurrentFrame => _frames[_frames.Count - 1];
 
         /// <summary>
+        /// Gets the active lexical block while parsing a statement.
+        /// </summary>
+        internal BuildTimeScopeBlock CurrentBlock => CurrentFrame.CurrentBlock;
+
+        /// <summary>
         /// Pushes a new function frame so local declarations and upvalues can be emitted for the nested body.
         /// </summary>
         /// <param name="closureBuilder">Callback that materializes captured variables for the compiled function.</param>

@@ -26,7 +26,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
             ByteCode byteCode = new(new Script(version));
 
             InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
-                boundary.CompileBreak(byteCode)
+                boundary.CompileBreak(byteCode, null)
             );
             await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }

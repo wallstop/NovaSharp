@@ -7,7 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
     /// </summary>
     internal class StandardIoFileUserDataBase : StreamFileUserDataBase
     {
-        protected override string Close()
+        protected override string CloseCore()
         {
             return ("cannot close standard file");
         }

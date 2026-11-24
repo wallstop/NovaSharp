@@ -595,11 +595,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 CallStackItem c = _executionStack.Peek(i);
 
+                if (c.IsHiddenFromDebugger)
+                {
+                    startingRef = c.CallingSourceRef;
+                    continue;
+                }
+
+                CallbackFunction dispatcherOrigin = null;
+                if (c.IsIteratorMetamethodDispatcher && c.LocalScope != null)
+                {
+                    dispatcherOrigin = c.LocalScope[CallStackItem.IteratorDispatcherOriginSlot]
+                        .Value
+                        .Callback;
+
+                    // Synchronous hooks keep the native caller below the dispatcher. Show the
+                    // one public frame in both that case and the resumable tail-request case.
+                    if (dispatcherOrigin != null && i + 1 < _executionStack.Count)
+                    {
+                        CallStackItem caller = _executionStack.Peek(i + 1);
+                        if (ReferenceEquals(caller.ClrFunction, dispatcherOrigin))
+                        {
+                            i++;
+                            c = caller;
+                        }
+                    }
+                }
+
                 Instruction instruction = _rootChunk.Code[c.DebugEntryPoint];
 
                 string callname = instruction.OpCode == OpCode.Meta ? instruction.Name : null;
 
-                if (c.ClrFunction != null)
+                CallbackFunction nativeFunction = dispatcherOrigin ?? c.ClrFunction;
+                if (nativeFunction != null)
                 {
                     wis.Add(
                         new WatchItem()
@@ -607,12 +634,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             Address = -1,
                             BasePtr = -1,
                             RetAddress = c.ReturnAddress,
-                            Location = startingRef,
-                            Name = c.ClrFunction.Name,
+                            Location =
+                                dispatcherOrigin == null ? startingRef : SourceRef.GetClrLocation(),
+                            Name = nativeFunction.Name,
                             Value = includeFunctions
-                                ? LuaValue.FromCallback(c.ClrFunction)
+                                ? LuaValue.FromCallback(nativeFunction)
                                 : (LuaValue?)null,
                             IsTailCall = false,
+                            IsIteratorMetamethodDispatcher = dispatcherOrigin != null,
                         }
                     );
                 }

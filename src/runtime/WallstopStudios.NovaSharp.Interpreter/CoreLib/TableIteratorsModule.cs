@@ -15,11 +15,50 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public static class TableIteratorsModule
     {
+        private static readonly LuaValue PairsFunction = LuaValue.NewCallback(Pairs, "pairs");
+        private static readonly LuaValue IpairsFunction = LuaValue.NewCallback(Ipairs, "ipairs");
+
         private static readonly ConditionalWeakTable<Script, IteratorCallbacks> CallbackCache =
             new();
 
+        private static readonly LuaValue NormalizeTriple = LuaValue.NewCallback(
+            CallbackFunction.FromArgumentView(static args =>
+                AdjustIteratorResults(args, includeClosingValue: false)
+            )
+        );
+
+        private static readonly LuaValue NormalizeQuadruple = LuaValue.NewCallback(
+            CallbackFunction.FromArgumentView(static args =>
+                AdjustIteratorResults(args, includeClosingValue: true)
+            )
+        );
+
+        /// <summary>
+        /// Registers the callbacks also used to identify iterator metamethod frames in the debugger.
+        /// </summary>
+        /// <param name="globalTable">The script's global table.</param>
+        /// <param name="iteratorTable">The table receiving the built-in functions.</param>
+        public static void NovaSharpInit(Table globalTable, Table iteratorTable)
+        {
+            iteratorTable = ModuleArgumentValidation.RequireTable(
+                iteratorTable,
+                nameof(iteratorTable)
+            );
+            Script script = iteratorTable.OwnerScript;
+            iteratorTable.Set(
+                "pairs",
+                script == null ? PairsFunction : PairsFunction.BindCallbackToScript(script)
+            );
+            iteratorTable.Set(
+                "ipairs",
+                script == null ? IpairsFunction : IpairsFunction.BindCallbackToScript(script)
+            );
+        }
+
         private sealed class IteratorCallbacks
         {
+            private Closure _metamethodDispatcher;
+
             internal IteratorCallbacks(Script script)
             {
                 NextArray = LuaValue.NewCallback(script, TableIteratorsModule.NextArray);
@@ -29,18 +68,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             internal LuaValue NextArray { get; }
 
             internal LuaValue Next { get; }
+
+            internal LuaValue GetMetamethodDispatcher(Script script)
+            {
+                _metamethodDispatcher ??= script.CreateIteratorMetamethodDispatcher();
+                return LuaValue.NewClosure(_metamethodDispatcher);
+            }
         }
 
         // ipairs (t)
         // -------------------------------------------------------------------------------------------------------------------
-        // If t has a metamethod __ipairs, calls it with t as argument and returns the first three results from the call.
+        // Lua 5.2 and the stock Lua 5.3 build support __ipairs. NovaSharp also supports CLR userdata hooks.
         // Otherwise, returns three values: an iterator function, the table t, and 0, so that the construction
         //	  for i,v in ipairs(t) do body end
         // will iterate over the pairs (1,t[1]), (2,t[2]), ..., up to the first integer key absent from the table.
         /// <summary>
         /// Implements Lua `ipairs`, respecting `__ipairs` metamethods and otherwise yielding the array iterator triple.
         /// </summary>
-        [NovaSharpModuleMethod(Name = "ipairs")]
         public static LuaValue Ipairs(
             ScriptExecutionContext executionContext,
             CallbackArguments args
@@ -52,17 +96,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             LuaValue table = args[0];
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
 
             if (
-                executionContext.TryGetMetamethodTailCall(
-                    table,
-                    Metamethods.IPairs,
-                    out LuaValue meta,
-                    args.GetArray()
-                )
+                (
+                    version is LuaCompatibilityVersion.Lua52 or LuaCompatibilityVersion.Lua53
+                    || table.Type == DataType.UserData
+                ) && executionContext.TryGetMetamethod(table, Metamethods.IPairs, out LuaValue meta)
             )
             {
-                return meta;
+                return CallIteratorMetamethod(
+                    executionContext,
+                    meta,
+                    table,
+                    IpairsFunction,
+                    allowYield: table.Type == DataType.UserData,
+                    includeClosingValue: false
+                );
             }
 
             // Per Lua spec: ipairs requires a table argument when no __ipairs metamethod exists
@@ -86,15 +138,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         // pairs (t)
         // -------------------------------------------------------------------------------------------------------------------
-        // If t has a metamethod __pairs, calls it with t as argument and returns the first three results from the call.
-        // Otherwise, returns three values: the next function, the table t, and nil, so that the construction
+        // Lua 5.2+ honors __pairs, as does the CLR userdata extension in all profiles.
+        // The results are the iterator, state, initial value and, in Lua 5.5+, the closing value.
+        // The default next iterator, table t and nil allow the construction
         //     for k,v in pairs(t) do body end
         // will iterate over all key–value pairs of table t.
         // See function next for the caveats of modifying the table during its traversal.
         /// <summary>
-        /// Implements Lua `pairs`, honoring `__pairs` metamethods or returning the default `next` iterator triple.
+        /// Implements Lua `pairs`, including the fourth closing value in Lua 5.5 and later.
         /// </summary>
-        [NovaSharpModuleMethod(Name = "pairs")]
         public static LuaValue Pairs(
             ScriptExecutionContext executionContext,
             CallbackArguments args
@@ -106,17 +158,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             LuaValue table = args[0];
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            bool includeClosingValue = version >= LuaCompatibilityVersion.Lua55;
 
             if (
-                executionContext.TryGetMetamethodTailCall(
-                    table,
-                    Metamethods.Pairs,
-                    out LuaValue meta,
-                    args.GetArray()
-                )
+                (version >= LuaCompatibilityVersion.Lua52 || table.Type == DataType.UserData)
+                && executionContext.TryGetMetamethod(table, Metamethods.Pairs, out LuaValue meta)
             )
             {
-                return meta;
+                return CallIteratorMetamethod(
+                    executionContext,
+                    meta,
+                    table,
+                    PairsFunction,
+                    allowYield: version >= LuaCompatibilityVersion.Lua54
+                        || table.Type == DataType.UserData,
+                    includeClosingValue
+                );
             }
 
             // Per Lua spec: pairs requires a table argument when no __pairs metamethod exists
@@ -135,7 +195,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext.Script,
                 static script => new IteratorCallbacks(script)
             );
-            return LuaValue.NewTuple(callbacks.Next, table);
+            return includeClosingValue
+                ? LuaValue.NewTuple(callbacks.Next, table, LuaValue.Nil, LuaValue.Nil)
+                : LuaValue.NewTuple(callbacks.Next, table, LuaValue.Nil);
+        }
+
+        private static LuaValue CallIteratorMetamethod(
+            ScriptExecutionContext executionContext,
+            LuaValue metamethod,
+            LuaValue subject,
+            LuaValue iteratorFunction,
+            bool allowYield,
+            bool includeClosingValue
+        )
+        {
+            Script script = executionContext.Script;
+            IteratorCallbacks callbacks = CallbackCache.GetValue(
+                script,
+                static owner => new IteratorCallbacks(owner)
+            );
+            LuaValue dispatcher = callbacks.GetMetamethodDispatcher(script);
+            LuaValue normalize = includeClosingValue ? NormalizeQuadruple : NormalizeTriple;
+            LuaValue origin = iteratorFunction.BindCallbackToScript(script);
+            return allowYield
+                ? LuaValue.NewTailCallReq(dispatcher, metamethod, subject, normalize, origin)
+                : executionContext.Call(dispatcher, metamethod, subject, normalize, origin);
+        }
+
+        private static LuaValue AdjustIteratorResults(
+            CallbackArgumentsView results,
+            bool includeClosingValue
+        )
+        {
+            LuaValue iterator = GetIteratorResult(results, 0);
+            LuaValue state = GetIteratorResult(results, 1);
+            LuaValue control = GetIteratorResult(results, 2);
+            return includeClosingValue
+                ? LuaValue.NewTuple(iterator, state, control, GetIteratorResult(results, 3))
+                : LuaValue.NewTuple(iterator, state, control);
+        }
+
+        private static LuaValue GetIteratorResult(CallbackArgumentsView results, int index)
+        {
+            return results.TryRawGet(index, translateVoids: true, out LuaValue value)
+                ? value
+                : LuaValue.Nil;
         }
 
         // next (table [, index])
@@ -206,21 +310,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaValue val;
             if (version >= LuaCompatibilityVersion.Lua53)
             {
-                val = GetTableValueWithMetamethods(executionContext, table, idx);
+                val = GetTableValueWithMetamethods(executionContext, table, idx).ToScalar();
             }
             else
             {
                 val = table.Table.Get(idx);
             }
 
-            if (val.Type != DataType.Nil)
+            if (!val.IsNil)
             {
                 return LuaValue.NewTuple(LuaValue.FromNumber(idx), val);
             }
-            else
-            {
-                return LuaValue.Nil;
-            }
+
+            return version == LuaCompatibilityVersion.Lua51 ? LuaValue.Void : LuaValue.Nil;
         }
 
         /// <summary>

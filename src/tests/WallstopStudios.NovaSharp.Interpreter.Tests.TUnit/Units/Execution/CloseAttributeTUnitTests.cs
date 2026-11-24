@@ -144,7 +144,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert
                 .That(result.Tuple[1].String)
-                .Contains("__close metamethod expected")
+                .Contains("variable '_' got a non-closable value")
                 .ConfigureAwait(false);
         }
 

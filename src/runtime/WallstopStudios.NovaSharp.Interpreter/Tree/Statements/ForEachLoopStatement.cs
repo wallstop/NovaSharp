@@ -15,6 +15,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
     internal class ForEachLoopStatement : Statement
     {
         private readonly RuntimeScopeBlock _stackFrame;
+        private readonly RuntimeScopeBlock _closingScope;
+        private readonly SymbolRef _closingValue;
         private readonly SymbolRef[] _names;
         private readonly IVariable[] _nameExps;
         private readonly ExprListExpression _rValues;
@@ -50,6 +52,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
 
             _rValues = new ExprListExpression(Expression.ExprList(lcontext), lcontext);
 
+            if (lcontext.Script.CompatibilityProfile.SupportsToBeClosedVariables)
+            {
+                lcontext.Scope.PushBlock();
+                _closingValue = lcontext.Scope.DefineLocal(
+                    "(for state)",
+                    SymbolRefAttributes.ToBeClosed
+                );
+            }
+
             lcontext.Scope.PushBlock();
 
             _names = new SymbolRef[names.Count];
@@ -73,6 +84,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             _stackFrame = lcontext.Scope.PopBlock();
             _stackFrame.ValueStackSlots = 1;
 
+            if (_closingValue != null)
+            {
+                _closingScope = lcontext.Scope.PopBlock();
+            }
+
             lcontext.Source.Refs.Add(_refFor);
             lcontext.Source.Refs.Add(_refEnd);
         }
@@ -92,6 +108,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
 
                 // get iterator tuple
                 _rValues.Compile(bc);
+
+                if (_closingScope != null)
+                {
+                    // The fourth result belongs to the loop, so it must outlive each iteration.
+                    bc.EmitEnter(_closingScope);
+                    bc.EmitStore(_closingValue, 0, 3);
+                }
 
                 // prepares iterator tuple - stack : iterator-tuple
                 bc.EmitIterPrep();
@@ -142,6 +165,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                 int exitpointBreaks = bc.GetJumpPointForNextInstruction();
 
                 bc.EmitPop();
+                if (_closingScope != null)
+                {
+                    bc.EmitLeave(_closingScope);
+                }
 
                 foreach (Instruction i in l.BreakJumps)
                 {

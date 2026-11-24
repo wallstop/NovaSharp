@@ -9,8 +9,9 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
 
 ## Now
 
-1. Fix uninitialized locals reading generic-loop iterator state across Lua 5.1–5.5
-   in [#164](https://github.com/Ambiguous-Interactive/NovaSharp/issues/164).
+1. Preserve exact numeric ordering in default `table.sort`, including mixed
+   integer and float operands, in
+   [#167](https://github.com/Ambiguous-Interactive/NovaSharp/issues/167).
 1. Advance Phase A5 call paths in
    [#108](https://github.com/Ambiguous-Interactive/NovaSharp/issues/108):
    - Migrate each remaining legacy CoreLib registration in its own scoped change:
@@ -76,6 +77,12 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    [stackless/fuel model](docs/proposals/runtime-research-gates.md#stacklessfuel-execution-model)
    in the same study.
 1. Lua parity backlog: [call-context error names](https://github.com/Ambiguous-Interactive/NovaSharp/issues/124),
+   [error-value identity during unwinding](https://github.com/Ambiguous-Interactive/NovaSharp/issues/168),
+   [yieldable close handlers](https://github.com/Ambiguous-Interactive/NovaSharp/issues/169),
+   [failed coroutine cleanup order](https://github.com/Ambiguous-Interactive/NovaSharp/issues/174),
+   [borrowed line iterators and read formats](https://github.com/Ambiguous-Interactive/NovaSharp/issues/175),
+   [closer source lines on generic-for jumps](https://github.com/Ambiguous-Interactive/NovaSharp/issues/176),
+   [missing values in assignments](https://github.com/Ambiguous-Interactive/NovaSharp/issues/172),
    [optional-argument validation](https://github.com/Ambiguous-Interactive/NovaSharp/issues/125),
    [residual number/string parity nits](https://github.com/Ambiguous-Interactive/NovaSharp/issues/138),
    [table library exports](https://github.com/Ambiguous-Interactive/NovaSharp/issues/159),

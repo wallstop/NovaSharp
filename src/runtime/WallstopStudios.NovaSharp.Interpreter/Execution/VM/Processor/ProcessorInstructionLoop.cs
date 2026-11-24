@@ -23,6 +23,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     {
         private const int YieldSpecialTrap = -99;
 
+        private static readonly LuaValue ReplayCloseResult = LuaValue.NewCallbackView(static args =>
+            args[0]
+        );
+
         private readonly struct TailCallFrameReuseState
         {
             public TailCallFrameReuseState(
@@ -791,11 +795,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return;
             }
 
-            LuaValue metamethod = GetMetamethodRaw(candidate, Metamethods.Close);
+            LuaValue metamethod = GetMetamethod(candidate, Metamethods.Close);
 
             if (metamethod.IsNil)
             {
-                throw ScriptRuntimeException.CloseMetamethodExpected(candidate);
+                throw new ScriptRuntimeException(
+                    "variable '{0}' got a non-closable value",
+                    symbol.Name
+                );
             }
         }
 
@@ -813,41 +820,155 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return;
             }
 
-            LuaValue metamethod = GetMetamethodRaw(scalar, Metamethods.Close);
-
-            if (metamethod.IsNil)
-            {
-                throw ScriptRuntimeException.CloseMetamethodExpected(scalar);
-            }
-
-            LuaValue err = error;
+            LuaValue metamethod = GetMetamethod(scalar, Metamethods.Close);
+            bool isLua55 =
+                LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                >= LuaCompatibilityVersion.Lua55;
+            bool passError = !isLua55 || error.IsNotNil();
 
             if (metamethod.Type == DataType.Function)
             {
-                Call(metamethod, scalar, err);
+                ClrCallArguments arguments = passError
+                    ? new ClrCallArguments(scalar, error)
+                    : new ClrCallArguments(scalar);
+                Call(metamethod, arguments, GetCurrentSourceRef(instructionPtr - 1));
                 return;
             }
 
             if (metamethod.Type == DataType.ClrFunction)
             {
                 CallbackFunction callback = metamethod.Callback;
-                ScriptExecutionContext context = new(
-                    this,
-                    callback,
-                    GetCurrentSourceRef(instructionPtr)
-                );
-                if (callback.HasArgumentViewCallback)
+                LuaValue result;
+                if (callback.HasArgumentViewNoContextCallback)
                 {
-                    callback.InvokeArgumentViewFixed(context, scalar, err);
+                    result = passError
+                        ? callback.InvokeArgumentViewFixed(_script, scalar, error)
+                        : callback.InvokeArgumentViewFixed(_script, scalar);
                 }
                 else
                 {
-                    callback.InvokeLegacyFixed(context, scalar, err);
+                    ScriptExecutionContext context = new(
+                        this,
+                        callback,
+                        GetCurrentSourceRef(instructionPtr - 1)
+                    );
+                    if (callback.HasArgumentViewCallback)
+                    {
+                        result = passError
+                            ? callback.InvokeArgumentViewFixed(context, scalar, error)
+                            : callback.InvokeArgumentViewFixed(context, scalar);
+                    }
+                    else
+                    {
+                        result = passError
+                            ? callback.InvokeLegacyFixed(context, scalar, error)
+                            : callback.InvokeLegacyFixed(context, scalar);
+                    }
+                }
+
+                if (result.Type is DataType.TailCallRequest or DataType.YieldRequest)
+                {
+                    Call(
+                        _script.GetCloseMetamethodDispatcher(),
+                        new ClrCallArguments(ReplayCloseResult, result),
+                        GetCurrentSourceRef(instructionPtr - 1)
+                    );
                 }
                 return;
             }
 
-            throw ScriptRuntimeException.CloseMetamethodExpected(scalar);
+            CallIndirectCloser(
+                metamethod,
+                scalar,
+                error,
+                isLua55,
+                passError,
+                GetCurrentSourceRef(instructionPtr - 1)
+            );
+        }
+
+        private void CallIndirectCloser(
+            LuaValue callable,
+            LuaValue value,
+            LuaValue error,
+            bool isLua55,
+            bool passError,
+            SourceRef callingSource
+        )
+        {
+            const int maxLua55CallChainLength = 15;
+            using PooledResource<List<LuaValue>> pooledReceivers = ListPool<LuaValue>.Get(
+                out List<LuaValue> receivers
+            );
+            int capacity = _valueStack.MaxCapacity;
+            int availableSlots =
+                capacity > 0 ? capacity - _valueStack.Count : VmStackDefaults.ValueStackMaxCapacity;
+            // Lua 5.4 grows its own stack to its limit. Detect deterministic cycles here
+            // before spending time building an argument list that cannot complete.
+            HashSet<LuaValue> visited = null;
+            try
+            {
+                while (callable.Type is not (DataType.Function or DataType.ClrFunction))
+                {
+                    LuaValue next = GetMetamethod(callable, Metamethods.Call);
+                    if (next.IsNil || !CanCallMetamethod(next))
+                    {
+                        throw ScriptRuntimeException.AttemptToCallMetamethod(
+                            callable.Type,
+                            "close"
+                        );
+                    }
+
+                    if (isLua55 && receivers.Count == maxLua55CallChainLength)
+                    {
+                        throw new ScriptRuntimeException("'__call' chain too long");
+                    }
+
+                    if (!isLua55 && callable.Type != DataType.UserData)
+                    {
+                        visited ??= HashSetPool<LuaValue>.Rent();
+                        if (!visited.Add(callable))
+                        {
+                            throw ScriptRuntimeException.StackOverflow();
+                        }
+                    }
+
+                    int requiredSlots = receivers.Count + (passError ? 4 : 3);
+                    if (requiredSlots > availableSlots)
+                    {
+                        throw ScriptRuntimeException.StackOverflow();
+                    }
+
+                    receivers.Add(callable);
+                    callable = next;
+                }
+            }
+            finally
+            {
+                HashSetPool<LuaValue>.Return(visited);
+            }
+
+            int argumentCount = 2 + receivers.Count + (passError ? 1 : 0);
+            using PooledResource<LuaValue[]> pooledArgs = DynValueArrayPool.Get(
+                argumentCount,
+                out LuaValue[] arguments
+            );
+            arguments[0] = callable;
+            for (int index = 0; index < receivers.Count; index++)
+            {
+                arguments[index + 1] = receivers[receivers.Count - 1 - index];
+            }
+            arguments[receivers.Count + 1] = value;
+            if (passError)
+            {
+                arguments[argumentCount - 1] = error;
+            }
+
+            Call(
+                _script.GetCloseMetamethodDispatcher(),
+                new ClrCallArguments(arguments.AsSpan(0, argumentCount)),
+                callingSource
+            );
         }
 
         private void CloseCurrentBlock(CallStackItem stackframe, LuaValue error, int instructionPtr)
