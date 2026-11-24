@@ -41,7 +41,7 @@ bumps. Current tool pins suffice for the migration.
   312.00048 B per call on the base and 48.00048 B on the candidate. Every
   sample returned 4,200,000. Bytes include the Lua loop and the amortized
   allocation at the host entry point.
-- Independent verification matched base and candidate outputs for all five
+- Independent verification matched base and pre-correction candidate outputs for all five
   profiles, including version exposure, trailing argument expansion, coercion,
   comparator reentrancy and failure, mutation, and range behavior. Its separate
   explicit-bound unpack probe measured the same 264 B reduction per call.
@@ -55,6 +55,26 @@ bumps. Current tool pins suffice for the migration.
   public callbacks became private. The replacement uses Unity's documented
   third-party attribute contract and preserves each of the nine entry points.
   [Unity PreserveAttribute](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Scripting.PreserveAttribute.html)
+
+## Hosted CI findings
+
+The first benchmark job reported 16 fresh-compile allocation regressions.
+The fresh-compile benchmark constructs a new Script each time. An isolated
+probe reproduced the same increase for construction on its own, 896 B per
+operation in the Lua 5.1 and 5.4 profiles and 1,024 B in the Lua 5.2 profile.
+Each newly migrated name had created an unused 64 B CLR delegate during
+registration. The CLR getter now creates and caches the adapter on demand,
+preserving delegate identity across callers. In Lua 5.4 the fresh-compile
+probe moved from 350,714 B on the base to 351,610 B in the first candidate
+and 334,842 B after the change. The one-result unpack allocation remained
+48.00048 B per call.
+
+The Windows Lua 5.2 job exposed that its reference build omits
+`LUA_COMPAT_MAXN`. The original fixture failed against a local Lua 5.2.4
+build with the Windows job's compatibility flags and no `LUA_COMPAT_ALL`.
+The revised fixture passed both build variants. It checks `maxn` behavior
+when the reference exports it. TUnit still verifies its presence in the
+NovaSharp 5.1 and 5.2 profiles and its absence in later profiles.
 
 ## Local checks
 

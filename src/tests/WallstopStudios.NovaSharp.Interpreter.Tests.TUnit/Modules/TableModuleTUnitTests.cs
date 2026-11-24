@@ -67,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 assert(select('#', unpackRange(values, 2, 1)) == 0)
                 assert(select('#', unpackRange(values, 2, 2)) == 1)
 
-                if _VERSION == 'Lua 5.1' or _VERSION == 'Lua 5.2' then
+                if table.maxn then
                     assert(table.maxn(values) == 2, 'maxn ignores the removed array entry')
                     values[3.5] = true
                     assert(table.maxn(values) == 3.5, 'maxn includes fractional keys')
