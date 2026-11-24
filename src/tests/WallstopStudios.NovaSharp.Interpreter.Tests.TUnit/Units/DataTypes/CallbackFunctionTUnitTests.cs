@@ -160,6 +160,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             function.Invoke(context, userDataArgs, isMethodCall: true);
             await Assert.That(capturedIsMethodCall).IsTrue().ConfigureAwait(false);
+
+            Func<ScriptExecutionContext, CallbackArguments, LuaValue>[] adapters =
+                await Task.WhenAll(
+                        Task.Run(() => function.ClrCallback),
+                        Task.Run(() => function.ClrCallback)
+                    )
+                    .ConfigureAwait(false);
+            await Assert.That(adapters[0]).IsSameReferenceAs(adapters[1]).ConfigureAwait(false);
+            adapters[0](context, TestHelpers.CreateArguments());
+            await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -196,6 +206,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             function.Invoke(script, userDataArgs, isMethodCall: true);
             await Assert.That(capturedIsMethodCall).IsTrue().ConfigureAwait(false);
+
+            Func<ScriptExecutionContext, CallbackArguments, LuaValue> adapter =
+                function.ClrCallback;
+            await Assert
+                .That(function.ClrCallback)
+                .IsSameReferenceAs(adapter)
+                .ConfigureAwait(false);
+            adapter(TestHelpers.CreateExecutionContext(script), TestHelpers.CreateArguments());
+            await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

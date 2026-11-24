@@ -312,7 +312,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
 
             if (modules.Has(CoreModules.Table))
             {
-                RegisterModuleType(table, typeof(TableModuleGlobals));
+                RegisterModuleType(table, typeof(TableModule.Globals));
             }
 
             if (modules.Has(CoreModules.ErrorHandling))
