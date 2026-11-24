@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
     using global::NovaSharp;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -74,11 +75,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                     return v.GetLength();
                 case "-":
                 {
-                    double? d = v.CastToNumber();
-
-                    if (d.HasValue)
+                    LuaCompatibilityVersion version = context.Script.CompatibilityVersion;
+                    LuaNumber? number = v.CastToLuaNumber(version, forArithmetic: true);
+                    if (number.HasValue)
                     {
-                        return LuaValue.NewNumber(-d.Value);
+                        return LuaValue.NewNumber(LuaNumber.Negate(number.Value));
                     }
 
                     throw new DynamicExpressionException(

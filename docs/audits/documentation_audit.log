@@ -138,7 +138,7 @@ Found 191 undocumented public/internal type declarations.
   - line 51: missing XML docs for `Continuation`
   - line 53: missing XML docs for `ErrorHandlerBeforeUnwind`
   - line 55: missing XML docs for `HasErrorHandlerBeforeUnwind`
-  - line 1887: missing XML docs for `Count`
+  - line 1857: missing XML docs for `Count`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/BasicDescriptors/DispatchingUserDataDescriptor.cs
   - line 314: missing XML docs for `TryIndex()`
   - line 816: missing XML docs for `TryMetaIndex()`

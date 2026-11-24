@@ -1496,10 +1496,7 @@ namespace NovaSharp
                     hash.AddInt(Boolean ? 1 : 0);
                     return hash.ToHashCode();
                 case DataType.Number:
-                    // Use LuaNumber's hash code to ensure equal numbers have equal hashes
-                    hash.AddInt(
-                        Number == 0.0 ? LuaNumber.Zero.GetHashCode() : LuaNumber.GetHashCode()
-                    );
+                    hash.AddInt(LuaNumber.GetHashCode());
                     return hash.ToHashCode();
                 case DataType.String:
                     hash.Add(String);
@@ -1552,6 +1549,12 @@ namespace NovaSharp
         /// <inheritdoc />
         public bool Equals(LuaValue other)
         {
+            return Equals(other, LuaCompatibilityVersion.Latest);
+        }
+
+        /// <summary>Compares values using the script profile for numeric equality.</summary>
+        internal bool Equals(LuaValue other, LuaCompatibilityVersion version)
+        {
             if (
                 (other.Type == DataType.Nil && Type == DataType.Void)
                 || (other.Type == DataType.Void && Type == DataType.Nil)
@@ -1573,8 +1576,7 @@ namespace NovaSharp
                 case DataType.Boolean:
                     return Boolean == other.Boolean;
                 case DataType.Number:
-                    // Use LuaNumber comparison to preserve integer precision at boundaries
-                    return LuaNumber.Equal(LuaNumber, other.LuaNumber);
+                    return LuaNumber.Equal(LuaNumber, other.LuaNumber, version);
                 case DataType.String:
                     return String == other.String;
                 case DataType.Function:
@@ -1715,21 +1717,31 @@ namespace NovaSharp
         /// and applying the supplied Lua version's numeric-string grammar.
         /// </summary>
         /// <param name="version">The Lua compatibility version governing string coercion.</param>
-        /// <returns>The LuaNumber value, or null if not number, not string or non-convertible-string.</returns>
-        internal LuaNumber? CastToLuaNumber(LuaCompatibilityVersion version)
+        /// <param name="forArithmetic">Whether to apply the profile's arithmetic conversions.</param>
+        /// <returns>The LuaNumber value, or null if conversion is unavailable.</returns>
+        internal LuaNumber? CastToLuaNumber(
+            LuaCompatibilityVersion version,
+            bool forArithmetic = false
+        )
         {
             LuaValue rv = ToScalar();
             if (rv.Type == DataType.Number)
             {
-                return rv.LuaNumber;
+                LuaNumber number = rv.LuaNumber;
+                return forArithmetic ? number.ForArithmeticProfile(version) : number;
             }
-            else if (rv.Type == DataType.String)
+
+            if (
+                rv.Type == DataType.String
+                && LuaNumber.TryParse(rv.String, version, out LuaNumber result)
+            )
             {
-                if (LuaNumber.TryParse(rv.String, version, out LuaNumber result))
-                {
-                    return result;
-                }
+                // Lua 5.3's arithmetic fallback converts strings to float, even for integer numerals.
+                return forArithmetic && version == LuaCompatibilityVersion.Lua53
+                    ? LuaNumber.FromFloat(result.ToDouble)
+                    : result;
             }
+
             return null;
         }
 

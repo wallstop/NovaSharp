@@ -566,7 +566,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
             if ((_operator & ComparisonOperators) != 0)
             {
-                return LuaValue.FromBoolean(EvalComparison(v1, v2, _operator));
+                return LuaValue.FromBoolean(EvalComparison(v1, v2, _operator, version));
             }
             else if (_operator == Operator.StrConcat)
             {
@@ -630,8 +630,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            LuaNumber? nd1 = v1.CastToLuaNumber(version);
-            LuaNumber? nd2 = v2.CastToLuaNumber(version);
+            LuaNumber? nd1 = v1.CastToLuaNumber(version, forArithmetic: true);
+            LuaNumber? nd2 = v2.CastToLuaNumber(version, forArithmetic: true);
 
             if (nd1 == null || nd2 == null)
             {
@@ -651,8 +651,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            LuaNumber? nd1 = v1.CastToLuaNumber(version);
-            LuaNumber? nd2 = v2.CastToLuaNumber(version);
+            LuaNumber? nd1 = v1.CastToLuaNumber(version, forArithmetic: true);
+            LuaNumber? nd2 = v2.CastToLuaNumber(version, forArithmetic: true);
 
             if (nd1 == null || nd2 == null)
             {
@@ -663,7 +663,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
             LuaNumber n1 = nd1.Value;
             LuaNumber n2 = nd2.Value;
-
             switch (_operator)
             {
                 case Operator.Add:
@@ -675,7 +674,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 case Operator.Div:
                     return LuaNumber.Divide(n1, n2);
                 case Operator.Mod:
-                    return LuaNumber.Modulo(n1, n2);
+                    return LuaNumber.Modulo(n1, n2, version);
                 case Operator.Power:
                     return LuaNumber.Power(n1, n2);
                 default:
@@ -683,15 +682,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             }
         }
 
-        private static bool EvalComparison(LuaValue l, LuaValue r, Operator op)
+        private static bool EvalComparison(
+            LuaValue l,
+            LuaValue r,
+            Operator op,
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
             switch (op)
             {
                 case Operator.Less:
                     if (l.Type == DataType.Number && r.Type == DataType.Number)
                     {
-                        // Use LuaNumber comparison to preserve integer precision at boundaries
-                        return LuaNumber.LessThan(l.LuaNumber, r.LuaNumber);
+                        return LuaNumber.LessThan(l.LuaNumber, r.LuaNumber, version);
                     }
                     else if (l.Type == DataType.String && r.Type == DataType.String)
                     {
@@ -706,8 +709,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 case Operator.LessOrEqual:
                     if (l.Type == DataType.Number && r.Type == DataType.Number)
                     {
-                        // Use LuaNumber comparison to preserve integer precision at boundaries
-                        return LuaNumber.LessThanOrEqual(l.LuaNumber, r.LuaNumber);
+                        return LuaNumber.LessThanOrEqual(l.LuaNumber, r.LuaNumber, version);
                     }
                     else if (l.Type == DataType.String && r.Type == DataType.String)
                     {
@@ -739,13 +741,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                             return false;
                         }
                     }
-                    return r.Equals(l);
+                    return r.Equals(l, version);
                 case Operator.Greater:
-                    return !EvalComparison(l, r, Operator.LessOrEqual);
+                    return EvalComparison(r, l, Operator.Less, version);
                 case Operator.GreaterOrEqual:
-                    return !EvalComparison(l, r, Operator.Less);
+                    return EvalComparison(r, l, Operator.LessOrEqual, version);
                 case Operator.NotEqual:
-                    return !EvalComparison(l, r, Operator.Equal);
+                    return !EvalComparison(l, r, Operator.Equal, version);
                 default:
                     throw new DynamicExpressionException("Unsupported operator {0}", op);
             }

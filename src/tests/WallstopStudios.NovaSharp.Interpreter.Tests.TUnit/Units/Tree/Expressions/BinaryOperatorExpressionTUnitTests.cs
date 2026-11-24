@@ -14,11 +14,144 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
     using WallstopStudios.NovaSharp.Interpreter.Tests.Units;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Expressions;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.LuaFixtures;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
     using Expression = NovaSharp.Interpreter.Tree.Expression;
 
     public sealed class BinaryOperatorExpressionTUnitTests
     {
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public void CompareMixedNumbersInLua(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            LuaFixtureHelper fixture =
+                LuaFixtureHelper.ForCallingTest<BinaryOperatorExpressionTUnitTests>();
+            script.DoFile(fixture.GetFixturePath());
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompareMixedNumbersInDynamicExpressions(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            bool hasIntegers = version >= LuaCompatibilityVersion.Lua53;
+            bool integerStrings = version >= LuaCompatibilityVersion.Lua54;
+            script.Globals.Set("bound", LuaValue.FromInteger(9007199254740992L));
+            script.Globals.Set("one", LuaValue.FromInteger(1));
+            (string expression, bool expected)[] cases =
+            {
+                ("9007199254740992.0 < 9007199254740993", hasIntegers),
+                ("9007199254740993 <= 9007199254740992.0", !hasIntegers),
+                ("9007199254740993 == 9007199254740992.0", !hasIntegers),
+                ("9007199254740992.0 ~= 9007199254740993", hasIntegers),
+                ("0 > (0 / 0)", false),
+                ("(0 / 0) > 0", false),
+                ("0 >= (0 / 0)", false),
+                ("(0 / 0) >= 0", false),
+                ("bound + one == 9007199254740992.0", !hasIntegers),
+                ("-(-9223372036854775807) < 9223372036854775808.0", hasIntegers),
+                ("-'-9223372036854775808' > 0", !integerStrings),
+                ("'9007199254740993' + 0 > 9007199254740992.0", integerStrings),
+                ("'9007199254740993' % 2 == 0", !integerStrings),
+            };
+
+            foreach ((string expression, bool expected) in cases)
+            {
+                LuaValue result = script.CreateDynamicExpression(expression).Evaluate();
+                await Assert.That(result.Boolean).IsEqualTo(expected).ConfigureAwait(false);
+            }
+
+            if (hasIntegers)
+            {
+                LuaValue floor = script
+                    .CreateDynamicExpression("'9007199254740993' // 1")
+                    .Evaluate();
+                await Assert.That(floor.IsInteger).IsEqualTo(integerStrings).ConfigureAwait(false);
+                LuaValue remainder = script
+                    .CreateDynamicExpression("9007199254740994.0 % 3")
+                    .Evaluate();
+                await Assert.That(remainder.Number).IsEqualTo(1d).ConfigureAwait(false);
+                LuaValue tiny = script.CreateDynamicExpression("-1e-200 % 3e-200").Evaluate();
+                await Assert
+                    .That(tiny.Number < 0d)
+                    .IsEqualTo(version == LuaCompatibilityVersion.Lua53)
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompareMixedNumbersAtTheHostBoundary(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            const long wide = 9007199254740993L;
+            const long rounded = 9007199254740992L;
+            bool hasIntegers = version >= LuaCompatibilityVersion.Lua53;
+            script.Globals.Set("hostWide", LuaValue.FromInteger(wide));
+            script.DoString(
+                """
+                local rounded = 9007199254740992.0
+                local exact = math.type ~= nil
+                assert((hostWide == rounded) == not exact, 'host equality')
+                assert((rounded < hostWide) == exact, 'host ordering')
+                assert((hostWide <= rounded) == not exact, 'host inclusive ordering')
+                assert(rawequal(hostWide, rounded) == not exact, 'host raw equality')
+                assert(hostWide % #'ab' == (exact and 1 or 0), 'host modulo')
+                local values = {[hostWide] = 'host'}
+                assert(next(values, hostWide) == nil, 'host constructor key cursor')
+                rawset(values, rounded, 'rounded')
+                assert(rawget(values, hostWide) == (exact and 'host' or 'rounded'), 'host lookup')
+                rawset(values, rounded, nil)
+                assert(values[hostWide] == (exact and 'host' or nil), 'host update')
+                """
+            );
+
+            LuaValue dynamicLiteral = script
+                .CreateDynamicExpression("hostWide == 9007199254740992.0")
+                .Evaluate();
+            await Assert.That(dynamicLiteral.Boolean).IsEqualTo(!hasIntegers).ConfigureAwait(false);
+
+            Table values = new(script);
+            values.Set(wide, LuaValue.True);
+            script.Options.CompatibilityVersion = hasIntegers
+                ? LuaCompatibilityVersion.Lua52
+                : LuaCompatibilityVersion.Lua53;
+            await Assert.That(values.RawGet(wide).Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values.Remove(rounded)).IsEqualTo(!hasIntegers).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CompareMixedNumbersKeepsEquivalentHashes()
+        {
+            (long integer, double floating)[] equivalentValues =
+            {
+                (0, -0.0),
+                (0, 0.0),
+                (9007199254740992L, 9007199254740992.0),
+                (long.MinValue, -9223372036854775808.0),
+            };
+
+            foreach ((long integer, double floating) in equivalentValues)
+            {
+                LuaNumber integral = LuaNumber.FromInteger(integer);
+                LuaNumber fractional = LuaNumber.FromFloat(floating);
+                await Assert.That(integral.Equals(fractional)).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(integral.GetHashCode())
+                    .IsEqualTo(fractional.GetHashCode())
+                    .ConfigureAwait(false);
+
+                LuaValue left = LuaValue.FromInteger(integer);
+                LuaValue right = LuaValue.FromFloat(floating);
+                await Assert.That(left.Equals(right)).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(left.GetHashCode())
+                    .IsEqualTo(right.GetHashCode())
+                    .ConfigureAwait(false);
+            }
+        }
+
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
@@ -362,8 +495,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
             LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            // 9223372036854775806 < 9223372036854775807 should be true
-            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+            // Only Lua 5.3+ keeps these adjacent integer operands distinct.
+            await Assert
+                .That(result.Boolean)
+                .IsEqualTo(version >= LuaCompatibilityVersion.Lua53)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -406,9 +542,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task AdditionPreservesIntegerSubtype(LuaCompatibilityVersion version)
+        public async Task AdditionRespectsTheActiveNumericProfile(LuaCompatibilityVersion version)
         {
-            // Test that integer arithmetic in DynamicExpression.Eval() preserves the integer subtype.
+            // The script profile controls whether dynamic arithmetic uses integer operands.
             Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
@@ -421,8 +557,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
             LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
-            await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(30L).ConfigureAwait(false);
+            await Assert
+                .That(result.IsInteger)
+                .IsEqualTo(version >= LuaCompatibilityVersion.Lua53)
+                .ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(30d).ConfigureAwait(false);
 
             Expression symbolicInfinity = BuildBinaryExpression(
                 script,
@@ -455,7 +594,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task SubtractionPreservesIntegerSubtype(LuaCompatibilityVersion version)
+        public async Task SubtractionRespectsTheActiveNumericProfile(
+            LuaCompatibilityVersion version
+        )
         {
             Script script = new(version);
 
@@ -469,8 +610,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
             LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
-            await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(30L).ConfigureAwait(false);
+            await Assert
+                .That(result.IsInteger)
+                .IsEqualTo(version >= LuaCompatibilityVersion.Lua53)
+                .ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(30d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -479,7 +623,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task MultiplicationPreservesIntegerSubtype(LuaCompatibilityVersion version)
+        public async Task MultiplicationRespectsTheActiveNumericProfile(
+            LuaCompatibilityVersion version
+        )
         {
             Script script = new(version);
 
@@ -493,8 +639,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
             LuaValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
 
-            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
-            await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(42L).ConfigureAwait(false);
+            await Assert
+                .That(result.IsInteger)
+                .IsEqualTo(version >= LuaCompatibilityVersion.Lua53)
+                .ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

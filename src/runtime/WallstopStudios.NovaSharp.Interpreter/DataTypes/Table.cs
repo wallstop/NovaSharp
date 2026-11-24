@@ -24,6 +24,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private int _initArray;
         private int _constructorArrayLength;
         private int _cachedLength = -1;
+        private readonly bool _roundsNumericKeys;
         private bool _containsNilEntries;
         private long _trackedBytes;
 
@@ -34,6 +35,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public Table(Script owner)
         {
             _owner = owner;
+            // Stored keys must keep the same equivalence for the table's lifetime.
+            _roundsNumericKeys = LuaNumber.UsesFloatOnlyProfile(ResolveCompatibilityVersion());
 
             // Track initial allocation if memory tracking is enabled
             AllocationTracker tracker = owner?.AllocationTracker;
@@ -453,6 +456,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     Set(idx, value);
                     return;
                 }
+
+                key = NormalizeNumericHashKey(key);
             }
 
             this.CheckScriptOwnership(key);
@@ -625,6 +630,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                         return TryRawGet(index, out value);
                     }
 
+                    key = NormalizeNumericHashKey(key);
                     break;
                 }
             }
@@ -869,6 +875,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                         return Remove(idx);
                     }
 
+                    key = NormalizeNumericHashKey(key);
                     break;
                 }
             }
@@ -1001,6 +1008,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                         return _storage.TryLocateInt(idx, out arrayIndex, out nodeIndex);
                     }
 
+                    key = NormalizeNumericHashKey(key);
                     break;
                 }
             }
@@ -1047,6 +1055,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _cachedLength = CalculatePrefixLength();
                 return _cachedLength;
             }
+        }
+
+        private LuaValue NormalizeNumericHashKey(LuaValue key)
+        {
+            LuaNumber number = key.LuaNumber;
+            return
+                _roundsNumericKeys
+                && number.IsInteger
+                && !LuaNumber.InExactDoubleRange(number.AsInteger)
+                ? LuaValue.NewFloat(number.ToDouble)
+                : key;
         }
 
         private LuaCompatibilityVersion ResolveCompatibilityVersion()
@@ -1173,6 +1192,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     ExtendConstructorArrayLengthThroughContiguousFields();
                     return;
                 }
+
+                key = NormalizeNumericHashKey(key);
             }
 
             this.CheckScriptOwnership(key);

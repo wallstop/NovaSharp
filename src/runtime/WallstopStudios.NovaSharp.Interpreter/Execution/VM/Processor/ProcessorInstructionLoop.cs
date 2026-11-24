@@ -1443,49 +1443,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             // and never terminates (verified against lua5.1-5.3; sandbox instruction
             // limits bound such scripts).
 
-            // Reference Lua stores all three controls of a float loop as floats; NovaSharp
-            // normalizes the same way from Lua 5.3 on, so the body observes float control
-            // values from the very first iteration. Lua 5.1/5.2 have a single number
-            // type, so their controls keep the coerced subtypes. Either way the coerced
-            // numbers must replace the raw expression results in their slots: a
-            // string-coercible control leaves a String behind otherwise, which Incr and
-            // JFor cannot operate on. The float limit slot itself also marks the
-            // comparison-driven protocol in every profile.
-            if (version >= LuaCompatibilityVersion.Lua53)
-            {
-                _valueStack.Set(0, LuaValue.NewNumber(LuaNumber.FromFloat(coercedIndex.AsFloat)));
-                _valueStack.Set(1, LuaValue.NewNumber(LuaNumber.FromFloat(coercedStep.AsFloat)));
-            }
-            else
-            {
-                _valueStack.Set(0, LuaValue.NewNumber(coercedIndex));
-                _valueStack.Set(1, LuaValue.NewNumber(coercedStep));
-            }
+            // Float loops use double arithmetic from the first iteration. The
+            // limit slot also marks the comparison-driven protocol.
+            double index = coercedIndex.AsFloat;
+            double floatLimit = coercedLimit.AsFloat;
+            double step = coercedStep.AsFloat;
+            _valueStack.Set(0, LuaValue.NewFloat(index));
+            _valueStack.Set(1, LuaValue.NewFloat(step));
+            _valueStack.Set(2, LuaValue.NewFloat(floatLimit));
 
-            _valueStack.Set(2, LuaValue.NewNumber(LuaNumber.FromFloat(coercedLimit.AsFloat)));
-
-            // Lua 5.4+ enters the body unless the limit is provably beyond the initial
-            // value, so a NaN bound runs exactly one iteration before the bottom
-            // comparison ends the loop. Lua 5.1-5.3 instead route the very first
-            // decision through their bottom check on the index re-computed as
-            // (init - step) + step, so a NaN step poisons the entry comparison and the
-            // loop never starts; for every non-NaN operand the two forms agree.
-            LuaNumber limitN = coercedLimit;
-            LuaNumber stepN = coercedStep;
-            LuaNumber indexN = coercedIndex;
-            bool stepPositive = stepN.AsFloat > 0.0;
+            bool stepPositive = step > 0.0;
             bool skip;
             if (version >= LuaCompatibilityVersion.Lua54)
             {
-                skip = stepPositive
-                    ? LuaNumber.LessThan(limitN, indexN)
-                    : LuaNumber.LessThan(indexN, limitN);
+                // A NaN limit permits one iteration before the bottom check.
+                skip = stepPositive ? floatLimit < index : index < floatLimit;
             }
             else
             {
-                double entryIndex = (indexN.AsFloat - stepN.AsFloat) + stepN.AsFloat;
-                double entryLimit = limitN.AsFloat;
-                skip = !(stepPositive ? entryIndex <= entryLimit : entryLimit <= entryIndex);
+                // Earlier VMs use the bottom check on the recomputed initial index.
+                double entryIndex = (index - step) + step;
+                skip = !(stepPositive ? entryIndex <= floatLimit : floatLimit <= entryIndex);
             }
 
             return skip ? i.NumVal : instructionPtr;
@@ -1584,11 +1562,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private int ExecJFor(Instruction i, int instructionPtr)
         {
-            // Bottom-of-loop continuation check, run after Incr advanced the controls.
-            // Jumps back to the loop body while the loop continues and falls through to
-            // the exit otherwise. Use LuaNumber to preserve integer precision for large
-            // values (e.g., near maxinteger); .Number (double) causes precision loss and
-            // infinite loops for large integer bounds.
+            // Incr advanced the controls. The limit slot encodes either the
+            // remaining count of an integer loop or the bound of a float loop.
             LuaNumber control = _valueStack.Peek(2).LuaNumber;
 
             bool continueLoop;
@@ -1603,15 +1578,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                LuaNumber val = _valueStack.Peek(0).LuaNumber;
-                LuaNumber step = _valueStack.Peek(1).LuaNumber;
-
-                // Lua for-loop condition: if step > 0 then val <= stop else val >= stop
-                bool stepPositive = LuaNumber.LessThan(LuaNumber.Zero, step);
-
-                continueLoop = stepPositive
-                    ? LuaNumber.LessThanOrEqual(val, control)
-                    : LuaNumber.LessThanOrEqual(control, val);
+                double index = _valueStack.Peek(0).Number;
+                double step = _valueStack.Peek(1).Number;
+                double limit = control.AsFloat;
+                continueLoop = step > 0.0 ? index <= limit : limit <= index;
             }
 
             return continueLoop ? i.NumVal : instructionPtr;
@@ -2880,7 +2850,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool TryGetNumberOperands(
+        private bool TryGetNumberOperands(
             LuaValue l,
             LuaValue r,
             out LuaNumber ln,
@@ -2891,6 +2861,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 ln = l.LuaNumber;
                 rn = r.LuaNumber;
+                if (ln.IsInteger && rn.IsInteger)
+                {
+                    // One float operand selects the floating arithmetic path.
+                    ln = ln.ForArithmeticProfile(_script.Options.CompatibilityVersion);
+                }
+
                 return true;
             }
 
@@ -2902,20 +2878,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private LuaNumber NegateNumberForVersion(LuaNumber value)
         {
-            LuaNumber result = LuaNumber.Negate(value);
-
-            // Lua 5.1/5.2: negating integer zero should produce float negative zero.
-            // In 5.3+, integers are a distinct subtype, so -0 stays integer 0.
-            if (
-                result.IsInteger
-                && result.AsInteger == 0
-                && _script.Options.CompatibilityVersion < LuaCompatibilityVersion.Lua53
-            )
-            {
-                return LuaNumber.FromFloat(-0.0);
-            }
-
-            return result;
+            return LuaNumber.Negate(
+                value.ForArithmeticProfile(_script.Options.CompatibilityVersion)
+            );
         }
 
         private int ExecEq(Instruction i, int instructionPtr)
@@ -2974,7 +2939,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             // else perform standard comparison
-            _valueStack.Push(LuaValue.NewBoolean(r.Equals(l)));
+            _valueStack.Push(LuaValue.NewBoolean(r.Equals(l, _script.CompatibilityVersion)));
             return instructionPtr;
         }
 
@@ -2985,8 +2950,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (l.Type == DataType.Number && r.Type == DataType.Number)
             {
-                // Use LuaNumber comparison to preserve integer precision at boundaries
-                _valueStack.Push(LuaValue.NewBoolean(LuaNumber.LessThan(l.LuaNumber, r.LuaNumber)));
+                _valueStack.Push(
+                    LuaValue.NewBoolean(
+                        LuaNumber.LessThan(l.LuaNumber, r.LuaNumber, _script.CompatibilityVersion)
+                    )
+                );
             }
             else if (l.Type == DataType.String && r.Type == DataType.String)
             {
@@ -3017,9 +2985,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             if (l.Type == DataType.Number && r.Type == DataType.Number)
             {
                 _valueStack.Push(LuaValue.False);
-                // Use LuaNumber comparison to preserve integer precision at boundaries
                 _valueStack.Push(
-                    LuaValue.NewBoolean(LuaNumber.LessThanOrEqual(l.LuaNumber, r.LuaNumber))
+                    LuaValue.NewBoolean(
+                        LuaNumber.LessThanOrEqual(
+                            l.LuaNumber,
+                            r.LuaNumber,
+                            _script.CompatibilityVersion
+                        )
+                    )
                 );
             }
             else if (l.Type == DataType.String && r.Type == DataType.String)
@@ -3435,34 +3408,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </returns>
         private LuaNumber? CastToLuaNumberForArithmetic(LuaValue value)
         {
-            DataType type = value.Type;
-
-            // Numbers always convert
-            if (type == DataType.Number)
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                _script.CompatibilityVersion
+            );
+            if (value.Type == DataType.String && version >= LuaCompatibilityVersion.Lua54)
             {
-                return value.LuaNumber;
+                // Lua 5.4+ delegates string conversion to the arithmetic metamethod.
+                return null;
             }
 
-            // Strings: version-dependent behavior
-            // In Lua 5.4+, strings are NOT coerced by the arithmetic operators themselves;
-            // the coercion happens via string metatable metamethods (__add, __sub, etc.)
-            if (type == DataType.String)
-            {
-                LuaCompatibilityVersion version = _script.Options.CompatibilityVersion;
-                if (version >= LuaCompatibilityVersion.Lua54)
-                {
-                    // 5.4+: Do NOT coerce strings here; fall through to metamethod lookup
-                    return null;
-                }
-
-                // 5.1-5.3: Auto-coerce strings to numbers
-                if (LuaNumber.TryParse(value.String, version, out LuaNumber result))
-                {
-                    return result;
-                }
-            }
-
-            return null;
+            return value.CastToLuaNumber(version, forArithmetic: true);
         }
     }
 }
