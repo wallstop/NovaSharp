@@ -1533,7 +1533,11 @@ return iterator, upper, substring, formatted
             LuaFixtureHelper fixture = LuaFixtureHelper.ForCallingTest<StringModuleTUnitTests>();
             LuaValue result = fixture.RunFixture(script);
 
-            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Boolean)
+                .IsEqualTo(version >= LuaCompatibilityVersion.Lua52)
+                .ConfigureAwait(false);
         }
 
         [Test]

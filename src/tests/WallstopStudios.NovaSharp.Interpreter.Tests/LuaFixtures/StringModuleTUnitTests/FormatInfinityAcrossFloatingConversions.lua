@@ -3,10 +3,15 @@
 -- @expects-error: false
 local conversions = { "e", "E", "f", "g", "G" }
 local hex_supported = _VERSION ~= "Lua 5.1"
+local hex_modifiers = false
 local allows_repeated_flags = hex_supported and _VERSION ~= "Lua 5.2" and _VERSION ~= "Lua 5.3"
 if hex_supported then
     conversions[#conversions + 1] = "a"
     conversions[#conversions + 1] = "A"
+    -- PUC Lua's C89 fallback supports bare hex conversions and reports unsupported modifiers.
+    local ok, result = pcall(string.format, "%+a", math.huge)
+    assert(ok or result:find("modifiers for format '%a'/'%A' not implemented", 1, true), result)
+    hex_modifiers = ok
 else
     assert(not pcall(string.format, "%a", math.huge))
     assert(not pcall(string.format, "%A", math.huge))
@@ -17,10 +22,15 @@ local function check(format, value, expected)
     assert(actual == expected, format .. ": expected [" .. expected .. "], got [" .. actual .. "]")
 end
 
-for _, conversion in ipairs(conversions) do
+local function check_conversion(conversion)
     local inf = conversion == string.upper(conversion) and "INF" or "inf"
+    check("%" .. conversion, math.huge, inf)
+    check("%" .. conversion, -math.huge, "-" .. inf)
+    if (conversion == "a" or conversion == "A") and not hex_modifiers then
+        return
+    end
+
     local cases = {
-        { "", inf, "-" .. inf },
         { "2", inf, "-" .. inf },
         { " ", " " .. inf, "-" .. inf },
         { " +", "+" .. inf, "-" .. inf },
@@ -54,6 +64,10 @@ for _, conversion in ipairs(conversions) do
     end
 end
 
+for _, conversion in ipairs(conversions) do
+    check_conversion(conversion)
+end
+
 for _, invalid in ipairs({ "%ıf", "%ı.2f", "%1ıf", "%.ıf", "%.1ıf" }) do
     assert(not pcall(string.format, invalid, math.huge), "accepted invalid format " .. invalid)
 end
@@ -70,8 +84,8 @@ assert((nan_ok and nan:lower():find("nan", 1, true))
 assert(not pcall(string.format, "%++++++9s", "text"))
 assert(string.format("%g, %G, %+g end", math.huge, -math.huge, 1.5) == "inf, -INF, +1.5 end")
 check("%+09.2f", 1.5, "+00001.50")
-if hex_supported then
+if hex_modifiers then
     check("%012.1a", 1.5, "0x00001.8p+0")
 end
 
-return true
+return true, hex_modifiers

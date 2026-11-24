@@ -1,10 +1,12 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 {
+    using System;
     using System.Threading.Tasks;
     using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Verifies version-specific NUL handling in Lua numeric coercions.
@@ -14,10 +16,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         /// <summary>Exercises numeric coercion with valid, leading, embedded, and trailing NUL inputs.</summary>
         [Test]
         [AllLuaVersions]
+        [ScriptGlobalOptionsIsolation]
         public async Task NumericStringNulFollowsCompatibilityProfile(
             LuaCompatibilityVersion version
         )
         {
+            using IDisposable globalOptions = Script.BeginGlobalOptionsScope();
+            Script.GlobalOptions.CompatibilityVersion = LuaCompatibilityVersion.Lua51;
             Script script = new(version);
             bool stopsAtNul = version == LuaCompatibilityVersion.Lua51;
 

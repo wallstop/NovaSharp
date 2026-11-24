@@ -68,3 +68,10 @@ payload grammar.
   unavailable.
 - Hosted lint found the Copilot policy mirror was stale. The mirror now
   matches `AGENTS.md`, and the repository indexer suite checks both copies.
+- The integer helper now rejects NUL directly for Lua 5.3+ operations. The
+  mixed-profile regression sets a Lua 5.1 host default inside an isolated scope
+  before exercising explicit script profiles.
+- The Windows comparison artifact identified the reference Lua C89 formatter
+  diagnostic for unsupported hex modifiers. Stock Lua 5.3.6, 5.4.7, and 5.5.0
+  built with `LUA_USE_C89` reproduced the failure and passed the revised
+  fixture. TUnit still requires hex modifier support in NovaSharp from Lua 5.2.
