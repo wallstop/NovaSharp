@@ -19,7 +19,7 @@ jobs:
           github.event.pull_request.user.type != 'Bot' }}
     uses: Ambiguous-Interactive/review-tools/.github/workflows/openai-review.yml@5aabfe60ec294f8160b70d0a712c561db5e3fa29  # v1.1.2
     with:
-      model: ${{ vars.OPENAI_REVIEW_MODEL }}
+      model: ${{ vars.OPENAI_REVIEW_MODEL || 'gpt-6.1-terra' }}
       effort: ${{ vars.OPENAI_REVIEW_EFFORT }}
       timeout-minutes: 15
     secrets:
