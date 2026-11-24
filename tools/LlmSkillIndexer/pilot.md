@@ -16,7 +16,8 @@ bash tools/LlmSkillIndexer/prepare-pilot.sh TASK BASELINE_REV GUIDANCE_REV EMPTY
 ```
 
 Each snapshot contains the same source within a task, guidance from its assigned
-revision, and knowledge from the source revision. Other frontend settings come from the fixed source revision in both arms. Each trial starts with one local commit and no Git remote. Only mount the resulting
+revision, and knowledge from the source revision. It includes a task-local plan
+and goal with the same scope and delivery rules in both conditions. Other frontend settings come from the fixed source revision in both arms. Each trial starts with one local commit and no Git remote. Only mount the resulting
 snapshot into the trial container. Keep the assessor checkout, later commits,
 other trial outputs, and grading fixtures outside it. Start a fresh client session
 with personal memory and remote repository search disabled. Allow the same local
