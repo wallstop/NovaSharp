@@ -89,20 +89,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
                 return path;
             }
 
-            return string.Create(
-                path.Length,
-                (path, replacement),
-                static (span, state) =>
+            return string.Create(path.Length, (path, replacement), static (span, state) =>
+            {
+                ReadOnlySpan<char> source = state.path.AsSpan();
+                for (int i = 0; i < source.Length; i++)
                 {
-                    ReadOnlySpan<char> source = state.path.AsSpan();
-                    for (int i = 0; i < source.Length; i++)
-                    {
-                        char c = source[i];
-                        span[i] =
-                            (c == UnixSeparator || c == WindowsSeparator) ? state.replacement : c;
-                    }
+                    char c = source[i];
+                    span[i] = (c == UnixSeparator || c == WindowsSeparator) ? state.replacement : c;
                 }
-            );
+            });
         }
     }
 }

@@ -459,9 +459,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 SamplePropertiesMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
-            OverrideOptimizedSetter(
-                descriptor,
-                (_, _) => throw new ArgumentException("failing reflection assignment")
+            OverrideOptimizedSetter(descriptor, (_, _) =>
+                throw new ArgumentException("failing reflection assignment")
             );
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
@@ -485,9 +484,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
                 SamplePropertiesMetadata.InstanceValue,
                 InteropAccessMode.Reflection
             );
-            OverrideOptimizedSetter(
-                descriptor,
-                (_, _) => throw new InvalidCastException("failing optimized assignment")
+            OverrideOptimizedSetter(descriptor, (_, _) =>
+                throw new InvalidCastException("failing optimized assignment")
             );
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>

@@ -305,11 +305,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
             Func<long, long, long> operation
         )
         {
-            return PerformBinaryOperationS(
-                funcName,
-                ctx,
-                args,
-                (v1, v2) => CreateValueSigned(operation(v1, v2))
+            return PerformBinaryOperationS(funcName, ctx, args, (v1, v2) =>
+                CreateValueSigned(operation(v1, v2))
             );
         }
 
@@ -320,11 +317,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
             Func<ulong, ulong, ulong> operation
         )
         {
-            return PerformBinaryOperationU(
-                funcName,
-                ctx,
-                args,
-                (v1, v2) => CreateValueUnsigned(operation(v1, v2))
+            return PerformBinaryOperationU(funcName, ctx, args, (v1, v2) =>
+                CreateValueUnsigned(operation(v1, v2))
             );
         }
 
@@ -429,20 +423,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         {
             if (IsUnsigned)
             {
-                return PerformBinaryOperationU(
-                    "hasAll",
-                    ctx,
-                    args,
-                    (v1, v2) => LuaValue.NewBoolean((v1 & v2) == v2)
+                return PerformBinaryOperationU("hasAll", ctx, args, (v1, v2) =>
+                    LuaValue.NewBoolean((v1 & v2) == v2)
                 );
             }
             else
             {
-                return PerformBinaryOperationS(
-                    "hasAll",
-                    ctx,
-                    args,
-                    (v1, v2) => LuaValue.NewBoolean((v1 & v2) == v2)
+                return PerformBinaryOperationS("hasAll", ctx, args, (v1, v2) =>
+                    LuaValue.NewBoolean((v1 & v2) == v2)
                 );
             }
         }
@@ -454,20 +442,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         {
             if (IsUnsigned)
             {
-                return PerformBinaryOperationU(
-                    "hasAny",
-                    ctx,
-                    args,
-                    (v1, v2) => LuaValue.NewBoolean((v1 & v2) != 0)
+                return PerformBinaryOperationU("hasAny", ctx, args, (v1, v2) =>
+                    LuaValue.NewBoolean((v1 & v2) != 0)
                 );
             }
             else
             {
-                return PerformBinaryOperationS(
-                    "hasAny",
-                    ctx,
-                    args,
-                    (v1, v2) => LuaValue.NewBoolean((v1 & v2) != 0)
+                return PerformBinaryOperationS("hasAny", ctx, args, (v1, v2) =>
+                    LuaValue.NewBoolean((v1 & v2) != 0)
                 );
             }
         }

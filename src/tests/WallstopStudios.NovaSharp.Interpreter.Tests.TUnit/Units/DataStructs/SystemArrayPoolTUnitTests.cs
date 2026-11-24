@@ -413,9 +413,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
                         for (int i = 0; i < iterations; i++)
                         {
                             byte[] array = SystemArrayPool<byte>.Rent(128);
-                            using PooledResource<byte[]> _ = new(
-                                array,
-                                arr => SystemArrayPool<byte>.Return(arr)
+                            using PooledResource<byte[]> _ = new(array, arr =>
+                                SystemArrayPool<byte>.Return(arr)
                             );
 
                             // Write some data

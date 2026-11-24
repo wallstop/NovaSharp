@@ -879,9 +879,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             bool metaOptimized = false;
             descriptor.AddMember(
                 "OptimizableMember",
-                new StubOptimizableMemberDescriptor(
-                    "OptimizableMember",
-                    () => memberOptimized = true
+                new StubOptimizableMemberDescriptor("OptimizableMember", () =>
+                    memberOptimized = true
                 )
             );
             descriptor.AddMetaMember(

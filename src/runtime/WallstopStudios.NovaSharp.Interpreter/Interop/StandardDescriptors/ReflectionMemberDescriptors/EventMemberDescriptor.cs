@@ -323,25 +323,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
 
         private void RegisterCallback(object o)
         {
-            _delegates.GetOrCreate(
-                o,
-                () =>
-                {
-                    Delegate d = CreateDelegate(o);
+            _delegates.GetOrCreate(o, () =>
+            {
+                Delegate d = CreateDelegate(o);
 #if NETFX_CORE
-                    Delegate handler = d.GetMethodInfo()
-                        .CreateDelegate(EventInfo.EventHandlerType, d.Target);
+                Delegate handler = d.GetMethodInfo()
+                    .CreateDelegate(EventInfo.EventHandlerType, d.Target);
 #else
-                    Delegate handler = Delegate.CreateDelegate(
-                        EventInfo.EventHandlerType,
-                        d.Target,
-                        d.Method
-                    );
+                Delegate handler = Delegate.CreateDelegate(
+                    EventInfo.EventHandlerType,
+                    d.Target,
+                    d.Method
+                );
 #endif
-                    _add.Invoke(o, new object[] { handler });
-                    return handler;
-                }
-            );
+                _add.Invoke(o, new object[] { handler });
+                return handler;
+            });
         }
 
         private void UnregisterCallback(object o)

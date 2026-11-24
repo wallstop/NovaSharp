@@ -167,8 +167,8 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
                 createFile: false,
                 deleteOnDispose: deleteOnDispose
             );
-            Encoding writerEncoding =
-                encoding ?? new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+            Encoding writerEncoding = encoding
+                ?? new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
             File.WriteAllText(scope.FilePath, content ?? string.Empty, writerEncoding);
             return scope;
         }

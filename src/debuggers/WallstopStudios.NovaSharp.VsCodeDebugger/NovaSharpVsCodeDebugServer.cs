@@ -362,42 +362,39 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger
                         clientSocket.RemoteEndPoint
                     );
 
-                    SpawnThread(
-                        "VsCodeDebugSession_" + sessionId,
-                        () =>
+                    SpawnThread("VsCodeDebugSession_" + sessionId, () =>
+                    {
+                        using (NetworkStream networkStream = new NetworkStream(clientSocket))
                         {
-                            using (NetworkStream networkStream = new NetworkStream(clientSocket))
+                            try
                             {
-                                try
-                                {
-                                    RunSession(sessionId, networkStream);
-                                }
-                                catch (InterpreterException ex)
-                                {
-                                    Log(
-                                        "[{0}] : Interpreter error : {1}",
-                                        sessionId,
-                                        ex.DecoratedMessage ?? ex.Message
-                                    );
-                                }
-                                catch (IOException ex)
-                                {
-                                    Log("[{0}] : IO error : {1}", sessionId, ex.Message);
-                                }
-                                catch (InvalidOperationException ex)
-                                {
-                                    Log("[{0}] : Session error : {1}", sessionId, ex.Message);
-                                }
+                                RunSession(sessionId, networkStream);
                             }
+                            catch (InterpreterException ex)
+                            {
+                                Log(
+                                    "[{0}] : Interpreter error : {1}",
+                                    sessionId,
+                                    ex.DecoratedMessage ?? ex.Message
+                                );
+                            }
+                            catch (IOException ex)
+                            {
+                                Log("[{0}] : IO error : {1}", sessionId, ex.Message);
+                            }
+                            catch (InvalidOperationException ex)
+                            {
+                                Log("[{0}] : Session error : {1}", sessionId, ex.Message);
+                            }
+                        }
 
 #if DOTNET_CORE
-                            clientSocket.Dispose();
+                        clientSocket.Dispose();
 #else
-                            clientSocket.Close();
+                        clientSocket.Close();
 #endif
-                            Log("[{0}] : Client connection closed", sessionId);
-                        }
-                    );
+                        Log("[{0}] : Client connection closed", sessionId);
+                    });
                 }
             }
             catch (SocketException e)

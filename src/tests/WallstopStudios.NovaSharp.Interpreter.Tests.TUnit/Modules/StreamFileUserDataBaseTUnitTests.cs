@@ -1680,8 +1680,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             internal void TriggerFlushFailure()
             {
-                FaultyStreamWriter writer =
-                    InnerWriter ?? throw new InvalidOperationException("Writer is not available.");
+                FaultyStreamWriter writer = InnerWriter
+                    ?? throw new InvalidOperationException("Writer is not available.");
                 writer.ThrowOnFlush = true;
             }
 

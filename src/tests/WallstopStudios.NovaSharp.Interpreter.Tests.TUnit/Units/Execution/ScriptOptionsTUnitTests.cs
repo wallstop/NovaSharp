@@ -450,8 +450,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             );
 
             // Capture diagnostic info before running for better debugging on failure
-            string loaderType =
-                Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "null (no loader)";
+            string loaderType = Script.DefaultOptions.ScriptLoader?.GetType().Name
+                ?? "null (no loader)";
             string diagnosticContext =
                 $"FilePath: {tempFile.FilePath}, LoaderType: {loaderType}, "
                 + $"FileExists: {System.IO.File.Exists(tempFile.FilePath)}";
@@ -579,8 +579,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             // Capture current loader type for diagnostics
-            string loaderType =
-                Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "null (no loader)";
+            string loaderType = Script.DefaultOptions.ScriptLoader?.GetType().Name
+                ?? "null (no loader)";
 
             LuaValue result = Script.RunString("return 123");
 

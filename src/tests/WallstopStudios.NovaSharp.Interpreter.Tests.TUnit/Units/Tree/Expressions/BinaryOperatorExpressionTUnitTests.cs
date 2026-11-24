@@ -1442,9 +1442,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 expr.Compile(byteCode);
 
                 Instruction[] instructions = byteCode.Code.ToArray();
-                int comparisonIndex = Array.FindLastIndex(
-                    instructions,
-                    i => i.OpCode == expectedOpCode
+                int comparisonIndex = Array.FindLastIndex(instructions, i =>
+                    i.OpCode == expectedOpCode
                 );
 
                 await Assert.That(comparisonIndex).IsGreaterThan(1).ConfigureAwait(false);

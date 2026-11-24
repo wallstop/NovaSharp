@@ -494,14 +494,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version, CoreModulePresets.Complete);
             List<int> receivedCounts = new();
-            script.Globals["countArgs"] = LuaValue.NewCallbackView(
-                script,
-                args =>
-                {
-                    receivedCounts.Add(args.Count);
-                    return LuaValue.FromNumber(args.Count);
-                }
-            );
+            script.Globals["countArgs"] = LuaValue.NewCallbackView(script, args =>
+            {
+                receivedCounts.Add(args.Count);
+                return LuaValue.FromNumber(args.Count);
+            });
 
             // values(0) returns zero results; its expansion previously leaked a trailing void
             // sentinel into registered argument views, inflating every forwarded count by one.

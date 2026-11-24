@@ -243,9 +243,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            FileUserDataBase outp =
-                args[0]
-                    .CheckUserDataType<FileUserDataBase>("close", 0, TypeValidationOptions.AllowNil)
+            FileUserDataBase outp = args[0]
+                .CheckUserDataType<FileUserDataBase>("close", 0, TypeValidationOptions.AllowNil)
                 ?? GetDefaultFile(executionContext, StandardFileType.StdOut);
             return outp.Close(executionContext, args);
         }
@@ -277,9 +276,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            FileUserDataBase outp =
-                args[0]
-                    .CheckUserDataType<FileUserDataBase>("close", 0, TypeValidationOptions.AllowNil)
+            FileUserDataBase outp = args[0]
+                .CheckUserDataType<FileUserDataBase>("close", 0, TypeValidationOptions.AllowNil)
                 ?? GetDefaultFile(executionContext, StandardFileType.StdOut);
             outp.Flush();
             return LuaValue.True;

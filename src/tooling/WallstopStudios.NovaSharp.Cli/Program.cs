@@ -197,8 +197,8 @@ namespace WallstopStudios.NovaSharp.Cli
 
         private static bool ExecuteInlineMode(CliParseResult parseResult)
         {
-            LuaCompatibilityVersion luaVersion =
-                parseResult.LuaVersion ?? LuaCompatibilityVersion.Latest;
+            LuaCompatibilityVersion luaVersion = parseResult.LuaVersion
+                ?? LuaCompatibilityVersion.Latest;
 
             ScriptOptions options = new(Script.DefaultOptions)
             {

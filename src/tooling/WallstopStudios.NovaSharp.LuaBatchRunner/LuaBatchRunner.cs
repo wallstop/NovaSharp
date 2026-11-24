@@ -133,8 +133,7 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
                 TimeSpan effectiveTimeout = GetEffectiveCommandTimeout(
                     out bool fixtureTimeoutBound
                 );
-                using Process process =
-                    Process.Start(startInfo)
+                using Process process = Process.Start(startInfo)
                     ?? throw new InvalidOperationException("Failed to start command process.");
                 if (process.WaitForExit(effectiveTimeout))
                 {
