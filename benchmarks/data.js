@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795502140801,
+  "lastUpdate": 1795503169292,
   "repoUrl": "https://github.com/Ambiguous-Interactive/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -3838,6 +3838,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 813.238,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e2d2c73b1135210100c80e8bce6e749a939029ca",
+          "message": "Bump csharpier from 1.3.0 to 1.4.1 (#148)\n\nUpdated [csharpier](https://github.com/belav/csharpier) from 1.3.0 to\n1.4.1.\n\n<details>\n<summary>Release notes</summary>\n\n_Sourced from [csharpier's\nreleases](https://github.com/belav/csharpier/releases)._\n\n## 1.4.1\n\n## What's Changed\n### Fix: Trailing lambda with an expression body that breaks is\nformatted badly [#​1941](https://github.com/belav/csharpier/issues/1941)\n1.4.0 started keeping the arguments before a trailing lambda on the same\nline as the method name. When the lambda had an expression body that did\nnot fit on one line, the body started on the same line as the `=>` and\nthe closing parenthesis was not moved to its own line.\n```c#\n// input & expected output\nCallMethod(one, x =>\n    x == 1 ? \"one\"\n    : x == 2 ? \"two\"\n    : \"three\"\n);\n\nCallMethod(one, x =>\n    from y in x\n    group y by y.Key into g\n    select new\n    {\n        g.Key.Id,\n        g.Key.Alias,\n        Count = g.Count(),\n    }\n);\n\n// 1.4.0\nCallMethod(one, x => x == 1 ? \"one\"\n    : x == 2 ? \"two\"\n    : \"three\");\n\nCallMethod(one, x => from y in x group y by y.Key into g select new\n    {\n        g.Key.Id,\n        g.Key.Alias,\n        Count = g.Count(),\n    });\n```\n\n### Fix: Raw string literals are formatted inconsistently\n[#​1940](https://github.com/belav/csharpier/issues/1940)\nA raw string literal assigned to a variable kept its opening quotes on\nthe same line as the `=`. In other places, such as a lambda body, an\nexpression bodied member, a property initializer or a cast, the opening\nquotes moved to the next line and the contents were indented one level\nfurther than the quotes. These cases are now formatted the same way as a\nvariable.\n```c#\n// input & expected output\nFunc<int, string> lambda = _ => \"\"\"\n    SomeRawString\n    \"\"\";\n\nCallMethod(_ => \"\"\"\n    SomeRawString\n    \"\"\"\n);\n\nvar cast = (object)\"\"\"\n    SomeRawString\n ... (truncated)\n\n## 1.4.0\n\n## Breaking Changes\n### Drop support for net8.0 and net9.0 [#​1888](https://github.com/belav/csharpier/issues/1888)\nCSharpier and CSharpier.MsBuild now target `net10.0` and `net11.0`. CSharpier.Core targets `net10.0`, `net11.0` and `netstandard2.0`.\n\n## What's Changed\n### Feature: Support for .NET 11 and C# 15 [#​1888](https://github.com/belav/csharpier/issues/1888)\nCSharpier now supports the new syntax in C# 15.\n```c#\npublic union Pet(Cat, Dog, Bird);\n\npublic closed record GateState;\n\nHashSet<string> set = [with(StringComparer.OrdinalIgnoreCase), \"Hello\",\n\"HELLO\", \"hello\"];\n\nouter:\nfor (int row = 0; row < grid.Height; row++)\n{\n    for (int column = 0; column < grid.Width; column++)\n    {\n        if (grid[row, column].IsBlocked)\n        {\n            continue outer;\n        }\n\n        if (grid[row, column].IsGoal)\n        {\n            break outer;\n        }\n    }\n}\n```\n\n### Feature: Avoid chopping single trailing lambda [#​1865](https://github.com/belav/csharpier/issues/1865)\nWhen the last argument is a lambda with a block body, and the arguments up to and including the `=>` fit on one line, CSharpier now keeps them on the same line as the method name.\n```c#\n// input & expected output\nlogging.AddFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,\n\"server{0}.log\"), o =>\n{\n    o.MaxRollingFiles = 1;\n});\n\n// 1.3.0\nlogging.AddFile(\nPath.Combine(AppDomain.CurrentDomain.BaseDirectory, \"server{0}.log\"),\n    o =>\n    {\n        o.MaxRollingFiles = 1;\n    }\n);\n```\n ... (truncated)\n\n## 1.3.11-beta1\n\n\n\n## 1.3.6\n\n# 1.3.6\n## What's Changed\n#### Fix bug where 2nd instance of VSCode was not able to format code [#​784](https://github.com/belav/csharpier/issues/784)\n\nThanks to @​BenasB for reporting the issue\n\nCommits viewable in [compare view](https://github.com/belav/csharpier/compare/1.3.0...1.4.1).\n</details>\n\n[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=csharpier&package-manager=nuget&previous-version=1.3.0&new-version=1.4.1)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\n\n\n</details>\n\n---------\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>\nCo-authored-by: Eli Pinkerton <wallstop@wallstopstudios.com>",
+          "timestamp": "2026-11-23T22:46:51-08:00",
+          "tree_id": "44c86b6c0218280b83f17b525968376ad39ea906",
+          "url": "https://github.com/Ambiguous-Interactive/NovaSharp/commit/e2d2c73b1135210100c80e8bce6e749a939029ca"
+        },
+        "date": 1795503168715,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 455.958,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 479.754,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 472.984,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 708.629,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 741.764,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 730.956,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 751.613,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 797.532,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 790.669,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 777.43,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 855.617,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 853.823,
             "unit": "ns",
             "extra": ""
           }
