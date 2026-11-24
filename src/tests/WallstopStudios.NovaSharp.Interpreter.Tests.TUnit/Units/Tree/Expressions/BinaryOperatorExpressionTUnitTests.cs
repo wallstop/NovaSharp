@@ -22,6 +22,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
     {
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public void GreaterComparisonsPreserveLuaOperandOrder(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            LuaFixtureHelper fixture =
+                LuaFixtureHelper.ForCallingTest<BinaryOperatorExpressionTUnitTests>();
+            script.DoFile(fixture.GetFixturePath());
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public void CompareMixedNumbersInLua(LuaCompatibilityVersion version)
         {
             Script script = new(version);

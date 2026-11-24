@@ -1172,19 +1172,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private LuaValue GetStoreValue(Instruction i)
         {
-            int stackofs = i.NumVal;
-            int tupleidx = i.NumVal2;
+            int tupleIndex = i.NumVal2;
+            LuaValue value = _valueStack.Peek(i.NumVal);
 
-            LuaValue v = _valueStack.Peek(stackofs);
+            if (value.Type == DataType.Tuple)
+            {
+                LuaValue[] values = value.Tuple;
+                value = tupleIndex < values.Length ? values[tupleIndex] : LuaValue.Nil;
+            }
+            else if (tupleIndex != 0)
+            {
+                return LuaValue.Nil;
+            }
 
-            if (v.Type == DataType.Tuple)
-            {
-                return (tupleidx < v.Tuple.Length) ? v.Tuple[tupleidx] : LuaValue.Nil;
-            }
-            else
-            {
-                return (tupleidx == 0) ? v : LuaValue.Nil;
-            }
+            // An absent result still occupies one value slot after assignment.
+            return value.IsVoid() ? LuaValue.Nil : value;
         }
 
         private void ExecClosure(Instruction i)

@@ -11,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
     using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Statements;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.LuaFixtures;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class AssignmentStatementTUnitTests
@@ -106,6 +107,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
             );
 
             await Assert.That(exception).IsNotNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public void AssignmentStoresExplicitNilForMissingValues(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            LuaFixtureHelper fixture =
+                LuaFixtureHelper.ForCallingTest<AssignmentStatementTUnitTests>();
+            script.DoFile(fixture.GetFixturePath());
         }
 
         private static AssignmentStatement ParseLocalAssignment(string code, Script script = null)
