@@ -1114,6 +1114,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
         /* valid flags in a format specification */
         public const string FLAGS = "-+ #0";
 
+        private static string FormatInfinity(
+            double value,
+            char conversion,
+            ReadOnlySpan<char> format
+        )
+        {
+            int widthStart = 1; // Skip '%'.
+            while (FLAGS.Contains(format[widthStart], StringComparison.Ordinal))
+            {
+                widthStart++;
+            }
+
+            int width = 0;
+            for (int i = widthStart; format[i] is >= '0' and <= '9'; i++)
+            {
+                width = width * 10 + (format[i] - '0');
+            }
+
+            ReadOnlySpan<char> flags = format.Slice(1, widthStart - 1);
+            string sign = GetSignPrefix(double.IsNegativeInfinity(value), flags);
+            string number = sign + (char.IsUpper(conversion) ? "INF" : "inf");
+
+            // For infinity, even the '0' flag pads with spaces.
+            return flags.IndexOf('-') >= 0 ? number.PadRight(width) : number.PadLeft(width);
+        }
+
         /// <summary>
         /// Formats a double as a hexadecimal floating-point string per Lua's %a/%A specifier.
         /// Format: [-]0xh.hhhhp±d where h.hhhh is the significand in hexadecimal
@@ -1138,19 +1164,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             {
                 string nanStr = uppercase ? "-NAN" : "-nan";
                 return ApplyFieldWidth(nanStr, width, flags);
-            }
-
-            if (double.IsPositiveInfinity(value))
-            {
-                string infStr = uppercase ? "INF" : "inf";
-                string prefix = GetSignPrefix(false, flags);
-                return ApplyFieldWidth(prefix + infStr, width, flags);
-            }
-
-            if (double.IsNegativeInfinity(value))
-            {
-                string infStr = uppercase ? "-INF" : "-inf";
-                return ApplyFieldWidth(infStr, width, flags);
             }
 
             bool negative = value < 0 || (value == 0 && double.IsNegativeInfinity(1.0 / value));
@@ -1366,19 +1379,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
         /// <summary>
         /// Gets the sign prefix based on flags ('+' or ' ' for positive numbers).
         /// </summary>
-        private static string GetSignPrefix(bool negative, string flags)
+        private static string GetSignPrefix(bool negative, ReadOnlySpan<char> flags)
         {
             if (negative)
             {
                 return "-";
             }
 
-            if (flags.Contains('+', StringComparison.Ordinal))
+            if (flags.IndexOf('+') >= 0)
             {
                 return "+";
             }
 
-            if (flags.Contains(' ', StringComparison.Ordinal))
+            if (flags.IndexOf(' ') >= 0)
             {
                 return " ";
             }
@@ -1435,12 +1448,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             return new string(' ', padCount) + value;
         }
 
-        /*
-        ** maximum size of each format specification (such as '%-099.99d')
-        ** (+10 accounts for %99.99x plus margin of error)
-        */
-        public static readonly int MaxFormat =
-            (FLAGS.Length + 1) + (LuaIntegerFormatLength.Length + 1) + 10;
+        // Lua 5.4 and later bound the entire conversion instead of counting flags.
+        public const int MaxFormat = 32;
 
         // Pre-computed escape sequences for characters 0-31 to avoid allocations in Addquoted.
         // These are the 3-digit versions (e.g., "\000", "\001", ..., "\031") for when followed by a digit.
@@ -1581,7 +1590,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             LuaLAddChar(b, '"');
         }
 
-        private static CharPtr Scanformat(LuaState l, CharPtr strfrmt, CharPtr form)
+        private static CharPtr Scanformat(
+            LuaState l,
+            CharPtr strfrmt,
+            CharPtr form,
+            LuaCompatibilityVersion version,
+            int argumentIndex
+        )
         {
             CharPtr p = strfrmt;
             while (p[0] != '\0' && !StringFindCharacter(FLAGS, p[0]).IsNull)
@@ -1589,17 +1604,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                 p = p.Next(); /* skip flags */
             }
 
-            if ((uint)(p - strfrmt) >= (FLAGS.Length + 1))
-            {
-                LuaLError(l, "invalid format (repeated flags)");
-            }
+            int flagCount = p - strfrmt;
 
-            if (IsDigit((byte)(p[0])))
+            if (p[0] is >= '0' and <= '9')
             {
                 p = p.Next(); /* skip width */
             }
 
-            if (IsDigit((byte)(p[0])))
+            if (p[0] is >= '0' and <= '9')
             {
                 p = p.Next(); /* (2 digits at most) */
             }
@@ -1607,19 +1619,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             if (p[0] == '.')
             {
                 p = p.Next();
-                if (IsDigit((byte)(p[0])))
+                if (p[0] is >= '0' and <= '9')
                 {
                     p = p.Next(); /* skip precision */
                 }
 
-                if (IsDigit((byte)(p[0])))
+                if (p[0] is >= '0' and <= '9')
                 {
                     p = p.Next(); /* (2 digits at most) */
                 }
             }
-            if (IsDigit((byte)(p[0])))
+            // The infinity renderer can handle long flag sequences in Lua 5.4 and later.
+            if (
+                flagCount > FLAGS.Length
+                && (
+                    version < LuaCompatibilityVersion.Lua54
+                    || p[0] is not ('a' or 'A' or 'e' or 'E' or 'f' or 'g' or 'G')
+                    || GetArgument(l, argumentIndex).CastToNumber() is not double number
+                    || !double.IsInfinity(number)
+                )
+            )
+            {
+                LuaLError(l, "invalid format (repeated flags)");
+            }
+
+            if (p[0] is >= '0' and <= '9')
             {
                 LuaLError(l, "invalid format (width or precision too long)");
+            }
+
+            // The reference limit leaves room for '%', the terminator, and a length modifier.
+            if (version >= LuaCompatibilityVersion.Lua54 && p - strfrmt + 1 >= MaxFormat - 10)
+            {
+                LuaLError(l, "invalid format (too long)");
             }
 
             form[0] = '%';
@@ -1681,7 +1713,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         LuaLArgError(l, arg, "no value");
                     }
 
-                    strfrmt = Scanformat(l, strfrmt, form);
+                    strfrmt = Scanformat(l, strfrmt, form, version, arg);
                     char ch = strfrmt[0];
                     strfrmt = strfrmt.Next();
                     switch (ch)
@@ -1750,15 +1782,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         case 'f':
                         case 'g':
                         case 'G':
-                        {
-                            StringFormat(buff, form, (double)LuaLCheckNumber(l, arg));
-                            break;
-                        }
                         case 'a':
                         case 'A':
                         {
-                            // Hex float format specifier - only available in Lua 5.2+
-                            if (version < LuaCompatibilityVersion.Lua52)
+                            bool hexadecimal = ch is 'a' or 'A';
+                            if (hexadecimal && version < LuaCompatibilityVersion.Lua52)
                             {
                                 return LuaLError(
                                     l,
@@ -1770,8 +1798,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                                 );
                             }
 
-                            double value = (double)LuaLCheckNumber(l, arg);
-                            bool uppercase = (ch == 'A');
+                            double value = LuaLCheckNumber(l, arg);
+                            if (double.IsInfinity(value))
+                            {
+                                LuaLAddString(b, FormatInfinity(value, ch, formBuffer));
+                                continue;
+                            }
+
+                            if (!hexadecimal)
+                            {
+                                StringFormat(buff, form, value);
+                                break;
+                            }
+
+                            bool uppercase = ch == 'A';
 
                             // Parse flags and precision from the format string
                             string formStr = form.ToString();

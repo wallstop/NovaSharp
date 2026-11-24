@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
     using System.Globalization;
     using System.Runtime.CompilerServices;
     using global::NovaSharp;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -77,7 +78,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             if (
                 scalar.Type == DataType.String
                 && double.TryParse(
-                    scalar.String,
+                    LuaNumber.GetNumeralSpan(scalar.String, LuaVersionDefaults.CurrentDefault),
                     NumberStyles.Float,
                     CultureInfo.InvariantCulture,
                     out double parsed

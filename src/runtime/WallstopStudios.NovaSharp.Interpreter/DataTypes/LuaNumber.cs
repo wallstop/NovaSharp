@@ -253,12 +253,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             value = Zero;
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return false;
-            }
-
-            ReadOnlySpan<char> span = text.AsSpan().Trim();
+            LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
+            ReadOnlySpan<char> numeral = GetNumeralSpan(text, resolved);
+            ReadOnlySpan<char> span = numeral.Trim();
             if (span.IsEmpty)
             {
                 return false;
@@ -276,7 +273,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 }
             }
 
-            LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
             if (
                 index + 1 < span.Length
                 && span[index] == '0'
@@ -327,7 +323,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (
                 !double.TryParse(
-                    text,
+                    numeral,
                     NumberStyles.Float,
                     CultureInfo.InvariantCulture,
                     out double doubleValue
@@ -346,6 +342,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             value = FromFloat(doubleValue);
             return true;
+        }
+
+        /// <summary>
+        /// Returns the text available to the Lua numeral parser, or an empty span for a rejected NUL.
+        /// </summary>
+        internal static ReadOnlySpan<char> GetNumeralSpan(
+            string text,
+            LuaCompatibilityVersion resolvedVersion
+        )
+        {
+            ReadOnlySpan<char> span = text.AsSpan();
+            int nulIndex = span.IndexOf('\0');
+            if (nulIndex < 0)
+            {
+                return span;
+            }
+
+            // Lua 5.1's number coercion sees a C string. Later profiles check the Lua string length.
+            return resolvedVersion == LuaCompatibilityVersion.Lua51
+                ? span.Slice(0, nulIndex)
+                : default;
         }
 
         private static bool TryParseHexLuaNumeral(
