@@ -99,7 +99,10 @@ of the Z.ai key in the container user's home directory. Codex explicitly
 forwards only `ZAI_API_KEY` through its stdio MCP allowlist.
 The wrappers scrub the canonical key and unrelated tokens before starting the
 MCP process.
-Reinstall the launchers manually after moving the checkout:
+After moving a managed checkout, recreate its devcontainer from the new
+workspace path. Creation stages the credential for that path and reinstalls
+the launchers. For a standalone POSIX checkout, reinstall the launchers from
+the new repository root:
 
 ```bash
 bash .devcontainer/ai-backends.sh install
