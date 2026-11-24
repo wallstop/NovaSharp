@@ -9,7 +9,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
     /// </summary>
     internal class AdjustmentExpression : Expression
     {
-        private readonly Expression _expression;
+        /// <summary>
+        /// Gets the expression whose result is adjusted to a scalar.
+        /// </summary>
+        internal Expression Operand { get; }
 
         /// <summary>
         /// Initializes a new scalar adjustment expression wrapping the supplied expression.
@@ -17,20 +20,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         public AdjustmentExpression(ScriptLoadingContext lcontext, Expression exp)
             : base(lcontext)
         {
-            _expression = exp;
+            Operand = exp;
         }
 
         /// <inheritdoc />
         public override void Compile(Execution.VM.ByteCode bc)
         {
-            _expression.Compile(bc);
+            Operand.Compile(bc);
             bc.EmitScalar();
         }
 
         /// <inheritdoc />
         public override LuaValue Eval(ScriptExecutionContext context)
         {
-            return _expression.Eval(context).ToScalar();
+            return Operand.Eval(context).ToScalar();
         }
     }
 }

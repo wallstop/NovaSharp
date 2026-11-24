@@ -12,6 +12,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.LuaFixtures;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class StringModuleTUnitTests
@@ -1523,6 +1524,36 @@ return iterator, upper, substring, formatted
         // ========================================
         // string.format - Float format specifier tests
         // ========================================
+
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatInfinityAcrossFloatingConversions(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaFixtureHelper fixture = LuaFixtureHelper.ForCallingTest<StringModuleTUnitTests>();
+            LuaValue result = fixture.RunFixture(script);
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Boolean)
+                .IsEqualTo(version >= LuaCompatibilityVersion.Lua52)
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatNaNControlsPreserveSpelling(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaFixtureHelper fixture = LuaFixtureHelper.ForCallingTest<StringModuleTUnitTests>();
+            LuaValue result = fixture.RunFixture(script);
+
+            await Assert.That(result.Tuple[0].String).IsEqualTo("NaN").ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].String)
+                .IsEqualTo(version >= LuaCompatibilityVersion.Lua52 ? "-NAN" : "unsupported")
+                .ConfigureAwait(false);
+        }
 
         [Test]
         [AllLuaVersions]

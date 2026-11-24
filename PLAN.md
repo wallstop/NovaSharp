@@ -35,6 +35,12 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
 
 ## Next
 
+1. Preserve Lua error-value identity across protected calls and unwinding in
+   [#168](https://github.com/Ambiguous-Interactive/NovaSharp/issues/168). Use
+   that error value when fixing [failed coroutine cleanup](https://github.com/Ambiguous-Interactive/NovaSharp/issues/174)
+   and [yieldable close handlers](https://github.com/Ambiguous-Interactive/NovaSharp/issues/169).
+1. Fix evaluation order and preserve pending values in parallel indexed
+   assignments in [#194](https://github.com/Ambiguous-Interactive/NovaSharp/issues/194).
 1. A1d: benchmark `LuaValue` copy/layout and measured inlining or `in`/`ref`
    changes; retain only demonstrated wins.
 1. A2: pack instructions and constants into contiguous chunk storage, version the
@@ -75,16 +81,11 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    in the same study.
 1. Lua parity backlog: [original operands in math extrema](https://github.com/Ambiguous-Interactive/NovaSharp/issues/178),
    [string sort dispatch and return arity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/179),
-   [comparison operand evaluation order](https://github.com/Ambiguous-Interactive/NovaSharp/issues/181),
    [integral float cursors in next](https://github.com/Ambiguous-Interactive/NovaSharp/issues/185),
    [first visible floating numeric-for value](https://github.com/Ambiguous-Interactive/NovaSharp/issues/186),
    [call-context error names](https://github.com/Ambiguous-Interactive/NovaSharp/issues/124),
-   [error-value identity during unwinding](https://github.com/Ambiguous-Interactive/NovaSharp/issues/168),
-   [yieldable close handlers](https://github.com/Ambiguous-Interactive/NovaSharp/issues/169),
-   [failed coroutine cleanup order](https://github.com/Ambiguous-Interactive/NovaSharp/issues/174),
    [borrowed line iterators and read formats](https://github.com/Ambiguous-Interactive/NovaSharp/issues/175),
    [closer source lines on generic-for jumps](https://github.com/Ambiguous-Interactive/NovaSharp/issues/176),
-   [missing values in assignments](https://github.com/Ambiguous-Interactive/NovaSharp/issues/172),
    [optional-argument validation](https://github.com/Ambiguous-Interactive/NovaSharp/issues/125),
    [residual number/string parity nits](https://github.com/Ambiguous-Interactive/NovaSharp/issues/138),
    [reference builds for legacy floating modulo](https://github.com/Ambiguous-Interactive/NovaSharp/issues/188),

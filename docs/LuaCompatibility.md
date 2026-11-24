@@ -31,6 +31,13 @@ NovaSharp now exposes a version selector so applications can pin script executio
 | Generic `for` body locals                        | ✅     | `GenericForLocalsStartAsNil`                                                            | A declaration without an initializer starts at nil on each iteration across Lua 5.1–5.5.                                                                                                                                                                                                                                                                                                                    |
 | Generic `for` fourth value                       | 🚧     | `GenericForClosingValueLivesUntilExit`, `GenericForClosingValueFollowsLexicalExitOrder` | Lua 5.4–5.5 keep the fourth value through all iterations, then close it on loop exit. Known gaps include [non-string error values](https://github.com/Ambiguous-Interactive/NovaSharp/issues/168), [yielding from a closer](https://github.com/Ambiguous-Interactive/NovaSharp/issues/169), and [cleanup after an uncaught coroutine error](https://github.com/Ambiguous-Interactive/NovaSharp/issues/174). |
 
+Across Lua 5.1–5.5, assignment fills missing values with explicit nil,
+including when a call returns zero values. Greater-than comparisons preserve
+the order of operand side effects and pass operands to comparison metamethods
+in the reference order. Regression coverage includes
+`AssignmentStoresExplicitNilForMissingValues` and
+`GreaterComparisonsPreserveLuaOperandOrder`.
+
 ## Standard Libraries
 
 | Library Area | Feature                                                         | Status | Coverage / Evidence                                                                                                                                | Notes & Owner                                                                                                                                                                                                       |
@@ -51,6 +58,12 @@ NovaSharp now exposes a version selector so applications can pin script executio
 | `io`         | `io.read("*n")` hex/exponent parsing                            | ✅     | `IoModuleTests.ReadNumberParsesHexLiteralInput`, `ReadNumberParsesHexVariants`, TAP `308-io.t`                                                     | Runtime parses hex floats, huge integers, and exponent overflow per Lua 5.4 rules. Owner: Runtime Modernization.                                                                                                    |
 | `io`         | `io.popen` process pipes                                        | ⏸️     | `IoModuleTests.PopenIsUnsupportedAndProvidesErrorMessage`                                                                                          | Intentionally disabled for sandboxing; hosts must provide a custom `IPlatformAccessor` to enable it. Owner: Tooling.                                                                                                |
 | `os`         | `os.execute` Lua-style status tuples                            | ✅     | `OsSystemModuleTests.ExecuteCommandReturnsSuccessTuple`, `ExecuteCommandReturnsNilTupleOnNonZeroExit`                                              | Now returns \`(true                                                                                                                                                                                                 |
+
+Across Lua 5.1–5.5, `string.format` renders infinity as `inf` or `INF`
+according to the conversion, with the requested sign and space padding.
+For numeric-string arithmetic, numeric loop controls, and `tonumber`, Lua 5.1
+treats NUL as the end of the string. Lua 5.2–5.5 reject strings containing NUL
+in those conversions.
 
 ## Metatables, GC, and Weak Tables
 

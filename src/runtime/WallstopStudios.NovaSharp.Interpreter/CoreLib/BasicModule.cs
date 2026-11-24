@@ -488,7 +488,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             LuaValue e = args[0];
-            LuaValue b = args.AsType(1, "tonumber", DataType.Number, true);
+            LuaValue b = args[1];
 
             if (b.IsNil)
             {
@@ -499,12 +499,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(
                     executionContext.Script.CompatibilityVersion
                 );
+                LuaNumber baseNumber;
+                if (b.Type == DataType.Number)
+                {
+                    baseNumber = b.LuaNumber;
+                }
+                else if (
+                    b.Type != DataType.String
+                    || !LuaNumber.TryParse(b.String, resolved, out baseNumber)
+                )
+                {
+                    throw ScriptRuntimeException.BadArgument(
+                        1,
+                        "tonumber",
+                        DataType.Number,
+                        b.Type,
+                        false
+                    );
+                }
 
                 int bb;
                 if (resolved >= LuaCompatibilityVersion.Lua53)
                 {
                     // Lua 5.3+ require the base to have an exact integer representation
-                    if (!b.LuaNumber.TryToInteger(out long baseInteger))
+                    if (!baseNumber.TryToInteger(out long baseInteger))
                     {
                         throw new ScriptRuntimeException(
                             "bad argument #2 to 'tonumber' (number has no integer representation)"
@@ -524,7 +542,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 {
                     // Lua 5.1/5.2 truncate a fractional base (luaL_checkint) and report
                     // NaN/Infinity conversions as out of range
-                    double baseValue = b.Number;
+                    double baseValue = baseNumber.ToDouble;
                     if (double.IsNaN(baseValue) || double.IsInfinity(baseValue))
                     {
                         throw new ScriptRuntimeException(
@@ -612,7 +630,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         )
         {
             value = LuaNumber.Zero;
-            ReadOnlySpan<char> span = text.AsSpan().TrimWhitespace();
+            ReadOnlySpan<char> span = LuaNumber.GetNumeralSpan(text, resolved).TrimWhitespace();
             if (span.IsEmpty)
             {
                 return false;

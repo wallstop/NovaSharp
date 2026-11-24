@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution
 {
+    using System;
     using System.Globalization;
     using System.Runtime.CompilerServices;
     using global::NovaSharp;
@@ -54,7 +55,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         private const double MaxDoubleIntegerValue = 9223372036854775808.0; // 2^63
 
         /// <summary>
-        /// Attempts to coerce a LuaValue into a Lua integer (accepting numeric strings per Lua semantics).
+        /// Coerces a LuaValue to an integer for Lua 5.3+ integer operations.
         /// </summary>
         public static bool TryGetInteger(LuaValue value, out long integer)
         {
@@ -76,6 +77,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             if (
                 scalar.Type == DataType.String
+                && scalar.String.AsSpan().IndexOf('\0') < 0
                 && double.TryParse(
                     scalar.String,
                     NumberStyles.Float,

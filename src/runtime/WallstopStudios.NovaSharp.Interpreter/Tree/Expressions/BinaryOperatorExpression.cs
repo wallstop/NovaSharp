@@ -413,22 +413,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             _operator = op;
         }
 
-        private static bool ShouldInvertBoolean(Operator op)
-        {
-            return (op == Operator.NotEqual)
-                || (op == Operator.GreaterOrEqual)
-                || (op == Operator.Greater);
-        }
-
         private static OpCode OperatorToOpCode(Operator op)
         {
             switch (op)
             {
                 case Operator.Less:
-                case Operator.GreaterOrEqual:
+                case Operator.Greater:
                     return OpCode.Less;
                 case Operator.LessOrEqual:
-                case Operator.Greater:
+                case Operator.GreaterOrEqual:
                     return OpCode.LessEq;
                 case Operator.Equal:
                 case Operator.NotEqual:
@@ -467,15 +460,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// <inheritdoc />
         public override void Compile(ByteCode bc)
         {
-            // For > and >= operators, swap operands to use < and <= respectively.
-            // This ensures correct NaN handling per IEEE 754: nan > nan = false.
-            // The transformation a > b ≡ b < a preserves NaN semantics, whereas
-            // NOT (a <= b) does not (since nan <= nan = false, NOT false = true).
-            bool swapOperands =
+            bool reverseComparison =
                 _operator == Operator.Greater || _operator == Operator.GreaterOrEqual;
 
-            if (swapOperands)
+            if (reverseComparison && CanReverseComparisonLoads(_exp1, _exp2))
             {
+                // Lua reads a direct left local after the right operand runs.
+                // A literal load on either side also makes reordering unobservable.
                 _exp2.Compile(bc);
                 _exp1.Compile(bc);
             }
@@ -503,30 +494,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 {
                     _exp2.Compile(bc);
                 }
+
+                if (reverseComparison)
+                {
+                    // Evaluate left to right, then compare as right < left or right <= left.
+                    bc.EmitSwap(0, 1);
+                }
             }
 
-            // Map > to < and >= to <= (with swapped operands above)
-            OpCode opcode;
-            if (_operator == Operator.Greater)
-            {
-                opcode = OpCode.Less;
-            }
-            else if (_operator == Operator.GreaterOrEqual)
-            {
-                opcode = OpCode.LessEq;
-            }
-            else
-            {
-                opcode = OperatorToOpCode(_operator);
-            }
-
-            bc.EmitOperator(opcode);
-
-            // Only NotEqual still needs inversion (== with not)
+            bc.EmitOperator(OperatorToOpCode(_operator));
             if (_operator == Operator.NotEqual)
             {
                 bc.EmitOperator(OpCode.Not);
             }
+        }
+
+        private static bool CanReverseComparisonLoads(Expression left, Expression right)
+        {
+            left = UnwrapAdjustments(left);
+            return left is LiteralExpression
+                || UnwrapAdjustments(right) is LiteralExpression
+                || (
+                    left is SymbolRefExpression symbol
+                    && symbol.GetSymbolRef() is SymbolRef symbolRef
+                    && symbolRef.Type == SymbolRefType.Local
+                );
+        }
+
+        private static Expression UnwrapAdjustments(Expression operand)
+        {
+            while (operand is AdjustmentExpression adjustment)
+            {
+                operand = adjustment.Operand;
+            }
+
+            return operand;
         }
 
         /// <inheritdoc />
