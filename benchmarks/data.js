@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795481667210,
+  "lastUpdate": 1795497120837,
   "repoUrl": "https://github.com/Ambiguous-Interactive/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -3550,6 +3550,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 486.171,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "877c0731ca0d0acb441fa56ec54209884dcb3450",
+          "message": "Share repository guidance across coding agents (#158)\n\nCodex, Claude Code and OpenCode now share the repository engineering\npolicy in AGENTS.md. The existing 32 skills keep one canonical source.\nThe repository guide gives agents a read-only skill inventory, and CI\nchecks repository conventions and upstream Agent Skills conformance\nseparately.\n\n## Local evidence\n\n- Both new discovery tests failed against the original instructions. All\n21 indexer tests succeeded after the change, and the index check\nreported 32 current entries.\n- The pinned upstream reference implementation accepted all 32 skill\npackages and rejected the missing-description control.\n- The quick build, all 15,716 quick tests, and the standalone pre-commit\nhook succeeded.\n- Claude Code and OpenCode exposed the 32 skills in both conditions. The\ncandidate Codex prompt included the shared policy and all 32 skills. A\nlocal OpenCode provider probe captured the complete shared policy in the\noutgoing request. Claude's memory estimate changed from approximately\n1.1k to 685 tokens.\n- A known-answer Release control used five warmups and eleven samples on\nidentical Bit32 workloads. The historical parent allocated 312.0016\nbytes per callback and the fixed revision allocated 48.0016, with the\nsame return value of 290329086.\n\n## Validation scope\n\nThe maintainer directed us to proceed without additional Claude Code or\nOpenCode behavioral trials. Codex task sessions matched all 25 held-out\nnumeral cases in both conditions and both returned the exact 32-skill\ninventory. The candidate Bit32 session initially left a non-reference\nexport. After assessor feedback, it matched stock Lua 5.2's export set\nand the baseline submission's allocation and checksum. These are limited\ntask results and do not establish unattended parity or end-to-end token\nsavings. See [the pilot\nresults](https://github.com/Ambiguous-Interactive/NovaSharp/issues/157#issuecomment-7122502304).\n\nThe final review fixes preserve paired C# and Lua regression coverage,\nadd a drift check for Copilot, remove the jq prerequisite, and supply\nanswer-free planning files for the blinded tasks. All 22 focused tests\nand pre-commit succeeded.",
+          "timestamp": "2026-11-23T21:06:27-08:00",
+          "tree_id": "baea24dce9c0a0fc985e04330106f7fe2855770b",
+          "url": "https://github.com/Ambiguous-Interactive/NovaSharp/commit/877c0731ca0d0acb441fa56ec54209884dcb3450"
+        },
+        "date": 1795497120318,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 372.693,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 418.4,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 417.742,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 617.393,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 641.911,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 651.975,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 651.373,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 700.999,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 688.74,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 673.459,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 742.908,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 757.179,
             "unit": "ns",
             "extra": ""
           }
