@@ -26,14 +26,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             private readonly ScriptExecutionContext _ctx;
             private readonly LuaValue _lt;
+            private readonly bool _supportsIntegerSubtype;
 
             public LuaSortComparer(ScriptExecutionContext ctx, LuaValue lt)
             {
                 _ctx = ctx;
                 _lt = lt;
+                _supportsIntegerSubtype =
+                    LuaVersionDefaults.Resolve(ctx.Script.CompatibilityVersion)
+                    >= LuaCompatibilityVersion.Lua53;
             }
 
-            public int Compare(LuaValue a, LuaValue b) => SortComparer(_ctx, a, b, _lt);
+            public int Compare(LuaValue a, LuaValue b) =>
+                SortComparer(_ctx, a, b, _lt, _supportsIntegerSubtype);
         }
 
         /// <summary>
@@ -218,21 +223,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             ScriptExecutionContext executionContext,
             LuaValue a,
             LuaValue b,
-            LuaValue lt
+            LuaValue lt,
+            bool supportsIntegerSubtype
         )
         {
             if (lt.IsNil)
             {
+                if (a.Type == DataType.Number && b.Type == DataType.Number)
+                {
+                    return a.LuaNumber.CompareForSort(b.LuaNumber, supportsIntegerSubtype);
+                }
+
                 if (
                     !executionContext.TryGetBinaryMetamethod(a, b, Metamethods.Lt, out lt)
                     || lt.IsNil
                 )
                 {
-                    if (a.Type == DataType.Number && b.Type == DataType.Number)
-                    {
-                        return a.Number.CompareTo(b.Number);
-                    }
-
                     if (a.Type == DataType.String && b.Type == DataType.String)
                     {
                         return string.Compare(a.String, b.String, StringComparison.Ordinal);

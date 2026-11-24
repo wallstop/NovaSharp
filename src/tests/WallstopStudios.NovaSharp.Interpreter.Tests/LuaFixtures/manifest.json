@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2019,
+  "total_snippets": 2021,
   "novasharp_only": 501,
-  "comparable": 1518,
+  "comparable": 1520,
   "by_version": {
-    "5.1": 1011,
-    "5.2": 717,
-    "5.3": 961,
-    "5.4": 1034,
-    "5.5": 1075
+    "5.1": 1012,
+    "5.2": 718,
+    "5.3": 963,
+    "5.4": 1036,
+    "5.5": 1077
   },
   "snippets": [
     {
@@ -22433,6 +22433,32 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:321",
       "test": "ValueSlotSemanticsTUnitTests.GenericForCloseSupportsDeepCallableChains",
       "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/SortNumbersIgnoresNumberMetatableForNumericPairs.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:181",
+      "test": "TableModuleTUnitTests.SortNumbersIgnoresNumberMetatableForNumericPairs",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/SortNumbersPreservesExactIntegerAndMixedOrdering.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:213",
+      "test": "TableModuleTUnitTests.SortNumbersPreservesExactIntegerAndMixedOrdering",
+      "lua_versions": [
+        "5.3",
         "5.4",
         "5.5"
       ],

@@ -1270,6 +1270,66 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return 1;
         }
 
+        /// <summary>
+        /// Compares numbers for Lua sort using the active numeric profile.
+        /// A NaN operand is neither less nor greater than the other operand.
+        /// </summary>
+        internal int CompareForSort(LuaNumber other, bool supportsIntegerSubtype)
+        {
+            if (!supportsIntegerSubtype)
+            {
+                return CompareFloats(ToDouble, other.ToDouble);
+            }
+
+            if (IsInteger && other.IsInteger)
+            {
+                return _integer.CompareTo(other._integer);
+            }
+
+            if (IsFloat && other.IsFloat)
+            {
+                return CompareFloats(_float, other._float);
+            }
+
+            return IsInteger
+                ? CompareIntegerToFloat(_integer, other._float)
+                : -CompareIntegerToFloat(other._integer, _float);
+        }
+
+        private static int CompareFloats(double left, double right)
+        {
+            if (left < right)
+            {
+                return -1;
+            }
+
+            return left > right ? 1 : 0;
+        }
+
+        private static int CompareIntegerToFloat(long integer, double floating)
+        {
+            if (double.IsNaN(floating))
+            {
+                return 0;
+            }
+
+            if (floating < (double)long.MinValue)
+            {
+                return 1;
+            }
+
+            // The upper bound is exclusive: converting long.MaxValue to double rounds to 2^63.
+            if (floating >= -(double)long.MinValue)
+            {
+                return -1;
+            }
+
+            // Compare in integer space first, then inspect the fraction only when they coincide.
+            long truncated = (long)floating;
+            int comparison = integer.CompareTo(truncated);
+            return comparison != 0 ? comparison : CompareFloats(truncated, floating);
+        }
+
         /// <inheritdoc />
         public override int GetHashCode()
         {
