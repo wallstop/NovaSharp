@@ -227,12 +227,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Loaders
         /// </summary>
         public static IReadOnlyList<string> GetDefaultEnvironmentPaths()
         {
-            IReadOnlyList<string> paths =
-                TryUnpackEnvironmentVariable(
-                    Script.GlobalOptions.Platform.GetEnvironmentVariable(
-                        NovaSharpPathEnvironmentVariable
-                    )
+            IReadOnlyList<string> paths = TryUnpackEnvironmentVariable(
+                Script.GlobalOptions.Platform.GetEnvironmentVariable(
+                    NovaSharpPathEnvironmentVariable
                 )
+            )
                 ?? TryUnpackEnvironmentVariable(
                     Script.GlobalOptions.Platform.GetEnvironmentVariable("LUA_PATH")
                 );
@@ -270,18 +269,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Loaders
                 return modname;
             }
 
-            return string.Create(
-                modname.Length,
-                modname,
-                static (destination, source) =>
+            return string.Create(modname.Length, modname, static (destination, source) =>
+            {
+                for (int i = 0; i < destination.Length; i++)
                 {
-                    for (int i = 0; i < destination.Length; i++)
-                    {
-                        char c = source[i];
-                        destination[i] = c == '.' ? '/' : c;
-                    }
+                    char c = source[i];
+                    destination[i] = c == '.' ? '/' : c;
                 }
-            );
+            });
         }
 
         private static IReadOnlyList<string> TryUnpackEnvironmentVariable(string value)

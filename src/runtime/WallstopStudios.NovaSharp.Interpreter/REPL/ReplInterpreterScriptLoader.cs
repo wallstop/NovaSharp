@@ -36,8 +36,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.REPL
         /// <param name="environmentVariableProvider">Delegate used to read environment variables (defaults to <see cref="Environment.GetEnvironmentVariable(string)"/>).</param>
         protected ReplInterpreterScriptLoader(Func<string, string> environmentVariableProvider)
         {
-            _environmentVariableProvider =
-                environmentVariableProvider
+            _environmentVariableProvider = environmentVariableProvider
                 ?? throw new ArgumentNullException(nameof(environmentVariableProvider));
 
             ModulePaths = TryLoadEnvironmentPaths(NovaSharpPathEnvironmentVariable);

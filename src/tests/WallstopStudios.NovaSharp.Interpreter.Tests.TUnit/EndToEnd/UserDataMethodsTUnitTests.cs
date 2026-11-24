@@ -569,10 +569,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                         typeof(IList<int>),
                         v => new List<int>() { 42, 77, 125, 13 }
                     );
-                    registry.SetScriptToClrCustomConversion(
-                        DataType.Table,
-                        typeof(int[]),
-                        v => (int[])ScriptToClrIntArray.Clone()
+                    registry.SetScriptToClrCustomConversion(DataType.Table, typeof(int[]), v =>
+                        (int[])ScriptToClrIntArray.Clone()
                     );
                     registry.SetClrToScriptCustomConversion<StringBuilder>(
                         (s, v) => LuaValue.NewString(v.ToString().ToUpperInvariant())

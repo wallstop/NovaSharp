@@ -680,9 +680,8 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger
                 return known;
             }
 
-            return WatchElementNameCache.GetOrAdd(
-                watchType,
-                static wt => InvariantString.ToLowerInvariantIfNeeded(wt.ToString())
+            return WatchElementNameCache.GetOrAdd(watchType, static wt =>
+                InvariantString.ToLowerInvariantIfNeeded(wt.ToString())
             );
         }
     }

@@ -4,7 +4,7 @@ The session advanced [#160](https://github.com/Ambiguous-Interactive/NovaSharp/i
 Both forms of Lua `table.insert` return zero values. The normalized argument
 count selects append or positional insertion, so explicit nil and final
 expressions yielding zero or multiple values retain their Lua semantics.
-Wrong arity fails without mutation. Lua 5.1 uses the raw length and allows
+Wrong arity fails before the insertion. Lua 5.1 uses the raw length and allows
 positions outside the sequence. Later profiles validate the position after
 evaluating length. The Lua 5.1 negative shift visits live entries when the
 span of non-positive keys exceeds the table's entry count.
@@ -29,9 +29,14 @@ the green PyYAML, ReportGenerator, and markdown-it-py pull requests
 - The paired regression covers argument expansion, explicit nil, wrong arity
   without mutation, length evaluation order, numeric string coercion,
   positional bounds, and overlapping sparse Lua 5.1 shifts. Regenerating the
-  corpus adds one comparable snippet to every profile and expands the existing
+  corpus adds two comparable snippets to every profile and expands the existing
   length fixture to all five profiles.
-- The quick build, 221 focused TableModule tests, 15,726 full quick tests,
+- Hosted review reproduced a valid append at key -1 when `__len` returns -2.
+  The new regression failed in Lua 5.2–5.5 on the initial PR revision. It checks
+  both length operands, numeric conversion errors, and index wrapping at the
+  Lua 5.2 and Lua 5.3+ integer widths. The review fix was tested with .NET SDK
+  10.0.404 on main `e2d2c73`.
+- The quick build, 226 focused TableModule tests, 15,739 full quick tests,
   CSharpier, pre-commit, and enforced full corpus comparisons with PUC Lua 5.1
   through 5.5 passed. The pre-commit Docker-only devcontainer check and Unity
   player execution were unavailable. The existing callback registration and

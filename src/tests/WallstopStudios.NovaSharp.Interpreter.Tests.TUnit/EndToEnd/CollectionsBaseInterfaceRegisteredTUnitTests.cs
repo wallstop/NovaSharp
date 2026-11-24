@@ -293,9 +293,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         private static Task RunScriptAsync(string code, Func<LuaValue, Task> asserts)
         {
-            return RunScriptAsync(
-                code,
-                async (value, _) => await asserts(value).ConfigureAwait(false)
+            return RunScriptAsync(code, async (value, _) =>
+                await asserts(value).ConfigureAwait(false)
             );
         }
 

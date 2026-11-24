@@ -301,6 +301,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                 executionContext.Script.CompatibilityVersion
             );
+            if (args.Count == 2)
+            {
+                long appendIndex = GetInsertAppendIndex(executionContext, tableValue, version);
+                if (appendIndex >= int.MinValue && appendIndex <= int.MaxValue)
+                {
+                    list.Set((int)appendIndex, args[1]);
+                }
+                else
+                {
+                    list.SetValue(LuaValue.NewInteger(appendIndex), args[1]);
+                }
+
+                return LuaValue.Void;
+            }
+
             int end =
                 1
                 + (
@@ -309,29 +324,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         : GetTableLength(executionContext, tableValue)
                 );
 
-            if (args.Count == 2)
-            {
-                if (end < 1)
-                {
-                    throw ScriptRuntimeException.BadArgument(1, "insert", "position out of bounds");
-                }
-
-                list.Set(end, args[1]);
-                return LuaValue.Void;
-            }
-
             if (args.Count != 3)
             {
                 throw new ScriptRuntimeException("wrong number of arguments to 'insert'");
             }
 
             LuaValue positionArgument = args[1];
-            LuaNumber? number = positionArgument.Type switch
-            {
-                DataType.Number => positionArgument.LuaNumber,
-                DataType.String => ParseInsertPosition(positionArgument.String, version),
-                _ => null,
-            };
+            LuaNumber? number = GetInsertNumber(positionArgument, version);
             if (!number.HasValue)
             {
                 throw ScriptRuntimeException.BadArgument(
@@ -347,12 +346,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             long position;
             if (version <= LuaCompatibilityVersion.Lua52)
             {
-                // luaL_checkint truncates toward zero before narrowing to C int.
-                double value = numericPosition.AsFloat;
-                position =
-                    value >= long.MinValue && value < -(double)long.MinValue
-                        ? unchecked((int)(long)value)
-                        : 0;
+                position = NarrowInsertNumber(numericPosition);
             }
             else
             {
@@ -392,8 +386,74 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return LuaValue.Void;
         }
 
-        private static LuaNumber? ParseInsertPosition(string text, LuaCompatibilityVersion version)
+        private static long GetInsertAppendIndex(
+            ScriptExecutionContext executionContext,
+            LuaValue tableValue,
+            LuaCompatibilityVersion version
+        )
         {
+            if (
+                version == LuaCompatibilityVersion.Lua51
+                || !executionContext.TryGetMetamethod(
+                    tableValue,
+                    Metamethods.Len,
+                    out LuaValue lengthMetamethod
+                )
+            )
+            {
+                int rawLength = tableValue.Table.Length;
+                return version <= LuaCompatibilityVersion.Lua52
+                    ? unchecked(rawLength + 1)
+                    : (long)rawLength + 1;
+            }
+
+            LuaValue length = executionContext
+                .Script.CallValues(lengthMetamethod, tableValue, tableValue)
+                .ToScalar();
+            LuaNumber? number = GetInsertNumber(length, version);
+            if (version == LuaCompatibilityVersion.Lua52)
+            {
+                if (!number.HasValue)
+                {
+                    throw new ScriptRuntimeException("object length is not a number");
+                }
+
+                return unchecked(NarrowInsertNumber(number.Value) + 1);
+            }
+
+            if (!number.HasValue || !number.Value.TryToInteger(out long integerLength))
+            {
+                throw new ScriptRuntimeException("object length is not an integer");
+            }
+
+            return unchecked(integerLength + 1);
+        }
+
+        private static int NarrowInsertNumber(LuaNumber number)
+        {
+            // Lua 5.1 and 5.2 truncate toward zero before narrowing to C int.
+            double value = number.AsFloat;
+            return value >= long.MinValue && value < -(double)long.MinValue
+                ? unchecked((int)(long)value)
+                : 0;
+        }
+
+        private static LuaNumber? GetInsertNumber(
+            LuaValue argument,
+            LuaCompatibilityVersion version
+        )
+        {
+            if (argument.Type == DataType.Number)
+            {
+                return argument.LuaNumber;
+            }
+
+            if (argument.Type != DataType.String)
+            {
+                return null;
+            }
+
+            string text = argument.String;
             ReadOnlySpan<char> numeral = text.AsSpan();
             int terminator = numeral.IndexOf('\0');
             if (terminator >= 0)

@@ -143,8 +143,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         private static SymbolRefAttributes ParseLocalAttributes(ScriptLoadingContext lcontext)
         {
             SymbolRefAttributes flags = default;
-            Script script =
-                lcontext.Script ?? throw new InvalidOperationException("Missing Script instance.");
+            Script script = lcontext.Script
+                ?? throw new InvalidOperationException("Missing Script instance.");
             LuaCompatibilityProfile profile = script.CompatibilityProfile;
 
             while (lcontext.Lexer.Current.type == TokenType.OpLessThan)

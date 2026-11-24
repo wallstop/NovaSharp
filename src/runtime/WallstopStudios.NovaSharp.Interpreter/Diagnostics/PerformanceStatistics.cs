@@ -61,8 +61,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Diagnostics
                         {
                             for (int i = 0; i < (int)PerformanceCounter.LastValue; i++)
                             {
-                                _stopwatches[i] =
-                                    GlobalStopwatches[i]
+                                _stopwatches[i] = GlobalStopwatches[i]
                                     ?? new PerformanceStopwatch((PerformanceCounter)i, _clock);
                             }
                         }

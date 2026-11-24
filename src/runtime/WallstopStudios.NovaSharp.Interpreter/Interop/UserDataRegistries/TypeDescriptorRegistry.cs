@@ -601,8 +601,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.UserDataRegistries
             get { return CurrentState.RegistrationPolicy; }
             set
             {
-                CurrentState.RegistrationPolicy =
-                    value ?? throw new ArgumentNullException(nameof(value));
+                CurrentState.RegistrationPolicy = value
+                    ?? throw new ArgumentNullException(nameof(value));
             }
         }
     }

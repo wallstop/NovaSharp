@@ -854,12 +854,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         {
             if (obj is IComparable comp)
             {
-                return LuaValue.NewCallback(
-                    script,
-                    (context, args) =>
-                        LuaValue.NewBoolean(
-                            PerformComparison(obj, args[0].ToObject(), args[1].ToObject()) <= 0
-                        )
+                return LuaValue.NewCallback(script, (context, args) =>
+                    LuaValue.NewBoolean(
+                        PerformComparison(obj, args[0].ToObject(), args[1].ToObject()) <= 0
+                    )
                 );
             }
 
@@ -870,12 +868,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         {
             if (obj is IComparable comp)
             {
-                return LuaValue.NewCallback(
-                    script,
-                    (context, args) =>
-                        LuaValue.NewBoolean(
-                            PerformComparison(obj, args[0].ToObject(), args[1].ToObject()) < 0
-                        )
+                return LuaValue.NewCallback(script, (context, args) =>
+                    LuaValue.NewBoolean(
+                        PerformComparison(obj, args[0].ToObject(), args[1].ToObject()) < 0
+                    )
                 );
             }
 
@@ -906,10 +902,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
 
         private static LuaValue MultiDispatchEqual(Script script, object obj)
         {
-            return LuaValue.NewCallback(
-                script,
-                (context, args) =>
-                    LuaValue.NewBoolean(CheckEquality(obj, args[0].ToObject(), args[1].ToObject()))
+            return LuaValue.NewCallback(script, (context, args) =>
+                LuaValue.NewBoolean(CheckEquality(obj, args[0].ToObject(), args[1].ToObject()))
             );
         }
 

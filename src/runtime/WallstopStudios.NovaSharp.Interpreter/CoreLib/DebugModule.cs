@@ -1597,16 +1597,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         private static LuaValue GetUpvalueIdentifier(Script script, UpvalueCell upvalueSlot)
         {
             return UpvalueIdentifiers
-                .GetValue(
-                    upvalueSlot,
-                    slot => new UpvalueIdentifierValue(
-                        UserData.Create(
-                            script,
-                            new UpvalueIdentifier(slot),
-                            UpvalueIdentifierDescriptorInstance
-                        )
+                .GetValue(upvalueSlot, slot => new UpvalueIdentifierValue(
+                    UserData.Create(
+                        script,
+                        new UpvalueIdentifier(slot),
+                        UpvalueIdentifierDescriptorInstance
                     )
-                )
+                ))
                 .Value;
         }
 

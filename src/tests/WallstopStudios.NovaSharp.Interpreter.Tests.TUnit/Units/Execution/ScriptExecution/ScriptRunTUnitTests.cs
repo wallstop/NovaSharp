@@ -52,13 +52,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 ? await File.ReadAllTextAsync(tempFile).ConfigureAwait(false)
                 : "<file not found>";
             long fileLength = fileExists ? new FileInfo(tempFile).Length : -1;
-            string defaultLoaderType =
-                Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "<null loader>";
+            string defaultLoaderType = Script.DefaultOptions.ScriptLoader?.GetType().Name
+                ?? "<null loader>";
 
             // Create a script directly to check the actual loader used
             Script testScript = new();
-            string actualScriptLoaderType =
-                testScript.Options.ScriptLoader?.GetType().Name ?? "<null loader>";
+            string actualScriptLoaderType = testScript.Options.ScriptLoader?.GetType().Name
+                ?? "<null loader>";
 
             // Diagnostic context for troubleshooting CI failures
             string diagnostics =
@@ -325,16 +325,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         public async Task RunFileScriptLoaderIsolationWorks()
         {
             // Verify the ForceFileSystemLoader scope properly isolates
-            string loaderBeforeScope =
-                Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "<null>";
+            string loaderBeforeScope = Script.DefaultOptions.ScriptLoader?.GetType().Name
+                ?? "<null>";
 
             using (
                 PlatformDetectorOverrideScope platformScope =
                     PlatformDetectionTestHelper.ForceFileSystemLoader()
             )
             {
-                string loaderDuringScope =
-                    Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "<null>";
+                string loaderDuringScope = Script.DefaultOptions.ScriptLoader?.GetType().Name
+                    ?? "<null>";
                 await Assert
                     .That(loaderDuringScope)
                     .IsEqualTo(nameof(FileSystemScriptLoader))
@@ -342,8 +342,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             }
 
             // After scope ends, loader should be restored
-            string loaderAfterScope =
-                Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "<null>";
+            string loaderAfterScope = Script.DefaultOptions.ScriptLoader?.GetType().Name
+                ?? "<null>";
             await Assert.That(loaderAfterScope).IsEqualTo(loaderBeforeScope).ConfigureAwait(false);
         }
 

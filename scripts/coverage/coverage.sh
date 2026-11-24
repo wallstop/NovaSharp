@@ -165,7 +165,7 @@ trap 'popd >/dev/null' EXIT
 
 if [[ -z "${DOTNET_ROLL_FORWARD:-}" ]]; then
     export DOTNET_ROLL_FORWARD=Major
-    log "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 runtimes can host net8 test runners."
+    log "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so newer .NET runtimes can run .NET 8 test hosts."
 fi
 
 # Suppress TUnit ASCII banner and telemetry messages
@@ -252,8 +252,7 @@ mkdir -p "$tunit_coverage_dir"
 tunit_coverage_base="$tunit_coverage_dir/coverage"
 tunit_coverage_json="${tunit_coverage_base}.json"
 
-# Use 'run' instead of 'test' because Microsoft.Testing.Platform
-# (configured in global.json) does not support 'dotnet test <project>' syntax.
+# Launch the TUnit test application directly through coverlet.
 tunit_target_args=(
     run --project "$tunit_runner_project"
     -c "$configuration"

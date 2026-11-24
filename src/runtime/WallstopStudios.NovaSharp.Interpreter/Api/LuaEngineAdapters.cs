@@ -78,8 +78,8 @@ namespace NovaSharp
         /// </summary>
         public LuaRandomProviderAdapter(ILuaRandomProvider randomProvider)
         {
-            _randomProvider =
-                randomProvider ?? throw new ArgumentNullException(nameof(randomProvider));
+            _randomProvider = randomProvider
+                ?? throw new ArgumentNullException(nameof(randomProvider));
         }
 
         /// <inheritdoc />

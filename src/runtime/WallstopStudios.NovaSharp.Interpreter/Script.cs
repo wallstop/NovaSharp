@@ -498,8 +498,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
 
             _timeProvider = Options.TimeProvider ?? SystemTimeProvider.Instance;
-            _randomProvider =
-                Options.RandomProvider ?? CreateDefaultRandomProvider(Options.CompatibilityVersion);
+            _randomProvider = Options.RandomProvider
+                ?? CreateDefaultRandomProvider(Options.CompatibilityVersion);
             _startTimeUtc = _timeProvider.GetUtcNow().UtcDateTime;
 
             // Initialize allocation tracker if memory or coroutine limits are configured
@@ -588,8 +588,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
             {
                 if (ScopedGlobalOptions.Value != null)
                 {
-                    ScopedGlobalOptions.Value.Options =
-                        value ?? throw new ArgumentNullException(nameof(value));
+                    ScopedGlobalOptions.Value.Options = value
+                        ?? throw new ArgumentNullException(nameof(value));
                 }
                 else
                 {
@@ -1457,9 +1457,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         private LuaValue ExecuteLuaFunctionWithoutArguments(LuaValue function)
         {
-            return ExecuteWithCompatibilityGuard(
-                (_mainProcessor, function),
-                static state => state._mainProcessor.CallFunctionWithoutArguments(state.function)
+            return ExecuteWithCompatibilityGuard((_mainProcessor, function), static state =>
+                state._mainProcessor.CallFunctionWithoutArguments(state.function)
             );
         }
 
@@ -1475,9 +1474,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 return CallValues(function, arg);
             }
 
-            return ExecuteWithCompatibilityGuard(
-                (_mainProcessor, function, arg),
-                static state => state._mainProcessor.Call(state.function, state.arg)
+            return ExecuteWithCompatibilityGuard((_mainProcessor, function, arg), static state =>
+                state._mainProcessor.Call(state.function, state.arg)
             );
         }
 
@@ -1939,8 +1937,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 return MakeClosure(cached._entryPointAddress, globalTable ?? _globalTable);
             }
 
-            string chunkName =
-                codeFriendlyName
+            string chunkName = codeFriendlyName
                 ?? ZString.Concat("chunk_", _sources.Count.ToString(CultureInfo.InvariantCulture));
 
             SourceCode source = new(codeFriendlyName ?? chunkName, code, _sources.Count, this);
@@ -2043,8 +2040,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 return LoadString(scriptCode, globalTable, codeFriendlyName);
             }
 
-            string chunkName =
-                codeFriendlyName
+            string chunkName = codeFriendlyName
                 ?? ZString.Concat("dump_", _sources.Count.ToString(CultureInfo.InvariantCulture));
 
             SourceCode source = new(
@@ -2536,9 +2532,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 return CallNonFunction(function, arg);
             }
 
-            return ExecuteWithCompatibilityGuard(
-                (_mainProcessor, function, arg),
-                static state => state._mainProcessor.Call(state.function, state.arg)
+            return ExecuteWithCompatibilityGuard((_mainProcessor, function, arg), static state =>
+                state._mainProcessor.Call(state.function, state.arg)
             );
         }
 
@@ -3112,9 +3107,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 return ExecuteLuaFunctionWithoutArguments(function);
             }
 
-            return ExecuteWithCompatibilityGuard(
-                (_mainProcessor, function, args),
-                static state => state._mainProcessor.Call(state.function, state.args)
+            return ExecuteWithCompatibilityGuard((_mainProcessor, function, args), static state =>
+                state._mainProcessor.Call(state.function, state.args)
             );
         }
 

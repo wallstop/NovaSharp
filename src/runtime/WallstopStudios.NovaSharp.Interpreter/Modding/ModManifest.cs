@@ -50,8 +50,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 throw new ArgumentException("Manifest JSON cannot be empty.", nameof(json));
             }
 
-            ManifestModel model =
-                JsonSerializer.Deserialize<ManifestModel>(json, SerializerOptions)
+            ManifestModel model = JsonSerializer.Deserialize<ManifestModel>(json, SerializerOptions)
                 ?? throw new InvalidDataException("Manifest JSON resolved to an empty document.");
 
             return FromModel(model);
@@ -67,9 +66,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 throw new ArgumentNullException(nameof(stream));
             }
 
-            ManifestModel model =
-                JsonSerializer.Deserialize<ManifestModel>(stream, SerializerOptions)
-                ?? throw new InvalidDataException("Manifest JSON resolved to an empty document.");
+            ManifestModel model = JsonSerializer.Deserialize<ManifestModel>(
+                stream,
+                SerializerOptions
+            ) ?? throw new InvalidDataException("Manifest JSON resolved to an empty document.");
 
             return FromModel(model);
         }

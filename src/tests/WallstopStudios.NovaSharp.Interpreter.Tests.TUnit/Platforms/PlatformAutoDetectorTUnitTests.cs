@@ -544,30 +544,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
         {
             public static void EnsureLoaded()
             {
-                _ = BuildAssembly(
-                    "UnityEngine",
-                    module =>
-                    {
-                        DefineEmptyType(module, "UnityEngine.AutoDetectorProbe");
-                        DefineEmptyType(module, "UnityEngine.PlatformProbe");
-                        DefineTextAssetType(module);
-                        DefineResourcesType(module);
-                    }
-                );
+                _ = BuildAssembly("UnityEngine", module =>
+                {
+                    DefineEmptyType(module, "UnityEngine.AutoDetectorProbe");
+                    DefineEmptyType(module, "UnityEngine.PlatformProbe");
+                    DefineTextAssetType(module);
+                    DefineResourcesType(module);
+                });
             }
 
             public static Assembly[] GetAssemblies()
             {
-                Assembly assembly = BuildAssembly(
-                    "UnityEngine",
-                    module =>
-                    {
-                        DefineEmptyType(module, "UnityEngine.AutoDetectorProbe");
-                        DefineEmptyType(module, "UnityEngine.PlatformProbe");
-                        DefineTextAssetType(module);
-                        DefineResourcesType(module);
-                    }
-                );
+                Assembly assembly = BuildAssembly("UnityEngine", module =>
+                {
+                    DefineEmptyType(module, "UnityEngine.AutoDetectorProbe");
+                    DefineEmptyType(module, "UnityEngine.PlatformProbe");
+                    DefineTextAssetType(module);
+                    DefineResourcesType(module);
+                });
                 return new[] { assembly };
             }
 
@@ -623,24 +617,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
         {
             public static void EnsureTypeLoaded()
             {
-                _ = BuildAssembly(
-                    "UnityEngine.PlatformProbeAssembly",
-                    module =>
-                    {
-                        DefineEmptyType(module, "UnityEngine.PlatformProbe");
-                    }
-                );
+                _ = BuildAssembly("UnityEngine.PlatformProbeAssembly", module =>
+                {
+                    DefineEmptyType(module, "UnityEngine.PlatformProbe");
+                });
             }
 
             public static Assembly[] GetAssemblies()
             {
-                Assembly assembly = BuildAssembly(
-                    "UnityEngine.PlatformProbeAssembly",
-                    module =>
-                    {
-                        DefineEmptyType(module, "UnityEngine.PlatformProbe");
-                    }
-                );
+                Assembly assembly = BuildAssembly("UnityEngine.PlatformProbeAssembly", module =>
+                {
+                    DefineEmptyType(module, "UnityEngine.PlatformProbe");
+                });
                 return new[] { assembly };
             }
 

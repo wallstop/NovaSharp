@@ -21,7 +21,7 @@ NovaSharp executes a curated set of third-party Lua scripts to spot regressions 
 - Add new scripts under `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/Fixtures/RealWorld/<vendor-script>` with the upstream `LICENSE`.
 - Extend `RealWorldScriptTests` with a descriptive `TestCaseData` entry that exercises a behaviour NovaSharp must support.
 - Update the table above (and `docs/ThirdPartyLicenses.md`) with the script name, tag/commit, license, and source URL.
-- Re-run `dotnet test src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release --filter RealWorld` after every corpus change.
+- Re-run `./scripts/test/quick.sh -c RealWorld` after every corpus change.
 
 ## Completed Setup
 

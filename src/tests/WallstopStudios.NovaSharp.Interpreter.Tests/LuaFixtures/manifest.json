@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2002,
+  "total_snippets": 2003,
   "novasharp_only": 498,
-  "comparable": 1504,
+  "comparable": 1505,
   "by_version": {
-    "5.1": 1003,
-    "5.2": 707,
-    "5.3": 951,
-    "5.4": 1020,
-    "5.5": 1061
+    "5.1": 1004,
+    "5.2": 708,
+    "5.3": 952,
+    "5.4": 1021,
+    "5.5": 1062
   },
   "snippets": [
     {
@@ -22223,6 +22223,20 @@
       "path": "TableModuleTUnitTests/InsertUsesArgumentCountAndReturnsNoValues.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:1014",
       "test": "TableModuleTUnitTests.InsertUsesArgumentCountAndReturnsNoValues",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/InsertAppendUsesProfileLengthSemantics.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:1098",
+      "test": "TableModuleTUnitTests.InsertAppendUsesProfileLengthSemantics",
       "lua_versions": [
         "5.1",
         "5.2",

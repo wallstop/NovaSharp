@@ -57,10 +57,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             DataType invalidType = (DataType)((int)LuaTypeExtensions.MaxConvertibleTypes + 1);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
-                registry.SetScriptToClrCustomConversion(
-                    invalidType,
-                    typeof(string),
-                    value => value.String
+                registry.SetScriptToClrCustomConversion(invalidType, typeof(string), value =>
+                    value.String
                 )
             );
 
@@ -233,14 +231,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             Script script = new();
             Guid sampleGuid = Guid.Parse("01234567-89ab-cdef-0123-456789abcdef");
 
-            InvokeLegacyClrToScriptConversion(
-                registry,
-                typeof(Guid),
-                value => LuaValue.NewString(((Guid)value).ToString("N"))
+            InvokeLegacyClrToScriptConversion(registry, typeof(Guid), value =>
+                LuaValue.NewString(((Guid)value).ToString("N"))
             );
-            InvokeLegacyClrToScriptConversion<long>(
-                registry,
-                value => LuaValue.NewNumber(value * 2)
+            InvokeLegacyClrToScriptConversion<long>(registry, value =>
+                LuaValue.NewNumber(value * 2)
             );
 
             Func<Script, object, LuaValue?> guidConverter = registry.GetClrToScriptCustomConversion(
@@ -325,14 +320,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         public async Task ClearRemovesAllConverters()
         {
             CustomConverterRegistry registry = new();
-            registry.SetScriptToClrCustomConversion(
-                DataType.String,
-                typeof(string),
-                value => value.String
+            registry.SetScriptToClrCustomConversion(DataType.String, typeof(string), value =>
+                value.String
             );
-            registry.SetClrToScriptCustomConversion(
-                typeof(int),
-                (s, value) => LuaValue.NewNumber((int)value)
+            registry.SetClrToScriptCustomConversion(typeof(int), (s, value) =>
+                LuaValue.NewNumber((int)value)
             );
             registry.SetClrToScriptTryConversion<Guid>(
                 (Script _, Guid _, out LuaValue result) =>
@@ -472,10 +464,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             CustomConverterRegistry registry = new();
             Type stringType = typeof(string);
             InvokeLegacyClrToScriptConversion<double>(registry, value => LuaValue.NewNumber(value));
-            InvokeLegacyClrToScriptConversion(
-                registry,
-                stringType,
-                value => LuaValue.NewString((string)value)
+            InvokeLegacyClrToScriptConversion(registry, stringType, value =>
+                LuaValue.NewString((string)value)
             );
 
             await Assert

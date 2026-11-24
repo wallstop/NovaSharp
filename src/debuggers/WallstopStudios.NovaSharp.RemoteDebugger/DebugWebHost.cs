@@ -47,10 +47,9 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
 
-            using Stream stream =
-                assembly.GetManifestResourceStream(
-                    "WallstopStudios.NovaSharp.RemoteDebugger.Resources." + resourceName
-                )
+            using Stream stream = assembly.GetManifestResourceStream(
+                "WallstopStudios.NovaSharp.RemoteDebugger.Resources." + resourceName
+            )
                 ?? throw new InvalidOperationException(
                     $"Embedded resource '{resourceName}' could not be located."
                 );

@@ -120,7 +120,7 @@ else {
 
 if ([string]::IsNullOrWhiteSpace($env:DOTNET_ROLL_FORWARD)) {
     $env:DOTNET_ROLL_FORWARD = "Major"
-    Write-Host "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 runtimes can host net8 test runners."
+    Write-Host "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so newer .NET runtimes can run .NET 8 test hosts."
 }
 
 # Suppress TUnit ASCII banner and telemetry messages
@@ -221,8 +221,7 @@ try {
     $tunitCoverageDir = Join-Path $coverageRoot "tunit"
     New-Item -ItemType Directory -Force -Path $tunitCoverageDir | Out-Null
     $tunitCoverageBase = Join-Path $tunitCoverageDir "coverage"
-    # Use 'dotnet run' instead of 'dotnet test' because Microsoft.Testing.Platform
-    # (configured in global.json) does not support 'dotnet test --project' syntax.
+    # Launch the TUnit test application directly through coverlet.
     $tunitTargetArgs =
         "run --project `"$tunitRunnerProject`" -c $Configuration --no-build"
     $remoteDebuggerTargetArgs =
