@@ -43,14 +43,10 @@ namespace WallstopStudios.NovaSharp.Hardwire.Generators
 
             List<CodeExpression> initializers = new();
 
-            generatorContext.DispatchTablePairs(
-                table.Get("overloads").Table,
-                members,
-                exp =>
-                {
-                    initializers.Add(exp);
-                }
-            );
+            generatorContext.DispatchTablePairs(table.Get("overloads").Table, members, exp =>
+            {
+                initializers.Add(exp);
+            });
 
             CodePrimitiveExpression name = new((table["name"] as string));
             CodeTypeOfExpression type = new(table["decltype"] as string);

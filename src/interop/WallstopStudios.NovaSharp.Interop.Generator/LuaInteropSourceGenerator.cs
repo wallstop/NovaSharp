@@ -31,13 +31,11 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 )
                 .Where(static model => model != null);
 
-            context.RegisterSourceOutput(
-                luaObjects,
-                static (sourceContext, model) =>
-                    sourceContext.AddSource(
-                        model.HintName,
-                        SourceText.From(EmitSource(model), Encoding.UTF8)
-                    )
+            context.RegisterSourceOutput(luaObjects, static (sourceContext, model) =>
+                sourceContext.AddSource(
+                    model.HintName,
+                    SourceText.From(EmitSource(model), Encoding.UTF8)
+                )
             );
         }
 

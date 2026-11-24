@@ -231,10 +231,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Modding
             );
 
             string warning = null;
-            manifest.ApplyCompatibility(
-                options,
-                hostCompatibility: null,
-                warningSink: message => warning = message
+            manifest.ApplyCompatibility(options, hostCompatibility: null, warningSink: message =>
+                warning = message
             );
 
             await Assert

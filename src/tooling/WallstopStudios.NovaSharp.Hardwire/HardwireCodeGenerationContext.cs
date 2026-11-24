@@ -127,17 +127,14 @@ namespace WallstopStudios.NovaSharp.Hardwire
                 throw new ArgumentNullException(nameof(table));
             }
 
-            DispatchTablePairs(
-                table,
-                _kickstarterClass.Members,
-                (_, exp) =>
-                    _initStatements.Add(
-                        new CodeMethodInvokeExpression(
-                            new CodeTypeReferenceExpression(typeof(UserData)),
-                            "RegisterType",
-                            exp
-                        )
+            DispatchTablePairs(table, _kickstarterClass.Members, (_, exp) =>
+                _initStatements.Add(
+                    new CodeMethodInvokeExpression(
+                        new CodeTypeReferenceExpression(typeof(UserData)),
+                        "RegisterType",
+                        exp
                     )
+                )
             );
         }
 

@@ -10,20 +10,20 @@ Found 185 undocumented public/internal type declarations.
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CompiledScript.cs
   - line 621: missing XML docs for `ExecuteValues()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/DebugModule.cs
-  - line 1620: missing XML docs for `Value`
-  - line 1625: missing XML docs for `Function`
-  - line 1626: missing XML docs for `Mask`
-  - line 1627: missing XML docs for `Count`
-  - line 1640: missing XML docs for `Upvalue`
-  - line 1642: missing XML docs for `ReferenceId`
-  - line 1644: missing XML docs for `ToString()`
-  - line 1655: missing XML docs for `Name`
-  - line 1657: missing XML docs for `Type`
-  - line 1659: missing XML docs for `TryIndex()`
-  - line 1671: missing XML docs for `SetIndex()`
-  - line 1682: missing XML docs for `AsString()`
-  - line 1692: missing XML docs for `TryMetaIndex()`
-  - line 1698: missing XML docs for `IsTypeCompatible()`
+  - line 1617: missing XML docs for `Value`
+  - line 1622: missing XML docs for `Function`
+  - line 1623: missing XML docs for `Mask`
+  - line 1624: missing XML docs for `Count`
+  - line 1637: missing XML docs for `Upvalue`
+  - line 1639: missing XML docs for `ReferenceId`
+  - line 1641: missing XML docs for `ToString()`
+  - line 1652: missing XML docs for `Name`
+  - line 1654: missing XML docs for `Type`
+  - line 1656: missing XML docs for `TryIndex()`
+  - line 1668: missing XML docs for `SetIndex()`
+  - line 1679: missing XML docs for `AsString()`
+  - line 1689: missing XML docs for `TryMetaIndex()`
+  - line 1695: missing XML docs for `IsTypeCompatible()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/IO/FileUserDataDescriptor.cs
   - line 22: missing XML docs for `Name`
   - line 24: missing XML docs for `Type`
@@ -157,9 +157,9 @@ Found 185 undocumented public/internal type declarations.
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs
   - line 626: missing XML docs for `BeginDefaultOptionsScope()`
   - line 734: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
-  - line 4817: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
-  - line 4825: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
-  - line 4952: missing XML docs for `Dispose()`
+  - line 4811: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
+  - line 4819: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
+  - line 4946: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf2.cs
   - line 198: missing XML docs for `FromT0()`
   - line 211: missing XML docs for `FromT1()`
@@ -210,15 +210,15 @@ Found 185 undocumented public/internal type declarations.
   - line 110: missing XML docs for `DeleteFile()`
   - line 112: missing XML docs for `MoveFile()`
   - line 114: missing XML docs for `ExecuteCommand()`
-  - line 212: missing XML docs for `ExitFast()`
-  - line 252: missing XML docs for `class Program`
-  - line 393: missing XML docs for `Main()`
-  - line 1058: missing XML docs for `CanRead`
-  - line 1060: missing XML docs for `CanSeek`
-  - line 1062: missing XML docs for `CanWrite`
-  - line 1064: missing XML docs for `Length`
-  - line 1072: missing XML docs for `Flush()`
-  - line 1074: missing XML docs for `Write()`
-  - line 1079: missing XML docs for `Read()`
-  - line 1084: missing XML docs for `Seek()`
-  - line 1089: missing XML docs for `SetLength()`
+  - line 211: missing XML docs for `ExitFast()`
+  - line 251: missing XML docs for `class Program`
+  - line 392: missing XML docs for `Main()`
+  - line 1057: missing XML docs for `CanRead`
+  - line 1059: missing XML docs for `CanSeek`
+  - line 1061: missing XML docs for `CanWrite`
+  - line 1063: missing XML docs for `Length`
+  - line 1071: missing XML docs for `Flush()`
+  - line 1073: missing XML docs for `Write()`
+  - line 1078: missing XML docs for `Read()`
+  - line 1083: missing XML docs for `Seek()`
+  - line 1088: missing XML docs for `SetLength()`

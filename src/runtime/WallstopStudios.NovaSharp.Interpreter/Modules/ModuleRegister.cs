@@ -430,8 +430,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             );
             Table table = CreateModuleNamespace(gtable, descriptor.ModuleNamespace);
             Script ownerScript = table.OwnerScript;
-            LuaCompatibilityVersion scriptVersion =
-                ownerScript?.CompatibilityVersion ?? Script.GlobalOptions.CompatibilityVersion;
+            LuaCompatibilityVersion scriptVersion = ownerScript?.CompatibilityVersion
+                ?? Script.GlobalOptions.CompatibilityVersion;
 
             ModuleMethodRegistration[] methodActions = descriptor.MethodActions;
             for (int i = 0; i < methodActions.Length; i++)

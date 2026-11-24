@@ -83,7 +83,7 @@ EOF
 
 if [[ -z "${DOTNET_ROLL_FORWARD:-}" ]]; then
     export DOTNET_ROLL_FORWARD="Major"
-    echo "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 hosts can run the net8 test runner."
+    echo "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so newer .NET runtimes can run the .NET 8 test host."
 fi
 
 # Suppress TUnit ASCII banner and telemetry messages
@@ -113,14 +113,8 @@ dotnet build "$solution" -c "$configuration" -m "${build_restore_flag[@]}"
 
 if (( run_tests )); then
     echo "Running tests for $test_project..."
-    test_restore_flag=()
-    if (( ! restore_packages )); then
-        test_restore_flag=(--no-restore)
-    fi
-    # Microsoft.Testing.Platform options (--report-trx, --results-directory) must be passed after --
-    dotnet test "$test_project" -c "$configuration" --no-build \
-        "${test_restore_flag[@]}" \
-        -- --report-trx --report-trx-filename NovaSharpInterpreterTUnit.trx \
+    dotnet test --project "$test_project" -c "$configuration" --no-build \
+        --report-trx --report-trx-filename NovaSharpInterpreterTUnit.trx \
         --results-directory "$test_results_dir"
     rm -f "$test_results_placeholder"
 fi

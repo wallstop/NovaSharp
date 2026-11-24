@@ -92,8 +92,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 using Stream stream = fs.OpenRead(manifestPath);
                 ModManifest manifest = ModManifest.Load(stream);
 
-                LuaCompatibilityVersion hostVersion =
-                    hostCompatibility ?? Script.GlobalOptions.CompatibilityVersion;
+                LuaCompatibilityVersion hostVersion = hostCompatibility
+                    ?? Script.GlobalOptions.CompatibilityVersion;
 
                 manifest.ApplyCompatibility(options, hostVersion, warningSink);
 

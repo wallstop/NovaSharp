@@ -251,8 +251,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
                 return File.Exists(path) ? path : null;
             }
 
-            string candidate =
-                EvaluateCandidate(workingDirectory)
+            string candidate = EvaluateCandidate(workingDirectory)
                 ?? EvaluateCandidate(testDirectory)
                 ?? EvaluateCandidate(baseDirectory)
                 ?? EvaluateCandidate(runtimeDirectory);

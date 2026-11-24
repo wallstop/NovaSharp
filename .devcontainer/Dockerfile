@@ -12,7 +12,7 @@ ARG TARGETARCH=amd64
 # Pinned checksum for Microsoft package repository bootstrap package.
 ARG MS_PACKAGES_DEB_SHA256=8434dcb8c346dc95fbd63dbece056c343704590b58b6a5c323d39acf52bf0b48
 # Keep this in sync with global.json. scripts/lint/check-tooling-consistency.py enforces it.
-ARG DOTNET_SDK_MAJOR_MINOR=9.0
+ARG DOTNET_SDK_MAJOR_MINOR=10.0
 # Pinned Lua source version and checksum.
 ARG LUA55_VERSION=5.5.0
 ARG LUA55_SHA256=57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d

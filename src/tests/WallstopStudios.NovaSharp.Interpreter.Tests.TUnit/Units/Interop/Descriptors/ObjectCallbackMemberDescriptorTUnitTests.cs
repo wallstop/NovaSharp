@@ -25,16 +25,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             int invocationCount = 0;
             object capturedObject = null;
             int capturedArgCount = 0;
-            ObjectCallbackMemberDescriptor descriptor = new(
-                "Echo",
-                (obj, ctx, args) =>
-                {
-                    invocationCount++;
-                    capturedObject = obj;
-                    capturedArgCount = args?.Count ?? 0;
-                    return LuaValue.NewNumber(42);
-                }
-            );
+            ObjectCallbackMemberDescriptor descriptor = new("Echo", (obj, ctx, args) =>
+            {
+                invocationCount++;
+                capturedObject = obj;
+                capturedArgCount = args?.Count ?? 0;
+                return LuaValue.NewNumber(42);
+            });
 
             LuaValue result = descriptor.Execute(script, "host", context: null, NoOpArgs);
 

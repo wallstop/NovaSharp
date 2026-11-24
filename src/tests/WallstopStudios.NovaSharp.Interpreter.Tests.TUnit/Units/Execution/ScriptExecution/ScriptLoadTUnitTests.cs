@@ -834,9 +834,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 {
                     LoaderMode.String => Source,
                     LoaderMode.Bytes => Encoding.UTF8.GetBytes(Source),
-                    LoaderMode.Stream => new TrackingStream(
-                        Encoding.UTF8.GetBytes(Source),
-                        () => StreamDisposed = true
+                    LoaderMode.Stream => new TrackingStream(Encoding.UTF8.GetBytes(Source), () =>
+                        StreamDisposed = true
                     ),
                     LoaderMode.Null => null,
                     LoaderMode.Unsupported => new object(),

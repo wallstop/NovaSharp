@@ -28,13 +28,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
         {
             (Script script, BreakpointRecordingDebugger debugger) = RunScriptAndAttachDebugger();
 
-            DebugService service =
-                debugger.DebugService
+            DebugService service = debugger.DebugService
                 ?? throw new InvalidOperationException("Debugger never received DebugService.");
             await Assert.That(service.OwnerScript).IsSameReferenceAs(script).ConfigureAwait(false);
 
-            SourceCode source =
-                debugger.LastSourceCode
+            SourceCode source = debugger.LastSourceCode
                 ?? throw new InvalidOperationException("Debugger never received source code.");
 
             HashSet<int> requested = new(debugger.RequestedBreakpoints);
@@ -55,8 +53,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
         public async Task ResetBreakpointsThrowsWhenSourceCodeIsNull()
         {
             (_, BreakpointRecordingDebugger debugger) = RunScriptAndAttachDebugger();
-            DebugService service =
-                debugger.DebugService
+            DebugService service = debugger.DebugService
                 ?? throw new InvalidOperationException("Debugger never received DebugService.");
 
             HashSet<int> lines = new(debugger.RequestedBreakpoints);
@@ -71,8 +68,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
         public async Task ResetBreakpointsThrowsWhenLinesSetIsNull()
         {
             (_, BreakpointRecordingDebugger debugger) = RunScriptAndAttachDebugger();
-            DebugService service =
-                debugger.DebugService
+            DebugService service = debugger.DebugService
                 ?? throw new InvalidOperationException("Debugger never received DebugService.");
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>

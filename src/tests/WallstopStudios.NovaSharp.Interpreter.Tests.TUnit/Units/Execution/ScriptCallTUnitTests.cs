@@ -1332,9 +1332,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            LuaValue target = CreateTableValuedCallChain(
-                script,
-                (_, _, _) => LuaValue.NewString("unexpected")
+            LuaValue target = CreateTableValuedCallChain(script, (_, _, _) =>
+                LuaValue.NewString("unexpected")
             );
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
@@ -1398,10 +1397,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            LuaValue target = CreateTableValuedCallChain(
-                script,
-                (targetTable, proxyTable, args) =>
-                    SummarizeChainedCallArguments(targetTable, proxyTable, args)
+            LuaValue target = CreateTableValuedCallChain(script, (targetTable, proxyTable, args) =>
+                SummarizeChainedCallArguments(targetTable, proxyTable, args)
             );
 
             LuaValue result = CallLegacyCallbackWithSequentialArguments(script, target, arity);
@@ -1420,10 +1417,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(CoreModulePresets.Complete);
-            LuaValue target = CreateTableValuedCallChain(
-                script,
-                (targetTable, proxyTable, args) =>
-                    SummarizeChainedCallArguments(targetTable, proxyTable, args)
+            LuaValue target = CreateTableValuedCallChain(script, (targetTable, proxyTable, args) =>
+                SummarizeChainedCallArguments(targetTable, proxyTable, args)
             );
 
             LuaValue result = CallLegacyCallbackWithSequentialArguments(script, target, arity);
@@ -2724,9 +2719,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            LuaValue target = CreateTableValuedCallChain(
-                script,
-                (_, _, _) => LuaValue.NewString("unexpected")
+            LuaValue target = CreateTableValuedCallChain(script, (_, _, _) =>
+                LuaValue.NewString("unexpected")
             );
             LuaValue[] args = CreateSequentialArguments(5);
 
@@ -2744,10 +2738,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            LuaValue target = CreateTableValuedCallChain(
-                script,
-                (targetTable, proxyTable, args) =>
-                    SummarizeChainedCallArguments(targetTable, proxyTable, args)
+            LuaValue target = CreateTableValuedCallChain(script, (targetTable, proxyTable, args) =>
+                SummarizeChainedCallArguments(targetTable, proxyTable, args)
             );
             LuaValue[] args = CreateSequentialArguments(5);
 

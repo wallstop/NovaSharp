@@ -175,9 +175,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return known;
             }
 
-            return UnknownTypeCache.GetOrAdd(
-                type,
-                static t => InvariantString.ToLowerInvariantIfNeeded(t.ToString())
+            return UnknownTypeCache.GetOrAdd(type, static t =>
+                InvariantString.ToLowerInvariantIfNeeded(t.ToString())
             );
         }
 

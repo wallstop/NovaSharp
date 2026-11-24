@@ -63,24 +63,21 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.SDK
                 variables = new { };
             }
             Type type = variables.GetType();
-            return Variable.Replace(
-                format,
-                match =>
+            return Variable.Replace(format, match =>
+            {
+                string name = match.Groups[1].Value;
+                if (!underscoredOnly || name.StartsWith('_'))
                 {
-                    string name = match.Groups[1].Value;
-                    if (!underscoredOnly || name.StartsWith('_'))
+                    PropertyInfo property = Framework.Do.GetProperty(type, name);
+                    if (property != null)
                     {
-                        PropertyInfo property = Framework.Do.GetProperty(type, name);
-                        if (property != null)
-                        {
-                            object value = property.GetValue(variables, null);
-                            return value.ToString();
-                        }
-                        return '{' + name + ": not found}";
+                        object value = property.GetValue(variables, null);
+                        return value.ToString();
                     }
-                    return match.Groups[0].Value;
+                    return '{' + name + ": not found}";
                 }
-            );
+                return match.Groups[0].Value;
+            });
         }
 
         /**

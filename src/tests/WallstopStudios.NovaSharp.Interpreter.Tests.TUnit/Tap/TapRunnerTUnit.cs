@@ -42,8 +42,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
         {
             ArgumentNullException.ThrowIfNull(filename);
             _file = filename;
-            _compatibilityVersion =
-                compatibilityVersion ?? Script.GlobalOptions.CompatibilityVersion;
+            _compatibilityVersion = compatibilityVersion
+                ?? Script.GlobalOptions.CompatibilityVersion;
         }
 
         public static void Run(
@@ -80,8 +80,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
                 script.Options.ScriptLoader = new FileSystemScriptLoader();
             }
             ConfigureScriptLoader(script);
-            string suiteDirectory =
-                Path.GetDirectoryName(GetAbsoluteTestPath(_file)) ?? GetTestDirectory();
+            string suiteDirectory = Path.GetDirectoryName(GetAbsoluteTestPath(_file))
+                ?? GetTestDirectory();
             SeedTapGlobals(script, _compatibilityVersion, suiteDirectory);
             string friendlyName = _file.Replace('\\', '/');
             try

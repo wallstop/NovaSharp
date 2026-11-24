@@ -778,9 +778,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
                 return known;
             }
 
-            return CoroutineStateNameCache.GetOrAdd(
-                state,
-                static s => InvariantString.ToLowerInvariantIfNeeded(s.ToString())
+            return CoroutineStateNameCache.GetOrAdd(state, static s =>
+                InvariantString.ToLowerInvariantIfNeeded(s.ToString())
             );
         }
 

@@ -169,8 +169,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Platforms
                     Assembly[] assemblyOverride = TestHooks
                         .GetAssemblyEnumerationOverride()
                         ?.Invoke();
-                    Assembly[] loadedAssemblies =
-                        assemblyOverride?.Where(a => a != null).ToArray()
+                    Assembly[] loadedAssemblies = assemblyOverride?.Where(a => a != null).ToArray()
                         ?? AppDomain.CurrentDomain.GetAssemblies();
                     bool unityTypeFound = false;
 

@@ -27,10 +27,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
                 registry =>
-                    registry.SetScriptToClrCustomConversion(
-                        DataType.String,
-                        typeof(object),
-                        dv => $"converted:{dv.String}"
+                    registry.SetScriptToClrCustomConversion(DataType.String, typeof(object), dv =>
+                        $"converted:{dv.String}"
                     )
             );
 
@@ -568,10 +566,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         {
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
                 registry =>
-                    registry.SetScriptToClrCustomConversion(
-                        DataType.Boolean,
-                        typeof(string),
-                        dv => dv.Boolean ? "yes" : "no"
+                    registry.SetScriptToClrCustomConversion(DataType.Boolean, typeof(string), dv =>
+                        dv.Boolean ? "yes" : "no"
                     )
             );
 

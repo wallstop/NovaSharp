@@ -82,9 +82,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             LuaValue handle = Create(executionContext, args);
-            return LuaValue.NewCallbackView(
-                executionContext.Script,
-                callArgs => ResumeCoroutineWithArguments(handle.Coroutine, callArgs, 0)
+            return LuaValue.NewCallbackView(executionContext.Script, callArgs =>
+                ResumeCoroutineWithArguments(handle.Coroutine, callArgs, 0)
             );
         }
 

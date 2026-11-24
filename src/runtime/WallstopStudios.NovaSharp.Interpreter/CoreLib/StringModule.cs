@@ -69,93 +69,73 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // __add: a + b
             stringMetatable.Set(
                 Metamethods.Add,
-                LuaValue.NewCallbackView(
-                    ownerScript,
-                    static (ctx, args) =>
-                        StringBinaryArithmetic(ctx, args, Metamethods.Add, LuaNumber.Add)
+                LuaValue.NewCallbackView(ownerScript, static (ctx, args) =>
+                    StringBinaryArithmetic(ctx, args, Metamethods.Add, LuaNumber.Add)
                 )
             );
 
             // __sub: a - b
             stringMetatable.Set(
                 Metamethods.Sub,
-                LuaValue.NewCallbackView(
-                    ownerScript,
-                    static (ctx, args) =>
-                        StringBinaryArithmetic(ctx, args, Metamethods.Sub, LuaNumber.Subtract)
+                LuaValue.NewCallbackView(ownerScript, static (ctx, args) =>
+                    StringBinaryArithmetic(ctx, args, Metamethods.Sub, LuaNumber.Subtract)
                 )
             );
 
             // __mul: a * b
             stringMetatable.Set(
                 Metamethods.Mul,
-                LuaValue.NewCallbackView(
-                    ownerScript,
-                    static (ctx, args) =>
-                        StringBinaryArithmetic(ctx, args, Metamethods.Mul, LuaNumber.Multiply)
+                LuaValue.NewCallbackView(ownerScript, static (ctx, args) =>
+                    StringBinaryArithmetic(ctx, args, Metamethods.Mul, LuaNumber.Multiply)
                 )
             );
 
             // __div: a / b
             stringMetatable.Set(
                 Metamethods.Div,
-                LuaValue.NewCallbackView(
-                    ownerScript,
-                    static (ctx, args) =>
-                        StringBinaryArithmetic(ctx, args, Metamethods.Div, LuaNumber.Divide)
+                LuaValue.NewCallbackView(ownerScript, static (ctx, args) =>
+                    StringBinaryArithmetic(ctx, args, Metamethods.Div, LuaNumber.Divide)
                 )
             );
 
             // __mod: a % b
             stringMetatable.Set(
                 Metamethods.Mod,
-                LuaValue.NewCallbackView(
-                    ownerScript,
-                    static (ctx, args) =>
-                        StringBinaryArithmetic(
-                            ctx,
-                            args,
-                            Metamethods.Mod,
-                            static (a, b) => LuaNumber.Modulo(a, b, LuaCompatibilityVersion.Lua54)
-                        )
+                LuaValue.NewCallbackView(ownerScript, static (ctx, args) =>
+                    StringBinaryArithmetic(ctx, args, Metamethods.Mod, static (a, b) =>
+                        LuaNumber.Modulo(a, b, LuaCompatibilityVersion.Lua54)
+                    )
                 )
             );
 
             // __pow: a ^ b
             stringMetatable.Set(
                 Metamethods.Pow,
-                LuaValue.NewCallbackView(
-                    ownerScript,
-                    static (ctx, args) =>
-                        StringBinaryArithmetic(ctx, args, Metamethods.Pow, LuaNumber.Power)
+                LuaValue.NewCallbackView(ownerScript, static (ctx, args) =>
+                    StringBinaryArithmetic(ctx, args, Metamethods.Pow, LuaNumber.Power)
                 )
             );
 
             // __idiv: a // b (floor division)
             stringMetatable.Set(
                 Metamethods.IDiv,
-                LuaValue.NewCallbackView(
-                    ownerScript,
-                    static (ctx, args) =>
-                        StringBinaryArithmetic(ctx, args, Metamethods.IDiv, LuaNumber.FloorDivide)
+                LuaValue.NewCallbackView(ownerScript, static (ctx, args) =>
+                    StringBinaryArithmetic(ctx, args, Metamethods.IDiv, LuaNumber.FloorDivide)
                 )
             );
 
             // __unm: -a (unary minus)
             stringMetatable.Set(
                 Metamethods.Unm,
-                LuaValue.NewCallbackView(
-                    ownerScript,
-                    static (ctx, args) =>
+                LuaValue.NewCallbackView(ownerScript, static (ctx, args) =>
+                {
+                    LuaNumber? a = CoerceToLuaNumber(args[0]);
+                    if (!a.HasValue)
                     {
-                        LuaNumber? a = CoerceToLuaNumber(args[0]);
-                        if (!a.HasValue)
-                        {
-                            throw ScriptRuntimeException.ArithmeticOnNonNumber(args[0]);
-                        }
-                        return LuaValue.NewNumber(LuaNumber.Negate(a.Value));
+                        throw ScriptRuntimeException.ArithmeticOnNonNumber(args[0]);
                     }
-                )
+                    return LuaValue.NewNumber(LuaNumber.Negate(a.Value));
+                })
             );
         }
 

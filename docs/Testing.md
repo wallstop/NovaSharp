@@ -11,7 +11,9 @@ NovaSharp ships with a comprehensive test suite that blends historical Lua fixtu
 ## Running the Tests Locally
 
 ```bash
-dotnet test src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release -- --report-trx --report-trx-filename NovaSharpInterpreterTUnit.trx
+DOTNET_ROLL_FORWARD=Major dotnet test \
+  --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj \
+  -c Release --report-trx --report-trx-filename NovaSharpInterpreterTUnit.trx
 ```
 
 - Produces a standards-based TRX file under `TestResults/` (or the supplied `--results-directory`) so failures can be inspected with the test explorer of your choice.
@@ -19,9 +21,9 @@ dotnet test src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Wallstop
 
 ### Microsoft.Testing.Platform runner
 
-- `global.json` pins `test.runner` to `Microsoft.Testing.Platform`, so every `dotnet test` invocation must pass an explicit target path, solution, or test module. Use the positional project path shown above; test-platform options still go after the `--` separator.
+- The .NET 10 SDK selects Microsoft.Testing.Platform through `global.json`. Use `--project` when selecting a test project from the repository root and pass runner options directly to `dotnet test`.
 - The interpreter TUnit suite completes quickly on a many-core workstation; expect a slower first run when a clean build is required because the Microsoft.Testing.Platform entry point is re-generated.
-- Visual Studio and Rider inherit the same configuration because the runner is set in `global.json`; if a local command fails with “VSTest target is no longer supported”, re-run it with the explicit target path shown above so the Microsoft.Testing.Platform mode is engaged.
+- IDEs that honor the SDK test runner configuration use the Microsoft.Testing.Platform setting in `global.json`.
 
 ### TUnit-first policy
 
@@ -59,9 +61,7 @@ bash ./scripts/build/build.sh
 pwsh ./scripts/coverage/coverage.ps1
 ```
 
-- If the host only has .NET 9 installed (common on new Ubuntu images), set `DOTNET_ROLL_FORWARD=Major` when invoking the script (PowerShell or Bash) so the .NET 9 runtime can execute the net8.0 testhost.
-
-- Restores local tools, builds the solution in Release, and drives `dotnet test` through the `coverlet.console` wrapper so the TUnit suites execute exactly as they do in CI.
+- Restores local tools, builds the solution in Release, and runs the TUnit test application through the `coverlet.console` wrapper.
 
 - Emits LCOV, Cobertura, and OpenCover artefacts under `artifacts/coverage`, with the TRX test logs in `artifacts/coverage/test-results`.
 
@@ -69,7 +69,7 @@ pwsh ./scripts/coverage/coverage.ps1
 
 - Pass `-SkipBuild` to reuse existing binaries and `-Configuration Debug` to collect non-Release stats.
 
-- On macOS/Linux without PowerShell, run `bash ./scripts/coverage/coverage.sh` (identical flags/behaviour). Both scripts automatically set `DOTNET_ROLL_FORWARD=Major` when it isn’t already defined so .NET 9 runtimes can execute the net8.0 testhost; override the variable if you need different roll-forward behaviour.
+- On macOS/Linux without PowerShell, run `bash ./scripts/coverage/coverage.sh` (identical flags/behaviour). Both scripts automatically set `DOTNET_ROLL_FORWARD=Major` when it isn’t already defined so newer .NET runtimes can execute the .NET 8 test host. Set the variable explicitly to use a different roll-forward policy.
 
 - Both coverage helpers honour gating settings: set `COVERAGE_GATING_MODE` to `monitor` (warn) or `enforce` (fail), and override the per-metric targets via `COVERAGE_GATING_TARGET_LINE`, `COVERAGE_GATING_TARGET_BRANCH`, and `COVERAGE_GATING_TARGET_METHOD`. CI now exports `COVERAGE_GATING_MODE=enforce` with **80 % line / 80 % branch / 80 % method** thresholds so coverage dips fail fast; set the mode to `monitor` locally if you need a warning-only rehearsal. To mirror the enforced gate (the default in CI), export the same settings before rerunning the script:
 
@@ -191,7 +191,8 @@ Validation checklist:
 ```powershell
 dotnet build src/debuggers/WallstopStudios.NovaSharp.VsCodeDebugger/WallstopStudios.NovaSharp.VsCodeDebugger.csproj -c Release -nologo
 dotnet build src/debuggers/WallstopStudios.NovaSharp.RemoteDebugger/WallstopStudios.NovaSharp.RemoteDebugger.csproj -c Release -nologo
-dotnet test src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj -c Release --filter "FullyQualifiedName~RemoteDebugger"
+$env:DOTNET_ROLL_FORWARD = 'Major'
+dotnet test --project src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj -c Release
 ```
 
 Document new suppressions or analyzer exclusions in the closest authoritative analyzer documentation (with the CA rule, justification, and follow-up owner) before merging.

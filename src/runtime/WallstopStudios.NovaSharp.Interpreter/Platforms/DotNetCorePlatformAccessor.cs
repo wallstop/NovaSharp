@@ -200,8 +200,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Platforms
 
             try
             {
-                using Process process =
-                    Process.Start(startInfo)
+                using Process process = Process.Start(startInfo)
                     ?? throw new InvalidOperationException("Failed to start command process.");
                 process.WaitForExit();
                 return process.ExitCode;
