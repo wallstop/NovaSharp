@@ -5,7 +5,7 @@ Advance [PLAN.md](PLAN.md) through a green PR and merge it.
 ## Objective
 
 - Carry forward any in-progress work.
-- Address any [Open Issues](https://github.com/wallstop/NovaSharp/issues), paginated, to get a full list. If you only get 50, you have not gotten everything, ordered by most-gameplay impacting first.
+- Inventory [open issues](https://github.com/Ambiguous-Interactive/NovaSharp/issues) through the final page and prioritize issues by gameplay impact. Confirm pagination is exhausted even when the result count is exactly 50.
 - Drive any open dependency to green (incorporate) if relevant.
 - Ensure main CI is green; if it is not, RCA the issue and implement a comprehensive fix.
 - See if there were any draft/in-progress PRs from previous sessions and drive those to completion.
