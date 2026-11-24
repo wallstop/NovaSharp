@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Numerics;
+    using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
     using Compatibility;
     using Cysharp.Text;
@@ -721,6 +722,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _isInteger = isInteger;
         }
 
+        /// <summary>Returns whether the profile uses only floating-point numbers.</summary>
+        internal static bool UsesFloatOnlyProfile(LuaCompatibilityVersion version)
+        {
+            return version is LuaCompatibilityVersion.Lua51 or LuaCompatibilityVersion.Lua52;
+        }
+
+        /// <summary>
+        /// Projects integer storage into a double for the float-only profiles.
+        /// </summary>
+        internal LuaNumber ForProfile(LuaCompatibilityVersion version)
+        {
+            return IsInteger && UsesFloatOnlyProfile(version) ? FromFloat(_integer) : this;
+        }
+
         /// <summary>
         /// Adds two LuaNumbers following Lua semantics.
         /// Integer + Integer = Integer (with wrapping overflow per Lua spec).
@@ -1022,42 +1037,110 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Compares two LuaNumbers for equality following Lua semantics.
         /// An integer and float are equal if they represent the same mathematical value.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Equal(LuaNumber a, LuaNumber b)
         {
-            if (a.IsInteger && b.IsInteger)
+            if (a.IsInteger)
             {
-                return a._integer == b._integer;
+                if (b.IsInteger)
+                {
+                    return a._integer == b._integer;
+                }
+
+                return InExactDoubleRange(a._integer)
+                    ? a._integer == b._float
+                    : TryCompareIntegerToFloat(a._integer, b._float, out int order) && order == 0;
             }
-            if (a.IsFloat && b.IsFloat)
+
+            if (!b.IsInteger)
             {
                 return a._float == b._float;
             }
-            // Mixed comparison: integer vs float
-            return a.ToDouble == b.ToDouble;
+
+            return InExactDoubleRange(b._integer)
+                ? a._float == b._integer
+                : TryCompareIntegerToFloat(b._integer, a._float, out int reverseOrder)
+                    && reverseOrder == 0;
         }
 
         /// <summary>
         /// Compares two LuaNumbers for less-than following Lua semantics.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool LessThan(LuaNumber a, LuaNumber b)
         {
-            if (a.IsInteger && b.IsInteger)
+            if (a.IsInteger)
             {
-                return a._integer < b._integer;
+                if (b.IsInteger)
+                {
+                    return a._integer < b._integer;
+                }
+
+                return InExactDoubleRange(a._integer)
+                    ? a._integer < b._float
+                    : TryCompareIntegerToFloat(a._integer, b._float, out int order) && order < 0;
             }
-            return a.ToDouble < b.ToDouble;
+
+            if (!b.IsInteger)
+            {
+                return a._float < b._float;
+            }
+
+            return InExactDoubleRange(b._integer)
+                ? a._float < b._integer
+                : TryCompareIntegerToFloat(b._integer, a._float, out int reverseOrder)
+                    && reverseOrder > 0;
         }
 
         /// <summary>
         /// Compares two LuaNumbers for less-than-or-equal following Lua semantics.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool LessThanOrEqual(LuaNumber a, LuaNumber b)
         {
-            if (a.IsInteger && b.IsInteger)
+            if (a.IsInteger)
             {
-                return a._integer <= b._integer;
+                if (b.IsInteger)
+                {
+                    return a._integer <= b._integer;
+                }
+
+                return InExactDoubleRange(a._integer)
+                    ? a._integer <= b._float
+                    : TryCompareIntegerToFloat(a._integer, b._float, out int order) && order <= 0;
             }
-            return a.ToDouble <= b.ToDouble;
+
+            if (!b.IsInteger)
+            {
+                return a._float <= b._float;
+            }
+
+            return InExactDoubleRange(b._integer)
+                ? a._float <= b._integer
+                : TryCompareIntegerToFloat(b._integer, a._float, out int reverseOrder)
+                    && reverseOrder >= 0;
+        }
+
+        /// <summary>Tests numeric equality in the active Lua profile.</summary>
+        internal static bool Equal(LuaNumber a, LuaNumber b, LuaCompatibilityVersion version)
+        {
+            return UsesFloatOnlyProfile(version) ? a.ToDouble == b.ToDouble : Equal(a, b);
+        }
+
+        /// <summary>Tests strict numeric ordering in the active Lua profile.</summary>
+        internal static bool LessThan(LuaNumber a, LuaNumber b, LuaCompatibilityVersion version)
+        {
+            return UsesFloatOnlyProfile(version) ? a.ToDouble < b.ToDouble : LessThan(a, b);
+        }
+
+        /// <summary>Tests inclusive numeric ordering in the active Lua profile.</summary>
+        internal static bool LessThanOrEqual(
+            LuaNumber a,
+            LuaNumber b,
+            LuaCompatibilityVersion version
+        )
+        {
+            return UsesFloatOnlyProfile(version) ? a.ToDouble <= b.ToDouble : LessThanOrEqual(a, b);
         }
 
         /// <summary>
@@ -1291,9 +1374,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return CompareFloats(_float, other._float);
             }
 
-            return IsInteger
-                ? CompareIntegerToFloat(_integer, other._float)
-                : -CompareIntegerToFloat(other._integer, _float);
+            if (IsInteger)
+            {
+                return TryCompareIntegerToFloat(_integer, other._float, out int order) ? order : 0;
+            }
+
+            return TryCompareIntegerToFloat(other._integer, _float, out int reverseOrder)
+                ? -reverseOrder
+                : 0;
         }
 
         private static int CompareFloats(double left, double right)
@@ -1306,28 +1394,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return left > right ? 1 : 0;
         }
 
-        private static int CompareIntegerToFloat(long integer, double floating)
+        /// <summary>Checks the range where binary64 represents every integer exactly.</summary>
+        internal static bool InExactDoubleRange(long value)
+        {
+            // Binary64 represents every integer from -2^53 through 2^53.
+            const long limit = 1L << 53;
+            return unchecked((ulong)(value + limit)) <= 2UL * limit;
+        }
+
+        private static bool TryCompareIntegerToFloat(long integer, double floating, out int order)
         {
             if (double.IsNaN(floating))
             {
-                return 0;
+                order = 0;
+                return false;
             }
 
             if (floating < (double)long.MinValue)
             {
-                return 1;
+                order = 1;
+                return true;
             }
 
             // The upper bound is exclusive: converting long.MaxValue to double rounds to 2^63.
             if (floating >= -(double)long.MinValue)
             {
-                return -1;
+                order = -1;
+                return true;
             }
 
             // Compare in integer space first, then inspect the fraction only when they coincide.
             long truncated = (long)floating;
-            int comparison = integer.CompareTo(truncated);
-            return comparison != 0 ? comparison : CompareFloats(truncated, floating);
+            order = integer.CompareTo(truncated);
+            if (order == 0)
+            {
+                order = CompareFloats(truncated, floating);
+            }
+
+            return true;
         }
 
         /// <inheritdoc />
@@ -1341,8 +1445,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return hash.ToHashCode();
             }
 
-            // For floats that represent integers, use the same hash as the integer
-            // This ensures Equal values have equal hash codes
+            // Both signs of floating zero compare equal to integer zero.
+            if (_float == 0.0)
+            {
+                hash.AddLong(0);
+                return hash.ToHashCode();
+            }
+
+            // Integral floats share the hash of their matching integer.
             if (TryConvertToInteger(_float, out long intValue))
             {
                 hash.AddLong(intValue);

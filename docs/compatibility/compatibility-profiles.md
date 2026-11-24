@@ -12,6 +12,18 @@ NovaSharp targets Lua 5.4.8 today, but mod authors often need to pin older seman
 
 The `LuaCompatibilityProfile` exposes boolean feature toggles that map directly to spec additions between Lua versions. Downstream work (parser tweaks, library shims, analyzer hints) switches on these flags rather than hard-coding version checks.
 
+### Numeric behavior
+
+Lua 5.1 and 5.2 use doubles for script arithmetic and comparisons. Lua 5.3
+through 5.5 distinguish integers from floats and compare their actual values,
+including for `rawequal`. An integer and a float with the same value share a
+table key.
+
+A script-owned table uses the numeric key rules of the profile active when the
+table was created. Changing `Script.Options.CompatibilityVersion` applies the
+new key rules to newly created tables. Existing tables keep their key rules so
+entries remain accessible. Ownerless tables use exact numeric keys.
+
 ### Runtime Metadata
 
 Every globals table now exposes `_G._NovaSharp.luacompat`, which holds the active compatibility profile display name (for example, "Lua 5.3"). Hosts and modding tools can read this value to confirm which feature set a script is currently running under without reaching back into the hosting API.

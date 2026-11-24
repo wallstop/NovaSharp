@@ -1496,10 +1496,7 @@ namespace NovaSharp
                     hash.AddInt(Boolean ? 1 : 0);
                     return hash.ToHashCode();
                 case DataType.Number:
-                    // Use LuaNumber's hash code to ensure equal numbers have equal hashes
-                    hash.AddInt(
-                        Number == 0.0 ? LuaNumber.Zero.GetHashCode() : LuaNumber.GetHashCode()
-                    );
+                    hash.AddInt(LuaNumber.GetHashCode());
                     return hash.ToHashCode();
                 case DataType.String:
                     hash.Add(String);
@@ -1552,6 +1549,12 @@ namespace NovaSharp
         /// <inheritdoc />
         public bool Equals(LuaValue other)
         {
+            return Equals(other, LuaCompatibilityVersion.Latest);
+        }
+
+        /// <summary>Compares values using the script profile for numeric equality.</summary>
+        internal bool Equals(LuaValue other, LuaCompatibilityVersion version)
+        {
             if (
                 (other.Type == DataType.Nil && Type == DataType.Void)
                 || (other.Type == DataType.Void && Type == DataType.Nil)
@@ -1573,8 +1576,7 @@ namespace NovaSharp
                 case DataType.Boolean:
                     return Boolean == other.Boolean;
                 case DataType.Number:
-                    // Use LuaNumber comparison to preserve integer precision at boundaries
-                    return LuaNumber.Equal(LuaNumber, other.LuaNumber);
+                    return LuaNumber.Equal(LuaNumber, other.LuaNumber, version);
                 case DataType.String:
                     return String == other.String;
                 case DataType.Function:

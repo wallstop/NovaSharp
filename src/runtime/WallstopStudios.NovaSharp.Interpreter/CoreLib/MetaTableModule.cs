@@ -185,7 +185,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaValue v1 = args[0];
             LuaValue v2 = args[1];
 
-            return LuaValue.FromBoolean(v1.Equals(v2));
+            return LuaValue.FromBoolean(
+                v1.Equals(v2, executionContext.Script.CompatibilityVersion)
+            );
         }
 
         //rawlen (v)

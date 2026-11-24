@@ -1,8 +1,8 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Tree/Expressions/BinaryOperatorExpressionTUnitTests.cs:AdditionPreservesIntegerSubtype
--- @test: BinaryOperatorExpressionTUnitTests.AdditionPreservesIntegerSubtype
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Tree/Expressions/BinaryOperatorExpressionTUnitTests.cs:AdditionRespectsTheActiveNumericProfile
+-- @test: BinaryOperatorExpressionTUnitTests.AdditionRespectsTheActiveNumericProfile
 -- Integer addition should preserve integer subtype in Lua 5.3+
 
 -- Test: Integer + integer should produce integer
