@@ -50,8 +50,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public Script OwnerScript { get; private set; }
 
-        internal bool IsIteratorMetamethodDispatcher { get; set; }
-
         /// <summary>
         /// Shortcut for an empty closure
         /// </summary>

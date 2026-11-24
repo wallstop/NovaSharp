@@ -1,11 +1,15 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:130
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:132
 -- @test: ValueSlotSemanticsTUnitTests.GenericForClosingValueLivesUntilExit
+-- Compatibility notes: Test targets Lua 5.4+
 local hasClose = _VERSION == 'Lua 5.4' or _VERSION == 'Lua 5.5'
                 local closed, closeError
-                local closer = setmetatable({}, {__close = function(self, err)
+                local closer = setmetatable({}, {__close = function(...)
+                    local self, err = ...
+                    local expectedCount = _VERSION == 'Lua 5.5' and err == nil and 1 or 2
+                    assert(select('#', ...) == expectedCount, 'closing argument count')
                     closed = closed + 1
                     closeError = err
                 end})

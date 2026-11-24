@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
     using System.Globalization;
     using System.IO;
     using System.Reflection;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using global::NovaSharp;
     using CoreLib;
@@ -42,6 +43,11 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// The default Lua version targeted by NovaSharp.
         /// </summary>
         public const string LuaVersion = "5.4";
+
+        private const OpCodeMetadataType IteratorDispatcherMetadata = (OpCodeMetadataType)(-1);
+        private const OpCodeMetadataType CloseDispatcherMetadata = (OpCodeMetadataType)(-2);
+        private static readonly ConditionalWeakTable<Script, Closure> CloseMetamethodDispatchers =
+            new();
 
         private readonly Processor _mainProcessor;
         private readonly ByteCode _byteCode;
@@ -2463,7 +2469,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 scope.DebugSymbols.Add(normalize);
                 scope.DebugSymbols.Add(origin);
 
-                Instruction meta = _byteCode.EmitMeta(name, OpCodeMetadataType.FunctionEntrypoint);
+                Instruction meta = _byteCode.EmitMeta(name, IteratorDispatcherMetadata);
                 int entryPoint = _byteCode.GetJumpPointForNextInstruction();
                 _byteCode.EmitBeginFn(scope);
                 _byteCode.EmitArgs(metamethod, subject, normalize, origin);
@@ -2476,10 +2482,65 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 meta.NumVal = _byteCode.GetJumpPointForNextInstruction() - entryPoint;
 
                 SignalByteCodeChange();
-                Closure dispatcher = MakeClosure(entryPoint).Function;
-                dispatcher.IsIteratorMetamethodDispatcher = true;
-                return dispatcher;
+                return MakeClosure(entryPoint).Function;
             }
+        }
+
+        /// <summary>
+        /// Gets a VM frame that executes a closer and its tail requests before discarding results.
+        /// </summary>
+        internal LuaValue GetCloseMetamethodDispatcher()
+        {
+            return LuaValue.NewClosure(
+                CloseMetamethodDispatchers.GetValue(this, static script =>
+                    script.CreateCloseMetamethodDispatcher()
+                )
+            );
+        }
+
+        private Closure CreateCloseMetamethodDispatcher()
+        {
+            using (_byteCode.EnterSource(SourceRef.GetClrLocation()))
+            {
+                SymbolRef closer = SymbolRef.Local("closer", 0);
+                SymbolRef arguments = SymbolRef.Local(WellKnownSymbols.VARARGS, 1);
+                RuntimeScopeFrame scope = new() { ToFirstBlock = 1 };
+                scope.DebugSymbols.Add(closer);
+                scope.DebugSymbols.Add(arguments);
+
+                Instruction meta = _byteCode.EmitMeta(Metamethods.Close, CloseDispatcherMetadata);
+                int entryPoint = _byteCode.GetJumpPointForNextInstruction();
+                _byteCode.EmitBeginFn(scope);
+                _byteCode.EmitArgs(closer, arguments);
+                _byteCode.EmitLoad(closer);
+                _byteCode.EmitLoad(arguments);
+                _byteCode.EmitCall(1, debugName: null);
+                _byteCode.EmitRet(0);
+                meta.NumVal = _byteCode.GetJumpPointForNextInstruction() - entryPoint;
+
+                SignalByteCodeChange();
+                return MakeClosure(entryPoint).Function;
+            }
+        }
+
+        internal bool IsIteratorMetamethodDispatcher(int entryPoint) =>
+            HasDispatcherMetadata(entryPoint, IteratorDispatcherMetadata);
+
+        internal bool IsCloseMetamethodDispatcher(int entryPoint) =>
+            HasDispatcherMetadata(entryPoint, CloseDispatcherMetadata);
+
+        private bool HasDispatcherMetadata(int entryPoint, OpCodeMetadataType kind)
+        {
+            int metadataPoint = entryPoint - 1;
+            if ((uint)metadataPoint >= (uint)_byteCode.Code.Count)
+            {
+                return false;
+            }
+
+            Instruction metadata = _byteCode.Code[metadataPoint];
+            return metadata.OpCode == OpCode.Meta
+                && metadata.NumVal2 == (int)kind
+                && metadata.SourceCodeRef == SourceRef.GetClrLocation();
         }
 
         private LuaValue MakeClosure(int address, Table envTable = null)

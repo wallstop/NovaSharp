@@ -1598,7 +1598,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 depth++
             )
             {
-                if (candidate.ClrFunction != null)
+                if (candidate.ClrFunction != null || candidate.IsHiddenFromDebugger)
                 {
                     continue;
                 }

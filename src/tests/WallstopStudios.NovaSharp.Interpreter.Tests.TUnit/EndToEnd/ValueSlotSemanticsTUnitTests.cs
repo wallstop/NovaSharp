@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
@@ -132,7 +133,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 @"
                 local hasClose = _VERSION == 'Lua 5.4' or _VERSION == 'Lua 5.5'
                 local closed, closeError
-                local closer = setmetatable({}, {__close = function(self, err)
+                local closer = setmetatable({}, {__close = function(...)
+                    local self, err = ...
+                    local expectedCount = _VERSION == 'Lua 5.5' and err == nil and 1 or 2
+                    assert(select('#', ...) == expectedCount, 'closing argument count')
                     closed = closed + 1
                     closeError = err
                 end})
@@ -302,8 +306,96 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     assert(ok, err)
                     assert(closeThread == thread and closeArgumentCount == expectedCount)
                 end
-                check(nativeCloser, 2)
-                check(indirect, 4)
+                local closeArity = _VERSION == 'Lua 5.5' and 1 or 2
+                check(nativeCloser, closeArity)
+                check(indirect, closeArity + 2)
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public void GenericForCloseSupportsDeepCallableChains(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                local resource
+                local isLua55 = _VERSION == 'Lua 5.5'
+                local depth = isLua55 and 15 or 32
+                local caller = debug.getinfo(1, 'fS')
+                local called = false
+                local closer = function(...)
+                    local frame = debug.getinfo(2, 'fS')
+                    assert(frame.func == caller.func and frame.what == caller.what)
+                    local count = select('#', ...)
+                    assert(count == depth + (isLua55 and 1 or 2))
+                    assert(select(depth + 1, ...) == resource)
+                    if not isLua55 then assert(select(depth + 2, ...) == nil) end
+                    called = true
+                end
+                for _ = 1, depth do closer = setmetatable({}, {__call = closer}) end
+                resource = setmetatable({}, {__close = closer})
+                for _ in function() end, nil, nil, resource do end
+                assert(called)
+
+                if isLua55 then
+                    resource = setmetatable({}, {__close = setmetatable({}, {__call = closer})})
+                    local ok, message = pcall(function()
+                        for _ in function() end, nil, nil, resource do end
+                    end)
+                    assert(not ok and string.find(message, ""'__call' chain too long"", 1, true))
+                end
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public void GenericForCloseCompletesNativeTailRequests(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue target = script.LoadString(
+                """
+                local self, resource, err = ...
+                tailThread = coroutine.running()
+                tailSelf = self
+                tailResource = resource
+                tailError = err
+                return 17
+                """
+            );
+            script.Globals.Set("tailCloser", LuaValue.NewCallbackView(script, (context, args) =>
+                {
+                    bool chained = context.Script.Globals.Get("chainedCloser").Boolean;
+                    LuaValue request = chained
+                        ? LuaValue.NewTailCallReq(target, args[0], args[1], args[2])
+                        : LuaValue.NewTailCallReq(target, LuaValue.Nil, args[0], args[1]);
+                    request.TailCallData.Continuation = CallbackFunction.FromArgumentView(
+                        static (context, results) =>
+                        {
+                            context.Script.Globals.Set("tailContinuation", results[0]);
+                            return LuaValue.Void;
+                        }
+                    );
+                    return request;
+                }));
+            script.DoString(
+                @"
+                for _, chained in ipairs({false, true}) do
+                    chainedCloser = chained
+                    tailContinuation = nil
+                    local callable = chained and setmetatable({}, {__call = tailCloser})
+                    local resource = setmetatable({}, {__close = callable or tailCloser})
+                    local thread = coroutine.create(function()
+                        for _ in function() end, nil, nil, resource do end
+                    end)
+                    local ok, err = coroutine.resume(thread)
+                    assert(ok, err)
+                    assert(tailThread == thread and tailSelf == (callable or nil))
+                    assert(tailResource == resource and tailError == nil)
+                    assert(tailContinuation == 17)
+                end
                 "
             );
         }

@@ -595,6 +595,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 CallStackItem c = _executionStack.Peek(i);
 
+                if (c.IsHiddenFromDebugger)
+                {
+                    startingRef = c.CallingSourceRef;
+                    continue;
+                }
+
                 CallbackFunction dispatcherOrigin = null;
                 if (c.IsIteratorMetamethodDispatcher && c.LocalScope != null)
                 {

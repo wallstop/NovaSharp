@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2017,
-  "novasharp_only": 500,
-  "comparable": 1517,
+  "total_snippets": 2019,
+  "novasharp_only": 501,
+  "comparable": 1518,
   "by_version": {
     "5.1": 1011,
     "5.2": 717,
     "5.3": 961,
-    "5.4": 1033,
-    "5.5": 1074
+    "5.4": 1034,
+    "5.5": 1075
   },
   "snippets": [
     {
@@ -22264,7 +22264,7 @@
     },
     {
       "path": "ValueSlotSemanticsTUnitTests/GenericForClosingValueLivesUntilExit.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:130",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:132",
       "test": "ValueSlotSemanticsTUnitTests.GenericForClosingValueLivesUntilExit",
       "lua_versions": [
         "5.1",
@@ -22341,7 +22341,7 @@
     },
     {
       "path": "ValueSlotSemanticsTUnitTests/GenericForNativeCloseRunsOnActiveCoroutine.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:291",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:295",
       "test": "ValueSlotSemanticsTUnitTests.GenericForNativeCloseRunsOnActiveCoroutine",
       "lua_versions": [],
       "novasharp_only": true,
@@ -22414,6 +22414,25 @@
         "5.1",
         "5.2",
         "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/GenericForCloseCompletesNativeTailRequests.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:380",
+      "test": "ValueSlotSemanticsTUnitTests.GenericForCloseCompletesNativeTailRequests",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/GenericForCloseSupportsDeepCallableChains.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:321",
+      "test": "ValueSlotSemanticsTUnitTests.GenericForCloseSupportsDeepCallableChains",
+      "lua_versions": [
         "5.4",
         "5.5"
       ],

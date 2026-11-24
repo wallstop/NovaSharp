@@ -81,6 +81,7 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    [yieldable close handlers](https://github.com/Ambiguous-Interactive/NovaSharp/issues/169),
    [failed coroutine cleanup order](https://github.com/Ambiguous-Interactive/NovaSharp/issues/174),
    [borrowed line iterators and read formats](https://github.com/Ambiguous-Interactive/NovaSharp/issues/175),
+   [closer source lines on generic-for jumps](https://github.com/Ambiguous-Interactive/NovaSharp/issues/176),
    [missing values in assignments](https://github.com/Ambiguous-Interactive/NovaSharp/issues/172),
    [optional-argument validation](https://github.com/Ambiguous-Interactive/NovaSharp/issues/125),
    [residual number/string parity nits](https://github.com/Ambiguous-Interactive/NovaSharp/issues/138),

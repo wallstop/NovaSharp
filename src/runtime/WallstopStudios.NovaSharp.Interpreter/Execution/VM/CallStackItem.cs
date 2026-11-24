@@ -41,7 +41,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         public LuaValue Function { get; set; }
 
         internal bool IsIteratorMetamethodDispatcher =>
-            Function.Type == DataType.Function && Function.Function.IsIteratorMetamethodDispatcher;
+            Function.Type == DataType.Function
+            && Function.Function.OwnerScript.IsIteratorMetamethodDispatcher(DebugEntryPoint);
+
+        internal bool IsHiddenFromDebugger =>
+            Function.Type == DataType.Function
+            && Function.Function.OwnerScript.IsCloseMetamethodDispatcher(DebugEntryPoint);
 
         /// <summary>
         /// Continuation invoked after yielding or tail calls.

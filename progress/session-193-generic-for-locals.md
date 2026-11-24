@@ -89,6 +89,24 @@ choice of Lua 5.4.9 for the nested-close oracle.
   and 31 filename iterator cases. The quick build, all 15,790 quick tests,
   CSharpier, pre-commit, and the five enforced reference comparators passed.
 
+- A subsequent review reproduced dropped tail-call requests from native
+  closers and a nine-receiver cutoff. The VM dispatcher now processes tail
+  targets and continuations. Pinned Lua 5.4.7 accepts the 32-link regression.
+  Lua 5.5.0 accepts 15 links and rejects 16, and it omits the error argument
+  on ordinary exit. [Lua 5.5 close dispatch](https://www.lua.org/source/5.5/lfunc.c.html#callclosemethod)
+- Hosted Phase A0 rejected 17 allocation rows on the second head. Every
+  cached-compile scenario increased from 184 to 192 B/op and Tower of Hanoi
+  execution from 168 to 176 B/op. A warmed, 100,000-operation local probe
+  measured closure allocation at 40, 48, then 40 B and cached compile at
+  136, 144, then 136 B across the first, failing, and corrected revisions.
+  Dispatcher identity now lives on the bytecode metadata instead of each
+  closure.
+- The quick build, 20 generic-for cases, 30 iterator cases, 14 close-attribute
+  cases, 692 debugger cases, and all 15,794 quick tests passed after the
+  dispatch and allocation changes. All five enforced corpus comparisons
+  passed. Independent probes also verified caller identity and the exact
+  exhaustion and return source lines against both modern profiles.
+
 ## Issue triage
 
 The initial two-page inventory contained 35 open issues. Gameplay and Lua
@@ -115,3 +133,7 @@ coroutine error.
 
 [Issue 175](https://github.com/Ambiguous-Interactive/NovaSharp/issues/175)
 tracks borrowed line iterator results and optional read format handling.
+
+[Issue 176](https://github.com/Ambiguous-Interactive/NovaSharp/issues/176)
+records version-specific source lines in closers reached through generic-for
+`break` and `goto` with a paired PUC reproduction.

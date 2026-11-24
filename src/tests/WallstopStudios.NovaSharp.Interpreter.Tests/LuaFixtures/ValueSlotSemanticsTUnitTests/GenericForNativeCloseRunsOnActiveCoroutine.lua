@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:291
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:295
 -- @test: ValueSlotSemanticsTUnitTests.GenericForNativeCloseRunsOnActiveCoroutine
 -- Compatibility notes: Test targets Lua 5.4+
 local nested = setmetatable({}, {__call = nativeCloser})
@@ -16,5 +16,6 @@ local nested = setmetatable({}, {__call = nativeCloser})
                     assert(ok, err)
                     assert(closeThread == thread and closeArgumentCount == expectedCount)
                 end
-                check(nativeCloser, 2)
-                check(indirect, 4)
+                local closeArity = _VERSION == 'Lua 5.5' and 1 or 2
+                check(nativeCloser, closeArity)
+                check(indirect, closeArity + 2)
