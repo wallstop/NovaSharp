@@ -101,13 +101,15 @@ setup_npm_fixture() {
         '    fi' \
         '    ;;' \
         '  install)' \
-        '    if [ "${NOVA_TEST_SCENARIO}" = "install-fail" ] || [ "${NOVA_TEST_SCENARIO}" = "broken-fallback" ]; then' \
-        '      if [ "${NOVA_TEST_SCENARIO}" = "broken-fallback" ]; then' \
-        '        unlink "${NOVA_TEST_FIXTURE}/prefix/bin/nanocoder"' \
-        '        printf "#!/usr/bin/env bash\necho broken native payload >&2\nexit 88\n" > "${NOVA_TEST_FIXTURE}/prefix/bin/nanocoder"' \
-        '        chmod +x "${NOVA_TEST_FIXTURE}/prefix/bin/nanocoder"' \
+        '    if [[ "${NOVA_TEST_SCENARIO}" =~ ^(install-fail|broken-fallback|broken-mcp-fallback|missing-fallback)$ ]]; then' \
+        '      if [[ "${NOVA_TEST_SCENARIO}" = broken-* ]]; then' \
+        '        tool=nanocoder; if [ "${NOVA_TEST_SCENARIO}" = "broken-mcp-fallback" ]; then tool=zai-mcp-server; fi' \
+        '        unlink "${NOVA_TEST_FIXTURE}/prefix/bin/${tool}"' \
+        '        printf "#!/usr/bin/env bash\necho broken native payload >&2\nexit 88\n" > "${NOVA_TEST_FIXTURE}/prefix/bin/${tool}"' \
+        '        chmod +x "${NOVA_TEST_FIXTURE}/prefix/bin/${tool}"' \
         '      fi' \
-        '      echo "simulated install failure" >&2' \
+        '      if [ "${NOVA_TEST_SCENARIO}" = "missing-fallback" ]; then unlink "${NOVA_TEST_FIXTURE}/prefix/bin/codex"; fi' \
+        '      echo "npm error E404: published tarball unavailable" >&2' \
         '      exit 73' \
         '    fi' \
         '    echo 2.0.0 > "${NOVA_TEST_FIXTURE}/installed-version"' \
@@ -119,6 +121,10 @@ setup_npm_fixture() {
     # shellcheck disable=SC2016
     write_executable "${prefix}/bin/fake-cli" \
         '#!/usr/bin/env bash' \
+        'if [ "$(basename "$0")" = "zai-mcp-server" ]; then' \
+        '  [[ $# = 0 && -n "${Z_AI_API_KEY:-}" && -z "${NOVA_TEST_FIXTURE:-}" ]] || exit 89' \
+        '  exit 0' \
+        'fi' \
         'printf "%s %s\n" "$(basename "$0")" "$(<"${NOVA_TEST_FIXTURE}/installed-version")"'
     for command_name in nanocoder opencode codex claude copilot mcp-remote zai-mcp-server; do
         ln -s fake-cli "${prefix}/bin/${command_name}"
@@ -170,12 +176,13 @@ result="$(run_installer resolution-fail --offline-ok)"
 assert_contains "${result}" "latest status could not be verified"
 
 result="$(run_installer resolution-fail)"
-[ "${result%%$'\n'*}" != "0" ] || fail "strict create/build refresh should fail offline"
+[ "${result%%$'\n'*}" != "0" ] || fail "strict build refresh should fail offline"
 assert_contains "${result}" "Unable to resolve"
 
 result="$(run_installer install-fail --offline-ok)"
 [ "${result%%$'\n'*}" = "0" ] || fail "offline start should survive install-stage failure"
-assert_contains "${result}" "continuing with the intact installed tool versions"
+assert_contains "${result}" "validating the installed tool versions before continuing"
+assert_contains "${result}" "npm error E404"
 
 result="$(run_installer install-fail)"
 [ "${result%%$'\n'*}" = "73" ] || fail "strict install should preserve npm's failure code"
@@ -183,6 +190,14 @@ result="$(run_installer install-fail)"
 result="$(run_installer broken-fallback --offline-ok)"
 [ "${result%%$'\n'*}" != "0" ] || fail "a non-runnable fallback must fail startup"
 assert_contains "${result}" "failed its version check"
+
+result="$(run_installer broken-mcp-fallback --offline-ok)"
+[ "${result%%$'\n'*}" != "0" ] || fail "a broken stdio MCP payload must fail startup"
+assert_contains "${result}" "zai-mcp-server failed its stdio startup check"
+
+result="$(run_installer missing-fallback --offline-ok)"
+[ "${result%%$'\n'*}" = "73" ] || fail "a missing fallback must preserve npm's install failure"
+assert_contains "${result}" "installed @openai/codex fallback is not intact"
 
 result="$(run_installer root)"
 [ "${result%%$'\n'*}" != "0" ] || fail "root npm installation must be rejected"

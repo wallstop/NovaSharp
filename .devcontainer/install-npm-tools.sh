@@ -4,18 +4,23 @@
 set -euo pipefail
 
 offline_ok=0
+install_attempts="${NOVA_NPM_INSTALL_ATTEMPTS:-5}"
 case "${1:-}" in
     "") ;;
-    --offline-ok) offline_ok=1 ;;
+    --offline-ok)
+        offline_ok=1
+        install_attempts="${NOVA_NPM_START_ATTEMPTS:-${NOVA_NPM_INSTALL_ATTEMPTS:-2}}"
+        export NPM_CONFIG_FETCH_RETRIES="${NOVA_NPM_START_FETCH_RETRIES:-1}"
+        export NPM_CONFIG_FETCH_TIMEOUT="${NOVA_NPM_START_FETCH_TIMEOUT_MS:-10000}"
+        ;;
     *)
         echo "Usage: $0 [--offline-ok]" >&2
         exit 2
         ;;
 esac
 
-install_attempts="${NOVA_NPM_INSTALL_ATTEMPTS:-5}"
 if ! [[ "${install_attempts}" =~ ^[1-9][0-9]*$ ]]; then
-    echo "❌ NOVA_NPM_INSTALL_ATTEMPTS must be a positive integer." >&2
+    echo "❌ npm install attempts must be a positive integer." >&2
     exit 2
 fi
 
@@ -136,7 +141,7 @@ echo "   Node.js: $(node --version); npm: $(npm --version); prefix: ${npm_prefix
 
 installed_tree="$(read_installed_tree)"
 packages_to_install=()
-registry_unverified=0
+using_fallback=0
 clean_tool_cache=0
 for package_index in "${!NPM_TOOL_PACKAGES[@]}"; do
     package_spec="${NPM_TOOL_PACKAGES[package_index]}"
@@ -154,7 +159,7 @@ for package_index in "${!NPM_TOOL_PACKAGES[@]}"; do
     if ! latest_version="$(run_with_retries "${install_attempts}" npm view "${package_spec}" version)"; then
         if [ "${offline_ok}" = "1" ] && [ -n "${installed_version}" ] && [ -x "${expected_command}" ]; then
             echo "⚠️  npm registry unavailable; keeping ${package_name}@${installed_version}." >&2
-            registry_unverified=1
+            using_fallback=1
             continue
         fi
         echo "❌ Unable to resolve ${package_spec} from npm." >&2
@@ -201,9 +206,10 @@ if [ "${#packages_to_install[@]}" -gt 0 ]; then
                 exit "${install_exit_code}"
             fi
         done
-        echo "⚠️  npm update failed; continuing with the intact installed tool versions." >&2
+        using_fallback=1
+        echo "⚠️  npm update failed; validating the installed tool versions before continuing." >&2
     fi
-elif [ "${registry_unverified}" = "1" ]; then
+elif [ "${using_fallback}" = "1" ]; then
     echo "   No npm changes applied; latest status could not be verified."
 else
     echo "   All npm coding tools are current."
@@ -221,6 +227,19 @@ for package_index in "${!NPM_TOOL_COMMANDS[@]}"; do
         exit 1
     fi
     if [ "${command_name}" = "zai-mcp-server" ]; then
+        # The stdio server has no version command. After a failed refresh,
+        # launch it with EOF to catch a broken payload without any real keys.
+        if [ "${using_fallback}" = "1" ]; then
+            if ! probe_output="$(
+                probe_home="$(mktemp -d)" || exit 1
+                trap 'rm -rf -- "${probe_home}"' EXIT
+                env -i PATH="${PATH}" HOME="${probe_home}" Z_AI_API_KEY=devcontainer-health-check Z_AI_MODE=ZAI \
+                    timeout 30 "${resolved_command}" </dev/null 2>&1
+            )"; then
+                printf '❌ %s failed its stdio startup check:\n%s\n' "${command_name}" "${probe_output}" >&2
+                exit 1
+            fi
+        fi
         tool_version="$(
             node -e 'process.stdout.write(require(process.argv[1]).version)' \
                 "${npm_prefix}/lib/node_modules/@z_ai/mcp-server/package.json"

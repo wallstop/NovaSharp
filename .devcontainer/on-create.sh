@@ -127,7 +127,7 @@ bash .devcontainer/cleanup-artifacts.sh "${WORKSPACE_DIR}" --all
 # ============================================================================
 echo ""
 echo "🤖 Step 2/4: Refreshing npm coding tools..."
-bash .devcontainer/install-npm-tools.sh
+bash .devcontainer/install-npm-tools.sh --offline-ok
 bash .devcontainer/ai-backends.sh install
 
 # ============================================================================

@@ -50,12 +50,11 @@ Tool refreshes use a dedicated cache under the user's cache directory. A
 successful update clears downloaded CLI tarballs without deleting the cache used
 by ordinary project-level npm commands.
 
-Image builds and first-create refreshes fail if npm cannot provide the requested
-latest releases. Restart checks are deliberately bounded: if npm is temporarily
-unavailable but all seven image-baked tools are intact, startup emits a warning
-and continues with those versions. This keeps an existing development container
-usable during a registry or network outage without silently treating the tools
-as current.
+Image builds require npm to supply the requested latest releases. Container
+creation and subsequent starts use bounded retries. If the registry is
+unreachable or a published tarball cannot be installed, startup warns and
+validates all seven installed tools before continuing. A missing or broken
+installation still fails startup.
 
 Run the refresh manually with:
 

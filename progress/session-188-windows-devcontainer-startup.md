@@ -10,6 +10,10 @@
   granted local users read access, and Claude's credential reader required `0600`.
 - Docker Desktop presented the checkout as root-owned. Git refused to operate
   as `vscode`, including during hook installation.
+- During a second clean creation, npm advertised `@openai/codex@0.172.0`
+  while its tarball returned HTTP 404 on five attempts. The creation hook
+  aborted even though the image already contained the tools. The same tarball
+  subsequently returned HTTP 200.
 
 ## Changes
 
@@ -18,6 +22,10 @@ optional credentials and publishes them with native access controls on Windows.
 The managed Claude launchers read a project-specific Z.ai credential staged
 on the container filesystem at creation. Git trusts the mounted checkout when
 its ownership differs from the container user's.
+
+Creation and restart now share the bounded npm refresh. On registry failure,
+startup checks all seven installed tools before continuing. Building a fresh
+image still requires the requested packages.
 
 The Windows CI fixture launches the configured hook under a path containing
 spaces and checks the native ACL. The opt-in Docker test covers the real
