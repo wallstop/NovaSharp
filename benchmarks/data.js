@@ -1,6 +1,6 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795471099303,
-  "repoUrl": "https://github.com/wallstop/NovaSharp",
+  "lastUpdate": 1795481667210,
+  "repoUrl": "https://github.com/Ambiguous-Interactive/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
       {
@@ -3454,6 +3454,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 652.534,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c4735245dd0c4d8586a8e4bc049e694fde200e57",
+          "message": "Add shared advisory OpenAI PR review (#155)\n\nAdds a thin caller pinned to review-tools v1.1.2. The workflow reviews\nsame-repository human pull requests and skips drafts, forks, and bots.\n\nValidation: actionlint, yamllint, whitespace checks, quick build, and\nall 15,716 tests passed. The local macOS hook reaches a Linux-specific\ndevcontainer self-test, so the draft is staged for Linux CI. Draft\nstatus exercises the skip path while the credential is provisioned.\n\n## Calibration\n\nThe [historical\nreplay](https://github.com/Ambiguous-Interactive/DxMessaging/actions/runs/45295647338)\ncaught the zero-crossing regression in 1 of 2 buggy diffs. Both\ncorrected runs flagged descending integer loops with a NaN limit, which\nNovaSharp's reference-verified test matrix expects. The [narrow guard\nreplay](https://github.com/Ambiguous-Interactive/DxMessaging/actions/runs/45296341088)\ncaught the defect in 2 of 2 buggy diffs and reported zero findings in 2\ncorrected diffs. The narrower result supports the diff-scope hypothesis.\nLuna at default effort missed the historical quality gate.\n\nHigher-effort Luna produced one complete review (69 seconds) before\nanother reply failed the structured-response check. [Higher-effort Luna\nrun](https://github.com/Ambiguous-Interactive/DxMessaging/actions/runs/45297352765)\n\nTerra at default effort passed the original paired endpoint: **2/2**\nbuggy runs reported the target and **0/2** corrected runs reported it\nagain. The corrected diffs did yield nine separate findings. Running\ntheir examples on the fixed historical revision and reference Lua\nconfirmed seven, contradicted one, and identified one as an intentional\ncompatibility divergence. All four responses completed. Median request\nlatency was 31 seconds and estimated model cost was $0.084 total using\nactual token usage and standard rates. This PR uses Terra as NovaSharp's\ndefault, with the existing repository model override. [Terra\nrun](https://github.com/Ambiguous-Interactive/DxMessaging/actions/runs/45297877973)\n· [Pricing](https://developers.openai.com/api/docs/models/gpt-6.1-terra)\n\n## Live rollout\n\nThe original [draft\ncanary](https://github.com/Ambiguous-Interactive/NovaSharp/actions/runs/45295991866)\nskipped as intended. Ready-for-review delivery, deduplication, and the\nCopilot ruleset cutover await the NovaSharp Actions credential.",
+          "timestamp": "2026-11-23T16:48:31-08:00",
+          "tree_id": "a84f61a3ced00bbd5d68fd293838d9497554732e",
+          "url": "https://github.com/Ambiguous-Interactive/NovaSharp/commit/c4735245dd0c4d8586a8e4bc049e694fde200e57"
+        },
+        "date": 1795481666511,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 286.012,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 307.332,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 317.513,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 409.668,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 438.137,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 427.398,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 425.738,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 461.669,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 462.918,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 445.346,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 482.88,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 486.171,
             "unit": "ns",
             "extra": ""
           }
