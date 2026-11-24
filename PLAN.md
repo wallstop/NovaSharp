@@ -1,7 +1,7 @@
 # NovaSharp Plan
 
 This file is the execution queue. Repository priorities and closure gates live in
-[`.llm/context.md`](.llm/context.md); planning rules — including the under-2-hour
+[`AGENTS.md`](AGENTS.md); planning rules — including the under-2-hour
 session scoping target — live in the
 [plan-maintenance skill](.llm/skills/plan-maintenance/SKILL.md). Design evidence
 belongs in domain documentation, completed work in `progress/`, and the full
@@ -59,6 +59,7 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
 
 ## Later or gated
 
+1. Run the [paired agent guidance pilot](tools/LlmSkillIndexer/pilot.md) once authenticated, isolated sessions are available for all three frontends. Require held-out task correctness before adopting further skill consolidations.
 1. B3/B4: async/coroutine hosting, capability-based mod isolation, deterministic
    providers, hot reload, supply-chain controls, and a Unity mod-host sample;
    close the remaining [sandbox threat-model](docs/security/sandbox-threat-model.md)
