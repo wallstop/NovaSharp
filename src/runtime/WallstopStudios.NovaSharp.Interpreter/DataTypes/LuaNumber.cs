@@ -1270,6 +1270,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return 1;
         }
 
+        /// <summary>
+        /// Orders numbers without rounding mixed operands and places NaN before other numbers.
+        /// </summary>
+        internal int CompareExactly(LuaNumber other)
+        {
+            if (IsInteger && other.IsInteger)
+            {
+                return _integer.CompareTo(other._integer);
+            }
+
+            if (IsFloat && other.IsFloat)
+            {
+                return _float.CompareTo(other._float);
+            }
+
+            return IsInteger
+                ? CompareIntegerToFloat(_integer, other._float)
+                : -CompareIntegerToFloat(other._integer, _float);
+        }
+
+        private static int CompareIntegerToFloat(long integer, double floating)
+        {
+            // The sorter needs a total order. Retain the CLR ordering of NaN before numbers.
+            if (double.IsNaN(floating) || floating < (double)long.MinValue)
+            {
+                return 1;
+            }
+
+            // The upper bound is exclusive: converting long.MaxValue to double rounds to 2^63.
+            if (floating >= -(double)long.MinValue)
+            {
+                return -1;
+            }
+
+            // Compare in integer space first, then inspect the fraction only when they coincide.
+            long truncated = (long)floating;
+            int comparison = integer.CompareTo(truncated);
+            return comparison != 0 ? comparison : ((double)truncated).CompareTo(floating);
+        }
+
         /// <inheritdoc />
         public override int GetHashCode()
         {

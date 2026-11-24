@@ -9,9 +9,6 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
 
 ## Now
 
-1. Preserve exact numeric ordering in default `table.sort`, including mixed
-   integer and float operands, in
-   [#167](https://github.com/Ambiguous-Interactive/NovaSharp/issues/167).
 1. Advance Phase A5 call paths in
    [#108](https://github.com/Ambiguous-Interactive/NovaSharp/issues/108):
    - Migrate each remaining legacy CoreLib registration in its own scoped change:
@@ -76,7 +73,10 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    Lua-CSharp; evaluate the gated
    [stackless/fuel model](docs/proposals/runtime-research-gates.md#stacklessfuel-execution-model)
    in the same study.
-1. Lua parity backlog: [call-context error names](https://github.com/Ambiguous-Interactive/NovaSharp/issues/124),
+1. Lua parity backlog: [exact mixed numeric comparisons](https://github.com/Ambiguous-Interactive/NovaSharp/issues/177)
+   followed by [original operands in math extrema](https://github.com/Ambiguous-Interactive/NovaSharp/issues/178),
+   [string sort dispatch and return arity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/179),
+   [call-context error names](https://github.com/Ambiguous-Interactive/NovaSharp/issues/124),
    [error-value identity during unwinding](https://github.com/Ambiguous-Interactive/NovaSharp/issues/168),
    [yieldable close handlers](https://github.com/Ambiguous-Interactive/NovaSharp/issues/169),
    [failed coroutine cleanup order](https://github.com/Ambiguous-Interactive/NovaSharp/issues/174),

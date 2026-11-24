@@ -39,7 +39,7 @@ Found 191 undocumented public/internal type declarations.
   - line 70: missing XML docs for `Next`
   - line 72: missing XML docs for `GetMetamethodDispatcher()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableModule.cs
-  - line 36: missing XML docs for `Compare()`
+  - line 40: missing XML docs for `Compare()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/Utf8Module.cs
   - line 34: missing XML docs for `Strict`
   - line 36: missing XML docs for `Lax`
