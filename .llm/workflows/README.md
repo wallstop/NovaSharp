@@ -34,13 +34,13 @@ evidence that its intended behavior exists.
 
 ## Single-Source-of-Truth Rules
 
-- Put universal priorities in `.llm/context.md`.
+- Put universal priorities in `AGENTS.md`.
 - Put reusable procedures in `.llm/skills/`.
 - Put orchestration and gates here.
 - Put verified stable facts in `.llm/knowledge/`.
 - Keep task receipts out of source control unless a project document requires
   them. PR descriptions and CI artifacts are suitable receipt locations.
-- Front-end adapters should link to `.llm/context.md`; generated adapters must
+- Front-end adapters should load `AGENTS.md`; generated adapters must
   identify their canonical template and generator.
 
 Do not encode the same dispatch predicate in both prose and metadata. Metadata is

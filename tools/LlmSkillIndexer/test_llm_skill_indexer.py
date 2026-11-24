@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests for Agent Skills metadata and fail-closed index validation."""
 
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -336,6 +337,25 @@ class MetadataTests(unittest.TestCase):
             self.assertEqual(2, len(errors))
             self.assertTrue(any(".agents/skills" in error for error in errors))
             self.assertTrue(any(".claude/skills" in error for error in errors))
+
+
+class RepositoryDiscoveryTests(unittest.TestCase):
+    root = Path(__file__).resolve().parents[2]
+
+    def test_claude_imports_shared_policy(self):
+        self.assertEqual("@AGENTS.md", (self.root / "CLAUDE.md").read_text().strip())
+
+    def test_documented_inventory_matches_canonical_skills(self):
+        command = ["jq", "-r", ".skills[].name", ".llm/skills-index.json"]
+        guide = (self.root / ".llm/context.md").read_text()
+        self.assertIn("jq -r '.skills[].name' .llm/skills-index.json", guide)
+        index = self.root / command[-1]
+        before = index.read_bytes()
+        names = subprocess.check_output(command, cwd=self.root, text=True).splitlines()
+        expected = [p.parent.name for p in self.root.glob(".llm/skills/*/SKILL.md")]
+        self.assertCountEqual(expected, names)
+        self.assertEqual(before, index.read_bytes())
+        self.assertEqual([], validate_discovery_aliases(self.root))
 
 
 if __name__ == "__main__":

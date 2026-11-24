@@ -87,6 +87,13 @@ jobs:
         run: |
           python3 tools/LlmSkillIndexer/test_llm_skill_indexer.py
           python3 tools/LlmSkillIndexer/llm_skill_indexer.py --check
+      - name: Validate skills with the Agent Skills reference implementation
+        shell: bash
+        run: |
+          python -m pip install -r tools/LlmSkillIndexer/requirements-reference.txt
+          for skill in .llm/skills/*/; do
+            skills-ref validate "$skill"
+          done
 
       - name: Setup .NET (formatting gate)
         uses: actions/setup-dotnet@v6

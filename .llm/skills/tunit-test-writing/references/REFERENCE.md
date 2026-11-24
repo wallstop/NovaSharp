@@ -97,7 +97,7 @@ ______________________________________________________________________
 
 ## Running Tests
 
-See [context.md Quick Scripts](../../../context.md) for test commands (`./scripts/test/quick.sh`).
+See [the shared build and test commands](../../../../AGENTS.md) for test commands (`./scripts/test/quick.sh`).
 
 ______________________________________________________________________
 
