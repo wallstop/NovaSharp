@@ -11,7 +11,7 @@ policy and canonical skill tree. The upstream reference validator accepted all
 32 packages and rejected a control missing its description. Repository metadata
 and index freshness remain separate checks.
 
-The root policy changed from 3,201 to 2,044 bytes and the optional repository
+On the initial candidate (`eac0f9dd`), the root policy changed from 3,201 to 2,044 bytes and the optional repository
 guide from 14,060 to 4,534 bytes (LF). These are file measurements. Session
 token consumption and task success require paired frontend runs.
 
@@ -25,7 +25,7 @@ The quick build succeeded and the full quick suite reported 15,716 successful
 tests. Across baseline and candidate, OpenCode 1.19.6 and Claude
 Code 2.1.331 each advertised the 32 project skills. Codex 0.172.0's candidate
 prompt contained the shared policy and all 32 names. Claude's local context
-diagnostic estimated 1.1k memory tokens on baseline and 685 for the final
+diagnostic estimated 1.1k memory tokens on baseline and 685 for the initial
 candidate (4 for the import and 681 for the shared policy).
 
 All three [pilot inputs](../tools/LlmSkillIndexer/pilot.md) could be prepared.
@@ -37,3 +37,11 @@ but Linux denied namespace creation before the command executed. The same
 namespace restriction and unavailable trial container prevented isolated
 historical model runs. Task correctness, cost, and end-to-end token savings
 remain unmeasured.
+
+The maintainer waived further Claude Code and OpenCode task trials for this PR.
+The follow-up review fixes restored the fixture requirements, kept the Copilot
+policy mirror under a drift check, and removed the inventory test's dependency
+on jq. All 22 indexer tests ran successfully. The Codex prompt diagnostic
+confirmed the full shared policy and all 32 skill names. The blinded task
+results and trial limitations are recorded in
+[issue #157](https://github.com/Ambiguous-Interactive/NovaSharp/issues/157).
