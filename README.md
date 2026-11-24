@@ -1,4 +1,4 @@
-NovaSharp — [GitHub Repository](https://github.com/wallstop/NovaSharp)
+NovaSharp — [GitHub Repository](https://github.com/Ambiguous-Interactive/NovaSharp)
 =========
 
 [![NuGet](https://img.shields.io/nuget/v/WallstopStudios.NovaSharp.Interpreter.svg)](https://www.nuget.org/packages/WallstopStudios.NovaSharp.Interpreter)
