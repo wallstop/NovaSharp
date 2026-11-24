@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Tests for Agent Skills metadata and fail-closed index validation."""
 
-import shlex
 import subprocess
 import sys
 import tempfile
@@ -347,18 +346,24 @@ class RepositoryDiscoveryTests(unittest.TestCase):
     def test_claude_imports_shared_policy(self):
         self.assertEqual("@AGENTS.md", (self.root / "CLAUDE.md").read_text().strip())
 
+    def test_copilot_mirrors_shared_policy(self):
+        policy = (self.root / "AGENTS.md").read_text()
+        expected = policy.replace("](PLAN.md)", "](../PLAN.md)").replace("](.llm/", "](../.llm/")
+        adapter = (self.root / ".github/copilot-instructions.md").read_text()
+        self.assertEqual(expected, adapter.split("\n\n", 1)[1])
+
     def test_documented_inventory_matches_canonical_skills(self):
+        code = (
+            'import json; import sys; print("\\n".join(skill["name"] '
+            'for skill in json.load(sys.stdin.buffer)["skills"]))'
+        )
+        filename = ".llm/skills-index.json"
         guide = (self.root / ".llm/context.md").read_text()
-        discovery = guide.split("## Skill discovery", 1)[1]
-        command, redirect, filename = discovery.split("```bash\n", 1)[1].splitlines()[0].rpartition(" < ")
-        self.assertEqual(" < ", redirect)
-        interpreter, *arguments = shlex.split(command)
-        self.assertEqual("python3", interpreter)
-        self.assertEqual(".llm/skills-index.json", filename)
+        self.assertIn(f"python3 -c '{code}' < {filename}", guide)
         index = self.root / filename
         before = index.read_bytes()
         names = subprocess.check_output(
-            [sys.executable, *arguments], input=before, cwd=self.root
+            [sys.executable, "-c", code], input=before, cwd=self.root
         ).decode("utf-8").splitlines()
         expected = [p.parent.name for p in self.root.glob(".llm/skills/*/SKILL.md")]
         self.assertCountEqual(expected, names)
