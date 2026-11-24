@@ -23,8 +23,8 @@
       ],
       "rollForward": false
     },
-    "ilspycmd": {
-      "version": "9.1.0.7988",
+    "ilspycmd.any": {
+      "version": "11.2.0.10050",
       "commands": [
         "ilspycmd"
       ],
