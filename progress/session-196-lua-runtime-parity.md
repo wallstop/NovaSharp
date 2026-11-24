@@ -66,3 +66,5 @@ payload grammar.
 - CSharpier, the Markdown checks, and the full pre-commit hook succeeded.
   The hook skipped its Docker-specific no-cache check because Docker was
   unavailable.
+- Hosted lint found the Copilot policy mirror was stale. The mirror now
+  matches `AGENTS.md`, and the repository indexer suite checks both copies.
