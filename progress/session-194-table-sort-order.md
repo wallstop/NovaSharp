@@ -41,6 +41,17 @@ guidance draft is tracked in [#163](https://github.com/Ambiguous-Interactive/Nov
   an exact rational oracle in the modern profiles, including their Lua
   subtypes and binary representations.
 
+- Hosted review found that the initial candidate moved NaN before other
+  numbers. The same two-element default sorts preserve the input order
+  in PUC Lua 5.1–5.5. Comparisons involving NaN now report neither operand
+  as smaller. The paired fixture covers integer, float, and NaN operands
+  in both positions, with a numeric metatable installed.
+- An independent stress probe ran 151,604 deterministic sorts and checked
+  that each preserved the input values and stayed within the requested
+  range. Lua requires a strict weak order, which a list with NaN and
+  distinct numeric values may violate.
+  [Lua table.sort contract](https://www.lua.org/manual/5.4/manual.html#pdf-table.sort)
+
 ## Issue triage
 
 The paginated inventory returned 40 open issues. Gameplay and Lua caller

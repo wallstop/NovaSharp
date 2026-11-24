@@ -231,9 +231,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 if (a.Type == DataType.Number && b.Type == DataType.Number)
                 {
-                    return supportsIntegerSubtype
-                        ? a.LuaNumber.CompareExactly(b.LuaNumber)
-                        : a.Number.CompareTo(b.Number);
+                    return a.LuaNumber.CompareForSort(b.LuaNumber, supportsIntegerSubtype);
                 }
 
                 if (

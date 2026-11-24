@@ -1271,10 +1271,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Orders numbers without rounding mixed operands and places NaN before other numbers.
+        /// Compares numbers for Lua sort using the active numeric profile.
+        /// A NaN operand is neither less nor greater than the other operand.
         /// </summary>
-        internal int CompareExactly(LuaNumber other)
+        internal int CompareForSort(LuaNumber other, bool supportsIntegerSubtype)
         {
+            if (!supportsIntegerSubtype)
+            {
+                return CompareFloats(ToDouble, other.ToDouble);
+            }
+
             if (IsInteger && other.IsInteger)
             {
                 return _integer.CompareTo(other._integer);
@@ -1282,7 +1288,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (IsFloat && other.IsFloat)
             {
-                return _float.CompareTo(other._float);
+                return CompareFloats(_float, other._float);
             }
 
             return IsInteger
@@ -1290,10 +1296,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 : -CompareIntegerToFloat(other._integer, _float);
         }
 
+        private static int CompareFloats(double left, double right)
+        {
+            if (left < right)
+            {
+                return -1;
+            }
+
+            return left > right ? 1 : 0;
+        }
+
         private static int CompareIntegerToFloat(long integer, double floating)
         {
-            // The sorter needs a total order. Retain the CLR ordering of NaN before numbers.
-            if (double.IsNaN(floating) || floating < (double)long.MinValue)
+            if (double.IsNaN(floating))
+            {
+                return 0;
+            }
+
+            if (floating < (double)long.MinValue)
             {
                 return 1;
             }
@@ -1307,7 +1327,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             // Compare in integer space first, then inspect the fraction only when they coincide.
             long truncated = (long)floating;
             int comparison = integer.CompareTo(truncated);
-            return comparison != 0 ? comparison : ((double)truncated).CompareTo(floating);
+            return comparison != 0 ? comparison : CompareFloats(truncated, floating);
         }
 
         /// <inheritdoc />
