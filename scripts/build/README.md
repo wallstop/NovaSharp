@@ -40,7 +40,7 @@ Use `quick.sh` for fast iterative development with incremental compilation:
 - `--skip-tests` / `-SkipTests`: Build only; do not execute tests.
 - `--skip-tool-restore` / `-SkipToolRestore`: Assume `dotnet tool restore` already ran for this checkout.
 
-Both scripts automatically set `DOTNET_ROLL_FORWARD=Major` when the variable is unset so environments with only .NET 9 installed can still run the net8 test runner. Test logs are written to `artifacts/test-results`, matching the CI layout.
+Both scripts automatically set `DOTNET_ROLL_FORWARD=Major` when the variable is unset so newer .NET runtimes can run the .NET 8 test host. Test logs are written to `artifacts/test-results`, matching the CI layout.
 
 ### Examples
 

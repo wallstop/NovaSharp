@@ -4,7 +4,7 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
 
 ## Environment & Tooling
 
-- Install the .NET SDK pinned by `global.json` (currently 9.0.100 with latest-minor roll-forward).
+- Install the .NET SDK pinned by `global.json` (currently 10.0.100 with latest-minor roll-forward).
 - Install Python 3.10+ (CI uses 3.12) and restore the shared tooling dependencies once per clone:
   ```bash
   python -m pip install -r requirements.tooling.txt
@@ -22,8 +22,7 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
 
 - Full solution build: `dotnet build src/NovaSharp.sln -c Release`
 - Interpreter-only build: `dotnet build src/runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj`
-- Interpreter tests (Release):\
-  `dotnet test src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release -- --report-trx --report-trx-filename NovaSharpInterpreterTUnit.trx`
+- Interpreter tests (Release): `./scripts/test/quick.sh`
 
 ## Coverage
 

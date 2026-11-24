@@ -51,7 +51,7 @@ else {
 
 if ([string]::IsNullOrWhiteSpace($env:DOTNET_ROLL_FORWARD)) {
     $env:DOTNET_ROLL_FORWARD = "Major"
-    Write-Host "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 hosts can run the net8 test runner."
+    Write-Host "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so newer .NET runtimes can run the .NET 8 test host."
 }
 
 # Suppress TUnit ASCII banner and telemetry messages
@@ -96,9 +96,8 @@ NovaSharp test results were not generated. This placeholder file ensures CI arti
         Set-Content -Path $placeholderPath -Value $placeholderContent
 
         Write-Host "Running tests for $TestProject..."
-        # Microsoft.Testing.Platform options (--report-trx, --results-directory) must be passed after --
-        dotnet test $TestProject -c $Configuration --no-build `
-            -- --report-trx --report-trx-filename NovaSharpInterpreterTUnit.trx `
+        dotnet test --project $TestProject -c $Configuration --no-build `
+            --report-trx --report-trx-filename NovaSharpInterpreterTUnit.trx `
             --results-directory $resultsDir
         if ($LASTEXITCODE -ne 0) {
             throw "dotnet test $TestProject failed with exit code $LASTEXITCODE."

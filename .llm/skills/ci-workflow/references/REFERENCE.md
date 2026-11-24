@@ -39,16 +39,13 @@ NovaSharp uses TUnit on Microsoft.Testing.Platform.
 <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="..." />
 ```
 
-### Platform Options Separator
+### Microsoft.Testing.Platform options
 
-Options for the test platform MUST come after `--`:
+Run a specific project with `--project` and pass runner options directly to
+`dotnet test`. When using `dotnet run`, place runner options after `--`.
 
 ```bash
-# WRONG
-dotnet test --results-directory ./results --report-trx
-
-# CORRECT
-dotnet test -- --results-directory ./results --report-trx
+dotnet test --project path/to/TestProject.csproj --results-directory ./results --report-trx
 ```
 
 ______________________________________________________________________

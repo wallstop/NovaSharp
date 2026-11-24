@@ -122,7 +122,7 @@ export DOTNET_CLI_TELEMETRY_OPTOUT=1
 export DOTNET_NOLOGO=1
 export TESTINGPLATFORM_NOBANNER=1
 
-# Ensure .NET 9 can run .NET 8 test host
+# Allow newer .NET runtimes to run the .NET 8 test host
 if [[ -z "${DOTNET_ROLL_FORWARD:-}" ]]; then
     export DOTNET_ROLL_FORWARD="Major"
 fi
