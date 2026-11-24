@@ -30,6 +30,13 @@ lifecycle and uses local MCP test doubles. See the [test instructions](../script
   ACL regression also ran under Git for Windows Bash.
 - `devcontainer exec --workspace-folder . zsh -il` opened a PTY in the checkout
   as `vscode`, with both the login and interactive shell options set.
+- `python scripts/test/devcontainer-smoke.py --temp-parent .. --image novasharp-windows-smoke:session188`
+  exited zero on a Windows drive. The clean checkout restored the solution.
+  Recreating with synthetic keys repaired a root-owned NuGet volume and both
+  managed launchers delivered the expected key to local MCP doubles. The next
+  start preserved cache ownership. Recreating after key removal cleared the
+  Docker environment and the staged credential. Docker's exported build context
+  and the captured diagnostics contained no synthetic keys.
 - The Linux interpreter build and quick test suite completed with 15,716 tests
   and zero failures. The Release solution build reported zero warnings and
   errors. CSharpier checked 828 files.
