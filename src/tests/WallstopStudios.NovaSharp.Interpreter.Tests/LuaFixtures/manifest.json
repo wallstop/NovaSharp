@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2001,
+  "total_snippets": 2002,
   "novasharp_only": 498,
-  "comparable": 1503,
+  "comparable": 1504,
   "by_version": {
-    "5.1": 1002,
-    "5.2": 705,
-    "5.3": 949,
-    "5.4": 1018,
-    "5.5": 1059
+    "5.1": 1003,
+    "5.2": 707,
+    "5.3": 951,
+    "5.4": 1020,
+    "5.5": 1061
   },
   "snippets": [
     {
@@ -11714,7 +11714,11 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:261",
       "test": "TableModuleTUnitTests.InsertUsesLenMetamethodWhenPresent",
       "lua_versions": [
-        "5.1"
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
       ],
       "novasharp_only": false,
       "expects_error": false
@@ -22205,6 +22209,20 @@
       "path": "TableModuleTUnitTests/RegisteredTableCallbacksUseArgumentViews.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:56",
       "test": "TableModuleTUnitTests.RegisteredTableCallbacksUseArgumentViews",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/InsertUsesArgumentCountAndReturnsNoValues.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:1014",
+      "test": "TableModuleTUnitTests.InsertUsesArgumentCountAndReturnsNoValues",
       "lua_versions": [
         "5.1",
         "5.2",

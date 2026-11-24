@@ -296,55 +296,160 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
 
-            LuaValue vlist = args.AsType(0, "table.insert", DataType.Table, false);
-            LuaValue vpos = args[1];
-            LuaValue vvalue = args[2];
+            LuaValue tableValue = args.AsType(0, "table.insert", DataType.Table);
+            Table list = tableValue.Table;
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            int end =
+                1
+                + (
+                    version == LuaCompatibilityVersion.Lua51
+                        ? list.Length
+                        : GetTableLength(executionContext, tableValue)
+                );
 
-            if (args.Count > 3)
+            if (args.Count == 2)
+            {
+                if (end < 1)
+                {
+                    throw ScriptRuntimeException.BadArgument(1, "insert", "position out of bounds");
+                }
+
+                list.Set(end, args[1]);
+                return LuaValue.Void;
+            }
+
+            if (args.Count != 3)
             {
                 throw new ScriptRuntimeException("wrong number of arguments to 'insert'");
             }
 
-            int len = GetTableLength(executionContext, vlist);
-            Table list = vlist.Table;
-            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
-
-            if (vvalue.IsNil)
+            LuaValue positionArgument = args[1];
+            LuaNumber? number = positionArgument.Type switch
             {
-                vvalue = vpos;
-                vpos = LuaValue.FromNumber(len + 1);
-            }
-
-            if (vpos.Type != DataType.Number)
+                DataType.Number => positionArgument.LuaNumber,
+                DataType.String => ParseInsertPosition(positionArgument.String, version),
+                _ => null,
+            };
+            if (!number.HasValue)
             {
                 throw ScriptRuntimeException.BadArgument(
                     1,
                     "table.insert",
                     DataType.Number,
-                    vpos.Type,
+                    positionArgument.Type,
                     false
                 );
             }
 
-            // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
-            int pos = (int)
-                Utilities.LuaNumberHelpers.ToLongWithValidation(version, vpos, "insert", 2);
-
-            if (pos > len + 1 || pos < 1)
+            LuaNumber numericPosition = number.Value;
+            long position;
+            if (version <= LuaCompatibilityVersion.Lua52)
             {
-                throw new ScriptRuntimeException(
-                    "bad argument #2 to 'insert' (position out of bounds)"
+                // luaL_checkint truncates toward zero before narrowing to C int.
+                double value = numericPosition.AsFloat;
+                position =
+                    value >= long.MinValue && value < -(double)long.MinValue
+                        ? unchecked((int)(long)value)
+                        : 0;
+            }
+            else
+            {
+                position = Utilities.LuaNumberHelpers.ToLongWithValidation(
+                    version,
+                    LuaValue.NewNumber(numericPosition),
+                    "insert",
+                    2
                 );
             }
 
-            for (int i = len; i >= pos; i--)
+            if (version != LuaCompatibilityVersion.Lua51 && (position < 1 || position > end))
             {
-                list.Set(i + 1, list.Get(i));
+                throw ScriptRuntimeException.BadArgument(1, "insert", "position out of bounds");
             }
 
-            list.Set(pos, vvalue);
+            int index = (int)position;
+            int shiftStart = index;
+            if (-(long)index > list.Count)
+            {
+                // Lua 5.1 accepts negative positions. Skip unoccupied negative keys when
+                // the shift would otherwise scan more keys than the whole table contains.
+                shiftStart = 1;
+            }
 
-            return vlist;
+            for (int i = end; i > shiftStart; i--)
+            {
+                list.Set(i, list.Get(i - 1));
+            }
+
+            if (shiftStart != index)
+            {
+                ShiftSparseNonPositiveKeys(list, index);
+            }
+
+            list.Set(index, args[2]);
+            return LuaValue.Void;
+        }
+
+        private static LuaNumber? ParseInsertPosition(string text, LuaCompatibilityVersion version)
+        {
+            ReadOnlySpan<char> numeral = text.AsSpan();
+            int terminator = numeral.IndexOf('\0');
+            if (terminator >= 0)
+            {
+                // Lua 5.1 converts a C string. Later versions require the full Lua string.
+                if (version != LuaCompatibilityVersion.Lua51)
+                {
+                    return null;
+                }
+
+                numeral = numeral.Slice(0, terminator);
+            }
+
+            // The shared parser also trims Unicode whitespace, which Lua numerals reject.
+            foreach (char character in numeral)
+            {
+                if (character > 0x7f)
+                {
+                    return null;
+                }
+            }
+
+            string numericText = terminator >= 0 ? text.Substring(0, terminator) : text;
+            return LuaNumber.TryParse(numericText, version, out LuaNumber number) ? number : null;
+        }
+
+        private static void ShiftSparseNonPositiveKeys(Table list, int index)
+        {
+            using PooledResource<List<TablePair>> lease = ListPool<TablePair>.Get(
+                out List<TablePair> entries
+            );
+            foreach (TablePair pair in list.GetNonNilPairsEnumerator())
+            {
+                if (pair.Key.Type != DataType.Number)
+                {
+                    continue;
+                }
+
+                double key = pair.Key.Number;
+                if (key >= index && key <= 0 && key == (int)key)
+                {
+                    entries.Add(pair);
+                }
+            }
+
+            // Snapshot the sources, so overlapping destinations do not overwrite them.
+            list.Set(1, LuaValue.Nil);
+            foreach (TablePair pair in entries)
+            {
+                list.Set((int)pair.Key.Number, LuaValue.Nil);
+            }
+
+            foreach (TablePair pair in entries)
+            {
+                list.Set((int)pair.Key.Number + 1, pair.Value);
+            }
         }
 
         /// <summary>
