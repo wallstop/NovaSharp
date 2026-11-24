@@ -54,6 +54,25 @@ points to the remaining work on math extrema.
   Adversarial review also reran the exact arithmetic oracle against the
   rebuilt runtime and verified profile switches, dynamic negation, and
   floating numeric for loops.
+- Four hosted Lua 5.1 and 5.2 jobs failed on one assertion. Their artifacts
+  identified the large modulo probe. Official Lua 5.1.5 and 5.2.4 built
+  without floating-point contraction returned 2. Fused builds returned 1.
+  The paired fixture now uses a power-of-two divisor, and the typed-host test
+  detects integer arithmetic where an older profile must round to double.
+  [#188](https://github.com/Ambiguous-Interactive/NovaSharp/issues/188)
+- Hosted review identified numeric-string negation in Lua 5.3. Reference probes
+  confirmed both unary and binary arithmetic coerce a numeric string to double
+  in 5.3, while the string metatable keeps integer numerals in 5.4 and 5.5.
+  The VM and dynamic evaluator now share that conversion. The paired test
+  checks negation, addition, subtraction, multiplication, modulo, floor
+  division, and the result subtype.
+- The corrected coercion exercised the floating modulo path on wide numerals.
+  Lua 5.3 uses the remainder and tests the sign of its product with the divisor.
+  Lua 5.4 and 5.5 compare signs directly. The paired fixture covers a wide
+  dividend, signed zero, product underflow, and the integer minimum with
+  divisor -1.
+  [Lua 5.3 numeric macros](https://www.lua.org/source/5.3/llimits.h.html#luai_nummod)
+  [Lua 5.4 numeric macros](https://www.lua.org/source/5.4/llimits.h.html#luai_nummod)
 
 ## Issue triage
 

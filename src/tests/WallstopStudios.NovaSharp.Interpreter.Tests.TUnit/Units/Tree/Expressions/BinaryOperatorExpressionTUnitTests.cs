@@ -36,6 +36,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         {
             Script script = new(version);
             bool hasIntegers = version >= LuaCompatibilityVersion.Lua53;
+            bool integerStrings = version >= LuaCompatibilityVersion.Lua54;
             script.Globals.Set("bound", LuaValue.FromInteger(9007199254740992L));
             script.Globals.Set("one", LuaValue.FromInteger(1));
             (string expression, bool expected)[] cases =
@@ -50,12 +51,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 ("(0 / 0) >= 0", false),
                 ("bound + one == 9007199254740992.0", !hasIntegers),
                 ("-(-9223372036854775807) < 9223372036854775808.0", hasIntegers),
+                ("-'-9223372036854775808' > 0", !integerStrings),
+                ("'9007199254740993' + 0 > 9007199254740992.0", integerStrings),
+                ("'9007199254740993' % 2 == 0", !integerStrings),
             };
 
             foreach ((string expression, bool expected) in cases)
             {
                 LuaValue result = script.CreateDynamicExpression(expression).Evaluate();
                 await Assert.That(result.Boolean).IsEqualTo(expected).ConfigureAwait(false);
+            }
+
+            if (hasIntegers)
+            {
+                LuaValue floor = script
+                    .CreateDynamicExpression("'9007199254740993' // 1")
+                    .Evaluate();
+                await Assert.That(floor.IsInteger).IsEqualTo(integerStrings).ConfigureAwait(false);
+                LuaValue remainder = script
+                    .CreateDynamicExpression("9007199254740994.0 % 3")
+                    .Evaluate();
+                await Assert.That(remainder.Number).IsEqualTo(1d).ConfigureAwait(false);
+                LuaValue tiny = script.CreateDynamicExpression("-1e-200 % 3e-200").Evaluate();
+                await Assert
+                    .That(tiny.Number < 0d)
+                    .IsEqualTo(version == LuaCompatibilityVersion.Lua53)
+                    .ConfigureAwait(false);
             }
         }
 
@@ -76,6 +97,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 assert((rounded < hostWide) == exact, 'host ordering')
                 assert((hostWide <= rounded) == not exact, 'host inclusive ordering')
                 assert(rawequal(hostWide, rounded) == not exact, 'host raw equality')
+                assert(hostWide % #'ab' == (exact and 1 or 0), 'host modulo')
                 local values = {[hostWide] = 'host'}
                 assert(next(values, hostWide) == nil, 'host constructor key cursor')
                 rawset(values, rounded, 'rounded')

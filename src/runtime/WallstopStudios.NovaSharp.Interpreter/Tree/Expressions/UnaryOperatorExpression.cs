@@ -76,12 +76,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 case "-":
                 {
                     LuaCompatibilityVersion version = context.Script.CompatibilityVersion;
-                    LuaNumber? number = v.CastToLuaNumber(version);
+                    LuaNumber? number = v.CastToLuaNumber(version, forArithmetic: true);
                     if (number.HasValue)
                     {
-                        return LuaValue.NewNumber(
-                            LuaNumber.Negate(number.Value.ForProfile(version))
-                        );
+                        return LuaValue.NewNumber(LuaNumber.Negate(number.Value));
                     }
 
                     throw new DynamicExpressionException(

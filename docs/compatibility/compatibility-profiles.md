@@ -17,7 +17,9 @@ The `LuaCompatibilityProfile` exposes boolean feature toggles that map directly 
 Lua 5.1 and 5.2 use doubles for script arithmetic and comparisons. Lua 5.3
 through 5.5 distinguish integers from floats and compare their actual values,
 including for `rawequal`. An integer and a float with the same value share a
-table key.
+table key. Lua 5.3 coerces numeric strings to doubles for arithmetic.
+Lua 5.4 and 5.5 use the string metatable for arithmetic coercion and preserve
+integer numerals.
 
 A script-owned table uses the numeric key rules of the profile active when the
 table was created. Changing `Script.Options.CompatibilityVersion` applies the

@@ -2864,7 +2864,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 if (ln.IsInteger && rn.IsInteger)
                 {
                     // One float operand selects the floating arithmetic path.
-                    ln = ln.ForProfile(_script.Options.CompatibilityVersion);
+                    ln = ln.ForArithmeticProfile(_script.Options.CompatibilityVersion);
                 }
 
                 return true;
@@ -2878,7 +2878,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private LuaNumber NegateNumberForVersion(LuaNumber value)
         {
-            return LuaNumber.Negate(value.ForProfile(_script.Options.CompatibilityVersion));
+            return LuaNumber.Negate(
+                value.ForArithmeticProfile(_script.Options.CompatibilityVersion)
+            );
         }
 
         private int ExecEq(Instruction i, int instructionPtr)
@@ -3406,34 +3408,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </returns>
         private LuaNumber? CastToLuaNumberForArithmetic(LuaValue value)
         {
-            DataType type = value.Type;
-
-            // Numbers always convert
-            if (type == DataType.Number)
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                _script.CompatibilityVersion
+            );
+            if (value.Type == DataType.String && version >= LuaCompatibilityVersion.Lua54)
             {
-                return value.LuaNumber;
+                // Lua 5.4+ delegates string conversion to the arithmetic metamethod.
+                return null;
             }
 
-            // Strings: version-dependent behavior
-            // In Lua 5.4+, strings are NOT coerced by the arithmetic operators themselves;
-            // the coercion happens via string metatable metamethods (__add, __sub, etc.)
-            if (type == DataType.String)
-            {
-                LuaCompatibilityVersion version = _script.Options.CompatibilityVersion;
-                if (version >= LuaCompatibilityVersion.Lua54)
-                {
-                    // 5.4+: Do NOT coerce strings here; fall through to metamethod lookup
-                    return null;
-                }
-
-                // 5.1-5.3: Auto-coerce strings to numbers
-                if (LuaNumber.TryParse(value.String, version, out LuaNumber result))
-                {
-                    return result;
-                }
-            }
-
-            return null;
+            return value.CastToLuaNumber(version, forArithmetic: true);
         }
     }
 }

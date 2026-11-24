@@ -630,8 +630,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            LuaNumber? nd1 = v1.CastToLuaNumber(version);
-            LuaNumber? nd2 = v2.CastToLuaNumber(version);
+            LuaNumber? nd1 = v1.CastToLuaNumber(version, forArithmetic: true);
+            LuaNumber? nd2 = v2.CastToLuaNumber(version, forArithmetic: true);
 
             if (nd1 == null || nd2 == null)
             {
@@ -651,8 +651,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            LuaNumber? nd1 = v1.CastToLuaNumber(version);
-            LuaNumber? nd2 = v2.CastToLuaNumber(version);
+            LuaNumber? nd1 = v1.CastToLuaNumber(version, forArithmetic: true);
+            LuaNumber? nd2 = v2.CastToLuaNumber(version, forArithmetic: true);
 
             if (nd1 == null || nd2 == null)
             {
@@ -663,11 +663,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
             LuaNumber n1 = nd1.Value;
             LuaNumber n2 = nd2.Value;
-            if (n1.IsInteger && n2.IsInteger)
-            {
-                n1 = n1.ForProfile(version);
-            }
-
             switch (_operator)
             {
                 case Operator.Add:
@@ -679,7 +674,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 case Operator.Div:
                     return LuaNumber.Divide(n1, n2);
                 case Operator.Mod:
-                    return LuaNumber.Modulo(n1, n2);
+                    return LuaNumber.Modulo(n1, n2, version);
                 case Operator.Power:
                     return LuaNumber.Power(n1, n2);
                 default:

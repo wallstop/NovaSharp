@@ -731,7 +731,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Projects integer storage into a double for the float-only profiles.
         /// </summary>
-        internal LuaNumber ForProfile(LuaCompatibilityVersion version)
+        internal LuaNumber ForArithmeticProfile(LuaCompatibilityVersion version)
         {
             return IsInteger && UsesFloatOnlyProfile(version) ? FromFloat(_integer) : this;
         }
@@ -849,50 +849,57 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Modulo operation (%) following Lua semantics with version-aware behavior.
-        /// Integer % Integer = Integer (following floor division semantics).
-        /// Otherwise, result is Float.
+        /// Returns the Lua remainder with the active profile's numeric rules.
         /// </summary>
         /// <param name="a">The dividend.</param>
         /// <param name="b">The divisor.</param>
-        /// <param name="version">The Lua compatibility version to use for error handling.</param>
-        /// <returns>The modulo result.</returns>
-        /// <remarks>
-        /// In Lua 5.1/5.2, integer modulo by zero returns nan (promotes to float semantics).
-        /// In Lua 5.3+, integer modulo by zero throws "attempt to perform 'n%0'".
-        /// Float modulo by zero always returns nan in all versions.
-        /// </remarks>
+        /// <param name="version">The active Lua compatibility version.</param>
+        /// <returns>The remainder. Lua 5.1 and 5.2 always use floating-point arithmetic.</returns>
+        /// <exception cref="Errors.ScriptRuntimeException">
+        /// Both operands are integers, the divisor is zero, and the profile supports integers.
+        /// </exception>
         public static LuaNumber Modulo(LuaNumber a, LuaNumber b, LuaCompatibilityVersion version)
         {
             LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
-
-            if (a.IsInteger && b.IsInteger)
+            bool floatOnly = UsesFloatOnlyProfile(resolved);
+            if (!floatOnly && a.IsInteger && b.IsInteger)
             {
-                if (b._integer == 0)
+                long divisor = b._integer;
+                if (divisor == 0)
                 {
-                    // In Lua 5.1/5.2, integer modulo by zero returns nan (float semantics)
-                    // In Lua 5.3+, integer modulo by zero throws an error
-                    if (resolved < LuaCompatibilityVersion.Lua53)
-                    {
-                        // Fall through to float logic which returns nan
-                        double ad = a.ToDouble;
-                        double bd = b.ToDouble;
-                        return FromFloat(ad - Math.Floor(ad / bd) * bd);
-                    }
                     throw new Errors.ScriptRuntimeException("attempt to perform 'n%0'");
                 }
-                // Lua modulo follows floor division: a % b == a - floor(a/b) * b
-                long remainder = a._integer % b._integer;
-                // Adjust for Lua's floor semantics
-                if (remainder != 0 && (a._integer < 0) != (b._integer < 0))
+
+                if (divisor == -1)
                 {
-                    remainder += b._integer;
+                    // The minimum integer divided by -1 overflows, but its remainder is zero.
+                    return Zero;
                 }
+
+                long remainder = a._integer % divisor;
+                if (remainder != 0 && (remainder < 0) != (divisor < 0))
+                {
+                    remainder += divisor;
+                }
+
                 return FromInteger(remainder);
             }
-            double aDouble = a.ToDouble;
-            double bDouble = b.ToDouble;
-            return FromFloat(aDouble - Math.Floor(aDouble / bDouble) * bDouble);
+
+            double dividend = a.ToDouble;
+            double floatDivisor = b.ToDouble;
+            if (floatOnly)
+            {
+                return FromFloat(dividend - Math.Floor(dividend / floatDivisor) * floatDivisor);
+            }
+
+            double floatRemainder = dividend % floatDivisor;
+            // Lua 5.3 tests the sign of a product that can underflow.
+            bool adjust =
+                resolved == LuaCompatibilityVersion.Lua53
+                    ? floatRemainder * floatDivisor < 0.0
+                    : (floatRemainder > 0.0 && floatDivisor < 0.0)
+                        || (floatRemainder < 0.0 && floatDivisor > 0.0);
+            return FromFloat(adjust ? floatRemainder + floatDivisor : floatRemainder);
         }
 
         /// <summary>

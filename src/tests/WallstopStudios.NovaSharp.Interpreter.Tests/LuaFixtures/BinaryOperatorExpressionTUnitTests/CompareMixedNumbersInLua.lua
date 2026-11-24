@@ -66,8 +66,9 @@ compare('arithmetic sum', sum, rounded, false, hasIntegers, not hasIntegers)
 compare('arithmetic difference', -bound - one, -rounded, hasIntegers, false, not hasIntegers)
 compare('arithmetic product', product, rounded, false, hasIntegers, not hasIntegers)
 compare('subsequent subtraction', sum - bound, hasIntegers and 1 or 0, false, false, true)
-local remainder = math.floor(9007199254740994.0) % #'abc'
-compare('profile-specific modulo', remainder, hasIntegers and 1 or 2, false, false, true)
+-- A power-of-two divisor keeps the result independent of floating-point contraction.
+local remainder = sum % (one + one)
+compare('profile-specific modulo', remainder, hasIntegers and 1 or 0, false, false, true)
 
 local fromLength = one
 for _ = 1, 53 do
@@ -100,3 +101,31 @@ for _ = wide, rounded, 1.0 do
     if iterations == 3 then break end
 end
 assert(iterations == 3, 'float numeric for')
+
+local integerStrings = hasIntegers and _VERSION ~= 'Lua 5.3'
+local lowString, wideString = '-9223372036854775808', '9007199254740993'
+local negatedString = -lowString
+assert((negatedString > 0) == not integerStrings, 'numeric string negation')
+for _, result in ipairs({wideString + 0, wideString - 0, wideString * 1}) do
+    compare('numeric string arithmetic', result, rounded, false, integerStrings, not integerStrings)
+end
+assert(wideString % #'ab' == (integerStrings and 1 or 0), 'numeric string modulo')
+if hasIntegers then
+    local floorString = assert(load("return '9007199254740993' // 1"))()
+    local expectedType = integerStrings and 'integer' or 'float'
+    assert(math.type(negatedString) == expectedType, 'numeric string negation subtype')
+    assert(math.type(floorString) == expectedType, 'numeric string floor division subtype')
+    compare('numeric string floor division', floorString, rounded, false, integerStrings, not integerStrings)
+end
+
+local tiny = -1e-200 % 3e-200
+assert((tiny < 0) == (_VERSION == 'Lua 5.3'), 'modulo sign after product underflow')
+if hasIntegers then
+    local largeRemainder = 9007199254740994.0 % 3
+    local negative = -9223372036854775808.0
+    assert(largeRemainder == 1.0 and math.type(largeRemainder) == 'float', 'large float modulo')
+    assert(1 / (negative % 2) == -math.huge, 'float modulo sign of zero')
+    assert(math.mininteger % -1 == 0, 'integer modulo with minimum dividend')
+    assert((-9223372036854775808.0 % 2) == 0, 'float modulo equality with zero')
+    assert(1 / (lowString % 2) == (integerStrings and math.huge or -math.huge), 'string modulo sign of zero')
+end

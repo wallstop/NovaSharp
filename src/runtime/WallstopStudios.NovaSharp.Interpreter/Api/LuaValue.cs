@@ -1717,21 +1717,31 @@ namespace NovaSharp
         /// and applying the supplied Lua version's numeric-string grammar.
         /// </summary>
         /// <param name="version">The Lua compatibility version governing string coercion.</param>
-        /// <returns>The LuaNumber value, or null if not number, not string or non-convertible-string.</returns>
-        internal LuaNumber? CastToLuaNumber(LuaCompatibilityVersion version)
+        /// <param name="forArithmetic">Whether to apply the profile's arithmetic conversions.</param>
+        /// <returns>The LuaNumber value, or null if conversion is unavailable.</returns>
+        internal LuaNumber? CastToLuaNumber(
+            LuaCompatibilityVersion version,
+            bool forArithmetic = false
+        )
         {
             LuaValue rv = ToScalar();
             if (rv.Type == DataType.Number)
             {
-                return rv.LuaNumber;
+                LuaNumber number = rv.LuaNumber;
+                return forArithmetic ? number.ForArithmeticProfile(version) : number;
             }
-            else if (rv.Type == DataType.String)
+
+            if (
+                rv.Type == DataType.String
+                && LuaNumber.TryParse(rv.String, version, out LuaNumber result)
+            )
             {
-                if (LuaNumber.TryParse(rv.String, version, out LuaNumber result))
-                {
-                    return result;
-                }
+                // Lua 5.3's arithmetic fallback converts strings to float, even for integer numerals.
+                return forArithmetic && version == LuaCompatibilityVersion.Lua53
+                    ? LuaNumber.FromFloat(result.ToDouble)
+                    : result;
             }
+
             return null;
         }
 
