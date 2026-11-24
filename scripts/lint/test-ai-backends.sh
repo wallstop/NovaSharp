@@ -414,8 +414,6 @@ grep -Fq '"${localWorkspaceFolder}/.devcontainer/.mcp.env"' "${repo_root}/.devco
     || fail "devcontainer does not load the filtered MCP environment"
 grep -Fq '"NANOCODER_MCPSERVERS_FILE"' "${repo_root}/.devcontainer/devcontainer.json" \
     || fail "Nanocoder MCP discovery depends on the frontend launch directory"
-grep -Fq '"${localWorkspaceFolder}/.devcontainer/check-mcp-env.sh"' "${repo_root}/.devcontainer/devcontainer.json" \
-    || fail "devcontainer initialization does not validate MCP credentials"
 git -C "${repo_root}" check-ignore -q .env.local \
     || fail ".env.local is not ignored by Git"
 git -C "${repo_root}" check-ignore -q .env.local.bak \
@@ -425,8 +423,22 @@ git -C "${repo_root}" check-ignore -q .devcontainer/.mcp.env \
 git -C "${repo_root}" check-ignore -q .devcontainer/.mcp.env.interrupted \
     || fail "temporary MCP environment files are not ignored by Git"
 
-preflight_workspace="${test_root}/preflight-workspace"
+preflight_workspace="${test_root}/preflight workspace"
 mkdir -p "${preflight_workspace}/.devcontainer"
+cp "${mcp_env_check}" "${preflight_workspace}/.devcontainer/"
+python3 - "${repo_root}" "${preflight_workspace}" <<'PY'
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+root, workspace = map(Path, sys.argv[1:])
+config = (root / ".devcontainer/devcontainer.json").read_text(encoding="utf-8")
+config = json.loads("\n".join(line for line in config.splitlines() if not line.lstrip().startswith("//")))
+argv = [arg.replace("${localWorkspaceFolder}", r"X:\checkout with spaces") for arg in config["initializeCommand"]]
+subprocess.run(argv, cwd=workspace, check=True)
+assert (workspace / ".devcontainer/.mcp.env").read_bytes() == b""
+PY
 parent_symlink_workspace="${test_root}/parent-symlink-workspace"
 parent_symlink_target="${test_root}/outside-devcontainer"
 mkdir -p "${parent_symlink_workspace}" "${parent_symlink_target}"
@@ -782,4 +794,5 @@ if PATH="${test_bin}:/usr/bin:/bin" ZAI_MCP_API_KEY=placeholder \
     fail "Remote MCP wrapper accepted an unknown endpoint alias"
 fi
 
+bash "${repo_root}/scripts/lint/test-devcontainer-runtime-credentials.sh"
 printf 'PASS: isolated AI backends and project MCP catalogs\n'

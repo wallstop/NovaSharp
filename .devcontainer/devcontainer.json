@@ -11,8 +11,8 @@
             "--no-cache"
         ]
     },
-    // Validate the ignored credential file before Docker consumes it.
-    "initializeCommand": ["bash", "${localWorkspaceFolder}/.devcontainer/check-mcp-env.sh", "${localWorkspaceFolder}"],
+    // Bash inherits the workspace as its working directory, including under WSL.
+    "initializeCommand": ["bash", ".devcontainer/check-mcp-env.sh"],
     // Inject credentials only at container runtime; they never enter image layers.
     "runArgs": ["--env-file", "${localWorkspaceFolder}/.devcontainer/.mcp.env"],
     // Nanocoder otherwise resolves .mcp.json only from the launch directory.

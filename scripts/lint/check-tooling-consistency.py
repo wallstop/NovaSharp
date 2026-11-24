@@ -250,7 +250,6 @@ def check_devcontainer_npm_tooling(violations: list[str]) -> None:
     installer = read_text(DEVCONTAINER_NPM_INSTALLER)
     dockerfile = read_text(DEVCONTAINER_DOCKERFILE)
     devcontainer = read_text(DEVCONTAINER_JSON)
-    on_create = read_text(DEVCONTAINER_ON_CREATE)
 
     for package in LATEST_NPM_TOOLS:
         if package not in installer:
@@ -283,7 +282,7 @@ def check_devcontainer_npm_tooling(violations: list[str]) -> None:
         )
 
     image_installer = "RUN NOVA_NPM_CLEAN_CACHE=1 novasharp-install-npm-tools"
-    image_install_position = dockerfile.find(image_installer)
+    image_install_position = dockerfile.find(image_installer + "\n")
     last_user_before_install = dockerfile.rfind("USER ", 0, image_install_position)
     install_user_line = (
         dockerfile[last_user_before_install:].splitlines()[0] if last_user_before_install >= 0 else ""
@@ -291,7 +290,7 @@ def check_devcontainer_npm_tooling(violations: list[str]) -> None:
     if image_install_position < 0 or install_user_line != "USER vscode":
         violations.append(
             f"{repo_path(DEVCONTAINER_DOCKERFILE)} must run the image npm installer as the vscode user "
-            "during the image build."
+            "in strict mode during the image build."
         )
 
     if "CODEX_CLI_VERSION" in dockerfile:
@@ -313,11 +312,12 @@ def check_devcontainer_npm_tooling(violations: list[str]) -> None:
             "through UID remapping and exercise every parent under a synthetic UID."
         )
 
-    workspace_installer = ".devcontainer/install-npm-tools.sh"
-    if workspace_installer not in on_create:
-        violations.append(
-            f"{repo_path(DEVCONTAINER_ON_CREATE)} must refresh the npm CLIs when a container is created."
-        )
+    for hook in (DEVCONTAINER_ON_CREATE, DEVCONTAINER_POST_START):
+        command = r"^\s*bash\s+\.devcontainer/install-npm-tools\.sh\s+--offline-ok\s*$"
+        if not hook.is_file() or not re.search(command, read_text(hook), re.MULTILINE):
+            violations.append(
+                f"{repo_path(hook)} must allow startup with validated image tools when an npm refresh fails."
+            )
 
     if ".devcontainer/post-start.sh" not in devcontainer:
         violations.append(
@@ -373,11 +373,6 @@ def check_devcontainer_artifact_cleanup(violations: list[str]) -> None:
         return
 
     post_start = read_text(DEVCONTAINER_POST_START)
-    if ".devcontainer/install-npm-tools.sh" not in post_start or "--offline-ok" not in post_start:
-        violations.append(
-            f"{repo_path(DEVCONTAINER_POST_START)} must refresh the latest npm CLIs with the "
-            "tested offline fallback on every start."
-        )
     if ".devcontainer/cleanup-artifacts.sh" not in post_start or "--older-than-days" not in post_start:
         violations.append(
             f"{repo_path(DEVCONTAINER_POST_START)} must prune expired generated artifacts on every start."

@@ -54,8 +54,9 @@
   Nanocoder requires `NANOCODER_MCPSERVERS_FILE` because it does not search parent
   directories for `.mcp.json`.
 - **Fact:** A host preflight allowlists `GITHUB_PERSONAL_ACCESS_TOKEN` and
-  `ZAI_API_KEY` from ignored `.env.local` into an ignored mode-`0600` runtime
-  file. It atomically publishes only after validation so a concurrent launch
+  `ZAI_API_KEY` from ignored `.env.local` into an ignored Docker env file.
+  The workspace-relative host hook uses native Windows ACLs on Windows drives
+  and mode `0600` on POSIX storage. It atomically publishes after validation so a concurrent launch
   can open the previous file. A failed preflight stops that launch. A missing
   source publishes an empty file, allowing credential-free devcontainer startup.
 - **Fact:** The GitHub server sends `X-MCP-Readonly: true` in every frontend.
@@ -81,14 +82,16 @@
   no MCP startup errors and proceeded to the independently failing model quota.
 - **Fact:** Claude 2.1.260 also does not forward its reserved Anthropic auth
   variable to the configured stdio MCP child. The Z.ai wrappers therefore parse
-  only the exact `ZAI_API_KEY` assignment from the ignored filtered runtime file
-  below `CLAUDE_PROJECT_DIR`; they do not source arbitrary project content.
+  a private credential file selected by the canonical `CLAUDE_PROJECT_DIR`.
+  The managed image stages only the Docker-injected Z.ai key on its Linux
+  filesystem during creation. Windows bind mounts can report mode `0777` even
+  for host files protected by a private NTFS ACL.
 - **Fact:** `claude-zai` uses a private MCP catalog and Codex uses its project
   catalog to bridge only the three affected remote servers through `mcp-remote`.
   Vision remains direct stdio and GitHub remains native HTTP. Codex forwards only
   `ZAI_API_KEY` through the documented per-server `env_vars` allowlist; the
   wrapper validates it and scrubs all credentials before starting the bridge.
-  Claude continues to use the filtered runtime file below `CLAUDE_PROJECT_DIR`.
+  Standalone POSIX wrappers read the filtered runtime file below `CLAUDE_PROJECT_DIR`.
   The presence of `CLAUDE_PROJECT_DIR` makes that file authoritative: an absent,
   malformed, symlinked, or over-readable file fails closed and never falls back
   to an ambient key.

@@ -4,31 +4,12 @@
 set +x
 set -euo pipefail
 
-zai_api_key="${ZAI_API_KEY:-${Z_AI_API_KEY:-}}"
-export -n zai_api_key 2>/dev/null || true
-if [ -z "${zai_api_key}" ] && [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
-    runtime_env="${CLAUDE_PROJECT_DIR}/.devcontainer/.mcp.env"
-    if [ ! -f "${runtime_env}" ] || [ -L "${runtime_env}" ]; then
-        printf 'zai-mcp-vision: Filtered MCP credentials are missing; rebuild the devcontainer.\n' >&2
-        exit 1
-    fi
-    if [ "$(stat -c '%a' "${runtime_env}")" != "600" ]; then
-        printf 'zai-mcp-vision: Filtered MCP credentials must have mode 600; rebuild the devcontainer.\n' >&2
-        exit 1
-    fi
-    definition_count="$({ grep -Ec '^ZAI_API_KEY=' "${runtime_env}" || true; })"
-    if [ "${definition_count}" != "1" ]; then
-        printf 'zai-mcp-vision: Filtered MCP credentials contain an invalid ZAI_API_KEY.\n' >&2
-        exit 1
-    fi
-    zai_api_key="$(sed -n 's/^ZAI_API_KEY=//p' "${runtime_env}")"
-    zai_api_key="${zai_api_key%$'\r'}"
-    case "${zai_api_key}" in
-        *[[:space:]\"\']*)
-            printf 'zai-mcp-vision: Filtered MCP credentials contain an invalid ZAI_API_KEY.\n' >&2
-            exit 1
-            ;;
-    esac
+unset zai_api_key
+if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
+    launcher_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+    zai_api_key="$(python3 -EsB "${launcher_dir}/read-claude-mcp-key.py" read "${CLAUDE_PROJECT_DIR}")"
+else
+    zai_api_key="${ZAI_API_KEY:-${Z_AI_API_KEY:-}}"
 fi
 if [ -z "${zai_api_key}" ]; then
     printf 'zai-mcp-vision: ZAI_API_KEY is missing; update .env.local and rebuild the devcontainer.\n' >&2

@@ -35,6 +35,7 @@ Advance [PLAN.md](PLAN.md) through a green PR and merge it.
   hand off through `PLAN.md`, `progress/`, and issues instead of over-running.
 - Commit and push freely. Small, coherent commits.
 - Address all non-trivial reviewer feedback and CI failures before moving to the next task.
+- When CodeRabbit reports a rate limit, proceed with the merge as soon as CI passes on the final commit and all actionable review feedback is addressed. If an earlier CodeRabbit change request still blocks the merge, verify its fixes, resolve its threads, and dismiss that review with links to the fixes and validation.
 
 ## Fix Philosophy
 

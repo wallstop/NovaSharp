@@ -12,6 +12,10 @@
 .devcontainer/Dockerfile text eol=lf
 .devcontainer/devcontainer.json text eol=lf
 
+# yamllint runs against the working copy inside the Linux devcontainer.
+*.yml text eol=lf
+*.yaml text eol=lf
+
 # Keep C# sources on CRLF to match .editorconfig and keep CSharpier happy on Linux agents.
 *.cs text eol=crlf
 

@@ -2,6 +2,15 @@
 
 This folder contains quick test execution utilities for NovaSharp development.
 
+## Devcontainer startup
+
+With Docker running and `devcontainer` on PATH, run
+`python scripts/test/devcontainer-smoke.py` to build the current committed
+checkout and exercise the configured lifecycle. Use `--image IMAGE` to reuse
+a local devcontainer image built from that commit with its features. On Windows,
+`--temp-parent ..` places the disposable checkout on the same drive as the repo.
+The test uses isolated containers, a named NuGet volume, and synthetic credentials.
+
 ## quick.sh - Quick Test Runner
 
 Optimized script for fast iterative test execution with filtering support.

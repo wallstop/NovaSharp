@@ -5,12 +5,12 @@ This file is the execution queue. Repository priorities and closure gates live i
 session scoping target — live in the
 [plan-maintenance skill](.llm/skills/plan-maintenance/SKILL.md). Design evidence
 belongs in domain documentation, completed work in `progress/`, and the full
-backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
+backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/issues).
 
 ## Now
 
 1. Advance Phase A5 call paths in
-   [#108](https://github.com/wallstop/NovaSharp/issues/108):
+   [#108](https://github.com/Ambiguous-Interactive/NovaSharp/issues/108):
    - Migrate each remaining legacy CoreLib registration in its own scoped change:
      Table, Load, Utf8, OsSystem, StringPack, MetaTable, ErrorHandling,
      TableIterators, OsTime, Json, and Dynamic.
@@ -24,8 +24,8 @@ backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
      after warmup, `new Script()` retains less than 100 KiB, and coroutine
      create/resume is near-zero allocation.
 1. Close the post-`LuaValue` table measurements in
-   [#93](https://github.com/wallstop/NovaSharp/issues/93), then ratchet the hosted
-   allocation baseline in [#92](https://github.com/wallstop/NovaSharp/issues/92).
+   [#93](https://github.com/Ambiguous-Interactive/NovaSharp/issues/93), then ratchet the hosted
+   allocation baseline in [#92](https://github.com/Ambiguous-Interactive/NovaSharp/issues/92).
 1. Finish the
    [B1 source-generator MVP](docs/proposals/roslyn-hardwire-generator.md): async
    suspension output, the NS0002 code fix after adapter contracts settle,
@@ -49,7 +49,7 @@ backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
 1. A4.5: evaluate table-field inline caches, specialized arithmetic, fast builtins,
    and safe global-import caching independently against the scoreboard.
 1. A6/A7: profile strings and cold compilation, including the cached-compilation
-   work tracked in [#118](https://github.com/wallstop/NovaSharp/issues/118), then
+   work tracked in [#118](https://github.com/Ambiguous-Interactive/NovaSharp/issues/118), then
    optimize only measured bottlenecks; exit with string-heavy workloads within
    2–3x of native Lua, cold `LoadString` within 5–10x, and cold-load allocations
    reduced at least 5x. Do not rewrite the parser without a demonstrated loading
@@ -72,10 +72,10 @@ backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
    Lua-CSharp; evaluate the gated
    [stackless/fuel model](docs/proposals/runtime-research-gates.md#stacklessfuel-execution-model)
    in the same study.
-1. Lua parity backlog: [call-context error names](https://github.com/wallstop/NovaSharp/issues/124),
-   [optional-argument validation](https://github.com/wallstop/NovaSharp/issues/125),
-   [residual number/string parity nits](https://github.com/wallstop/NovaSharp/issues/138),
-   other error formats, [Lua 5.5 const loop-variable enforcement](https://github.com/wallstop/NovaSharp/issues/130),
+1. Lua parity backlog: [call-context error names](https://github.com/Ambiguous-Interactive/NovaSharp/issues/124),
+   [optional-argument validation](https://github.com/Ambiguous-Interactive/NovaSharp/issues/125),
+   [residual number/string parity nits](https://github.com/Ambiguous-Interactive/NovaSharp/issues/138),
+   other error formats, [Lua 5.5 const loop-variable enforcement](https://github.com/Ambiguous-Interactive/NovaSharp/issues/130),
    `__gc`, Lua 5.4 garbage collector options, version-migration docs, and explicit
    compatibility-version matrix coverage; retain the
    [host-GC and byte-fidelity constraints](docs/proposals/runtime-research-gates.md#host-gc-and-string-fidelity).
@@ -83,6 +83,3 @@ backlog in [GitHub issues](https://github.com/wallstop/NovaSharp/issues).
    conversion boundary audits; consolidate repeated error-message and module-name
    literals incrementally when touched; harden the Phase A0 baseline against
    compile-P95 runner noise with a multi-run median capture.
-1. Add a Docker-backed devcontainer startup smoke test with fake credentials
-   and fresh and previously root-owned NuGet volumes. See
-   [#150](https://github.com/wallstop/NovaSharp/issues/150).

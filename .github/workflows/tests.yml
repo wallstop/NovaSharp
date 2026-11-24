@@ -148,6 +148,10 @@ jobs:
           fetch-depth: 0
       # Lint checks already passed in the 'lint' job (this job has needs: lint).
       # Skip redundant branding/namespace/naming/spelling/documentation/fixture-catalog steps.
+      - name: Check Windows devcontainer host initialization
+        if: runner.os == 'Windows'
+        shell: bash
+        run: pwsh -NoProfile -File scripts/lint/test-devcontainer-windows-preflight.ps1
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
