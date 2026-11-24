@@ -45,6 +45,12 @@ lifecycle and uses local MCP test doubles. See the [test instructions](../script
   start preserved cache ownership. Recreating after key removal cleared the
   Docker environment and the staged credential. Docker's exported build context
   and the captured diagnostics contained no synthetic keys.
+- `python scripts/test/devcontainer-smoke.py --temp-parent ..` repeated all four
+  lifecycle stages from a fresh image build after the npm fix and exited zero.
+  In a separate network-isolated container, a loopback npm registry advertised
+  a newer Codex release and returned 404 for its tarball. The actual npm client
+  exhausted its retries, the startup check exited zero, and the baked Codex
+  `0.171.0` still ran `--version` and `--help`.
 - The Linux interpreter build and quick test suite completed with 15,716 tests
   and zero failures. The Release solution build reported zero warnings and
   errors. CSharpier checked 828 files.
