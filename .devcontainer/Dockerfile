@@ -177,6 +177,11 @@ RUN git config --system init.defaultBranch main \
     && git config --system core.autocrlf input \
     && git config --system core.eol lf
 
+# Seed the NuGet cache mount point so Docker initializes new named volumes with
+# vscode ownership instead of root:root. Existing volumes are repaired by
+# ensure-nuget-cache.sh before any lifecycle command invokes dotnet.
+RUN install -d -m 0755 -o vscode -g vscode /home/vscode/.nuget
+
 # Initialize zoxide for bash (add to bashrc for interactive shells).
 RUN echo 'eval "$(zoxide init bash)"' >> /etc/bash.bashrc
 
@@ -218,5 +223,10 @@ RUN echo "=== Environment Verification ===" \
     && echo "--- Workflow/YAML Lint Tools ---" \
     && actionlint -version && yamllint --version \
     && echo "=== Verification Complete ==="
+
+COPY --chmod=0755 zai-mcp-vision.sh /usr/local/bin/zai-mcp-vision
+COPY --chmod=0755 zai-mcp-remote.sh /usr/local/bin/zai-mcp-remote
+# Installed Claude launchers always use container-owned files, including on NTFS mounts.
+COPY mcp_credentials.py /usr/local/bin/read-claude-mcp-key.py
 
 USER vscode

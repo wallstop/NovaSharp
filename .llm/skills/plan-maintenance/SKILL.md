@@ -37,7 +37,7 @@ issue entry, and hand off cleanly instead of leaving a half-finished branch.
 
 | Information                                                            | Canonical destination               |
 | ---------------------------------------------------------------------- | ----------------------------------- |
-| Always-applicable priority or closure gate                             | `.llm/context.md`                   |
+| Always-applicable priority or closure gate                             | `AGENTS.md`                         |
 | Reusable method or decision process                                    | `.llm/skills/` or `.llm/workflows/` |
 | Stable verified repository fact                                        | `.llm/knowledge/`                   |
 | Architecture, proposal, benchmark, or domain detail                    | Relevant file under `docs/`         |

@@ -52,6 +52,9 @@ setup_npm_fixture() {
     local prefix="${fixture}/prefix"
     mkdir -p "${fake_bin}" "${prefix}/bin" "${prefix}/lib/node_modules/@openai/codex" \
         "${prefix}/lib/node_modules/@anthropic-ai/claude-code" \
+        "${prefix}/lib/node_modules/@github/copilot" \
+        "${prefix}/lib/node_modules/mcp-remote" \
+        "${prefix}/lib/node_modules/@z_ai/mcp-server" \
         "${prefix}/lib/node_modules/@nanocollective" "${fixture}/cache"
     printf '%s\n' "1.0.0" > "${fixture}/installed-version"
 
@@ -86,7 +89,7 @@ setup_npm_fixture() {
         '  list)' \
         '    if [ "${NOVA_TEST_SCENARIO}" = "list-invalid" ]; then printf "not-json\n"; exit 1; fi' \
         '    version="$(<"${NOVA_TEST_FIXTURE}/installed-version")"' \
-        '    printf "{\"dependencies\":{\"@nanocollective/nanocoder\":{\"version\":\"%s\"},\"opencode-ai\":{\"version\":\"%s\"},\"@openai/codex\":{\"version\":\"%s\"},\"@anthropic-ai/claude-code\":{\"version\":\"%s\"}}}\n" "${version}" "${version}" "${version}" "${version}"' \
+        '    printf "{\"dependencies\":{\"@nanocollective/nanocoder\":{\"version\":\"%s\"},\"opencode-ai\":{\"version\":\"%s\"},\"@openai/codex\":{\"version\":\"%s\"},\"@anthropic-ai/claude-code\":{\"version\":\"%s\"},\"@github/copilot\":{\"version\":\"%s\"},\"mcp-remote\":{\"version\":\"%s\"},\"@z_ai/mcp-server\":{\"version\":\"%s\"}}}\n" "${version}" "${version}" "${version}" "${version}" "${version}" "${version}" "${version}"' \
         '    if [ "${NOVA_TEST_SCENARIO}" = "list-nonzero" ]; then exit 1; fi' \
         '    ;;' \
         '  view)' \
@@ -98,13 +101,15 @@ setup_npm_fixture() {
         '    fi' \
         '    ;;' \
         '  install)' \
-        '    if [ "${NOVA_TEST_SCENARIO}" = "install-fail" ] || [ "${NOVA_TEST_SCENARIO}" = "broken-fallback" ]; then' \
-        '      if [ "${NOVA_TEST_SCENARIO}" = "broken-fallback" ]; then' \
-        '        unlink "${NOVA_TEST_FIXTURE}/prefix/bin/nanocoder"' \
-        '        printf "#!/usr/bin/env bash\necho broken native payload >&2\nexit 88\n" > "${NOVA_TEST_FIXTURE}/prefix/bin/nanocoder"' \
-        '        chmod +x "${NOVA_TEST_FIXTURE}/prefix/bin/nanocoder"' \
+        '    if [[ "${NOVA_TEST_SCENARIO}" =~ ^(install-fail|broken-fallback|broken-mcp-fallback|missing-fallback)$ ]]; then' \
+        '      if [[ "${NOVA_TEST_SCENARIO}" = broken-* ]]; then' \
+        '        tool=nanocoder; if [ "${NOVA_TEST_SCENARIO}" = "broken-mcp-fallback" ]; then tool=zai-mcp-server; fi' \
+        '        unlink "${NOVA_TEST_FIXTURE}/prefix/bin/${tool}"' \
+        '        printf "#!/usr/bin/env bash\necho broken native payload >&2\nexit 88\n" > "${NOVA_TEST_FIXTURE}/prefix/bin/${tool}"' \
+        '        chmod +x "${NOVA_TEST_FIXTURE}/prefix/bin/${tool}"' \
         '      fi' \
-        '      echo "simulated install failure" >&2' \
+        '      if [ "${NOVA_TEST_SCENARIO}" = "missing-fallback" ]; then unlink "${NOVA_TEST_FIXTURE}/prefix/bin/codex"; fi' \
+        '      echo "npm error E404: published tarball unavailable" >&2' \
         '      exit 73' \
         '    fi' \
         '    echo 2.0.0 > "${NOVA_TEST_FIXTURE}/installed-version"' \
@@ -116,8 +121,12 @@ setup_npm_fixture() {
     # shellcheck disable=SC2016
     write_executable "${prefix}/bin/fake-cli" \
         '#!/usr/bin/env bash' \
+        'if [ "$(basename "$0")" = "zai-mcp-server" ]; then' \
+        '  [[ $# = 0 && -n "${Z_AI_API_KEY:-}" && -z "${NOVA_TEST_FIXTURE:-}" ]] || exit 89' \
+        '  exit 0' \
+        'fi' \
         'printf "%s %s\n" "$(basename "$0")" "$(<"${NOVA_TEST_FIXTURE}/installed-version")"'
-    for command_name in nanocoder opencode codex claude; do
+    for command_name in nanocoder opencode codex claude copilot mcp-remote zai-mcp-server; do
         ln -s fake-cli "${prefix}/bin/${command_name}"
     done
 
@@ -167,12 +176,13 @@ result="$(run_installer resolution-fail --offline-ok)"
 assert_contains "${result}" "latest status could not be verified"
 
 result="$(run_installer resolution-fail)"
-[ "${result%%$'\n'*}" != "0" ] || fail "strict create/build refresh should fail offline"
+[ "${result%%$'\n'*}" != "0" ] || fail "strict build refresh should fail offline"
 assert_contains "${result}" "Unable to resolve"
 
 result="$(run_installer install-fail --offline-ok)"
 [ "${result%%$'\n'*}" = "0" ] || fail "offline start should survive install-stage failure"
-assert_contains "${result}" "continuing with the intact installed tool versions"
+assert_contains "${result}" "validating the installed tool versions before continuing"
+assert_contains "${result}" "npm error E404"
 
 result="$(run_installer install-fail)"
 [ "${result%%$'\n'*}" = "73" ] || fail "strict install should preserve npm's failure code"
@@ -180,6 +190,14 @@ result="$(run_installer install-fail)"
 result="$(run_installer broken-fallback --offline-ok)"
 [ "${result%%$'\n'*}" != "0" ] || fail "a non-runnable fallback must fail startup"
 assert_contains "${result}" "failed its version check"
+
+result="$(run_installer broken-mcp-fallback --offline-ok)"
+[ "${result%%$'\n'*}" != "0" ] || fail "a broken stdio MCP payload must fail startup"
+assert_contains "${result}" "zai-mcp-server failed its stdio startup check"
+
+result="$(run_installer missing-fallback --offline-ok)"
+[ "${result%%$'\n'*}" = "73" ] || fail "a missing fallback must preserve npm's install failure"
+assert_contains "${result}" "installed @openai/codex fallback is not intact"
 
 result="$(run_installer root)"
 [ "${result%%$'\n'*}" != "0" ] || fail "root npm installation must be rejected"
@@ -363,5 +381,131 @@ bash "${REPO_ROOT}/.devcontainer/cleanup-artifacts.sh" "${workspace}" --all >/de
 [ -f "${workspace}/artifacts/build-cache/preserved.cache" ] || fail "full cleanup removed legacy cache"
 [ ! -e "${workspace}/BenchmarkDotNet.Artifacts/build-cache" ] || fail "full cleanup exempted benchmark output"
 [ -f "${workspace}/src/source.cs" ] || fail "full cleanup deleted source"
+
+# ============================================================================
+# NuGet cache ownership guard
+# ============================================================================
+nuget_guard="${REPO_ROOT}/.devcontainer/ensure-nuget-cache.sh"
+grep -F -- '$(id -u)' "${nuget_guard}" >/dev/null ||
+    fail "NuGet cache guard must use the runtime UID"
+grep -F -- '$(id -g)' "${nuget_guard}" >/dev/null ||
+    fail "NuGet cache guard must use the runtime GID"
+
+nuget_home="${TEST_ROOT}/nuget-home"
+mkdir -p "${nuget_home}/.nuget"
+
+nuget_healthy_bin="${TEST_ROOT}/nuget-healthy-bin"
+mkdir -p "${nuget_healthy_bin}"
+write_executable "${nuget_healthy_bin}/sudo" \
+    '#!/usr/bin/env bash' \
+    'echo "healthy NuGet cache must not invoke sudo" >&2' \
+    'exit 98'
+if ! HOME="${nuget_home}" PATH="${nuget_healthy_bin}:${PATH}" \
+    bash "${nuget_guard}" 2>&1; then
+    fail "healthy NuGet cache should pass without sudo"
+fi
+
+nuget_malformed_home="${TEST_ROOT}/nuget-malformed-home"
+mkdir -p "${nuget_malformed_home}/.nuget/NuGet/NuGet.Config"
+if nuget_malformed_output="$(
+    HOME="${nuget_malformed_home}" PATH="${nuget_healthy_bin}:${PATH}" bash "${nuget_guard}" 2>&1
+)"; then
+    fail "a directory in place of NuGet.Config must fail before restore"
+fi
+assert_contains "${nuget_malformed_output}" "NuGet.Config must be a regular file"
+assert_contains "${nuget_malformed_output}" "docker volume rm novasharp-nuget-cache"
+
+if [ "$(id -u)" = "0" ]; then
+    echo "Skipping non-root NuGet cache cases because the test suite is running as root."
+else
+    chmod 0555 "${nuget_home}/.nuget"
+    nuget_sudo_log="${TEST_ROOT}/nuget-sudo.log"
+    nuget_repair_bin="${TEST_ROOT}/nuget-repair-bin"
+    mkdir -p "${nuget_repair_bin}"
+    # shellcheck disable=SC2016
+    write_executable "${nuget_repair_bin}/sudo" \
+        '#!/usr/bin/env bash' \
+        'printf "%s\n" "$*" >> "${NOVA_TEST_SUDO_LOG}"' \
+        'if [ "${1:-}" = "-n" ]; then shift; fi' \
+        'command_name="${1:-}"' \
+        'if [ -z "${command_name}" ]; then exit 96; fi' \
+        'shift' \
+        'exec "$(command -v "${command_name}")" "$@"'
+    if ! HOME="${nuget_home}" PATH="${nuget_repair_bin}:${PATH}" \
+        NOVA_TEST_SUDO_LOG="${nuget_sudo_log}" bash "${nuget_guard}" 2>&1; then
+        fail "root-owned-equivalent NuGet cache should be repaired"
+    fi
+    [ -w "${nuget_home}/.nuget" ] || fail "NuGet cache was not made writable"
+    assert_contains "$(<"${nuget_sudo_log}")" "chown -R $(id -u):$(id -g) ${nuget_home}/.nuget"
+    assert_contains "$(<"${nuget_sudo_log}")" "chmod -R u+rwX ${nuget_home}/.nuget"
+
+    # Simulate sudo exposing a malformed config while repairing its parent.
+    write_executable "${nuget_repair_bin}/chown" \
+        '#!/usr/bin/env bash' \
+        'chmod u+rwx "$3/NuGet"'
+    chmod 000 "${nuget_malformed_home}/.nuget/NuGet"
+    if nuget_malformed_output="$(
+        HOME="${nuget_malformed_home}" PATH="${nuget_repair_bin}:${PATH}" \
+            NOVA_TEST_SUDO_LOG="${nuget_sudo_log}" bash "${nuget_guard}" 2>&1
+    )"; then
+        fail "malformed NuGet.Config must still fail after its parent becomes accessible"
+    fi
+    [ -x "${nuget_malformed_home}/.nuget/NuGet" ] ||
+        fail "test sudo must make the malformed configuration visible"
+    rm -- "${nuget_repair_bin}/chown"
+    assert_contains "${nuget_malformed_output}" "docker volume rm novasharp-nuget-cache"
+
+    # An unreadable config file inside a writable cache still needs repair.
+    mkdir -p "${nuget_home}/.nuget/NuGet"
+    printf '<configuration />\n' > "${nuget_home}/.nuget/NuGet/NuGet.Config"
+    chmod 000 "${nuget_home}/.nuget/NuGet/NuGet.Config"
+    if ! HOME="${nuget_home}" PATH="${nuget_repair_bin}:${PATH}" \
+        NOVA_TEST_SUDO_LOG="${nuget_sudo_log}" bash "${nuget_guard}" 2>&1; then
+        fail "unreadable NuGet.Config should trigger a repair"
+    fi
+    [ -r "${nuget_home}/.nuget/NuGet/NuGet.Config" ] ||
+        fail "NuGet.Config was not made readable"
+    chmod 0644 "${nuget_home}/.nuget/NuGet/NuGet.Config"
+
+    nuget_no_sudo_bin="${TEST_ROOT}/nuget-no-sudo-bin"
+    mkdir -p "${nuget_no_sudo_bin}"
+    for command_name in id mkdir chown chmod; do
+        ln -s "$(command -v "${command_name}")" "${nuget_no_sudo_bin}/${command_name}"
+    done
+    bash_path="$(command -v bash)"
+    chmod 0555 "${nuget_home}/.nuget"
+    if nuget_no_sudo_output="$(
+        HOME="${nuget_home}" PATH="${nuget_no_sudo_bin}" "${bash_path}" "${nuget_guard}" 2>&1
+    )"; then
+        fail "unwritable NuGet cache without sudo must fail"
+    fi
+    assert_contains "${nuget_no_sudo_output}" "sudo is unavailable"
+
+    # A missing cache under a writable HOME must not require sudo.
+    nuget_empty_home="${TEST_ROOT}/nuget-empty-home"
+    mkdir -p "${nuget_empty_home}"
+    if ! HOME="${nuget_empty_home}" PATH="${nuget_no_sudo_bin}" \
+        "${bash_path}" "${nuget_guard}" 2>&1; then
+        fail "missing NuGet cache under a writable HOME should not require sudo"
+    fi
+    [ -d "${nuget_empty_home}/.nuget" ] || fail "NuGet cache directory was not created"
+
+    # Passwordless sudo being unavailable must produce the remediation message.
+    nuget_denied_bin="${TEST_ROOT}/nuget-denied-bin"
+    mkdir -p "${nuget_denied_bin}"
+    write_executable "${nuget_denied_bin}/sudo" \
+        '#!/usr/bin/env bash' \
+        'echo "sudo: a password is required" >&2' \
+        'exit 1'
+    chmod 0555 "${nuget_home}/.nuget"
+    if nuget_denied_output="$(
+        HOME="${nuget_home}" PATH="${nuget_denied_bin}:${PATH}" bash "${nuget_guard}" 2>&1
+    )"; then
+        fail "password-required sudo must fail the repair"
+    fi
+    assert_contains "${nuget_denied_output}" "passwordless sudo is unavailable"
+    assert_contains "${nuget_denied_output}" "docker volume rm novasharp-nuget-cache"
+    chmod 0755 "${nuget_home}/.nuget"
+fi
 
 echo "Devcontainer lifecycle behavior checks passed."

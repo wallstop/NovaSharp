@@ -47,7 +47,7 @@ record why and provide the strongest available differential evidence.
 ## 4. Implement
 
 Make the smallest complete change within the accepted scope. Preserve the
-priority hierarchy in `.llm/context.md`. The implementer owns production changes
+priority hierarchy in `AGENTS.md`. The implementer owns production changes
 and fixes; reviewers report findings and do not silently expand scope.
 
 ## 5. Green Gate
@@ -57,7 +57,7 @@ Use [change-path-verification](../skills/change-path-verification/SKILL.md) and
 observation and prove it now passes. Run risk-selected targeted checks, then
 every applicable repository closure gate. Behavior or CI changes require the
 build, full tests, formatting, applicable reference-Lua comparison, and PR CI
-described in `.llm/context.md`. Mark an irrelevant gate `N/A` with a concrete
+described in [the shared policy](../../AGENTS.md). Mark an irrelevant gate `N/A` with a concrete
 semantic-risk rationale; report unavailable applicable gates as unrun residual
 risk.
 

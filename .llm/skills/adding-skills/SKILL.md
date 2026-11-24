@@ -10,7 +10,7 @@ metadata:
 
 Keep skill content compatible with the
 [Agent Skills specification](https://agentskills.io/specification) and discoverable
-by Codex, Claude Code, and GitHub Copilot.
+by Codex, Claude Code, OpenCode, and GitHub Copilot.
 
 ## Canonical layout
 
@@ -92,4 +92,4 @@ related-skill references, both client discovery symlinks, and the committed
 - [ ] Resources are linked directly and paths resolve from the skill directory
 - [ ] Added scripts were executed successfully
 - [ ] Indexer tests, generation, and strict check succeeded
-- [ ] `.llm/context.md` routing changed if the skill is commonly used
+- [ ] Confirm the description distinguishes the skill from nearby tasks

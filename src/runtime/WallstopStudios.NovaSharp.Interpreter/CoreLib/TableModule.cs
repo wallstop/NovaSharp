@@ -17,7 +17,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     /// Class implementing table Lua functions
     /// </summary>
     [NovaSharpModule(Namespace = "table")]
-    public static class TableModule
+    internal static class TableModule
     {
         /// <summary>
         /// Struct-based comparer for table.sort to avoid closure allocations (Initiative 12 Phase 4).
@@ -41,17 +41,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// This function was added in Lua 5.2, replacing the global <c>unpack</c> function from Lua 5.1.
         /// </summary>
         [LuaCompatibility(LuaCompatibilityVersion.Lua52)]
+        [Preserve]
         [NovaSharpModuleMethod(Name = "unpack")]
-        public static LuaValue Unpack(
+        private static LuaValue Unpack(
             ScriptExecutionContext executionContext,
-            CallbackArguments args
+            CallbackArgumentsView args
         )
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             LuaValue s = args.AsType(0, "unpack", DataType.Table, false);
             LuaValue vi = args.AsType(1, "unpack", DataType.Number, true);
@@ -101,30 +101,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// It returns 0 if the table has no positive numeric keys.
         /// Unlike #t, this function scans all keys, not just the array portion.
         /// </remarks>
-        /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments (the table to scan).</param>
         /// <returns>The largest positive numeric key, or 0 if none exist.</returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua52)]
+        [Preserve]
         [NovaSharpModuleMethod(Name = "maxn")]
-        public static LuaValue MaxN(ScriptExecutionContext executionContext, CallbackArguments args)
+        private static LuaValue MaxN(CallbackArgumentsView args)
         {
-            executionContext = ModuleArgumentValidation.RequireExecutionContext(
-                executionContext,
-                nameof(executionContext)
-            );
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-
             LuaValue vTable = args.AsType(0, "maxn", DataType.Table, false);
             Table table = vTable.Table;
 
             double maxKey = 0;
 
-            foreach (TablePair pair in table.GetPairsEnumerator())
+            foreach (TablePair pair in table.GetNonNilPairsEnumerator())
             {
                 if (pair.Key.Type == DataType.Number)
                 {
                     double key = pair.Key.Number;
-                    if (key > maxKey && key == Math.Floor(key))
+                    if (key > maxKey)
                     {
                         maxKey = key;
                     }
@@ -139,14 +133,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// This function was added in Lua 5.2.
         /// </summary>
         [LuaCompatibility(LuaCompatibilityVersion.Lua52)]
+        [Preserve]
         [NovaSharpModuleMethod(Name = "pack")]
-        public static LuaValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
+        private static LuaValue Pack(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             Table t = new(executionContext.Script);
             LuaValue v = LuaValue.NewTable(t);
@@ -164,14 +161,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `table.sort`, sorting the array portion with an optional comparator (§6.6).
         /// </summary>
+        [Preserve]
         [NovaSharpModuleMethod(Name = "sort")]
-        public static LuaValue Sort(ScriptExecutionContext executionContext, CallbackArguments args)
+        private static LuaValue Sort(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             LuaValue vlist = args.AsType(0, "sort", DataType.Table, false);
             LuaValue lt = args[1];
@@ -284,17 +284,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `table.insert`, inserting a value at the specified position (§6.6).
         /// </summary>
+        [Preserve]
         [NovaSharpModuleMethod(Name = "insert")]
-        public static LuaValue Insert(
+        private static LuaValue Insert(
             ScriptExecutionContext executionContext,
-            CallbackArguments args
+            CallbackArgumentsView args
         )
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             LuaValue vlist = args.AsType(0, "table.insert", DataType.Table, false);
             LuaValue vpos = args[1];
@@ -350,17 +350,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `table.remove`, removing and returning a value at the given position (§6.6).
         /// </summary>
+        [Preserve]
         [NovaSharpModuleMethod(Name = "remove")]
-        public static LuaValue Remove(
+        private static LuaValue Remove(
             ScriptExecutionContext executionContext,
-            CallbackArguments args
+            CallbackArgumentsView args
         )
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             LuaValue vlist = args.AsType(0, "table.remove", DataType.Table, false);
             LuaValue vpos = args.AsType(1, "table.remove", DataType.Number, true);
@@ -405,17 +405,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `table.concat`, concatenating array elements with an optional separator (§6.6).
         /// </summary>
+        [Preserve]
         [NovaSharpModuleMethod(Name = "concat")]
-        public static LuaValue Concat(
+        private static LuaValue Concat(
             ScriptExecutionContext executionContext,
-            CallbackArguments args
+            CallbackArgumentsView args
         )
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             LuaValue vlist = args.AsType(0, "concat", DataType.Table, false);
             LuaValue vsep = args.AsType(executionContext, 1, "concat", DataType.String, true);
@@ -481,14 +481,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua 5.3 `table.move`, copying values between tables with overlap handling (§6.6).
         /// </summary>
         [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        [Preserve]
         [NovaSharpModuleMethod(Name = "move")]
-        public static LuaValue Move(ScriptExecutionContext executionContext, CallbackArguments args)
+        private static LuaValue Move(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             const string func = "move";
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
@@ -562,36 +565,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
             return (int)vlist.Table.Length;
         }
-    }
 
-    /// <summary>
-    /// Class exposing <c>unpack</c> in the global namespace for Lua 5.1 compatibility.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// In Lua 5.1, <c>unpack</c> was a global function.
-    /// In Lua 5.2+, it was moved to the <c>table</c> library as <c>table.unpack</c>.
-    /// </para>
-    /// <para>
-    /// Note: Unlike <c>unpack</c>, <c>table.pack</c> was introduced NEW in Lua 5.2;
-    /// there was no global <c>pack</c> function in Lua 5.1 or any other version.
-    /// </para>
-    /// </remarks>
-    [NovaSharpModule]
-    public static class TableModuleGlobals
-    {
         /// <summary>
-        /// Global <c>unpack</c> function for Lua 5.1 compatibility.
-        /// This function was moved to <c>table.unpack</c> in Lua 5.2 and removed from the global namespace.
+        /// Registers the Lua 5.1 global <c>unpack</c> entry point.
         /// </summary>
-        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
-        [NovaSharpModuleMethod(Name = "unpack")]
-        public static LuaValue Unpack(
-            ScriptExecutionContext executionContext,
-            CallbackArguments args
-        )
+        [NovaSharpModule]
+        internal static class Globals
         {
-            return TableModule.Unpack(executionContext, args);
+            [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
+            [Preserve]
+            [NovaSharpModuleMethod(Name = "unpack")]
+            private static LuaValue Unpack(
+                ScriptExecutionContext executionContext,
+                CallbackArgumentsView args
+            )
+            {
+                return TableModule.Unpack(executionContext, args);
+            }
         }
     }
 }

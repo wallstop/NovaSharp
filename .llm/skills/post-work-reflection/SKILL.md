@@ -86,7 +86,7 @@ ______________________________________________________________________
 | Defect or incomplete work               | Fix production code, tests, tooling, or docs before completion             |
 | Reusable problem-solving technique      | Create or update one focused `.llm/skills/<name>/SKILL.md` skill           |
 | Stable repository fact or useful trivia | Add it to the relevant topic under `.llm/knowledge/`                       |
-| Always-applicable policy or priority    | Update `.llm/context.md`; mirror only the essential rule in `AGENTS.md`    |
+| Always-applicable policy or priority    | Update the shared startup policy in `AGENTS.md`                            |
 | Navigation or task-routing information  | Update `.llm/context.md` or the relevant skill links/triggers              |
 | Repeated mechanical failure             | Prefer an automated check, helper, or template plus concise guidance       |
 | Task-specific or transient observation  | Keep it in the final report; do not persist it as guidance                 |

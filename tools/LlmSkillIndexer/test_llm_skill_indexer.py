@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Tests for Agent Skills metadata and fail-closed index validation."""
 
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -336,6 +338,37 @@ class MetadataTests(unittest.TestCase):
             self.assertEqual(2, len(errors))
             self.assertTrue(any(".agents/skills" in error for error in errors))
             self.assertTrue(any(".claude/skills" in error for error in errors))
+
+
+class RepositoryDiscoveryTests(unittest.TestCase):
+    root = Path(__file__).resolve().parents[2]
+
+    def test_claude_imports_shared_policy(self):
+        self.assertEqual("@AGENTS.md", (self.root / "CLAUDE.md").read_text().strip())
+
+    def test_copilot_mirrors_shared_policy(self):
+        policy = (self.root / "AGENTS.md").read_text()
+        expected = policy.replace("](PLAN.md)", "](../PLAN.md)").replace("](.llm/", "](../.llm/")
+        adapter = (self.root / ".github/copilot-instructions.md").read_text()
+        self.assertEqual(expected, adapter.split("\n\n", 1)[1])
+
+    def test_documented_inventory_matches_canonical_skills(self):
+        code = (
+            'import json; import sys; print("\\n".join(skill["name"] '
+            'for skill in json.load(sys.stdin.buffer)["skills"]))'
+        )
+        filename = ".llm/skills-index.json"
+        guide = (self.root / ".llm/context.md").read_text()
+        self.assertIn(f"python3 -c '{code}' < {filename}", guide)
+        index = self.root / filename
+        before = index.read_bytes()
+        names = subprocess.check_output(
+            [sys.executable, "-c", code], input=before, cwd=self.root
+        ).decode("utf-8").splitlines()
+        expected = [p.parent.name for p in self.root.glob(".llm/skills/*/SKILL.md")]
+        self.assertCountEqual(expected, names)
+        self.assertEqual(before, index.read_bytes())
+        self.assertEqual([], validate_discovery_aliases(self.root))
 
 
 if __name__ == "__main__":

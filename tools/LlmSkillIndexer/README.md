@@ -16,6 +16,16 @@ python3 tools/LlmSkillIndexer/llm_skill_indexer.py
 python3 tools/LlmSkillIndexer/llm_skill_indexer.py --check
 ```
 
+CI also checks each canonical package with the pinned upstream Agent Skills
+reference validator. To reproduce this check in a Python 3.11+ virtual environment:
+
+```bash
+python -m pip install -r tools/LlmSkillIndexer/requirements-reference.txt
+for skill in .llm/skills/*/; do
+  skills-ref validate "$skill" || exit 1
+done
+```
+
 After changing a skill, regenerate and stage its complete directory with the
 index:
 
@@ -70,3 +80,8 @@ stale index fails CI.
 The version 2 index records each skill's name, description, canonical path, line
 count, category, priority, related skills, title, and validation results. The
 summary contains aggregate warning/error counts and structural errors.
+
+## Guidance evaluation
+
+Use the [paired task pilot](pilot.md) to measure instruction changes on historical
+Lua behavior, allocation, and read-only discovery tasks.

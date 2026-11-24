@@ -13,6 +13,81 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     public sealed class TableModuleTUnitTests
     {
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task RegisteredTableCallbacksUseArgumentViews(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            Table library = script.Globals.Get("table").Table;
+            string[] commonNames = { "concat", "insert", "remove", "sort" };
+
+            foreach (string name in commonNames)
+            {
+                await Assert.That(library.Get(name).Type).IsEqualTo(DataType.ClrFunction);
+            }
+
+            bool hasTablePackAndUnpack = version >= LuaCompatibilityVersion.Lua52;
+            bool hasTableMaxN = version <= LuaCompatibilityVersion.Lua52;
+            bool hasTableMove = version >= LuaCompatibilityVersion.Lua53;
+            await Assert.That(library.Get("pack").IsNil).IsEqualTo(!hasTablePackAndUnpack);
+            await Assert.That(library.Get("unpack").IsNil).IsEqualTo(!hasTablePackAndUnpack);
+            await Assert.That(library.Get("maxn").IsNil).IsEqualTo(!hasTableMaxN);
+            await Assert.That(library.Get("move").IsNil).IsEqualTo(!hasTableMove);
+
+            foreach (TablePair pair in library.GetNonNilPairsEnumerator())
+            {
+                await Assert.That(pair.Value.Type).IsEqualTo(DataType.ClrFunction);
+                await Assert
+                    .That(pair.Value.Callback.HasArgumentViewCallback)
+                    .IsTrue()
+                    .Because($"table.{pair.Key.String} should use stack-only arguments");
+            }
+
+            LuaValue globalUnpack = script.Globals.Get("unpack");
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(globalUnpack.Type).IsEqualTo(DataType.ClrFunction);
+                await Assert.That(globalUnpack.Callback.HasArgumentViewCallback).IsTrue();
+            }
+            else
+            {
+                await Assert.That(globalUnpack.IsNil).IsTrue();
+            }
+
+            script.DoString(
+                @"
+                local values = {3, 1}
+                table.insert(values, 2, 2)
+                table.sort(values)
+                assert(table.remove(values, 2) == 2)
+                assert(table.concat(values, '-') == '1-3')
+
+                local unpackRange = table.unpack or unpack
+                local first, last = unpackRange(values)
+                assert(first == 1 and last == 3)
+                assert(select('#', unpackRange(values, 2, 1)) == 0)
+                assert(select('#', unpackRange(values, 2, 2)) == 1)
+
+                if table.maxn then
+                    assert(table.maxn(values) == 2, 'maxn ignores the removed array entry')
+                    values[3.5] = true
+                    assert(table.maxn(values) == 3.5, 'maxn includes fractional keys')
+                    values[3.5] = nil
+                    assert(table.maxn(values) == 2, 'maxn ignores the removed fractional key')
+                end
+                if _VERSION ~= 'Lua 5.1' then
+                    local function items() return 1, nil, 3 end
+                    local packed = table.pack(items())
+                    assert(packed.n == 3 and packed[2] == nil and packed[3] == 3)
+                end
+                if _VERSION ~= 'Lua 5.1' and _VERSION ~= 'Lua 5.2' then
+                    assert(table.move(values, 1, 2, 2) == values)
+                    assert(values[2] == 1 and values[3] == 3)
+                end
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
         [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task PackPreservesNilAndReportsCount(LuaCompatibilityVersion version)
         {

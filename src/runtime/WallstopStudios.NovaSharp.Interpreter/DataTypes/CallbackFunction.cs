@@ -19,6 +19,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private readonly ScriptFunctionCallbackView _argumentViewCallback;
         private readonly ScriptFunctionCallbackViewNoContext _argumentViewNoContextCallback;
         private readonly SharedState _sharedState;
+        private Func<ScriptExecutionContext, CallbackArguments, LuaValue> _clrCallback;
         private ConditionalWeakTable<Script, CallbackFunction> _scriptBindings;
 
         internal sealed class SharedState
@@ -38,16 +39,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public Script OwnerScript { get; }
 
         /// <summary>
-        /// Gets the call back.
+        /// Gets the CLR callback, creating an adapter on first access for argument-view callbacks.
         /// </summary>
-        /// <value>
-        /// The call back.
-        /// </value>
-        public Func<ScriptExecutionContext, CallbackArguments, LuaValue> ClrCallback
-        {
-            get;
-            private set;
-        }
+        public Func<ScriptExecutionContext, CallbackArguments, LuaValue> ClrCallback =>
+            Volatile.Read(ref _clrCallback) ?? CreateClrCallbackAdapter();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CallbackFunction" /> class.
@@ -72,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(callBack));
             }
 
-            ClrCallback = callBack;
+            _clrCallback = callBack;
             Name = name;
             OwnerScript = ownerScript;
             _sharedState = sharedState ?? new SharedState();
@@ -91,7 +86,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             _argumentViewCallback = callBack;
-            ClrCallback = InvokeArgumentViewCallback;
             Name = name;
             OwnerScript = ownerScript;
             _sharedState = sharedState ?? new SharedState();
@@ -110,7 +104,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             _argumentViewNoContextCallback = callBack;
-            ClrCallback = InvokeArgumentViewCallback;
             Name = name;
             OwnerScript = ownerScript;
             _sharedState = sharedState ?? new SharedState();
@@ -1063,6 +1056,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
                     return InvokeLegacy(executionContext, copiedArgs, isMethodCall);
             }
+        }
+
+        private Func<ScriptExecutionContext, CallbackArguments, LuaValue> CreateClrCallbackAdapter()
+        {
+            Func<ScriptExecutionContext, CallbackArguments, LuaValue> adapter =
+                InvokeArgumentViewCallback;
+            return Interlocked.CompareExchange(ref _clrCallback, adapter, null) ?? adapter;
         }
 
         private LuaValue InvokeArgumentViewCallback(

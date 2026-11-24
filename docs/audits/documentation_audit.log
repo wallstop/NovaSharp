@@ -105,8 +105,8 @@ Found 185 undocumented public/internal type declarations.
   - line 281: missing XML docs for `GetStatistics()`
   - line 286: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/CallbackFunction.cs
-  - line 24: missing XML docs for `class SharedState`
-  - line 26: missing XML docs for `AdditionalData`
+  - line 25: missing XML docs for `class SharedState`
+  - line 27: missing XML docs for `AdditionalData`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/Closure.cs
   - line 459: missing XML docs for `CallValues()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/Coroutine.cs

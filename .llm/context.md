@@ -1,52 +1,4 @@
-# AI Assistant Guidelines for NovaSharp
-
-## 🔴 Priority Hierarchy (NEVER Violate)
-
-NovaSharp follows a strict priority order. **NEVER sacrifice a higher priority for a lower one:**
-
-| Priority           | Concern                | Description                                   |
-| ------------------ | ---------------------- | --------------------------------------------- |
-| **1. CORRECTNESS** | Lua Spec Compliance    | Behavior MUST match reference Lua exactly     |
-| **2. SPEED**       | Runtime Performance    | Execute Lua code as fast as possible          |
-| **3. MEMORY**      | Minimal Allocations    | Zero-allocation hot paths, aggressive pooling |
-| **4. UNITY**       | Platform Compatibility | IL2CPP/AOT, Mono, no runtime code generation  |
-| **5. CLARITY**     | Maintainability        | Clean architecture, readability               |
-
-**The Iron Rule**: A performance optimization that breaks Lua spec compliance is REJECTED. A memory optimization that slows down hot paths is REJECTED. See [correctness-then-performance](skills/correctness-then-performance/SKILL.md) for the complete decision framework.
-
-### ⛔ "Close Enough" is NEVER Acceptable
-
-NovaSharp's goal is **exact Lua spec compliance**, not "something like Lua." When discrepancies are found:
-
-1. **ASSUME NovaSharp is WRONG** — Reference Lua behavior is the source of truth
-1. **Investigate deeply** — Never dismiss differences as "acceptable variations"
-1. **Fix production code** — Never adjust tests to match NovaSharp's bugs
-1. **Verify with `lua5.X`** — Every expected result must be confirmed against reference Lua
-1. **"Close enough" = BUG** — Approximate behavior, formatting differences, or edge case mismatches are all bugs
-
-______________________________________________________________________
-
-## 🔴 Critical Rules
-
-1. **Scoped Git Operations Allowed When Requested** — If the user asks for commits, pushes, or PR/CI work, agents may run `git add`, `git commit`, and `git push` after reviewing the diff. Use small scoped commits and never use destructive git commands unless explicitly requested.
-1. **NEVER use absolute paths** — Relative to repo root only
-1. **Do not discard diagnostic output in ad-hoc commands** — Repo helper scripts may intentionally quiet noisy tools, but failures must surface actionable output.
-1. **Lua Spec Compliance is HIGHEST PRIORITY** — Fix production code, never tests
-1. **No Legacy Host API Compatibility** — NovaSharp is pre-adoption with no external consumers. Freely make breaking host-facing API changes when they improve the project; update repository-owned callers atomically and remove superseded APIs instead of adding shims, forwarding wrappers, obsolete aliases, migration adapters, deprecation windows, or compatibility layers. This does not relax Lua-version behavior or supported-platform compatibility.
-1. **Zero-Flaky Test Policy** — Every failure is a real bug
-1. **Always create BOTH C# tests AND `.lua` fixtures** — Regenerate corpus after
-1. **Multi-Version Testing** — Run tests against Lua 5.1-5.5
-1. **Lua Fixture Metadata** — Use ONLY `@lua-versions`, `@novasharp-only`, `@expects-error` **at TOP of file**
-1. **Pre-Commit Validation Allowed** — Run `./scripts/dev/pre-commit.sh` after changes; it may restage files it auto-formats or regenerates.
-1. **No False Green-Light** — Only say `green`, `verified`, `passes`, or `complete` after the exact local checks and PR CI were observed passing; otherwise report `not run` or residual risk.
-1. **Evidence-Driven Material Changes** — Use the [evidence-driven change workflow](workflows/evidence-driven-change.md) for material behavior, architecture, performance, reliability, CI, or LLM-system work. Require observed red→green evidence and risk-selected gates.
-1. **Lean Execution Plan** — Keep `PLAN.md` limited to in-progress and intentionally queued work. Route reusable guidance to skills/workflows, stable facts to knowledge or domain docs, completed evidence to `progress/`, and unselected backlog detail to issues. Use [plan-maintenance](skills/plan-maintenance/SKILL.md) and remove completed items in the same change that records their session result.
-1. **Session Length Target: Under 2 Hours** — Scope each session to one shippable green PR that completes a falsifiable slice of a `PLAN.md` item. If the full slice will not fit, stop at a green checkpoint and hand off remainders through `PLAN.md`, `progress/`, and issues. See [plan-maintenance](skills/plan-maintenance/SKILL.md#session-scoping).
-1. **Mandatory Post-Work Improvement Gate** — After every large change or investigation, complete [post-work-reflection](skills/post-work-reflection/SKILL.md) before reporting completion. Resolve findings at their root, update the appropriate LLM guidance or knowledge when evidence supports a durable lesson, and independently review the result when agents are available.
-
-See individual skills for detailed guidance.
-
-______________________________________________________________________
+# NovaSharp repository guide
 
 ## Project Overview
 
@@ -60,63 +12,16 @@ ______________________________________________________________________
 
 ## Where to Find Things
 
-### Quick Navigation by Task
+Runtime paths below are relative to `src/runtime/WallstopStudios.NovaSharp.Interpreter/`.
 
-| I want to...                    | Look in                                             |
-| ------------------------------- | --------------------------------------------------- |
-| Fix Lua behavior bug            | `src/runtime/.../CoreLib/` (stdlib modules)         |
-| Fix parser/lexer issue          | `src/runtime/.../Tree/Lexer/` or `.../Tree/Parser/` |
-| Fix VM execution bug            | `src/runtime/.../Execution/VM/`                     |
-| Add/modify a data type          | `src/runtime/.../DataTypes/`                        |
-| Fix C# interop issue            | `src/runtime/.../Interop/`                          |
-| Add a new test                  | `src/tests/.../Tests.TUnit/`                        |
-| Add a Lua test fixture          | `src/tests/.../Tests/Fixtures/`                     |
-| Check Lua spec                  | `docs/lua-spec/lua5X-manual.md`                     |
-| Find pooling utilities          | `src/runtime/.../DataStructs/CollectionPools.cs`    |
-| Find string building utilities  | `src/runtime/.../DataStructs/ZStringBuilder.cs`     |
-| Check/add performance patterns  | `.llm/skills/high-performance-csharp/SKILL.md`      |
-| Investigate comparison failures | `.llm/skills/lua-comparison-harness/SKILL.md`       |
-| Debug cross-platform issues     | `.llm/skills/test-failure-investigation/SKILL.md`   |
-| Plan or review architecture     | `.llm/skills/architecture-review/SKILL.md`          |
-| Verify a behavior change        | `.llm/skills/change-path-verification/SKILL.md`     |
-| Run an independent hardening    | `.llm/skills/adversarial-handoff/SKILL.md`          |
-| Capture durable repository fact | `.llm/knowledge/`                                   |
-| Create or maintain the plan     | `.llm/skills/plan-maintenance/SKILL.md`             |
-
-### Key Files
-
-- `Api/LuaValue.cs` — Core Lua value type
-- `DataTypes/Table.cs` — Lua table implementation
-- `Execution/VM/Processor.cs` — Main VM execution loop
-- `CoreLib/*Module.cs` — Standard library implementations
-- `DataStructs/CollectionPools.cs` — ListPool, HashSetPool, etc.
-
-______________________________________________________________________
-
-## Commands
-
-```bash
-# Build (interpreter only)
-./scripts/build/quick.sh
-
-# Build full solution
-./scripts/build/quick.sh --all
-
-# Run all tests
-./scripts/test/quick.sh
-
-# Run tests by pattern
-./scripts/test/quick.sh Floor           # Method name
-./scripts/test/quick.sh -c MathModule   # Class name
-
-# Format code
-dotnet tool restore
-dotnet tool run csharpier format .
-```
-
-Before closing behavior or CI work, run the relevant targeted tests, `./scripts/build/quick.sh`, `./scripts/test/quick.sh`, formatting, Lua comparison when behavior changes, then poll PR CI until green or document the newly diagnosed failure. If any required check was not run, say exactly that and do not present the work as complete.
-
-______________________________________________________________________
+| Task                           | Start here                                                                                                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Investigate Lua behavior       | `CoreLib/`, then the matching [Lua manual](../docs/lua-spec/)                                                                                                            |
+| Trace parsing                  | `Tree/Lexer/`, `Tree/Expressions/`, `Tree/Statements/`                                                                                                                   |
+| Trace execution                | `Execution/VM/Processor/`                                                                                                                                                |
+| Inspect host interop or values | `Interop/`, `Api/LuaValue.cs`, `DataTypes/Table.cs`                                                                                                                      |
+| Find pools and string builders | `DataStructs/CollectionPools.cs`, `DataStructs/ZStringBuilder.cs`                                                                                                        |
+| Write a regression             | [TUnit tests](../src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/) and [Lua fixtures](../src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures/) |
 
 ## Coding Style
 
@@ -156,37 +61,16 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-## Skills Index
+## Skill discovery
 
-Skills are in `.llm/skills/`. Run `python3 tools/LlmSkillIndexer/llm_skill_indexer.py` to see all available skills.
+Use your client’s skill selector or list the canonical names from the repository root:
 
-### Core Skills
+```bash
+python3 -c 'import json; import sys; print("\n".join(skill["name"] for skill in json.load(sys.stdin.buffer)["skills"]))' < .llm/skills-index.json
+```
 
-| Category         | Key Skills                                                                                                                                                                                                                                         |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Priority**     | [correctness-then-performance](skills/correctness-then-performance/SKILL.md), [lua-spec-verification](skills/lua-spec-verification/SKILL.md)                                                                                                       |
-| **Performance**  | [high-performance-csharp](skills/high-performance-csharp/SKILL.md), [zstring-migration](skills/zstring-migration/SKILL.md), [data-structures](skills/data-structures/SKILL.md)                                                                     |
-| **Testing**      | [tunit-test-writing](skills/tunit-test-writing/SKILL.md), [lua-fixture-creation](skills/lua-fixture-creation/SKILL.md), [test-failure-investigation](skills/test-failure-investigation/SKILL.md)                                                   |
-| **Workflow**     | [systematic-investigation](skills/systematic-investigation/SKILL.md), [architecture-review](skills/architecture-review/SKILL.md), [adversarial-handoff](skills/adversarial-handoff/SKILL.md), [plan-maintenance](skills/plan-maintenance/SKILL.md) |
-| **Verification** | [change-path-verification](skills/change-path-verification/SKILL.md), [deterministic-testing](skills/deterministic-testing/SKILL.md), [post-work-reflection](skills/post-work-reflection/SKILL.md)                                                 |
-| **Unity**        | [unity-gc-patterns](skills/unity-gc-patterns/SKILL.md), [aggressive-inlining](skills/aggressive-inlining/SKILL.md)                                                                                                                                 |
-| **Lua**          | [lua-comparison-harness](skills/lua-comparison-harness/SKILL.md), [adding-opcodes](skills/adding-opcodes/SKILL.md)                                                                                                                                 |
-| **Quality**      | [defensive-programming](skills/defensive-programming/SKILL.md), [documentation-and-changelog](skills/documentation-and-changelog/SKILL.md)                                                                                                         |
-
-______________________________________________________________________
-
-## Key Utilities
-
-| Utility          | Usage                                     |
-| ---------------- | ----------------------------------------- |
-| **Pooling**      | `using var lease = ListPool<T>.Get();`    |
-| **ZString**      | `using var sb = ZStringBuilder.Create();` |
-| **Enum strings** | `TokenTypeStrings.GetName(token)`         |
-| **Hash codes**   | `HashCodeHelper.HashCode(a, b, c)`        |
-
-See [use-extension-methods](skills/use-extension-methods/SKILL.md) for full list.
-
-______________________________________________________________________
+Open a matching skill for its procedure and consult its references as needed.
+The [authoring guide](skills/adding-skills/SKILL.md) covers changes to the catalog.
 
 ## Resources
 
