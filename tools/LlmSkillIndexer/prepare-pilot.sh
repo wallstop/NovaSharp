@@ -40,6 +40,7 @@ tree and validation results. The assessor handles publication and review.
 EOF
 # Give clients a project root without any later commit or upstream remote.
 git -C "$4" init --quiet
-git -C "$4" -c core.hooksPath=/dev/null add --force .
-git -C "$4" -c core.hooksPath=/dev/null -c commit.gpgSign=false \
+mkdir -- "$4/.git/pilot-hooks"
+git -C "$4" -c core.hooksPath=.git/pilot-hooks add --force .
+git -C "$4" -c core.hooksPath=.git/pilot-hooks -c commit.gpgSign=false \
   -c user.name=Assessor -c user.email=assessor@example.invalid commit --quiet -m 'Trial input'
