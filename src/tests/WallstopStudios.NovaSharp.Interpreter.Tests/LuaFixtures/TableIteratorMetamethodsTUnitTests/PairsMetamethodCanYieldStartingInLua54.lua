@@ -27,6 +27,11 @@ local meta = {}
                 check(hook, 'paused', direct)
                 check(setmetatable({}, {__call = hook}), 'paused', direct)
                 check(coroutine.yield, target, direct)
+                check(function()
+                    local inner = setmetatable({}, {__pairs = function() return nil end})
+                    pairs(inner)
+                    return hook()
+                end, 'paused', direct)
                 if _VERSION == 'Lua 5.4' or _VERSION == 'Lua 5.5' then
                     check(coroutine.yield, target, pcall)
                 end

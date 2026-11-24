@@ -15,6 +15,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public static class TableIteratorsModule
     {
+        private static readonly LuaValue PairsFunction = LuaValue.NewCallback(Pairs, "pairs");
+        private static readonly LuaValue IpairsFunction = LuaValue.NewCallback(Ipairs, "ipairs");
+
         private static readonly ConditionalWeakTable<Script, IteratorCallbacks> CallbackCache =
             new();
 
@@ -29,6 +32,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 AdjustIteratorResults(args, includeClosingValue: true)
             )
         );
+
+        /// <summary>
+        /// Registers the callbacks also used to identify iterator metamethod frames in the debugger.
+        /// </summary>
+        /// <param name="globalTable">The script's global table.</param>
+        /// <param name="iteratorTable">The table receiving the built-in functions.</param>
+        public static void NovaSharpInit(Table globalTable, Table iteratorTable)
+        {
+            iteratorTable = ModuleArgumentValidation.RequireTable(
+                iteratorTable,
+                nameof(iteratorTable)
+            );
+            Script script = iteratorTable.OwnerScript;
+            iteratorTable.Set(
+                "pairs",
+                script == null ? PairsFunction : PairsFunction.BindCallbackToScript(script)
+            );
+            iteratorTable.Set(
+                "ipairs",
+                script == null ? IpairsFunction : IpairsFunction.BindCallbackToScript(script)
+            );
+        }
 
         private sealed class IteratorCallbacks
         {
@@ -60,7 +85,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `ipairs`, respecting `__ipairs` metamethods and otherwise yielding the array iterator triple.
         /// </summary>
-        [NovaSharpModuleMethod(Name = "ipairs")]
         public static LuaValue Ipairs(
             ScriptExecutionContext executionContext,
             CallbackArguments args
@@ -87,6 +111,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     executionContext,
                     meta,
                     table,
+                    IpairsFunction,
                     allowYield: table.Type == DataType.UserData,
                     includeClosingValue: false
                 );
@@ -122,7 +147,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `pairs`, including the fourth closing value in Lua 5.5 and later.
         /// </summary>
-        [NovaSharpModuleMethod(Name = "pairs")]
         public static LuaValue Pairs(
             ScriptExecutionContext executionContext,
             CallbackArguments args
@@ -148,6 +172,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     executionContext,
                     meta,
                     table,
+                    PairsFunction,
                     allowYield: version >= LuaCompatibilityVersion.Lua54
                         || table.Type == DataType.UserData,
                     includeClosingValue
@@ -179,6 +204,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             ScriptExecutionContext executionContext,
             LuaValue metamethod,
             LuaValue subject,
+            LuaValue iteratorFunction,
             bool allowYield,
             bool includeClosingValue
         )
@@ -190,9 +216,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             LuaValue dispatcher = callbacks.GetMetamethodDispatcher(script);
             LuaValue normalize = includeClosingValue ? NormalizeQuadruple : NormalizeTriple;
+            LuaValue origin = iteratorFunction.BindCallbackToScript(script);
             return allowYield
-                ? LuaValue.NewTailCallReq(dispatcher, metamethod, subject, normalize)
-                : executionContext.Call(dispatcher, metamethod, subject, normalize);
+                ? LuaValue.NewTailCallReq(dispatcher, metamethod, subject, normalize, origin)
+                : executionContext.Call(dispatcher, metamethod, subject, normalize, origin);
         }
 
         private static LuaValue AdjustIteratorResults(
@@ -283,21 +310,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaValue val;
             if (version >= LuaCompatibilityVersion.Lua53)
             {
-                val = GetTableValueWithMetamethods(executionContext, table, idx);
+                val = GetTableValueWithMetamethods(executionContext, table, idx).ToScalar();
             }
             else
             {
                 val = table.Table.Get(idx);
             }
 
-            if (val.Type != DataType.Nil)
+            if (!val.IsNil)
             {
                 return LuaValue.NewTuple(LuaValue.FromNumber(idx), val);
             }
-            else
-            {
-                return LuaValue.Nil;
-            }
+
+            return version == LuaCompatibilityVersion.Lua51 ? LuaValue.Void : LuaValue.Nil;
         }
 
         /// <summary>

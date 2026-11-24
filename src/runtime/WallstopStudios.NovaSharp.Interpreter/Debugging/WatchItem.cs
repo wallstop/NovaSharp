@@ -58,6 +58,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
         /// </summary>
         internal bool IsTailCall { get; set; }
 
+        internal bool IsIteratorMetamethodDispatcher { get; set; }
+
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
         /// </summary>

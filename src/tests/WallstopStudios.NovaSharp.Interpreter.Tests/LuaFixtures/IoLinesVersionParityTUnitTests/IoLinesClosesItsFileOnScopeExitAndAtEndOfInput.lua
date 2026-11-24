@@ -1,7 +1,7 @@
 -- @lua-versions: 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoLinesVersionParityTUnitTests.cs:222
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoLinesVersionParityTUnitTests.cs:205
 -- @test: IoLinesVersionParityTUnitTests.IoLinesClosesItsFileOnScopeExitAndAtEndOfInput
 -- Compatibility notes: Test targets Lua 5.4+
 local path = os.tmpname()
@@ -25,6 +25,9 @@ local path = os.tmpname()
                         break
                     end
                     assert(io.type(file) == 'closed file', 'manual close must survive scope exit')
+                    local ok, problem = pcall(iter)
+                    assert(not ok and string.find(problem, 'file is already closed', 1, true),
+                        'manual close must invalidate iterator')
 
                     iter, state, control, file = io.lines(path)
                     assert(iter() == 'first')

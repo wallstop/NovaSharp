@@ -481,6 +481,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     Diagnostics.PerformanceCounter.Execution
                 );
 
+                bool previousCanYield = _canYield;
                 _canYield = false;
 
                 try
@@ -495,7 +496,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 finally
                 {
-                    _canYield = true;
+                    _canYield = previousCanYield;
 
                     if (stopwatch != null)
                     {
@@ -624,6 +625,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     Diagnostics.PerformanceCounter.Execution
                 );
 
+                bool previousCanYield = _canYield;
                 _canYield = false;
 
                 try
@@ -637,7 +639,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 finally
                 {
-                    _canYield = true;
+                    _canYield = previousCanYield;
 
                     if (stopwatch != null)
                     {

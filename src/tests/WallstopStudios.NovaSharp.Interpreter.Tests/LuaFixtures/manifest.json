@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2013,
-  "novasharp_only": 499,
-  "comparable": 1514,
+  "total_snippets": 2017,
+  "novasharp_only": 500,
+  "comparable": 1517,
   "by_version": {
-    "5.1": 1009,
-    "5.2": 714,
-    "5.3": 958,
-    "5.4": 1030,
-    "5.5": 1071
+    "5.1": 1011,
+    "5.2": 717,
+    "5.3": 961,
+    "5.4": 1033,
+    "5.5": 1074
   },
   "snippets": [
     {
@@ -12385,14 +12385,6 @@
       "expects_error": false
     },
     {
-      "path": "IoModuleTUnitTests/LinesIteratesOverFileContent.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:956",
-      "test": "IoModuleTUnitTests.LinesIteratesOverFileContent",
-      "lua_versions": [],
-      "novasharp_only": true,
-      "expects_error": false
-    },
-    {
       "path": "IoModuleTUnitTests/LinesRaisesUsefulMessageWhenFileMissing.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:978",
       "test": "IoModuleTUnitTests.LinesRaisesUsefulMessageWhenFileMissing",
@@ -16527,22 +16519,6 @@
       ],
       "novasharp_only": false,
       "expects_error": true
-    },
-    {
-      "path": "IoLinesVersionParityTUnitTests/IoLinesReturnsThreeValuesInLua51To53.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoLinesVersionParityTUnitTests.cs:34",
-      "test": "IoLinesVersionParityTUnitTests.IoLinesReturnsThreeValuesInLua51To53",
-      "lua_versions": [],
-      "novasharp_only": true,
-      "expects_error": false
-    },
-    {
-      "path": "IoLinesVersionParityTUnitTests/IoLinesReturnsFourValuesInLua54Plus.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoLinesVersionParityTUnitTests.cs:60",
-      "test": "IoLinesVersionParityTUnitTests.IoLinesReturnsFourValuesInLua54Plus",
-      "lua_versions": [],
-      "novasharp_only": true,
-      "expects_error": false
     },
     {
       "path": "IoLinesVersionParityTUnitTests/IoLinesIteratesOverAllLines.lua",
@@ -22301,28 +22277,6 @@
       "expects_error": false
     },
     {
-      "path": "IoLinesVersionParityTUnitTests/IoLinesClosesItsFileOnScopeExitAndAtEndOfInput.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoLinesVersionParityTUnitTests.cs:222",
-      "test": "IoLinesVersionParityTUnitTests.IoLinesClosesItsFileOnScopeExitAndAtEndOfInput",
-      "lua_versions": [
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "ValueSlotSemanticsTUnitTests/GenericForDispatchesCloseMetamethodAtExit.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:224",
-      "test": "ValueSlotSemanticsTUnitTests.GenericForDispatchesCloseMetamethodAtExit",
-      "lua_versions": [
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
       "path": "TableIteratorMetamethodsTUnitTests/IpairsUsesOnlyTheProfileSupportedMetamethod.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/TableIteratorMetamethodsTUnitTests.cs:122",
       "test": "TableIteratorMetamethodsTUnitTests.IpairsUsesOnlyTheProfileSupportedMetamethod",
@@ -22369,6 +22323,101 @@
       "test": "TableIteratorMetamethodsTUnitTests.UserDataIpairsCannotPassAnIteratorClosingValue",
       "lua_versions": [],
       "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "IoLinesVersionParityTUnitTests/IoLinesReturnsOwnedIteratorAndRejectsCallsAfterEof.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoLinesVersionParityTUnitTests.cs:30",
+      "test": "IoLinesVersionParityTUnitTests.IoLinesReturnsOwnedIteratorAndRejectsCallsAfterEof",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/GenericForNativeCloseRunsOnActiveCoroutine.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:291",
+      "test": "ValueSlotSemanticsTUnitTests.GenericForNativeCloseRunsOnActiveCoroutine",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "IoLinesVersionParityTUnitTests/IoLinesClosesItsFileOnScopeExitAndAtEndOfInput.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoLinesVersionParityTUnitTests.cs:205",
+      "test": "IoLinesVersionParityTUnitTests.IoLinesClosesItsFileOnScopeExitAndAtEndOfInput",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "IoModuleTUnitTests/LinesIteratesOverFileContent.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:1194",
+      "test": "IoModuleTUnitTests.LinesIteratesOverFileContent",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "TableIteratorMetamethodsTUnitTests/IteratorMetamethodsExposeTheNativeCaller.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/TableIteratorMetamethodsTUnitTests.cs:122",
+      "test": "TableIteratorMetamethodsTUnitTests.IteratorMetamethodsExposeTheNativeCaller",
+      "lua_versions": [
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/GenericForDispatchesCloseMetamethodAtExit.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:225",
+      "test": "ValueSlotSemanticsTUnitTests.GenericForDispatchesCloseMetamethodAtExit",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableIteratorMetamethodsTUnitTests/NestedHostChunkKeepsIteratorHookNonYieldable.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/TableIteratorMetamethodsTUnitTests.cs:177",
+      "test": "TableIteratorMetamethodsTUnitTests.NestedHostChunkKeepsIteratorHookNonYieldable",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "TableIteratorMetamethodsTUnitTests/NestedHostChunkKeepsIteratorHookNonYieldable_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/TableIteratorMetamethodsTUnitTests.cs:180",
+      "test": "TableIteratorMetamethodsTUnitTests.NestedHostChunkKeepsIteratorHookNonYieldable",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "TableIteratorMetamethodsTUnitTests/IpairsStopsAtTheFirstNilLookupResult.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/TableIteratorMetamethodsTUnitTests.cs:229",
+      "test": "TableIteratorMetamethodsTUnitTests.IpairsStopsAtTheFirstNilLookupResult",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
       "expects_error": false
     }
   ]

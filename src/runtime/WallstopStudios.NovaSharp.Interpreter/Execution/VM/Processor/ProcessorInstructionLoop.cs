@@ -833,10 +833,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     return;
                 }
 
-                ScriptExecutionContext context = new(
-                    this,
+                ScriptExecutionContext context = CreateCloseCallbackContext(
                     callback,
-                    GetCurrentSourceRef(instructionPtr)
+                    instructionPtr
                 );
                 if (callback.HasArgumentViewCallback)
                 {
@@ -849,7 +848,74 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return;
             }
 
-            _script.CallCloseMetamethod(metamethod, scalar, error);
+            CallIndirectCloser(metamethod, scalar, error, instructionPtr);
+        }
+
+        private void CallIndirectCloser(
+            LuaValue callable,
+            LuaValue value,
+            LuaValue error,
+            int instructionPtr
+        )
+        {
+            const int maxCallChainLength = 9;
+            const int argumentEnd = maxCallChainLength + 2;
+            using PooledResource<LuaValue[]> pooled = DynValueArrayPool.Get(
+                argumentEnd,
+                out LuaValue[] arguments
+            );
+            int start = maxCallChainLength;
+            arguments[start] = value;
+            arguments[start + 1] = error;
+
+            while (callable.Type is not (DataType.Function or DataType.ClrFunction))
+            {
+                if (start == 0)
+                {
+                    throw ScriptRuntimeException.LoopInCall();
+                }
+
+                LuaValue next = GetMetamethod(callable, Metamethods.Call);
+                if (next.IsNil || !CanCallMetamethod(next))
+                {
+                    throw ScriptRuntimeException.AttemptToCallMetamethod(callable.Type, "close");
+                }
+
+                arguments[--start] = callable;
+                callable = next;
+            }
+
+            ReadOnlySpan<LuaValue> callArguments = arguments.AsSpan(start, argumentEnd - start);
+            if (callable.Type == DataType.Function)
+            {
+                Call(callable, callArguments);
+                return;
+            }
+
+            CallbackFunction callback = callable.Callback;
+            if (callback.HasArgumentViewNoContextCallback)
+            {
+                callback.InvokeArgumentViewSpan(_script, callArguments);
+                return;
+            }
+
+            ScriptExecutionContext context = CreateCloseCallbackContext(callback, instructionPtr);
+            if (callback.HasArgumentViewCallback)
+            {
+                callback.InvokeArgumentViewSpan(context, callArguments);
+            }
+            else
+            {
+                callback.InvokeLegacySpan(context, callArguments);
+            }
+        }
+
+        private ScriptExecutionContext CreateCloseCallbackContext(
+            CallbackFunction callback,
+            int instructionPtr
+        )
+        {
+            return new ScriptExecutionContext(this, callback, GetCurrentSourceRef(instructionPtr));
         }
 
         private void CloseCurrentBlock(CallStackItem stackframe, LuaValue error, int instructionPtr)

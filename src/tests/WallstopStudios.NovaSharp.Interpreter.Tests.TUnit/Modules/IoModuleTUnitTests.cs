@@ -144,18 +144,24 @@ return file_iterator, path_iterator, default_iterator
 
             for (int i = 0; i < iteratorNames.Length; i++)
             {
-                LuaValue iterator = iterators.Tuple[i];
-                bool found = iterator.UserData.Descriptor.TryMetaIndex(
-                    script,
-                    iterator.UserData.Object,
-                    Metamethods.Call,
-                    out LuaValue iteratorCallback
-                );
-                await Assert
-                    .That(found)
-                    .IsTrue()
-                    .Because($"{iteratorNames[i]} should return a callable iterator")
-                    .ConfigureAwait(false);
+                LuaValue iteratorCallback = iterators.Tuple[i];
+                if (iteratorCallback.Type == DataType.UserData)
+                {
+                    UserData userData = iteratorCallback.UserData;
+                    bool found = userData.Descriptor.TryMetaIndex(
+                        script,
+                        userData.Object,
+                        Metamethods.Call,
+                        out iteratorCallback
+                    );
+                    await Assert
+                        .That(found)
+                        .IsTrue()
+                        .Because($"{iteratorNames[i]} should return a callable iterator")
+                        .ConfigureAwait(false);
+                }
+
+                await Assert.That(iteratorCallback.Type).IsEqualTo(DataType.ClrFunction);
                 await Assert
                     .That(iteratorCallback.Callback.HasArgumentViewCallback)
                     .IsTrue()
@@ -1188,7 +1194,8 @@ end
             LuaValue tuple = script.DoString(
                 $@"
                     local iter = io.lines('{escapedPath}')
-                    return iter(), iter(), iter(), iter()
+                    local first, second, third, eof = iter(), iter(), iter(), iter()
+                    return first, second, third, eof
                     "
             );
 

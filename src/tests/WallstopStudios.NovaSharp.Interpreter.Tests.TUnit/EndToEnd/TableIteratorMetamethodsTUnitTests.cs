@@ -107,9 +107,86 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 check(hook, 'paused', direct)
                 check(setmetatable({}, {__call = hook}), 'paused', direct)
                 check(coroutine.yield, target, direct)
+                check(function()
+                    local inner = setmetatable({}, {__pairs = function() return nil end})
+                    pairs(inner)
+                    return hook()
+                end, 'paused', direct)
                 if _VERSION == 'Lua 5.4' or _VERSION == 'Lua 5.5' then
                     check(coroutine.yield, target, pcall)
                 end
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public void IteratorMetamethodsExposeTheNativeCaller(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                local nativePairs, nativeIpairs = pairs, ipairs
+                pairs, ipairs = nil, nil
+                local oldProfile = _VERSION == 'Lua 5.2' or _VERSION == 'Lua 5.3'
+                local temporary = oldProfile and '(*temporary)' or '(C temporary)'
+                local function check(iterator, hook, protected)
+                    local ran = false
+                    local target = setmetatable({}, {[hook] = function(subject)
+                        ran = true
+                        local info = debug.getinfo(2, 'Slutf')
+                        assert(info.what == 'C' and info.source == '=[C]' and info.short_src == '[C]')
+                        assert(info.linedefined == -1 and info.lastlinedefined == -1 and info.currentline == -1)
+                        assert(info.nparams == 0 and info.nups == 0 and info.isvararg and not info.istailcall)
+                        assert(info.func == iterator and debug.getinfo(info.func, 'S').what == 'C')
+                        assert(debug.getinfo(3, 'S').what == (protected and 'C' or 'Lua'))
+                        assert(string.find(debug.traceback(), '[C]: in', 1, true))
+                        local name, value = debug.getlocal(2, 1)
+                        assert(name == temporary and value == subject and debug.getlocal(2, 2) == nil)
+                        assert(debug.setlocal(2, 2, false) == nil)
+                        assert(debug.setlocal(2, 1, false) == temporary)
+                        name, value = debug.getlocal(2, 1)
+                        assert(name == temporary and value == false)
+                        return next, subject, nil
+                    end})
+                    if protected then
+                        assert(pcall(iterator, target))
+                    else
+                        iterator(target)
+                    end
+                    assert(ran)
+                end
+                check(nativePairs, '__pairs', false)
+                check(nativePairs, '__pairs', true)
+                if oldProfile then
+                    check(nativeIpairs, '__ipairs', false)
+                    check(nativeIpairs, '__ipairs', true)
+                end
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua52, LuaCompatibilityVersion.Lua53)]
+        public void NestedHostChunkKeepsIteratorHookNonYieldable(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.Globals.Set(
+                "runChunk",
+                LuaValue.NewCallbackView(script, static (context, _) =>
+                    context.Script.DoString("return 1")
+                )
+            );
+            script.DoString(
+                @"
+                local target = setmetatable({}, {__pairs = function()
+                    assert(runChunk() == 1)
+                    coroutine.yield('unexpected yield')
+                end})
+                local task = coroutine.create(function() return pairs(target) end)
+                local ok, value = coroutine.resume(task)
+                assert(not ok and string.find(value, 'yield', 1, true))
+                assert(coroutine.status(task) == 'dead')
                 "
             );
         }
@@ -140,6 +217,54 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
                 meta.__ipairs = function() return done end
                 assert(select('#', ipairs(target)) == 3, 'padded ipairs result count')
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public void IpairsStopsAtTheFirstNilLookupResult(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                local usesIndex = _VERSION ~= 'Lua 5.1' and _VERSION ~= 'Lua 5.2'
+                local terminalCount = _VERSION == 'Lua 5.1' and 0 or 1
+                for _, returnsExtra in ipairs({false, true}) do
+                    local calls = 0
+                    local target = setmetatable({}, {__index = function(_, index)
+                        calls = calls + 1
+                        if index == 1 then return false, 'discard' end
+                        if index == 2 then return 'value', 'discard' end
+                        if returnsExtra then return nil, 'discard' end
+                    end})
+                    local iterator, state, start = ipairs(target)
+                    local function checkTermination(index)
+                        local function check(...)
+                            assert(select('#', ...) == terminalCount and (...) == nil)
+                        end
+                        check(iterator(state, index))
+                    end
+                    if usesIndex then
+                        local index, value, extra = iterator(state, start)
+                        assert(index == 1 and value == false and extra == nil)
+                        index, value, extra = iterator(state, index)
+                        assert(index == 2 and value == 'value' and extra == nil)
+                        checkTermination(index)
+                        assert(calls == 3)
+                    else
+                        checkTermination(start)
+                        assert(calls == 0)
+                    end
+
+                    local count = 0
+                    for _, value in ipairs(target) do
+                        count = count + 1
+                        assert(count <= 2, 'nil lookup leaked a loop iteration')
+                        assert((count == 1 and value == false) or (count == 2 and value == 'value'))
+                    end
+                    assert(count == (usesIndex and 2 or 0))
+                end
                 "
             );
         }

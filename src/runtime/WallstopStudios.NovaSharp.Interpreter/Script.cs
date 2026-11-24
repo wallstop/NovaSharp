@@ -2445,17 +2445,28 @@ namespace WallstopStudios.NovaSharp.Interpreter
             using (_byteCode.EnterSource(SourceRef.GetClrLocation()))
             {
                 SymbolRef metamethod = SymbolRef.Local("metamethod", 0);
-                SymbolRef subject = SymbolRef.Local("subject", 1);
+                SymbolRef subject = SymbolRef.Local(
+                    "subject",
+                    CallStackItem.IteratorDispatcherSubjectSlot
+                );
                 SymbolRef normalize = SymbolRef.Local("normalize", 2);
-                RuntimeScopeFrame scope = new() { ToFirstBlock = 2 };
+                SymbolRef origin = SymbolRef.Local(
+                    "origin",
+                    CallStackItem.IteratorDispatcherOriginSlot
+                );
+                RuntimeScopeFrame scope = new()
+                {
+                    ToFirstBlock = CallStackItem.IteratorDispatcherOriginSlot,
+                };
                 scope.DebugSymbols.Add(metamethod);
                 scope.DebugSymbols.Add(subject);
                 scope.DebugSymbols.Add(normalize);
+                scope.DebugSymbols.Add(origin);
 
                 Instruction meta = _byteCode.EmitMeta(name, OpCodeMetadataType.FunctionEntrypoint);
                 int entryPoint = _byteCode.GetJumpPointForNextInstruction();
                 _byteCode.EmitBeginFn(scope);
-                _byteCode.EmitArgs(metamethod, subject, normalize);
+                _byteCode.EmitArgs(metamethod, subject, normalize, origin);
                 _byteCode.EmitLoad(normalize);
                 _byteCode.EmitLoad(metamethod);
                 _byteCode.EmitLoad(subject);
@@ -2465,7 +2476,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 meta.NumVal = _byteCode.GetJumpPointForNextInstruction() - entryPoint;
 
                 SignalByteCodeChange();
-                return MakeClosure(entryPoint).Function;
+                Closure dispatcher = MakeClosure(entryPoint).Function;
+                dispatcher.IsIteratorMetamethodDispatcher = true;
+                return dispatcher;
             }
         }
 
@@ -3542,19 +3555,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return CallValues(metafunction, arguments.AsSpan(0, 8));
         }
 
-        /// <summary>
-        /// Dispatches an indirect close metamethod through its Lua call chain.
-        /// </summary>
-        internal void CallCloseMetamethod(LuaValue function, LuaValue value, LuaValue error)
-        {
-            CallChainedNonFunction(function, new FixedChainedCallArguments(value, error), "close");
-        }
-
-        private LuaValue CallChainedNonFunction(
-            LuaValue function,
-            FixedChainedCallArguments args,
-            string metamethodName = null
-        )
+        private LuaValue CallChainedNonFunction(LuaValue function, FixedChainedCallArguments args)
         {
             int maxloops = 9;
 
@@ -3565,16 +3566,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     throw ScriptRuntimeException.LoopInCall();
                 }
 
-                LuaValue metafunction = GetCallableMetamethodOrThrow(function, metamethodName);
+                LuaValue metafunction = GetCallableMetamethodOrThrow(function);
                 if (!args.TryPrepend(function, out FixedChainedCallArguments nextArgs))
                 {
-                    return CallOverflowChainedNonFunction(
-                        function,
-                        metafunction,
-                        args,
-                        maxloops,
-                        metamethodName
-                    );
+                    return CallOverflowChainedNonFunction(function, metafunction, args, maxloops);
                 }
 
                 args = nextArgs;
@@ -3589,8 +3584,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             LuaValue function,
             LuaValue metafunction,
             FixedChainedCallArguments args,
-            int maxloops,
-            string metamethodName
+            int maxloops
         )
         {
             int count = args.Count + 1;
@@ -3612,7 +3606,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     throw ScriptRuntimeException.LoopInCall();
                 }
 
-                metafunction = GetCallableMetamethodOrThrow(function, metamethodName);
+                metafunction = GetCallableMetamethodOrThrow(function);
                 Array.Copy(arguments, 0, arguments, 1, count);
                 arguments[0] = function;
                 count++;
@@ -3660,10 +3654,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return function.Type == DataType.Function || function.Type == DataType.ClrFunction;
         }
 
-        private LuaValue GetCallableMetamethodOrThrow(
-            LuaValue function,
-            string metamethodName = null
-        )
+        private LuaValue GetCallableMetamethodOrThrow(LuaValue function)
         {
             if (
                 _mainProcessor.TryGetMetamethod(
@@ -3676,11 +3667,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
             )
             {
                 return metafunction;
-            }
-
-            if (metamethodName != null)
-            {
-                throw ScriptRuntimeException.AttemptToCallMetamethod(function.Type, metamethodName);
             }
 
             throw new ArgumentException("function is not a function and has no __call metamethod.");

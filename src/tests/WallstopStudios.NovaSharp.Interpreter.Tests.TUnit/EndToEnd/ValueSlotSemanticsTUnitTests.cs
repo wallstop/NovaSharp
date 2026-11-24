@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System.Threading.Tasks;
+    using global::NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
@@ -224,9 +225,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             script.DoString(
                 @"
                 local resource
+                local seenCoroutine
                 local called = false
                 local target = setmetatable({}, {__call = function(_, value, err)
                     assert(value == resource and err == nil)
+                    seenCoroutine = coroutine.running()
                     called = true
                 end})
                 local meta = {__close = target}
@@ -256,6 +259,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end)
                 assert(coroutine.resume(task) and not called)
                 assert(coroutine.close(task) and called, 'close suspended loop')
+
+                local completed = coroutine.create(function()
+                    for _ in once, nil, 0, resource do end
+                end)
+                assert(coroutine.resume(completed) and seenCoroutine == completed, 'active coroutine')
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public void GenericForNativeCloseRunsOnActiveCoroutine(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.Globals.Set(
+                "nativeCloser",
+                LuaValue.NewCallbackView(script, static (context, args) =>
+                {
+                    context.Script.Globals.Set(
+                        "closeThread",
+                        LuaValue.NewCoroutine(context.CallingCoroutine)
+                    );
+                    context.Script.Globals.Set(
+                        "closeArgumentCount",
+                        LuaValue.FromNumber(args.Count)
+                    );
+                    return LuaValue.Void;
+                })
+            );
+            script.DoString(
+                @"
+                local nested = setmetatable({}, {__call = nativeCloser})
+                local indirect = setmetatable({}, {__call = nested})
+                local function done() end
+                local function check(closer, expectedCount)
+                    local thread = coroutine.create(function()
+                        local value = setmetatable({}, {__close = closer})
+                        for _ in done, nil, nil, value do end
+                    end)
+                    local ok, err = coroutine.resume(thread)
+                    assert(ok, err)
+                    assert(closeThread == thread and closeArgumentCount == expectedCount)
+                end
+                check(nativeCloser, 2)
+                check(indirect, 4)
                 "
             );
         }

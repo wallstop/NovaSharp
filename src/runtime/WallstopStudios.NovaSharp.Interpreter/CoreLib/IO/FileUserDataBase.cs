@@ -746,19 +746,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         protected abstract string CloseCore();
 
         /// <summary>
-        /// Internal method to read a line from the file, with newline characters trimmed.
-        /// Used by <c>io.lines</c> lazy iterator.
+        /// Advances the iterator that owns this file for <c>io.lines(filename)</c>.
         /// </summary>
-        /// <returns>The line read, or <c>null</c> if at end of file.</returns>
-        internal string ReadLineInternal()
+        /// <param name="args">Ignored iterator state and control arguments.</param>
+        /// <returns>The next line or no values at end of input.</returns>
+        internal LuaValue ReadOwnedLine(CallbackArgumentsView args)
         {
-            if (Eof())
+            if (!IsOpen())
             {
-                return null;
+                throw new ScriptRuntimeException("file is already closed");
             }
 
-            string line = ReadLine();
-            return TrimLineEnding(line);
+            string line = Eof() ? null : ReadLine();
+            if (line == null)
+            {
+                Close();
+                return LuaValue.Void;
+            }
+
+            return LuaValue.NewString(TrimLineEnding(line));
         }
 
         /// <summary>

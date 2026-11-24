@@ -64,6 +64,31 @@ choice of Lua 5.4.9 for the nested-close oracle.
   first reproduced the two file-load error signature changes already tracked
   in [#165](https://github.com/Ambiguous-Interactive/NovaSharp/issues/165).
 
+## Hosted review
+
+- The callable closer already worked when the final target was Lua. A native
+  callback reached through the same chain observed the main coroutine.
+  Resolving and invoking the chain in the active processor fixed the native
+  path. Eight independent cases covered both callback styles in Lua 5.4–5.5.
+- The filename iterator now has the reference function type and exact result
+  count. It returns no values at EOF and raises a closed-file error on a
+  subsequent call. This closes [#170](https://github.com/Ambiguous-Interactive/NovaSharp/issues/170).
+- Stack inspection now exposes the original C iterator callback for both
+  synchronous and resumable hooks. The paired regression covers stack depth,
+  function identity and hidden locals after aliasing, global reassignment and
+  protected calls.
+- CodeRabbit reproduced a nested host call re-enabling yield in an outer
+  Lua 5.2 or 5.3 iterator hook. Restoring the prior yield permission fixes
+  both host call entry points. The same nested Lua probe still yields as
+  expected in Lua 5.4 and 5.5.
+- The default `ipairs` generator now uses the first indexed result and
+  terminates when the result is absent or nil. The reference probe used an
+  indexed value followed by a zero-result lookup. NovaSharp previously
+  supplied an extra nil loop value. This closes [#171](https://github.com/Ambiguous-Interactive/NovaSharp/issues/171).
+- The review revision passed 30 iterator, 16 generic-for, 692 debugger,
+  and 31 filename iterator cases. The quick build, all 15,790 quick tests,
+  CSharpier, pre-commit, and the five enforced reference comparators passed.
+
 ## Issue triage
 
 The initial two-page inventory contained 35 open issues. Gameplay and Lua
@@ -78,12 +103,15 @@ close-unwinding paths. Its scope includes explicit close locals as well as
 generic-for closers.
 
 [Issue 169](https://github.com/Ambiguous-Interactive/NovaSharp/issues/169)
-tracks normal-exit closers that suspend a coroutine. [Issue 170](https://github.com/Ambiguous-Interactive/NovaSharp/issues/170)
-records the reference return count and function type of `io.lines(filename)`.
-[Issue 171](https://github.com/Ambiguous-Interactive/NovaSharp/issues/171)
-tracks an existing default `ipairs` failure to stop when an indexed lookup
-produces zero results.
+tracks normal-exit closers that suspend a coroutine.
 
 [Issue 172](https://github.com/Ambiguous-Interactive/NovaSharp/issues/172)
 tracks the existing case where an explicit initializer returns no values and
 a subsequent argument omits the resulting local instead of passing nil.
+
+[Issue 174](https://github.com/Ambiguous-Interactive/NovaSharp/issues/174)
+records a pre-existing difference in when closers run after an uncaught
+coroutine error.
+
+[Issue 175](https://github.com/Ambiguous-Interactive/NovaSharp/issues/175)
+tracks borrowed line iterator results and optional read format handling.

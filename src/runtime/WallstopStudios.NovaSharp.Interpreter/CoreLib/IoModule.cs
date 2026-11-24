@@ -1,7 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Security;
     using System.Text;
@@ -15,7 +14,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
-    using WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
@@ -395,7 +393,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="executionContext">Runtime context owning the script and platform accessor.</param>
         /// <param name="args">Argument zero is the path to read.</param>
         /// <returns>
-        /// In Lua 5.1-5.3: An iterator triple <c>(iterator, nil, nil)</c>.
+        /// In Lua 5.1-5.3: The iterator function.
         /// In Lua 5.4+: A quadruple <c>(iterator, nil, nil, file_handle)</c> where the file handle
         /// can be used with to-be-closed variables or manual cleanup.
         /// </returns>
@@ -452,10 +450,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     false
                 );
 
-                // Create an iterator that reads lines lazily from the file
-                LuaValue iterator = EnumerableWrapper.ConvertIterator(
+                LuaValue iterator = LuaValue.NewCallbackView(
                     executionContext.Script,
-                    CreateLazyLineIterator(fileHandle)
+                    fileHandle.ReadOwnedLine,
+                    "io.lines"
                 );
 
                 // Lua 5.4+ returns 4 values: (iterator, nil, nil, file_handle)
@@ -463,37 +461,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 if (version >= LuaCompatibilityVersion.Lua54)
                 {
                     return LuaValue.NewTuple(
-                        iterator.Tuple[0], // iterator function
+                        iterator,
                         LuaValue.Nil, // state
                         LuaValue.Nil, // initial value
                         CreateFileUserData(executionContext.Script, fileHandle) // file handle for to-be-closed
                     );
                 }
 
-                // Lua 5.1-5.3: return just the iterator triple (iterator, nil, nil)
                 return iterator;
             }
             catch (Exception ex)
             {
                 throw new ScriptRuntimeException(IoExceptionToLuaMessage(ex, filename));
-            }
-        }
-
-        /// <summary>
-        /// Creates a lazy line iterator for a file that yields lines one at a time.
-        /// </summary>
-        private static IEnumerator<LuaValue> CreateLazyLineIterator(FileUserData fileHandle)
-        {
-            while (true)
-            {
-                string line = fileHandle.ReadLineInternal();
-                if (line == null)
-                {
-                    fileHandle.Close();
-                    yield break;
-                }
-
-                yield return LuaValue.NewString(line);
             }
         }
 

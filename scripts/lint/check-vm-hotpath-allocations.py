@@ -165,9 +165,9 @@ ALLOWLIST = [
     AllowedMatch(
         "new-script-execution-context",
         "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs",
-        "CloseValue",
-        re.compile(r"ScriptExecutionContext\s+context\s*=\s*new\s*\("),
-        "Lua 5.4 close-metamethod CLR callback path allocates context until A5 span callbacks remove it.",
+        "CreateCloseCallbackContext",
+        re.compile(r"new\s+ScriptExecutionContext\s*\("),
+        "Context-taking close callbacks need the active processor, including callable-table handlers.",
     ),
     AllowedMatch(
         "new-list-luavalue",

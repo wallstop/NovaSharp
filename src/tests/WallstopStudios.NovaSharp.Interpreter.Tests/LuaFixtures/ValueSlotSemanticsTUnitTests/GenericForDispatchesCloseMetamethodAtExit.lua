@@ -1,13 +1,15 @@
 -- @lua-versions: 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:224
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:225
 -- @test: ValueSlotSemanticsTUnitTests.GenericForDispatchesCloseMetamethodAtExit
 -- Compatibility notes: Test targets Lua 5.4+
 local resource
+                local seenCoroutine
                 local called = false
                 local target = setmetatable({}, {__call = function(_, value, err)
                     assert(value == resource and err == nil)
+                    seenCoroutine = coroutine.running()
                     called = true
                 end})
                 local meta = {__close = target}
@@ -37,3 +39,8 @@ local resource
                 end)
                 assert(coroutine.resume(task) and not called)
                 assert(coroutine.close(task) and called, 'close suspended loop')
+
+                local completed = coroutine.create(function()
+                    for _ in once, nil, 0, resource do end
+                end)
+                assert(coroutine.resume(completed) and seenCoroutine == completed, 'active coroutine')

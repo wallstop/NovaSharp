@@ -12,6 +12,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     /// </summary>
     internal class CallStackItem
     {
+        internal const int IteratorDispatcherSubjectSlot = 1;
+        internal const int IteratorDispatcherOriginSlot = 3;
+
         /// <summary>
         /// Bytecode index where execution should resume for debugger stepping.
         /// </summary>
@@ -36,6 +39,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// Lua function currently being executed, materialized on demand for debug APIs.
         /// </summary>
         public LuaValue Function { get; set; }
+
+        internal bool IsIteratorMetamethodDispatcher =>
+            Function.Type == DataType.Function && Function.Function.IsIteratorMetamethodDispatcher;
 
         /// <summary>
         /// Continuation invoked after yielding or tail calls.
