@@ -200,7 +200,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             );
 
             LuaValue result = script.DoString("return table.concat(collected, ',')");
-            await Assert.That(result.String).IsEqualTo("virtual=42").ConfigureAwait(false);
+            await Assert
+                .That(result.String)
+                .IsEqualTo(version == LuaCompatibilityVersion.Lua51 ? "a=1" : "virtual=42")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

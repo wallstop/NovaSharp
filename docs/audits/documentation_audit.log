@@ -2,7 +2,7 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 185 undocumented public/internal type declarations.
+Found 186 undocumented public/internal type declarations.
 
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs
   - line 9: missing XML docs for `class ComVisibleAttribute`
@@ -25,18 +25,19 @@ Found 185 undocumented public/internal type declarations.
   - line 1689: missing XML docs for `TryMetaIndex()`
   - line 1695: missing XML docs for `IsTypeCompatible()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/IO/FileUserDataDescriptor.cs
-  - line 22: missing XML docs for `Name`
-  - line 24: missing XML docs for `Type`
-  - line 26: missing XML docs for `Index()`
-  - line 33: missing XML docs for `TryIndex()`
-  - line 164: missing XML docs for `SetIndex()`
-  - line 181: missing XML docs for `AsString()`
-  - line 186: missing XML docs for `MetaIndex()`
-  - line 193: missing XML docs for `TryMetaIndex()`
-  - line 198: missing XML docs for `IsTypeCompatible()`
+  - line 27: missing XML docs for `Name`
+  - line 29: missing XML docs for `Type`
+  - line 31: missing XML docs for `Index()`
+  - line 38: missing XML docs for `TryIndex()`
+  - line 181: missing XML docs for `SetIndex()`
+  - line 198: missing XML docs for `AsString()`
+  - line 203: missing XML docs for `MetaIndex()`
+  - line 210: missing XML docs for `TryMetaIndex()`
+  - line 221: missing XML docs for `IsTypeCompatible()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableIteratorsModule.cs
-  - line 29: missing XML docs for `NextArray`
-  - line 31: missing XML docs for `Next`
+  - line 43: missing XML docs for `NextArray`
+  - line 45: missing XML docs for `Next`
+  - line 47: missing XML docs for `GetMetamethodDispatcher()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableModule.cs
   - line 36: missing XML docs for `Compare()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/Utf8Module.cs
@@ -133,7 +134,7 @@ Found 185 undocumented public/internal type declarations.
   - line 47: missing XML docs for `Continuation`
   - line 49: missing XML docs for `ErrorHandlerBeforeUnwind`
   - line 51: missing XML docs for `HasErrorHandlerBeforeUnwind`
-  - line 1766: missing XML docs for `Count`
+  - line 1768: missing XML docs for `Count`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/BasicDescriptors/DispatchingUserDataDescriptor.cs
   - line 314: missing XML docs for `TryIndex()`
   - line 816: missing XML docs for `TryMetaIndex()`
@@ -157,9 +158,9 @@ Found 185 undocumented public/internal type declarations.
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs
   - line 626: missing XML docs for `BeginDefaultOptionsScope()`
   - line 734: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
-  - line 4811: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
-  - line 4819: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
-  - line 4946: missing XML docs for `Dispose()`
+  - line 4871: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
+  - line 4879: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
+  - line 5006: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf2.cs
   - line 198: missing XML docs for `FromT0()`
   - line 211: missing XML docs for `FromT1()`

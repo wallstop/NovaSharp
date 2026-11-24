@@ -1621,7 +1621,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 return base.ReadBuffer(p);
             }
 
-            protected override string Close()
+            protected override string CloseCore()
             {
                 if (ThrowOnClose)
                 {
@@ -1634,7 +1634,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 }
 
                 string message = CloseMessage;
-                string baseResult = base.Close();
+                string baseResult = base.CloseCore();
                 return string.IsNullOrEmpty(message) ? baseResult : message;
             }
 

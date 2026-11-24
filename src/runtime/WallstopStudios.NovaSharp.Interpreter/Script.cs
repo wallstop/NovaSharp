@@ -2436,6 +2436,39 @@ namespace WallstopStudios.NovaSharp.Interpreter
             });
         }
 
+        /// <summary>
+        /// Builds the Lua frame that calls an iterator metamethod and adjusts its results.
+        /// </summary>
+        internal Closure CreateIteratorMetamethodDispatcher()
+        {
+            const string name = "iterator metamethod";
+            using (_byteCode.EnterSource(SourceRef.GetClrLocation()))
+            {
+                SymbolRef metamethod = SymbolRef.Local("metamethod", 0);
+                SymbolRef subject = SymbolRef.Local("subject", 1);
+                SymbolRef normalize = SymbolRef.Local("normalize", 2);
+                RuntimeScopeFrame scope = new() { ToFirstBlock = 2 };
+                scope.DebugSymbols.Add(metamethod);
+                scope.DebugSymbols.Add(subject);
+                scope.DebugSymbols.Add(normalize);
+
+                Instruction meta = _byteCode.EmitMeta(name, OpCodeMetadataType.FunctionEntrypoint);
+                int entryPoint = _byteCode.GetJumpPointForNextInstruction();
+                _byteCode.EmitBeginFn(scope);
+                _byteCode.EmitArgs(metamethod, subject, normalize);
+                _byteCode.EmitLoad(normalize);
+                _byteCode.EmitLoad(metamethod);
+                _byteCode.EmitLoad(subject);
+                _byteCode.EmitCall(1, debugName: null);
+                _byteCode.EmitCall(1, debugName: null);
+                _byteCode.EmitRet(1);
+                meta.NumVal = _byteCode.GetJumpPointForNextInstruction() - entryPoint;
+
+                SignalByteCodeChange();
+                return MakeClosure(entryPoint).Function;
+            }
+        }
+
         private LuaValue MakeClosure(int address, Table envTable = null)
         {
             this.CheckScriptOwnership(envTable);
@@ -3509,7 +3542,19 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return CallValues(metafunction, arguments.AsSpan(0, 8));
         }
 
-        private LuaValue CallChainedNonFunction(LuaValue function, FixedChainedCallArguments args)
+        /// <summary>
+        /// Dispatches an indirect close metamethod through its Lua call chain.
+        /// </summary>
+        internal void CallCloseMetamethod(LuaValue function, LuaValue value, LuaValue error)
+        {
+            CallChainedNonFunction(function, new FixedChainedCallArguments(value, error), "close");
+        }
+
+        private LuaValue CallChainedNonFunction(
+            LuaValue function,
+            FixedChainedCallArguments args,
+            string metamethodName = null
+        )
         {
             int maxloops = 9;
 
@@ -3520,10 +3565,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     throw ScriptRuntimeException.LoopInCall();
                 }
 
-                LuaValue metafunction = GetCallableMetamethodOrThrow(function);
+                LuaValue metafunction = GetCallableMetamethodOrThrow(function, metamethodName);
                 if (!args.TryPrepend(function, out FixedChainedCallArguments nextArgs))
                 {
-                    return CallOverflowChainedNonFunction(function, metafunction, args, maxloops);
+                    return CallOverflowChainedNonFunction(
+                        function,
+                        metafunction,
+                        args,
+                        maxloops,
+                        metamethodName
+                    );
                 }
 
                 args = nextArgs;
@@ -3538,7 +3589,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
             LuaValue function,
             LuaValue metafunction,
             FixedChainedCallArguments args,
-            int maxloops
+            int maxloops,
+            string metamethodName
         )
         {
             int count = args.Count + 1;
@@ -3560,7 +3612,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     throw ScriptRuntimeException.LoopInCall();
                 }
 
-                metafunction = GetCallableMetamethodOrThrow(function);
+                metafunction = GetCallableMetamethodOrThrow(function, metamethodName);
                 Array.Copy(arguments, 0, arguments, 1, count);
                 arguments[0] = function;
                 count++;
@@ -3608,7 +3660,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return function.Type == DataType.Function || function.Type == DataType.ClrFunction;
         }
 
-        private LuaValue GetCallableMetamethodOrThrow(LuaValue function)
+        private LuaValue GetCallableMetamethodOrThrow(
+            LuaValue function,
+            string metamethodName = null
+        )
         {
             if (
                 _mainProcessor.TryGetMetamethod(
@@ -3621,6 +3676,11 @@ namespace WallstopStudios.NovaSharp.Interpreter
             )
             {
                 return metafunction;
+            }
+
+            if (metamethodName != null)
+            {
+                throw ScriptRuntimeException.AttemptToCallMetamethod(function.Type, metamethodName);
             }
 
             throw new ArgumentException("function is not a function and has no __call metamethod.");

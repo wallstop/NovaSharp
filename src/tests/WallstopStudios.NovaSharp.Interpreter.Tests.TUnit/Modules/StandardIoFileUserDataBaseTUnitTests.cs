@@ -43,7 +43,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             StandardIoFileUserDataBase file = StandardIoFileUserDataBase.CreateOutputStream(stream);
             ScriptExecutionContext context = CreateExecutionContext();
 
-            LuaValue closeResult = file.Close(context, TestHelpers.CreateArguments());
+            LuaValue closeResult = file.Close();
 
             await Assert.That(closeResult.Type).IsEqualTo(DataType.Tuple);
             await Assert.That(closeResult.Tuple[0].IsNil).IsTrue();

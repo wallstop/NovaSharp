@@ -248,22 +248,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         /// Implements Lua's <c>file:close</c> (§6.8), returning <c>true</c> on success or the
         /// <c>(nil, message, code)</c> tuple when closing fails with a recoverable IO error.
         /// </summary>
-        /// <param name="executionContext">Execution context owning the current script.</param>
-        /// <param name="args">Unused Lua arguments; accepted for signature parity.</param>
         /// <returns>A <see cref="LuaValue"/> conveying <c>true</c> or the Lua error tuple.</returns>
-        public LuaValue Close(ScriptExecutionContext executionContext, CallbackArguments args)
-        {
-            return Close(executionContext, new CallbackArgumentsView(args));
-        }
-
-        /// <summary>
-        /// Implements <c>file:close</c> from a stack-only callback argument view.
-        /// </summary>
-        internal LuaValue Close(ScriptExecutionContext executionContext, CallbackArgumentsView args)
+        public LuaValue Close()
         {
             try
             {
-                string msg = Close();
+                string msg = CloseCore();
                 if (msg == null)
                 {
                     return LuaValue.True;
@@ -753,7 +743,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         protected abstract void ResetToPosition(long position);
 
         protected internal abstract bool IsOpen();
-        protected abstract string Close();
+        protected abstract string CloseCore();
 
         /// <summary>
         /// Internal method to read a line from the file, with newline characters trimmed.

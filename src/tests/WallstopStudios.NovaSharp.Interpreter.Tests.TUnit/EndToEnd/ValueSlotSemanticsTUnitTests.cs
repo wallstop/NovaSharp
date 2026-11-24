@@ -74,6 +74,192 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 .ConfigureAwait(false);
         }
 
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public void GenericForLocalsStartAsNil(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                local state = { 10, 20 }
+                local function step(s, previous)
+                    assert(s == state, 'iterator state')
+                    local index = previous + 1
+                    if s[index] then return index, s[index] end
+                end
+
+                local readers = {}
+                for index, value in step, state, 0 do
+                    local first, second, third, fourth
+                    assert(first == nil, 'first local captured iterator state')
+                    assert(second == nil and third == nil and fourth == nil, 'remaining locals')
+                    for _, nestedValue in ipairs({ value }) do
+                        local nested
+                        assert(nested == nil and nestedValue == value, 'nested iterator')
+                    end
+                    readers[index] = function() return first, second end
+                    if index == 1 then first, second = value, index end
+                end
+
+                local first, second = readers[1]()
+                assert(first == 10 and second == 1, 'first iteration capture')
+                first, second = readers[2]()
+                assert(first == nil and second == nil, 'second iteration capture')
+
+                for index = 1, 1 do
+                    local fresh
+                    assert(fresh == nil, 'numeric loop control')
+                end
+
+                local function empty() end
+                for index in step, state, 0 do
+                    local explicit = nil
+                    local fromEmpty = empty()
+                    assert(explicit == nil and fromEmpty == nil, 'explicit initializers')
+                    break
+                end
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public void GenericForClosingValueLivesUntilExit(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                local hasClose = _VERSION == 'Lua 5.4' or _VERSION == 'Lua 5.5'
+                local closed, closeError
+                local closer = setmetatable({}, {__close = function(self, err)
+                    closed = closed + 1
+                    closeError = err
+                end})
+                local function step(limit, previous)
+                    if previous < limit then return previous + 1 end
+                end
+                local function controls(limit)
+                    return step, limit, 0, closer, true
+                end
+                local function run(mode)
+                    if mode == 'iterator error' then
+                        local function fail() error('iterator failed', 0) end
+                        for _ in fail, nil, nil, closer do error('unreachable') end
+                        return
+                    end
+                    for i in controls(mode == 'empty' and 0 or 2) do
+                        assert(closed == 0, 'premature close')
+                        if mode == 'break' then break end
+                        if mode == 'return' then return i end
+                        if mode == 'body error' then error('body failed', 0) end
+                    end
+                end
+
+                for _, mode in ipairs({'empty', 'exhausted', 'break', 'return', 'body error', 'iterator error'}) do
+                    closed, closeError = 0, nil
+                    local expectedError = ({['body error'] = 'body failed', ['iterator error'] = 'iterator failed'})[mode]
+                    local ok, result = pcall(run, mode)
+                    assert(ok == (expectedError == nil), mode)
+                    assert(closed == (hasClose and 1 or 0), 'close count: ' .. mode)
+                    if mode == 'return' then assert(result == 1) end
+                    assert(closeError == (hasClose and expectedError or nil), 'active error: ' .. mode)
+                end
+
+                local function checkInvalid()
+                    for _ in step, 0, 0, true do error('unreachable') end
+                end
+                local ok, message = pcall(checkInvalid)
+                assert(ok == not hasClose, 'invalid closer')
+                if hasClose then
+                    assert(string.find(message, ""variable '(for state)' got a non-closable value"", 1, true))
+                end
+                for _ in step, 0, 0, false do error('unreachable') end
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public void GenericForClosingValueFollowsLexicalExitOrder(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                local log = {}
+                local function closer(name)
+                    return setmetatable({}, {__close = function() log[#log + 1] = name end})
+                end
+                local function once(_, previous)
+                    if previous == 0 then return 1 end
+                end
+
+                do
+                    local surrounding <close> = closer('surrounding')
+                    for _ in once, nil, 0, closer('iterator') do
+                        if true then
+                            local inner <close> = closer('inner')
+                            do break end
+                        end
+                    end
+                    log[#log + 1] = 'after break'
+                end
+
+                for _ in once, nil, 0, closer('goto iterator') do
+                    do
+                        local inner <close> = closer('goto inner')
+                        goto finished
+                    end
+                end
+                ::finished::
+                assert(table.concat(log, ',') == 'inner,iterator,after break,surrounding,goto inner,goto iterator')
+                "
+            );
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public void GenericForDispatchesCloseMetamethodAtExit(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                local resource
+                local called = false
+                local target = setmetatable({}, {__call = function(_, value, err)
+                    assert(value == resource and err == nil)
+                    called = true
+                end})
+                local meta = {__close = target}
+                resource = setmetatable({}, meta)
+                local function once(_, previous)
+                    if previous == 0 then return 1 end
+                end
+                for _ in once, nil, 0, resource do assert(not called) end
+                assert(called, 'callable close')
+
+                local function checkInvalid(replacement, errorType)
+                    meta.__close = target
+                    local ok, message = pcall(function()
+                        for _ in once, nil, 0, resource do meta.__close = replacement end
+                    end)
+                    local expected = 'attempt to call a ' .. errorType .. "" value (metamethod 'close')""
+                    assert(not ok and string.find(message, expected, 1, true), tostring(message))
+                end
+                checkInvalid(false, 'boolean')
+                checkInvalid(nil, 'nil')
+                checkInvalid(setmetatable({}, {__call = false}), 'boolean')
+
+                called = false
+                meta.__close = target
+                local task = coroutine.create(function()
+                    for _ in once, nil, 0, resource do coroutine.yield() end
+                end)
+                assert(coroutine.resume(task) and not called)
+                assert(coroutine.close(task) and called, 'close suspended loop')
+                "
+            );
+        }
+
         /// <summary>
         /// Every loop form must give each iteration a fresh cell for its body-locals, otherwise all
         /// closures made in the loop would alias one cell and report the final value. Cell freshness

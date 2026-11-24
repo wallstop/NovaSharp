@@ -13,6 +13,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
     internal class BreakStatement : Statement
     {
         private readonly SourceRef _ref;
+        private readonly BuildTimeScopeBlock _block;
 
         /// <summary>
         /// Parses a `break` statement and records its source location for diagnostics.
@@ -21,6 +22,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             : base(lcontext)
         {
             _ref = CheckTokenType(lcontext, TokenType.Break).GetSourceRef();
+            _block = lcontext.Scope.CurrentBlock;
             lcontext.Source.Refs.Add(_ref);
         }
 
@@ -53,7 +55,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                     );
                 }
 
-                loop.CompileBreak(bc);
+                loop.CompileBreak(bc, _block);
             }
         }
     }

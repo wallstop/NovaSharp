@@ -246,7 +246,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             FileUserDataBase outp = args[0]
                 .CheckUserDataType<FileUserDataBase>("close", 0, TypeValidationOptions.AllowNil)
                 ?? GetDefaultFile(executionContext, StandardFileType.StdOut);
-            return outp.Close(executionContext, args);
+            return outp.Close();
         }
 
         /// <summary>
@@ -489,7 +489,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 string line = fileHandle.ReadLineInternal();
                 if (line == null)
                 {
-                    yield return LuaValue.Nil;
+                    fileHandle.Close();
                     yield break;
                 }
 

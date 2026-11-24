@@ -791,11 +791,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return;
             }
 
-            LuaValue metamethod = GetMetamethodRaw(candidate, Metamethods.Close);
+            LuaValue metamethod = GetMetamethod(candidate, Metamethods.Close);
 
             if (metamethod.IsNil)
             {
-                throw ScriptRuntimeException.CloseMetamethodExpected(candidate);
+                throw new ScriptRuntimeException(
+                    "variable '{0}' got a non-closable value",
+                    symbol.Name
+                );
             }
         }
 
@@ -813,24 +816,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return;
             }
 
-            LuaValue metamethod = GetMetamethodRaw(scalar, Metamethods.Close);
-
-            if (metamethod.IsNil)
-            {
-                throw ScriptRuntimeException.CloseMetamethodExpected(scalar);
-            }
-
-            LuaValue err = error;
+            LuaValue metamethod = GetMetamethod(scalar, Metamethods.Close);
 
             if (metamethod.Type == DataType.Function)
             {
-                Call(metamethod, scalar, err);
+                Call(metamethod, scalar, error);
                 return;
             }
 
             if (metamethod.Type == DataType.ClrFunction)
             {
                 CallbackFunction callback = metamethod.Callback;
+                if (callback.HasArgumentViewNoContextCallback)
+                {
+                    callback.InvokeArgumentViewFixed(_script, scalar, error);
+                    return;
+                }
+
                 ScriptExecutionContext context = new(
                     this,
                     callback,
@@ -838,16 +840,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 );
                 if (callback.HasArgumentViewCallback)
                 {
-                    callback.InvokeArgumentViewFixed(context, scalar, err);
+                    callback.InvokeArgumentViewFixed(context, scalar, error);
                 }
                 else
                 {
-                    callback.InvokeLegacyFixed(context, scalar, err);
+                    callback.InvokeLegacyFixed(context, scalar, error);
                 }
                 return;
             }
 
-            throw ScriptRuntimeException.CloseMetamethodExpected(scalar);
+            _script.CallCloseMetamethod(metamethod, scalar, error);
         }
 
         private void CloseCurrentBlock(CallStackItem stackframe, LuaValue error, int instructionPtr)

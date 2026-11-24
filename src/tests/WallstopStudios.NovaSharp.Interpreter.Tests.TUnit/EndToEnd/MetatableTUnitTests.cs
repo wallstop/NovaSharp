@@ -17,7 +17,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     [UserDataIsolation]
     public sealed class MetatableTUnitTests
     {
-        // __ipairs metamethod was added in Lua 5.2 and removed in Lua 5.3+
+        // Lua 5.2 introduced __ipairs, which the stock Lua 5.3 build retains.
         [global::TUnit.Core.Test]
         [LuaVersionRange(LuaCompatibilityVersion.Lua52, LuaCompatibilityVersion.Lua52)]
         public async Task TableIPairsWithMetatable(LuaCompatibilityVersion version)

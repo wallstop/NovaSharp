@@ -38,6 +38,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         }
 
         /// <summary>
+        /// Gets the active lexical block while parsing a statement.
+        /// </summary>
+        internal BuildTimeScopeBlock CurrentBlock => _scopeTreeHead;
+
+        /// <summary>
         /// Pops the innermost block, ensuring pending gotos are resolved before returning the runtime metadata.
         /// </summary>
         /// <returns>The <see cref="RuntimeScopeBlock"/> associated with the popped block.</returns>
