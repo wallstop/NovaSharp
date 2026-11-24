@@ -869,6 +869,9 @@ Inserts element `value` at position `pos` in `table`, shifting up other elements
 
 Default for `pos` is `#table + 1`, so `table.insert(t, x)` inserts at the end.
 
+Both forms return zero values. In `table.insert(t, pos, nil)`, the third
+argument is the value to insert and the second argument is the position.
+
 **Examples:**
 
 ```lua

@@ -9,6 +9,8 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
 
 ## Now
 
+1. Fix uninitialized locals reading generic-loop iterator state across Lua 5.1–5.5
+   in [#164](https://github.com/Ambiguous-Interactive/NovaSharp/issues/164).
 1. Advance Phase A5 call paths in
    [#108](https://github.com/Ambiguous-Interactive/NovaSharp/issues/108):
    - Migrate each remaining legacy CoreLib registration in its own scoped change:
@@ -77,7 +79,7 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    [optional-argument validation](https://github.com/Ambiguous-Interactive/NovaSharp/issues/125),
    [residual number/string parity nits](https://github.com/Ambiguous-Interactive/NovaSharp/issues/138),
    [table library exports](https://github.com/Ambiguous-Interactive/NovaSharp/issues/159),
-   [table.insert arity and results](https://github.com/Ambiguous-Interactive/NovaSharp/issues/160),
+   [table insert metamethod behavior](https://github.com/Ambiguous-Interactive/NovaSharp/issues/162),
    other error formats, [Lua 5.5 const loop-variable enforcement](https://github.com/Ambiguous-Interactive/NovaSharp/issues/130),
    `__gc`, Lua 5.4 garbage collector options, version-migration docs, and explicit
    compatibility-version matrix coverage; retain the
