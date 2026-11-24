@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Tests for Agent Skills metadata and fail-closed index validation."""
 
+import shlex
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -346,12 +348,18 @@ class RepositoryDiscoveryTests(unittest.TestCase):
         self.assertEqual("@AGENTS.md", (self.root / "CLAUDE.md").read_text().strip())
 
     def test_documented_inventory_matches_canonical_skills(self):
-        command = ["jq", "-r", ".skills[].name", ".llm/skills-index.json"]
         guide = (self.root / ".llm/context.md").read_text()
-        self.assertIn("jq -r '.skills[].name' .llm/skills-index.json", guide)
-        index = self.root / command[-1]
+        discovery = guide.split("## Skill discovery", 1)[1]
+        command, redirect, filename = discovery.split("```bash\n", 1)[1].splitlines()[0].rpartition(" < ")
+        self.assertEqual(" < ", redirect)
+        interpreter, *arguments = shlex.split(command)
+        self.assertEqual("python3", interpreter)
+        self.assertEqual(".llm/skills-index.json", filename)
+        index = self.root / filename
         before = index.read_bytes()
-        names = subprocess.check_output(command, cwd=self.root, text=True).splitlines()
+        names = subprocess.check_output(
+            [sys.executable, *arguments], input=before, cwd=self.root
+        ).decode("utf-8").splitlines()
         expected = [p.parent.name for p in self.root.glob(".llm/skills/*/SKILL.md")]
         self.assertCountEqual(expected, names)
         self.assertEqual(before, index.read_bytes())

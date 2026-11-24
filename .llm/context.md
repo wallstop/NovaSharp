@@ -66,7 +66,7 @@ ______________________________________________________________________
 Use your client’s skill selector or list the canonical names from the repository root:
 
 ```bash
-jq -r '.skills[].name' .llm/skills-index.json
+python3 -c 'import json; import sys; print("\n".join(skill["name"] for skill in json.load(sys.stdin.buffer)["skills"]))' < .llm/skills-index.json
 ```
 
 Open a matching skill for its procedure and consult its references as needed.
