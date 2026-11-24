@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2003,
+  "total_snippets": 2004,
   "novasharp_only": 498,
-  "comparable": 1505,
+  "comparable": 1506,
   "by_version": {
-    "5.1": 1004,
-    "5.2": 708,
-    "5.3": 952,
-    "5.4": 1021,
-    "5.5": 1062
+    "5.1": 1005,
+    "5.2": 709,
+    "5.3": 953,
+    "5.4": 1022,
+    "5.5": 1063
   },
   "snippets": [
     {
@@ -22237,6 +22237,20 @@
       "path": "TableModuleTUnitTests/InsertAppendUsesProfileLengthSemantics.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:1098",
       "test": "TableModuleTUnitTests.InsertAppendUsesProfileLengthSemantics",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/InsertPositionalUsesProfileLengthSemantics.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:1148",
+      "test": "TableModuleTUnitTests.InsertPositionalUsesProfileLengthSemantics",
       "lua_versions": [
         "5.1",
         "5.2",

@@ -301,28 +301,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                 executionContext.Script.CompatibilityVersion
             );
+            long end = GetInsertEnd(executionContext, tableValue, version);
             if (args.Count == 2)
             {
-                long appendIndex = GetInsertAppendIndex(executionContext, tableValue, version);
-                if (appendIndex >= int.MinValue && appendIndex <= int.MaxValue)
-                {
-                    list.Set((int)appendIndex, args[1]);
-                }
-                else
-                {
-                    list.SetValue(LuaValue.NewInteger(appendIndex), args[1]);
-                }
-
+                SetInsertValue(list, end, args[1]);
                 return LuaValue.Void;
             }
-
-            int end =
-                1
-                + (
-                    version == LuaCompatibilityVersion.Lua51
-                        ? list.Length
-                        : GetTableLength(executionContext, tableValue)
-                );
 
             if (args.Count != 3)
             {
@@ -358,35 +342,56 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
             }
 
-            if (version != LuaCompatibilityVersion.Lua51 && (position < 1 || position > end))
+            // Lua 5.4 and 5.5 compare pos - 1 and end as unsigned Lua integers.
+            bool outOfBounds =
+                version >= LuaCompatibilityVersion.Lua54
+                    ? unchecked((ulong)position - 1) >= unchecked((ulong)end)
+                    : position < 1 || position > end;
+            if (version != LuaCompatibilityVersion.Lua51 && outOfBounds)
             {
                 throw ScriptRuntimeException.BadArgument(1, "insert", "position out of bounds");
             }
 
-            int index = (int)position;
-            int shiftStart = index;
-            if (-(long)index > list.Count)
+            if (end > position)
             {
-                // Lua 5.1 accepts negative positions. Skip unoccupied negative keys when
-                // the shift would otherwise scan more keys than the whole table contains.
-                shiftStart = 1;
+                // Sparse ranges can span billions of absent keys. Visit occupied entries instead.
+                if (unchecked((ulong)(end - position)) > (ulong)list.Count)
+                {
+                    ShiftSparseInsertRange(list, position, end);
+                }
+                else if (end <= int.MaxValue && position >= int.MinValue)
+                {
+                    for (int i = (int)end; i > (int)position; i--)
+                    {
+                        list.Set(i, list.Get(i - 1));
+                    }
+                }
+                else
+                {
+                    for (long i = end; i > position; i--)
+                    {
+                        SetInsertValue(list, i, list.GetValue(LuaValue.NewInteger(i - 1)));
+                    }
+                }
             }
 
-            for (int i = end; i > shiftStart; i--)
-            {
-                list.Set(i, list.Get(i - 1));
-            }
-
-            if (shiftStart != index)
-            {
-                ShiftSparseNonPositiveKeys(list, index);
-            }
-
-            list.Set(index, args[2]);
+            SetInsertValue(list, position, args[2]);
             return LuaValue.Void;
         }
 
-        private static long GetInsertAppendIndex(
+        private static void SetInsertValue(Table list, long index, LuaValue value)
+        {
+            if (index >= int.MinValue && index <= int.MaxValue)
+            {
+                list.Set((int)index, value);
+            }
+            else
+            {
+                list.SetValue(LuaValue.NewInteger(index), value);
+            }
+        }
+
+        private static long GetInsertEnd(
             ScriptExecutionContext executionContext,
             LuaValue tableValue,
             LuaCompatibilityVersion version
@@ -480,35 +485,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return LuaNumber.TryParse(numericText, version, out LuaNumber number) ? number : null;
         }
 
-        private static void ShiftSparseNonPositiveKeys(Table list, int index)
+        private static void ShiftSparseInsertRange(Table list, long position, long end)
         {
             using PooledResource<List<TablePair>> lease = ListPool<TablePair>.Get(
                 out List<TablePair> entries
             );
             foreach (TablePair pair in list.GetNonNilPairsEnumerator())
             {
-                if (pair.Key.Type != DataType.Number)
-                {
-                    continue;
-                }
-
-                double key = pair.Key.Number;
-                if (key >= index && key <= 0 && key == (int)key)
+                if (
+                    pair.Key.Type == DataType.Number
+                    && pair.Key.LuaNumber.TryToInteger(out long key)
+                    && key >= position
+                    && key <= end
+                )
                 {
                     entries.Add(pair);
                 }
             }
 
-            // Snapshot the sources, so overlapping destinations do not overwrite them.
-            list.Set(1, LuaValue.Nil);
+            // Keep the source values before clearing overwritten slots, including the old end.
             foreach (TablePair pair in entries)
             {
-                list.Set((int)pair.Key.Number, LuaValue.Nil);
+                list.SetValue(pair.Key, LuaValue.Nil);
             }
 
             foreach (TablePair pair in entries)
             {
-                list.Set((int)pair.Key.Number + 1, pair.Value);
+                long key = pair.Key.LuaNumber.AsInteger;
+                if (key < end)
+                {
+                    SetInsertValue(list, key + 1, pair.Value);
+                }
             }
         }
 

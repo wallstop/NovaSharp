@@ -24,6 +24,10 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
 - Interpreter-only build: `dotnet build src/runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj`
 - Interpreter tests (Release): `./scripts/test/quick.sh`
 
+To inspect a built assembly, run `dotnet tool run ilspycmd -- path/to/assembly.dll`.
+The manifest selects the managed ILSpy package so the command also runs on Debian 12.
+The native Linux x64 package requires glibc 2.38 or later.
+
 ## Coverage
 
 - PowerShell (Windows/Linux/macOS with PowerShell):

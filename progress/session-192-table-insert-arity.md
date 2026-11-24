@@ -6,8 +6,8 @@ count selects append or positional insertion, so explicit nil and final
 expressions yielding zero or multiple values retain their Lua semantics.
 Wrong arity fails before the insertion. Lua 5.1 uses the raw length and allows
 positions outside the sequence. Later profiles validate the position after
-evaluating length. The Lua 5.1 negative shift visits live entries when the
-span of non-positive keys exceeds the table's entry count.
+evaluating length. A sparse shift visits live entries when the span of shifted keys exceeds the
+table's entry count.
 
 The initial main revision was `1b5212dd`. Tests, CSharpier, Benchmarks, and the
 Pages deployment were green. The table change used main at `b63cded4`, after
@@ -29,14 +29,19 @@ the green PyYAML, ReportGenerator, and markdown-it-py pull requests
 - The paired regression covers argument expansion, explicit nil, wrong arity
   without mutation, length evaluation order, numeric string coercion,
   positional bounds, and overlapping sparse Lua 5.1 shifts. Regenerating the
-  corpus adds two comparable snippets to every profile and expands the existing
+  corpus adds three comparable snippets to every profile and expands the existing
   length fixture to all five profiles.
 - Hosted review reproduced a valid append at key -1 when `__len` returns -2.
   The new regression failed in Lua 5.2–5.5 on the initial PR revision. It checks
   both length operands, numeric conversion errors, and index wrapping at the
   Lua 5.2 and Lua 5.3+ integer widths. The review fix was tested with .NET SDK
   10.0.404 on main `e2d2c73`.
-- The quick build, 226 focused TableModule tests, 15,739 full quick tests,
+- A second hosted review found that positional insertion still narrowed the
+  length to 32 bits. The new positional fixture failed in four profiles on
+  that revision. It verifies shared length conversion, exact wide keys, shifts
+  across sparse intervals, and the unsigned Lua 5.4 and 5.5 position bounds.
+  The final candidate used main `0c0ed10` with all dependency changes.
+- The quick build, 231 focused TableModule tests, 15,744 full quick tests,
   CSharpier, pre-commit, and enforced full corpus comparisons with PUC Lua 5.1
   through 5.5 passed. The pre-commit Docker-only devcontainer check and Unity
   player execution were unavailable. The existing callback registration and
@@ -52,7 +57,7 @@ order was 113, 114, 135, 119, 94, 154, 98, 99, 106, 84, 102, 85, 121, and 157.
 A matched-reference probe also reproduced uninitialized generic-loop locals
 reading iterator state on the base. It is now first in the execution queue
 [#164](https://github.com/Ambiguous-Interactive/NovaSharp/issues/164).
-Table insertion's length and indexing metamethod differences are tracked in
+Table insertion's indexed access and proxy differences are tracked in
 [#162](https://github.com/Ambiguous-Interactive/NovaSharp/issues/162).
 The remaining local session 189 guidance is tracked in
 [#163](https://github.com/Ambiguous-Interactive/NovaSharp/issues/163).
