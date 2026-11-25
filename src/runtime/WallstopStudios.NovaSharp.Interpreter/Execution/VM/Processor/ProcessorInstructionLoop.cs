@@ -22,6 +22,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     internal sealed partial class Processor
     {
         private const int YieldSpecialTrap = -99;
+        private const CallStackItemFlags OperatorCallFlags =
+            CallStackItemFlags.SingleOperatorResult | CallStackItemFlags.Lua51OperatorYieldBoundary;
 
         private static readonly LuaValue ReplayCloseResult = LuaValue.NewCallbackView(static args =>
             args[0]
@@ -49,7 +51,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 CallbackFunction errorHandler,
                 CallbackFunction continuation,
                 LuaValue errorHandlerBeforeUnwind,
-                bool hasErrorHandlerBeforeUnwind
+                bool hasErrorHandlerBeforeUnwind,
+                CallStackItemFlags returnFlags
             )
             {
                 ReturnAddress = returnAddress;
@@ -57,6 +60,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 Continuation = continuation;
                 ErrorHandlerBeforeUnwind = errorHandlerBeforeUnwind;
                 HasErrorHandlerBeforeUnwind = hasErrorHandlerBeforeUnwind;
+                ReturnFlags = returnFlags;
             }
 
             public int ReturnAddress { get; }
@@ -68,6 +72,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             public LuaValue ErrorHandlerBeforeUnwind { get; }
 
             public bool HasErrorHandlerBeforeUnwind { get; }
+            public CallStackItemFlags ReturnFlags { get; }
         }
 
         /// <summary>
@@ -552,18 +557,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                     if (shouldYieldToCaller)
                     {
-                        // An immediate yield from an operator resumes with one result.
-                        _resumeYieldWithSingleResult =
-                            _canYield
-                            && i.OpCode
-                                is OpCode.Len
-                                    or OpCode.Neg
-                                    or OpCode.BitNot
-                                    or OpCode.BitAnd
-                                    or OpCode.BitOr
-                                    or OpCode.BitXor
-                                    or OpCode.ShiftLeft
-                                    or OpCode.ShiftRight;
                         goto yield_to_calling_coroutine;
                     }
                 }
@@ -643,6 +636,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                             CallbackFunction errorHandler = csi.ErrorHandler;
                             SourceRef sourceRef = GetCurrentSourceRef(instructionPtr);
+                            CallStackItemFlags returnFlags = csi.Flags;
                             CallStackItemPool.Return(csi);
                             returnedToPool = true;
 
@@ -661,7 +655,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                                     cbargs
                                 );
 
-                                _valueStack.Push(handled);
+                                _valueStack.Push(AdjustCallResult(handled, returnFlags));
                             }
 
                             goto repeat_execution;
@@ -2084,7 +2078,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             CallbackFunction Continuation = null,
             bool thisCall = false,
             string debugText = null,
-            bool allowTailCallFrameReuse = false
+            bool allowTailCallFrameReuse = false,
+            CallStackItemFlags returnFlags = default
         )
         {
             return InternalExecCall(
@@ -2096,7 +2091,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 debugText,
                 LuaValue.Nil,
                 hasUnwindHandler: false,
-                allowTailCallFrameReuse
+                allowTailCallFrameReuse,
+                returnFlags
             );
         }
 
@@ -2109,11 +2105,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             string debugText,
             LuaValue unwindHandler,
             bool hasUnwindHandler,
-            bool allowTailCallFrameReuse
+            bool allowTailCallFrameReuse,
+            CallStackItemFlags returnFlags
         )
         {
             LuaValue fn = _valueStack.Peek(argsCount);
-            CallStackItemFlags Flags = (thisCall ? CallStackItemFlags.MethodCall : default);
+            CallStackItemFlags Flags = returnFlags;
+            if (thisCall)
+            {
+                Flags |= CallStackItemFlags.MethodCall;
+            }
             bool canReuseTailCallFrame =
                 allowTailCallFrameReuse
                 && CanReuseFrameForKnownTailCallSite(
@@ -2182,12 +2183,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 _valueStack.RemoveLast(argsCount + 1);
                 // The CLR frame still owns the protected handler after its call inputs are consumed.
-                RejectForwardedForcedYield(ret);
+                if (ret.Type == DataType.YieldRequest)
+                {
+                    ValidateCallYield(ret);
+                }
                 _valueStack.Push(ret);
 
                 CallStackItemPool.Return(_executionStack.Pop());
 
-                return InternalCheckForTailRequests(null, instructionPtr, allowTailCallFrameReuse);
+                return InternalCheckForTailRequests(
+                    instructionPtr,
+                    allowTailCallFrameReuse,
+                    returnFlags
+                );
             }
             else if (fn.Type == DataType.Function)
             {
@@ -2204,7 +2212,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     effectiveContinuation = reuseState.Continuation;
                     effectiveUnwindHandler = reuseState.ErrorHandlerBeforeUnwind;
                     hasEffectiveUnwindHandler = reuseState.HasErrorHandlerBeforeUnwind;
-                    Flags |= CallStackItemFlags.TailCall;
+                    Flags |= CallStackItemFlags.TailCall | reuseState.ReturnFlags;
                 }
 
                 // Push arguments before renting so a value-stack overflow throws with nothing rented; the
@@ -2260,7 +2268,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     null,
                     unwindHandler: unwindHandler,
                     hasUnwindHandler: hasUnwindHandler,
-                    allowTailCallFrameReuse: allowTailCallFrameReuse
+                    allowTailCallFrameReuse: allowTailCallFrameReuse,
+                    returnFlags: returnFlags
                 );
             }
 
@@ -2451,7 +2460,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     csi.ErrorHandler,
                     csi.Continuation,
                     csi.ErrorHandlerBeforeUnwind,
-                    csi.HasErrorHandlerBeforeUnwind
+                    csi.HasErrorHandlerBeforeUnwind,
+                    csi.Flags & OperatorCallFlags
                 );
                 int argscnt = (int)(_valueStack.Pop().Number);
                 _valueStack.RemoveLast(argscnt + 1);
@@ -2484,7 +2494,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             else if (i.NumVal == 1)
             {
                 returnValue = _valueStack.Pop();
-                RejectForwardedForcedYield(returnValue);
+                if (returnValue.Type == DataType.YieldRequest)
+                {
+                    ValidateCallYield(returnValue);
+                }
             }
             else
             {
@@ -2501,7 +2514,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             CallStackItem popped = PopToBasePointer();
             System.Diagnostics.Debug.Assert(object.ReferenceEquals(csi, popped));
 
-            CallbackFunction continuation = null;
+            CallbackFunction continuation = csi.Continuation;
+            CallStackItemFlags returnFlags = csi.Flags & OperatorCallFlags;
 
             try
             {
@@ -2510,16 +2524,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 _valueStack.Push(returnValue);
 
-                if (i.NumVal == 1)
+                if (
+                    continuation == null
+                    || returnValue.Type is DataType.TailCallRequest or DataType.YieldRequest
+                )
                 {
                     retpoint = InternalCheckForTailRequests(
-                        i,
                         retpoint,
-                        allowTailCallFrameReuse: false
+                        allowTailCallFrameReuse: false,
+                        returnFlags
                     );
                 }
-
-                continuation = csi.Continuation;
             }
             finally
             {
@@ -2536,27 +2551,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     ? continuation.Invoke(executionContext, new LuaValue[] { continuationArgument })
                     : continuation.InvokeLegacyFixed(executionContext, continuationArgument);
 
-                _valueStack.Push(continuationReturn);
+                _valueStack.Push(AdjustCallResult(continuationReturn, returnFlags));
             }
 
             return retpoint;
         }
 
-        private static void RejectForwardedForcedYield(LuaValue result)
+        private void ValidateCallYield(LuaValue result)
         {
             // Auto-yield saves the instruction pointer in the coroutine that requested it.
-            if (result.Type == DataType.YieldRequest && result.YieldRequest.Forced)
+            if (result.YieldRequest.Forced)
             {
                 throw new ScriptRuntimeException(
                     "cannot forward a forced coroutine yield through a Lua call"
                 );
             }
+
+            CheckLua51OperatorYieldBoundary();
         }
 
         private int InternalCheckForTailRequests(
-            Instruction i,
             int instructionPtr,
-            bool allowTailCallFrameReuse
+            bool allowTailCallFrameReuse,
+            CallStackItemFlags returnFlags
         )
         {
             LuaValue tail = _valueStack.Peek(0);
@@ -2584,16 +2601,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     null,
                     tcd.ErrorHandlerBeforeUnwindValue,
                     tcd.HasErrorHandlerBeforeUnwind,
-                    allowTailCallFrameReuse
+                    allowTailCallFrameReuse,
+                    returnFlags
                 );
             }
             else if (tail.Type == DataType.YieldRequest)
             {
+                _resumeYieldWithSingleResult =
+                    _canYield && (returnFlags & CallStackItemFlags.SingleOperatorResult) != 0;
                 _savedInstructionPtr = instructionPtr;
                 return YieldSpecialTrap;
             }
 
+            if ((returnFlags & CallStackItemFlags.SingleOperatorResult) != 0)
+            {
+                _valueStack.Set(0, AdjustCallResult(tail, returnFlags));
+            }
+
             return instructionPtr;
+        }
+
+        private static LuaValue AdjustCallResult(LuaValue result, CallStackItemFlags returnFlags)
+        {
+            if ((returnFlags & CallStackItemFlags.SingleOperatorResult) == 0)
+            {
+                return result;
+            }
+
+            LuaValue scalar = result.ToScalar();
+            return scalar.IsVoid() ? LuaValue.Nil : scalar;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2648,7 +2684,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             else
             {
                 int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Add, instructionPtr);
-                if (ip >= 0)
+                if (ip != -1)
                 {
                     return ip;
                 }
@@ -2681,7 +2717,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             else
             {
                 int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Sub, instructionPtr);
-                if (ip >= 0)
+                if (ip != -1)
                 {
                     return ip;
                 }
@@ -2714,7 +2750,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             else
             {
                 int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Mul, instructionPtr);
-                if (ip >= 0)
+                if (ip != -1)
                 {
                     return ip;
                 }
@@ -2755,7 +2791,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             else
             {
                 int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Mod, instructionPtr);
-                if (ip >= 0)
+                if (ip != -1)
                 {
                     return ip;
                 }
@@ -2790,7 +2826,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             else
             {
                 int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Div, instructionPtr);
-                if (ip >= 0)
+                if (ip != -1)
                 {
                     return ip;
                 }
@@ -2829,7 +2865,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             else
             {
                 int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.IDiv, instructionPtr);
-                if (ip >= 0)
+                if (ip != -1)
                 {
                     return ip;
                 }
@@ -2864,7 +2900,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             else
             {
                 int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Pow, instructionPtr);
-                if (ip >= 0)
+                if (ip != -1)
                 {
                     return ip;
                 }
@@ -3105,7 +3141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             if (l.Type == DataType.UserData || r.Type == DataType.UserData)
             {
                 int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Eq, instructionPtr);
-                if (ip >= 0)
+                if (ip != -1)
                 {
                     return ip;
                 }
@@ -3137,7 +3173,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             )
             {
                 int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Eq, instructionPtr);
-                if (ip >= 0)
+                if (ip != -1)
                 {
                     return ip;
                 }
@@ -3251,9 +3287,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 throw CreateOrderingError(left, right);
             }
 
-            return CheckImmediateMetamethodYield(
-                ScheduleBinaryMetamethod(left, right, metamethod, instructionPtr)
-            );
+            return ScheduleBinaryMetamethod(left, right, metamethod, instructionPtr);
         }
 
         private int ExecLen(Instruction i, int instructionPtr)
@@ -3313,7 +3347,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             else
             {
                 int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Concat, instructionPtr);
-                if (ip >= 0)
+                if (ip != -1)
                 {
                     return ip;
                 }
@@ -3445,7 +3479,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     _valueStack.Push(obj);
                     _valueStack.Push(idx);
                     _valueStack.Push(value);
-                    return InternalExecCall(3, instructionPtr);
+                    return InternalExecCall(
+                        3,
+                        instructionPtr,
+                        returnFlags: MetamethodYieldBoundary
+                    );
                 }
                 else
                 {
@@ -3550,7 +3588,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     _valueStack.Push(h);
                     _valueStack.Push(obj);
                     _valueStack.Push(idx);
-                    return InternalExecCall(2, instructionPtr);
+                    return InternalExecCall(
+                        2,
+                        instructionPtr,
+                        returnFlags: CallStackItemFlags.SingleOperatorResult
+                            | MetamethodYieldBoundary
+                    );
                 }
                 else
                 {

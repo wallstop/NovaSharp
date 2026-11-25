@@ -1114,17 +1114,6 @@
       "nova_error_excerpt": "LuaFixtures/ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsNoContextArgumentViewCallbacks.lua:(7,0-55): attempt to index a nil value [compatibility: Lua 5.1]"
     },
     {
-      "file": "MyObject/MetatableExtensibleObjectSample.lua",
-      "lua_version": "5.1",
-      "classification": "unclassified",
-      "lua_rc_category": "nonzero",
-      "nova_rc_category": "nonzero",
-      "lua_error_sha256": "e1100112715bf1e6caf21836299f6cca4dd52bb60daa82b051790329103d3dc7",
-      "nova_error_sha256": "3511b6ccbb2fdbb98d5972c02d12883c555890460bf3d2146ed7443089444cb9",
-      "lua_error_excerpt": "lua: ...ixtures/MyObject/MetatableExtensibleObjectSample.lua:<line>: attempt to call field 'getSomething' (a nil value) | stack traceback: | \t...ixtures/MyObject/MetatableExtens...",
-      "nova_error_excerpt": "LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:(17,16-62): attempt to call a no value value [compatibility: Lua 5.1]"
-    },
-    {
       "file": "NovaSharpHideMemberAttributeTUnitTests/HiddenMembersAreNotExposedToScripts.lua",
       "lua_version": "5.1",
       "classification": "unclassified",
@@ -3536,17 +3525,6 @@
       "nova_error_sha256": "9c2b6104ad97e21221e47ad3876750b18ec464b35bd9149a34e0305e51afb41d",
       "lua_error_excerpt": "lua: ...Tests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:<line>: attempt to index global 'argument_view_probe' (a nil value) | stack traceback: | \t...Tests/RegisterModul...",
       "nova_error_excerpt": "LuaFixtures/ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:(6,0-41): attempt to index a nil value [compatibility: Lua 5.2]"
-    },
-    {
-      "file": "MyObject/MetatableExtensibleObjectSample.lua",
-      "lua_version": "5.2",
-      "classification": "unclassified",
-      "lua_rc_category": "nonzero",
-      "nova_rc_category": "nonzero",
-      "lua_error_sha256": "d380642ab95ecc17d2cbaedf7c784d6ff3dc70205fe5ca22c70e7f2ecc910792",
-      "nova_error_sha256": "fbc83c2de23a4e7dec3e240f5c4671b1d728bff7135df4a4b780e9b4ee33ffbc",
-      "lua_error_excerpt": "lua: ...LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:<line>: attempt to call field 'getSomething' (a nil value) | stack traceback: | \t...LuaFixtures/MyObject/Metatab...",
-      "nova_error_excerpt": "LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:(17,16-62): attempt to call a no value value [compatibility: Lua 5.2]"
     },
     {
       "file": "NovaSharpHideMemberAttributeTUnitTests/HiddenMembersAreNotExposedToScripts.lua",
@@ -6025,17 +6003,6 @@
       "nova_error_sha256": "0fc7368a3e9f62708f66412bdb01499ba152afb5f93f01d33f8ab29cf6e07bba",
       "lua_error_excerpt": "lua: ...Tests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:<line>: attempt to index a nil value (global 'argument_view_probe') | stack traceback: | \t...Tests/RegisterModul...",
       "nova_error_excerpt": "LuaFixtures/ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:(6,0-41): attempt to index a nil value [compatibility: Lua 5.3]"
-    },
-    {
-      "file": "MyObject/MetatableExtensibleObjectSample.lua",
-      "lua_version": "5.3",
-      "classification": "unclassified",
-      "lua_rc_category": "nonzero",
-      "nova_rc_category": "nonzero",
-      "lua_error_sha256": "f47242194bc7bc889a81331022f3ad672be3cd39852824c198488d78eba5e8fe",
-      "nova_error_sha256": "63a76f4e7ffb476c7c67d0e4c7cbc00336f2d75371ea4326e047886c8034c0bd",
-      "lua_error_excerpt": "lua: ...LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:<line>: attempt to call a nil value (field 'getSomething') | stack traceback: | \t...LuaFixtures/MyObject/Metatab...",
-      "nova_error_excerpt": "LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:(17,16-62): attempt to call a no value value [compatibility: Lua 5.3]"
     },
     {
       "file": "NovaSharpHideMemberAttributeTUnitTests/HiddenMembersAreNotExposedToScripts.lua",
@@ -9306,17 +9273,6 @@
       "nova_error_sha256": "83dcb8181805e3da2184bb1c54c28742adef9c0782336909597e9281ce94905f",
       "lua_error_excerpt": "lua: ...Tests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:<line>: attempt to index a nil value (global 'argument_view_probe') | stack traceback: | \t...Tests/RegisterModul...",
       "nova_error_excerpt": "LuaFixtures/ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:(6,0-41): attempt to index a nil value [compatibility: Lua 5.4]"
-    },
-    {
-      "file": "MyObject/MetatableExtensibleObjectSample.lua",
-      "lua_version": "5.4",
-      "classification": "unclassified",
-      "lua_rc_category": "nonzero",
-      "nova_rc_category": "nonzero",
-      "lua_error_sha256": "f47242194bc7bc889a81331022f3ad672be3cd39852824c198488d78eba5e8fe",
-      "nova_error_sha256": "087d1524c62cbca3be255f1503a1e79870356a63b414d060344cc37758a86141",
-      "lua_error_excerpt": "lua: ...LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:<line>: attempt to call a nil value (field 'getSomething') | stack traceback: | \t...LuaFixtures/MyObject/Metatab...",
-      "nova_error_excerpt": "LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:(17,16-62): attempt to call a no value value [compatibility: Lua 5.4]"
     },
     {
       "file": "NovaSharpHideMemberAttributeTUnitTests/HiddenMembersAreNotExposedToScripts.lua",
@@ -12699,17 +12655,6 @@
       "nova_error_sha256": "1935f17a8ce8b3ca84bc18e5c654b90c9704b0c225f89b9b1f2d87bfe32970e4",
       "lua_error_excerpt": "lua: ...Tests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:<line>: attempt to index a nil value (global 'argument_view_probe') | stack traceback: | \t...Tests/RegisterModul...",
       "nova_error_excerpt": "LuaFixtures/ModuleRegisterTUnitTests/RegisterModuleTypeAcceptsArgumentViewCallbacks.lua:(6,0-41): attempt to index a nil value [compatibility: Lua 5.5]"
-    },
-    {
-      "file": "MyObject/MetatableExtensibleObjectSample.lua",
-      "lua_version": "5.5",
-      "classification": "unclassified",
-      "lua_rc_category": "nonzero",
-      "nova_rc_category": "nonzero",
-      "lua_error_sha256": "f47242194bc7bc889a81331022f3ad672be3cd39852824c198488d78eba5e8fe",
-      "nova_error_sha256": "e7205252543bb5617b06a8aba661ad1afdad0e056cc2d8ee8ec8ab3afc057a84",
-      "lua_error_excerpt": "lua: ...LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:<line>: attempt to call a nil value (field 'getSomething') | stack traceback: | \t...LuaFixtures/MyObject/Metatab...",
-      "nova_error_excerpt": "LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:(17,16-62): attempt to call a no value value [compatibility: Lua 5.5]"
     },
     {
       "file": "NovaSharpHideMemberAttributeTUnitTests/HiddenMembersAreNotExposedToScripts.lua",

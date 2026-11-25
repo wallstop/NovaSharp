@@ -79,8 +79,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (TryGetMetamethod(operand, eventName, out LuaValue metamethod))
             {
-                return CheckImmediateMetamethodYield(
-                    ScheduleBinaryMetamethod(operand, secondArgument, metamethod, instructionPtr)
+                return ScheduleBinaryMetamethod(
+                    operand,
+                    secondArgument,
+                    metamethod,
+                    instructionPtr
                 );
             }
 
@@ -102,19 +105,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 : -1;
         }
 
-        private int CheckImmediateMetamethodYield(int next)
+        private void CheckLua51OperatorYieldBoundary()
         {
-            if (
-                next == YieldSpecialTrap
-                && _script.CompatibilityVersion == LuaCompatibilityVersion.Lua51
-            )
+            if (_script.CompatibilityVersion != LuaCompatibilityVersion.Lua51)
             {
-                throw new ScriptRuntimeException(
-                    "attempt to yield across metamethod/C-call boundary"
-                );
+                return;
             }
 
-            return next;
+            for (int i = 0; i < _executionStack.Count; i++)
+            {
+                if (
+                    (_executionStack.Peek(i).Flags & CallStackItemFlags.Lua51OperatorYieldBoundary)
+                    != 0
+                )
+                {
+                    throw new ScriptRuntimeException(
+                        "attempt to yield across metamethod/C-call boundary"
+                    );
+                }
+            }
         }
 
         private int ScheduleBinaryMetamethod(
@@ -127,8 +136,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             _valueStack.Push(metamethod);
             _valueStack.Push(left);
             _valueStack.Push(right);
-            return InternalExecCall(2, instructionPtr);
+            return InternalExecCall(
+                2,
+                instructionPtr,
+                returnFlags: CallStackItemFlags.SingleOperatorResult | MetamethodYieldBoundary
+            );
         }
+
+        private CallStackItemFlags MetamethodYieldBoundary =>
+            _script.CompatibilityVersion == LuaCompatibilityVersion.Lua51
+                ? CallStackItemFlags.Lua51OperatorYieldBoundary
+                : default;
 
         /// <summary>
         /// Copies or pops the top <paramref name="items"/> entries from the value stack.

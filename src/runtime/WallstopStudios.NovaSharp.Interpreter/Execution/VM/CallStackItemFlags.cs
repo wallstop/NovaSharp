@@ -38,6 +38,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// Indicates that the call originated from <c>object:method()</c> syntax (implicit self).
         /// </summary>
         MethodCall = 1 << 5,
+
+        /// <summary>
+        /// Adjusts the eventual operator metamethod result to one Lua value.
+        /// </summary>
+        SingleOperatorResult = 1 << 6,
+
+        /// <summary>
+        /// Carries a Lua 5.1 operator's non-yieldable boundary across nested calls.
+        /// </summary>
+        Lua51OperatorYieldBoundary = 1 << 7,
     }
 
     /// <summary>

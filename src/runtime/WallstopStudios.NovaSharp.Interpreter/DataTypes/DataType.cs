@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System.Collections.Concurrent;
     using System.Diagnostics.CodeAnalysis;
+    using System.Runtime.CompilerServices;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -120,7 +121,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static bool CanHaveTypeMetatables(this DataType type)
         {
-            return (uint)type < (uint)MaxMetaTypes || type == DataType.Thread;
+            return (uint)type.GetSharedMetatableType() < (uint)MaxMetaTypes
+                || type == DataType.Thread;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static DataType GetSharedMetatableType(this DataType type)
+        {
+            return type == DataType.ClrFunction ? DataType.Function : type;
         }
 
         /// <summary>

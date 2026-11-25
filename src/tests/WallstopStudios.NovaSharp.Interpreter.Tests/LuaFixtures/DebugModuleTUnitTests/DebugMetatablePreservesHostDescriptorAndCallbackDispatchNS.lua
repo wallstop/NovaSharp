@@ -19,5 +19,15 @@ assert(not pcall(debug.setmetatable, file, {}))
 assert(type(file.write) == 'function')
 assert(type(print) == 'function')
 assert(debug.getmetatable(print) == nil)
-assert(not pcall(debug.setmetatable, print, {}))
+local function closure() end
+local functionMeta = {
+    __index = { callbackOnly = true },
+    __eq = function() error('function equality must not intercept descriptor dispatch') end,
+}
+debug.setmetatable(print, functionMeta)
+assert(debug.getmetatable(closure) == functionMeta and print.callbackOnly)
+assert(thread == hostEquality and hostEquality == thread)
+assert(closure ~= hostEquality and hostEquality ~= print)
+assert(type(file.write) == 'function' and file.write.callbackOnly)
+debug.setmetatable(closure, nil)
 print('host dispatch verified')

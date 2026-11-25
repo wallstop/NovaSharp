@@ -38,6 +38,13 @@ in the reference order. Regression coverage includes
 `AssignmentStoresExplicitNilForMissingValues` and
 `GreaterComparisonsPreserveLuaOperandOrder`.
 
+Operator metamethod calls contribute one value. An empty return contributes
+nil, and comparison operators convert the first returned value to a Boolean.
+Lua 5.1 rejects coroutine yields across an operator metamethod call, including
+yields from deeper calls. Lua 5.2–5.5 allow these suspensions when the surrounding
+call is yieldable. Lua closures and native callbacks share a single function
+type metatable within each script in all five profiles.
+
 Floating numeric loops in Lua 5.1–5.3 start from the result of subtracting
 and re-adding the step. Rounding can change the visible first value and the
 subsequent sequence. Lua 5.4–5.5 start from the original initial value.
@@ -82,11 +89,14 @@ Lua threads, including coroutines, share a type metatable within each script.
 `debug.setmetatable(thread, nil)` clears it. Lua 5.1 returns `true` from
 `debug.setmetatable`. Lua 5.2–5.5 return the supplied value.
 
-NovaSharp IO handles and other userdata expose members through CLR descriptors.
-When a thread is compared with CLR userdata, the userdata descriptor supplies
-any host equality behavior. CLR callbacks use their attached host
-implementation. For these host-backed values, `debug.getmetatable` returns
-`nil` and `debug.setmetatable` raises an error.
+NovaSharp IO handles and other CLR userdata expose members through CLR
+descriptors. For CLR userdata, `debug.getmetatable` returns `nil` and
+`debug.setmetatable` raises an error. When a thread is compared with CLR
+userdata, the userdata descriptor supplies any host equality behavior.
+
+CLR callbacks run their attached host implementation. The debug metatable
+functions read and update the shared function type metatable through either
+a CLR callback or a Lua closure.
 
 ## Coroutine & Error Handling Semantics
 
