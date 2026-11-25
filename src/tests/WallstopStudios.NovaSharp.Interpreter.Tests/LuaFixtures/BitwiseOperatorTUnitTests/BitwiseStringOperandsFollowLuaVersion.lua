@@ -46,6 +46,7 @@ for _, case in ipairs(operations) do
     local old = rawget(stringMetatable, field)
     local calls = 0
     stringMetatable[field] = function(a, b)
+        assert((type(a) == "string" and b == 1) or (a == 1 and type(b) == "string"))
         calls = calls + 1
         return type(a) == "string" and 79 or 89
     end

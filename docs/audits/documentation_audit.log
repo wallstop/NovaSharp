@@ -154,7 +154,7 @@ Found 206 undocumented public/internal type declarations.
   - line 107: missing XML docs for `Dispose()`
   - line 116: missing XML docs for `ChargeSandboxInstruction()`
   - line 1996: missing XML docs for `Count`
-  - line 3152: missing XML docs for `TryCompareBuiltInLessThan()`
+  - line 3166: missing XML docs for `TryCompareBuiltInLessThan()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/BasicDescriptors/DispatchingUserDataDescriptor.cs
   - line 314: missing XML docs for `TryIndex()`
   - line 816: missing XML docs for `TryMetaIndex()`

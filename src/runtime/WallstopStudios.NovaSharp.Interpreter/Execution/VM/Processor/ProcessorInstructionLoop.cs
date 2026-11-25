@@ -2181,6 +2181,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
 
                 _valueStack.RemoveLast(argsCount + 1);
+                // The CLR frame still owns the protected handler after its call inputs are consumed.
+                RejectForwardedForcedYield(ret);
                 _valueStack.Push(ret);
 
                 CallStackItemPool.Return(_executionStack.Pop());
@@ -2482,6 +2484,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             else if (i.NumVal == 1)
             {
                 returnValue = _valueStack.Pop();
+                RejectForwardedForcedYield(returnValue);
             }
             else
             {
@@ -2537,6 +2540,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             return retpoint;
+        }
+
+        private static void RejectForwardedForcedYield(LuaValue result)
+        {
+            // Auto-yield saves the instruction pointer in the coroutine that requested it.
+            if (result.Type == DataType.YieldRequest && result.YieldRequest.Forced)
+            {
+                throw new ScriptRuntimeException(
+                    "cannot forward a forced coroutine yield through a Lua call"
+                );
+            }
         }
 
         private int InternalCheckForTailRequests(

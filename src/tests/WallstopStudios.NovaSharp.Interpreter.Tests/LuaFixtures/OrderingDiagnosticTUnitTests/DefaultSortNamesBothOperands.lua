@@ -1,8 +1,6 @@
 -- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/OrderingDiagnosticTUnitTests.cs:21
--- @test: OrderingDiagnosticTUnitTests.DefaultSortNamesBothOperands
 
 local modern = _VERSION ~= 'Lua 5.1' and _VERSION ~= 'Lua 5.2'
 local actor = setmetatable({}, { __name = 'Actor' })

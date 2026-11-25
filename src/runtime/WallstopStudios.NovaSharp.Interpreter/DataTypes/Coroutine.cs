@@ -973,6 +973,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Gets or sets the automatic yield counter.
         /// </summary>
+        /// <remarks>
+        /// An automatic yield returns a forced yield marker to the host. Resume this coroutine
+        /// without arguments to continue execution. Returning the marker through a Lua call
+        /// raises a runtime error.
+        /// </remarks>
         /// <value>
         /// The automatic yield counter.
         /// </value>

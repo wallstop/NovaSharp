@@ -78,7 +78,7 @@ cardinality. These are tracked with standalone reproductions.
 
 The focused quick runs passed 88 metamethod, 20 ordering, 45 bitwise, five
 CLR comparison, and 40 TestMore cases. The quick interpreter build reported
-zero warnings and errors. The full quick run passed 15,970 tests.
+zero warnings and errors. The initial full quick run passed 15,970 tests.
 
 The independent verification pass replayed 43 new fixture/profile cells,
 34 existing controls, and 2,369 synthetic cases. Adversarial review
@@ -111,3 +111,22 @@ concurrently, and the timing variation exceeded the median difference.
 The discovered cases are captured in fixtures or in the linked issues.
 The existing guidance already covers cross-version before-and-after
 probes and independent falsification.
+
+## Hosted review fix
+
+CodeRabbit exposed a host callback path that returned a forced-yield marker
+from a child coroutine. The parent treated the marker as its own suspension,
+even though only the child had saved its instruction pointer before executing
+an opcode. The new regression failed in all five profiles on the original
+PR head. It now passes in all five.
+
+The VM rejects a forwarded forced marker while its Lua or CLR call frame
+can still unwind. The CLR path consumes its call inputs first so a protected
+failure preserves the caller's existing arguments. The host-only fixture exercises an operator callback, an
+ordinary callback, a protected CLR tail request, and a Lua return of an
+unpacked marker. It also verifies that the parent can subsequently yield
+and resume with two results and that the child remains resumable by its
+host. The solution and interpreter quick builds completed with zero
+warnings and errors.
+
+The five new protected callback cases bring the full quick suite to 15,975.
