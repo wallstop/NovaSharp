@@ -453,6 +453,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return _processor.TryGetBinaryMetamethod(op1, op2, eventName, out resolvedMetamethod);
         }
 
+        /// <summary>Resolves the ordering hook according to the script profile.</summary>
+        internal bool TryGetOrderingMetamethod(
+            LuaValue left,
+            LuaValue right,
+            string eventName,
+            out LuaValue metamethod
+        )
+        {
+            return _processor.TryGetOrderingMetamethod(left, right, eventName, out metamethod);
+        }
+
         /// <summary>
         /// Applies Lua's less-than operation in a synchronous standard library callback.
         /// </summary>
@@ -470,12 +481,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 return less;
             }
 
-            if (TryGetBinaryMetamethod(left, right, Metamethods.Lt, out LuaValue metamethod))
+            if (TryGetOrderingMetamethod(left, right, Metamethods.Lt, out LuaValue metamethod))
             {
                 return Script.CallLibraryCallback(metamethod, left, right).CastToBool();
             }
 
-            throw ScriptRuntimeException.CompareInvalidType(left, right);
+            throw CreateOrderingError(left, right);
+        }
+
+        /// <summary>Creates an ordering diagnostic from the operands in comparison order.</summary>
+        internal ScriptRuntimeException CreateOrderingError(LuaValue left, LuaValue right)
+        {
+            return _processor.CreateOrderingError(left, right);
         }
 
         /// <summary>

@@ -75,37 +75,21 @@ is(u == 1, false, "u == 1")
 
 is(u ~= 1, true, "u ~= 1")
 
-error_like(function () return u < v end,
-           "^[^:]+:%d+: attempt to compare two userdata values",
-           "u < v")
+local file_type = (_VERSION == 'Lua 5.1' or _VERSION == 'Lua 5.2') and 'userdata' or 'FILE%*'
+local comparison_error = "^[^:]+:%d+: attempt to compare "
+local two_files = comparison_error .. "two " .. file_type .. " values$"
+local file_with_number = comparison_error .. file_type .. " with number$"
+local number_with_file = comparison_error .. "number with " .. file_type .. "$"
 
-error_like(function () return u <= v end,
-           "^[^:]+:%d+: attempt to compare two userdata values",
-           "u <= v")
+error_like(function () return u < v end, two_files, "u < v")
+error_like(function () return u <= v end, two_files, "u <= v")
+error_like(function () return u > v end, two_files, "u > v")
+error_like(function () return u >= v end, two_files, "u >= v")
 
-error_like(function () return u > v end,
-           "^[^:]+:%d+: attempt to compare two userdata values",
-           "u > v")
-
-error_like(function () return u >= v end,
-           "^[^:]+:%d+: attempt to compare two userdata values",
-           "u >= v")
-
-error_like(function () return u < 0 end,
-           "^[^:]+:%d+: attempt to compare %w+ with %w+",
-           "u < 0")
-
-error_like(function () return u <= 0 end,
-           "^[^:]+:%d+: attempt to compare %w+ with %w+",
-           "u <= 0")
-
-error_like(function () return u > 0 end,
-           "^[^:]+:%d+: attempt to compare %w+ with %w+",
-           "u > 0")
-
-error_like(function () return u > 0 end,
-           "^[^:]+:%d+: attempt to compare %w+ with %w+",
-           "u >= 0")
+error_like(function () return u < 0 end, file_with_number, "u < 0")
+error_like(function () return u <= 0 end, file_with_number, "u <= 0")
+error_like(function () return u > 0 end, number_with_file, "u > 0")
+error_like(function () return u >= 0 end, number_with_file, "u >= 0")
 
 is(u[1], nil, "index")
 

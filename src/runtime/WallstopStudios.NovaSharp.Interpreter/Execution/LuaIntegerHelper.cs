@@ -63,16 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             if (scalar.Type == DataType.Number)
             {
-                // Use the underlying LuaNumber to preserve integer precision
-                LuaNumber num = scalar.LuaNumber;
-                if (num.IsInteger)
-                {
-                    integer = num.AsInteger;
-                    return true;
-                }
-
-                // Float case - check if convertible to integer
-                return TryGetInteger(num.ToDouble, out integer);
+                return TryGetInteger(scalar.LuaNumber, out integer);
             }
 
             if (
@@ -95,19 +86,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         }
 
         /// <summary>
+        /// Converts a number to an integer for bitwise operations, allowing either signed zero.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryGetInteger(LuaNumber number, out long integer)
+        {
+            if (number.IsInteger)
+            {
+                integer = number.AsInteger;
+                return true;
+            }
+
+            return TryGetInteger(number.ToDouble, out integer);
+        }
+
+        /// <summary>
         /// Performs a Lua-style left shift, clamping large shifts to zero.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long ShiftLeft(long value, long shift)
         {
+            if (shift <= -IntegerBitCount || shift >= IntegerBitCount)
+            {
+                return 0;
+            }
+
             if (shift < 0)
             {
                 return ShiftRight(value, -shift);
-            }
-
-            if (shift >= IntegerBitCount)
-            {
-                return 0;
             }
 
             return value << (int)shift;
@@ -123,14 +129,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long ShiftRight(long value, long shift)
         {
+            if (shift <= -IntegerBitCount || shift >= IntegerBitCount)
+            {
+                return 0;
+            }
+
             if (shift < 0)
             {
                 return ShiftLeft(value, -shift);
-            }
-
-            if (shift >= IntegerBitCount)
-            {
-                return 0;
             }
 
             // Logical (unsigned) right shift per Lua spec

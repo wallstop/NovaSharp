@@ -552,6 +552,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                     if (shouldYieldToCaller)
                     {
+                        // An immediate yield from an operator resumes with one result.
+                        _resumeYieldWithSingleResult =
+                            _canYield
+                            && i.OpCode
+                                is OpCode.Len
+                                    or OpCode.Neg
+                                    or OpCode.BitNot
+                                    or OpCode.BitAnd
+                                    or OpCode.BitOr
+                                    or OpCode.BitXor
+                                    or OpCode.ShiftLeft
+                                    or OpCode.ShiftRight;
                         goto yield_to_calling_coroutine;
                     }
                 }
@@ -2169,6 +2181,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
 
                 _valueStack.RemoveLast(argsCount + 1);
+                // The CLR frame still owns the protected handler after its call inputs are consumed.
+                RejectForwardedForcedYield(ret);
                 _valueStack.Push(ret);
 
                 CallStackItemPool.Return(_executionStack.Pop());
@@ -2470,6 +2484,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             else if (i.NumVal == 1)
             {
                 returnValue = _valueStack.Pop();
+                RejectForwardedForcedYield(returnValue);
             }
             else
             {
@@ -2525,6 +2540,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             return retpoint;
+        }
+
+        private static void RejectForwardedForcedYield(LuaValue result)
+        {
+            // Auto-yield saves the instruction pointer in the coroutine that requested it.
+            if (result.Type == DataType.YieldRequest && result.YieldRequest.Forced)
+            {
+                throw new ScriptRuntimeException(
+                    "cannot forward a forced coroutine yield through a Lua call"
+                );
+            }
         }
 
         private int InternalCheckForTailRequests(
@@ -2899,20 +2925,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private int ExecBitNot(Instruction i, int instructionPtr)
         {
             LuaValue value = _valueStack.Pop().ToScalar();
-
-            if (LuaIntegerHelper.TryGetInteger(value, out long operand))
+            LuaNumber? number = GetBitwiseNumber(value);
+            if (number.HasValue && LuaIntegerHelper.TryGetInteger(number.Value, out long operand))
             {
                 _valueStack.Push(LuaValue.NewInteger(~operand));
                 return instructionPtr;
             }
 
-            int ip = InternalInvokeUnaryMetaMethod(value, Metamethods.Bnot, instructionPtr);
-            if (ip >= 0)
+            int ip = InternalInvokeUnaryMetaMethod(value, value, Metamethods.Bnot, instructionPtr);
+            if (ip != -1)
             {
                 return ip;
             }
 
-            throw ScriptRuntimeException.BitwiseOnNonInteger(value);
+            throw CreateBitwiseError(value, number.HasValue);
         }
 
         private int ExecBitwiseBinary(
@@ -2923,23 +2949,75 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             int instructionPtr
         )
         {
-            bool leftOk = LuaIntegerHelper.TryGetInteger(l, out long left);
-            bool rightOk = LuaIntegerHelper.TryGetInteger(r, out long right);
-
-            if (leftOk && rightOk)
+            LuaNumber? leftNumber = GetBitwiseNumber(l);
+            LuaNumber? rightNumber = GetBitwiseNumber(r);
+            if (
+                leftNumber.HasValue
+                && rightNumber.HasValue
+                && LuaIntegerHelper.TryGetInteger(leftNumber.Value, out long left)
+                && LuaIntegerHelper.TryGetInteger(rightNumber.Value, out long right)
+            )
             {
                 _valueStack.Push(LuaValue.NewInteger(operation(left, right)));
                 return instructionPtr;
             }
 
+            l = l.IsVoid() ? LuaValue.Nil : l;
+            r = r.IsVoid() ? LuaValue.Nil : r;
             int ip = InternalInvokeBinaryMetaMethod(l, r, metamethodName, instructionPtr);
-            if (ip >= 0)
+            if (ip != -1)
             {
                 return ip;
             }
 
-            LuaValue invalid = leftOk ? r : l;
-            throw ScriptRuntimeException.BitwiseOnNonInteger(invalid);
+            throw CreateBitwiseError(
+                leftNumber.HasValue ? r : l,
+                leftNumber.HasValue && rightNumber.HasValue
+            );
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private LuaNumber? GetBitwiseNumber(LuaValue value)
+        {
+            if (value.Type == DataType.Number)
+            {
+                return value.LuaNumber;
+            }
+
+            // Only Lua 5.3 coerces strings in the bitwise opcodes.
+            return
+                value.Type == DataType.String
+                && _script.CompatibilityVersion == LuaCompatibilityVersion.Lua53
+                ? ParseBitwiseNumeral(value.String)
+                : null;
+        }
+
+        private static LuaNumber? ParseBitwiseNumeral(string numeral)
+        {
+            // Lua's C-locale numeral parser does not trim Unicode whitespace.
+            foreach (char character in numeral.AsSpan())
+            {
+                if (character > 0x7F)
+                {
+                    return null;
+                }
+            }
+
+            return LuaNumber.TryParse(numeral, LuaCompatibilityVersion.Lua53, out LuaNumber number)
+                ? number
+                : null;
+        }
+
+        private static ScriptRuntimeException CreateBitwiseError(
+            LuaValue value,
+            bool allOperandsNumeric
+        )
+        {
+            return allOperandsNumeric
+                ? new ScriptRuntimeException("number has no integer representation")
+                : ScriptRuntimeException.BitwiseOnInvalidType(
+                    GetDiagnosticTypeName(value, useMetatableNames: true)
+                );
         }
 
         private int ExecNeg(Instruction i, int instructionPtr)
@@ -2964,8 +3042,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeUnaryMetaMethod(r, Metamethods.Unm, instructionPtr);
-                if (ip >= 0)
+                int ip = InternalInvokeUnaryMetaMethod(r, r, Metamethods.Unm, instructionPtr);
+                if (ip != -1)
                 {
                     return ip;
                 }
@@ -3081,13 +3159,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return instructionPtr;
             }
 
-            int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Lt, instructionPtr);
-            if (ip < 0)
-            {
-                throw ScriptRuntimeException.CompareInvalidType(l, r);
-            }
-
-            return ip;
+            return ExecOrderingMetamethod(l, r, instructionPtr, inclusive: false);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3140,79 +3212,84 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(
-                    l,
-                    r,
-                    Metamethods.Le,
-                    instructionPtr,
-                    LuaValue.False
-                );
-                if (ip < 0)
-                {
-                    // Lua 5.5 removes the fallback from __lt to emulate __le.
-                    // In earlier versions (5.1-5.4), if __le is not defined, we try __lt with swapped arguments.
-                    // Note: Lua 5.4 manual §8.1 claims this was removed in 5.4, but actual Lua 5.4.x still supports it.
-                    // Lua 5.5 (verified against lua5.5) actually removes this fallback behavior.
-                    // Latest mode follows current target (Lua 5.4.x) behavior which allows the fallback.
-                    Compatibility.LuaCompatibilityVersion version = _script
-                        .Options
-                        .CompatibilityVersion;
-                    bool allowLtFallback = version != Compatibility.LuaCompatibilityVersion.Lua55;
-
-                    if (allowLtFallback)
-                    {
-                        ip = InternalInvokeBinaryMetaMethod(
-                            r,
-                            l,
-                            Metamethods.Lt,
-                            instructionPtr,
-                            LuaValue.True
-                        );
-                    }
-
-                    if (ip < 0)
-                    {
-                        throw ScriptRuntimeException.CompareInvalidType(l, r);
-                    }
-                    else
-                    {
-                        return ip;
-                    }
-                }
-                else
-                {
-                    return ip;
-                }
+                return ExecOrderingMetamethod(l, r, instructionPtr, inclusive: true);
             }
 
             return instructionPtr;
         }
 
-        private int ExecLen(Instruction i, int instructionPtr)
+        private int ExecOrderingMetamethod(
+            LuaValue left,
+            LuaValue right,
+            int instructionPtr,
+            bool inclusive
+        )
         {
-            LuaValue r = _valueStack.Pop().ToScalar();
-
-            if (r.Type == DataType.String)
+            // A no-result expression contributes one nil operand to an ordering hook.
+            left = left.IsVoid() ? LuaValue.Nil : left;
+            right = right.IsVoid() ? LuaValue.Nil : right;
+            string eventName = inclusive ? Metamethods.Le : Metamethods.Lt;
+            if (TryGetOrderingMetamethod(left, right, eventName, out LuaValue metamethod))
             {
-                _valueStack.Push(LuaValue.FromNumber(r.String.Length));
+                if (inclusive)
+                {
+                    _valueStack.Push(LuaValue.False);
+                }
+            }
+            else if (
+                inclusive
+                && _script.CompatibilityVersion != LuaCompatibilityVersion.Lua55
+                && TryGetOrderingMetamethod(right, left, Metamethods.Lt, out metamethod)
+            )
+            {
+                // Lua 5.1–5.4 try __lt with reversed arguments and negate the result.
+                _valueStack.Push(LuaValue.True);
+                (left, right) = (right, left);
             }
             else
             {
-                int ip = InternalInvokeUnaryMetaMethod(r, Metamethods.Len, instructionPtr);
-                if (ip >= 0)
+                throw CreateOrderingError(left, right);
+            }
+
+            return CheckImmediateMetamethodYield(
+                ScheduleBinaryMetamethod(left, right, metamethod, instructionPtr)
+            );
+        }
+
+        private int ExecLen(Instruction i, int instructionPtr)
+        {
+            LuaValue operand = _valueStack.Pop().ToScalar();
+
+            if (operand.Type == DataType.String)
+            {
+                _valueStack.Push(LuaValue.FromNumber(operand.String.Length));
+                return instructionPtr;
+            }
+
+            bool isTable = operand.Type == DataType.Table;
+            bool isLua51 = _script.Options.CompatibilityVersion == LuaCompatibilityVersion.Lua51;
+
+            // Lua 5.1 always uses the raw table length and passes nil to other length hooks.
+            if (!isLua51 || !isTable)
+            {
+                int ip = InternalInvokeUnaryMetaMethod(
+                    operand,
+                    isLua51 ? LuaValue.Nil : operand,
+                    Metamethods.Len,
+                    instructionPtr
+                );
+                if (ip != -1)
                 {
                     return ip;
                 }
-                else if (r.Type == DataType.Table)
-                {
-                    _valueStack.Push(LuaValue.FromNumber(r.Table.Length));
-                }
-                else
-                {
-                    throw ScriptRuntimeException.LenOnInvalidType(r);
-                }
             }
 
+            if (!isTable)
+            {
+                throw ScriptRuntimeException.LenOnInvalidType(operand);
+            }
+
+            _valueStack.Push(LuaValue.FromNumber(operand.Table.Length));
             return instructionPtr;
         }
 
