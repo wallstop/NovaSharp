@@ -30,16 +30,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private struct SandboxInstructionBudget
         {
-            public SandboxInstructionBudget(SandboxOptions options, long limit)
+            public SandboxInstructionBudget(
+                SandboxOptions options,
+                long limit,
+                bool isRenewing = false
+            )
             {
                 Options = options;
                 Limit = limit;
                 Executed = 0;
+                IsRenewing = isRenewing;
             }
 
             public SandboxOptions Options { get; }
             public long Limit { get; }
             public long Executed { get; set; }
+            public bool IsRenewing { get; set; }
         }
 
         private readonly struct TailCallFrameReuseState
@@ -126,16 +132,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private void RenewSandboxInstructionBudget()
         {
-            long executed = _sandboxInstructionBudget.Executed;
-            Func<Script, long, bool> callback = _sandboxInstructionBudget
-                .Options
-                .OnInstructionLimitExceeded;
-            if (callback == null || !callback(_script, executed))
+            SandboxInstructionBudget exhausted = _sandboxInstructionBudget;
+            Func<Script, long, bool> callback = exhausted.Options.OnInstructionLimitExceeded;
+            bool renewed = false;
+            if (callback != null && !exhausted.IsRenewing)
+            {
+                // Give host renewal work a fresh allowance without recursively calling the host.
+                _sandboxInstructionBudget.Executed = 0;
+                _sandboxInstructionBudget.IsRenewing = true;
+                try
+                {
+                    renewed = callback(_script, exhausted.Executed);
+                }
+                finally
+                {
+                    _sandboxInstructionBudget = exhausted;
+                }
+            }
+
+            if (!renewed)
             {
                 throw new SandboxViolationException(
                     SandboxViolationType.InstructionLimitExceeded,
-                    _sandboxInstructionBudget.Limit,
-                    executed
+                    exhausted.Limit,
+                    exhausted.Executed
                 );
             }
 
@@ -158,7 +178,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             // Nested VM entries retain their existing independent budget and restore the caller's
             // count when they return, including when a native callback reenters Lua.
             SandboxInstructionBudget previousBudget = _sandboxInstructionBudget;
-            _sandboxInstructionBudget = new SandboxInstructionBudget(sandbox, instructionLimit);
+            _sandboxInstructionBudget = new SandboxInstructionBudget(
+                sandbox,
+                instructionLimit,
+                previousBudget.IsRenewing
+            );
             try
             {
                 return ProcessingLoopCore(instructionPtr, sandbox, instructionLimit > 0);
