@@ -459,6 +459,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         public Script Script => _processor.GetScript();
 
         /// <summary>
+        /// Gets the processor used for native work and synchronous library callbacks.
+        /// </summary>
+        internal Processor NativeInstructionBudgetProcessor => _processor.ActiveProcessor;
+
+        /// <summary>
         /// Gets the coroutine currently performing the call.
         /// </summary>
         public Coroutine CallingCoroutine => _processor.AssociatedCoroutine;

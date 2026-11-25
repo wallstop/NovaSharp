@@ -40,6 +40,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         private const int MaxArrayCapacity = 1 << 26;
 
+        // Limit the work done for a capacity hint alone. Larger tables continue to grow
+        // as entries are added, using the same sizing rules as tables created without hints.
+        private const int MaxInitialCapacity = 1 << 16;
+
         /// <summary>
         /// Approximate managed overhead of a single array object header plus length field.
         /// </summary>
@@ -76,6 +80,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private int _arrayCount;
         private int _nodeCount;
         private int _deadCount;
+        private bool _hasSequenceReservation;
 
         /// <summary>
         /// Gets the number of live entries, counting entries whose value is nil.
@@ -143,6 +148,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _arrayCount = 0;
             _nodeCount = 0;
             _deadCount = 0;
+            _hasSequenceReservation = false;
+        }
+
+        /// <summary>
+        /// Reserves storage for entries in a newly created table without creating any keys.
+        /// </summary>
+        internal void Preallocate(int sequenceCapacity, int recordCapacity)
+        {
+            if (sequenceCapacity != 0 || recordCapacity != 0)
+            {
+                Resize(
+                    Math.Min(sequenceCapacity, MaxInitialCapacity),
+                    Math.Min(recordCapacity, MaxInitialCapacity)
+                );
+                _hasSequenceReservation = sequenceCapacity != 0;
+            }
         }
 
         // ---------------------------------------------------------------------------------------
@@ -678,18 +699,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             int totalIntKeys = 0;
             LuaValue[] array = _array;
-            if (array != null)
-            {
-                for (int i = 0; i < array.Length; i++)
-                {
-                    if (IsArraySlotOccupied(i))
-                    {
-                        nums[CeilLog2((uint)(i + 1))]++;
-                        totalIntKeys++;
-                    }
-                }
-            }
-
             Node[] nodes = _nodes;
             if (nodes != null)
             {
@@ -710,15 +719,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 totalIntKeys++;
             }
 
-            int arrayCapacity = ComputeArrayCapacity(nums, totalIntKeys);
+            int arrayCapacity = ArrayCapacity;
+            // Lua 5.5 keeps a hinted sequence part when rehashing only record keys.
+            if (!_hasSequenceReservation || !hasPendingEntry || totalIntKeys != 0)
+            {
+                if (array != null)
+                {
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        if (IsArraySlotOccupied(i))
+                        {
+                            nums[CeilLog2((uint)(i + 1))]++;
+                            totalIntKeys++;
+                        }
+                    }
+                }
+
+                arrayCapacity = ComputeArrayCapacity(nums, totalIntKeys);
+            }
 
             // Count exactly what Resize will leave in the hash part, so the rebuild is sized once.
             int survivingHashEntries = 0;
             if (array != null)
             {
-                for (int i = 0; i < array.Length; i++)
+                for (int i = arrayCapacity; i < array.Length; i++)
                 {
-                    if (IsArraySlotOccupied(i) && i >= arrayCapacity)
+                    if (IsArraySlotOccupied(i))
                     {
                         survivingHashEntries++;
                     }
@@ -747,6 +773,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             bool pendingNeedsHashSlot =
                 hasPendingEntry && (pendingIntKey <= 0 || pendingIntKey > arrayCapacity);
             Resize(arrayCapacity, survivingHashEntries + (pendingNeedsHashSlot ? 1 : 0));
+            if (!hasPendingEntry || arrayCapacity != (array?.Length ?? 0))
+            {
+                _hasSequenceReservation = false;
+            }
         }
 
         /// <summary>
@@ -781,20 +811,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             Node[] oldNodes = _nodes;
             int oldNodeCount = _nodeCount;
             int oldArrayLength = oldArray == null ? 0 : oldArray.Length;
+            bool keepArray = arrayCapacity == oldArrayLength;
 
             int bucketCapacity = hashEntries <= 0 ? 0 : NextPowerOfTwo(hashEntries);
+            Node[] nodes = bucketCapacity > 0 ? new Node[bucketCapacity] : null;
+            int[] buckets = bucketCapacity > 0 ? new int[bucketCapacity] : null;
+            if (!keepArray)
+            {
+                LuaValue[] array = arrayCapacity > 0 ? new LuaValue[arrayCapacity] : null;
+                uint[] occupancy = arrayCapacity > 0 ? new uint[(arrayCapacity + 31) >> 5] : null;
+                _array = array;
+                _arrayOccupancy = occupancy;
+                _arrayCount = 0;
+            }
 
-            _array = arrayCapacity > 0 ? new LuaValue[arrayCapacity] : null;
-            _arrayOccupancy = arrayCapacity > 0 ? new uint[(arrayCapacity + 31) >> 5] : null;
-
-            _nodes = bucketCapacity > 0 ? new Node[bucketCapacity] : null;
-            _buckets = bucketCapacity > 0 ? new int[bucketCapacity] : null;
-            _arrayCount = 0;
+            _nodes = nodes;
+            _buckets = buckets;
             _nodeCount = 0;
             _deadCount = 0;
 
             // Preserve iteration order: the array prefix first, then surviving nodes in insertion order.
-            if (oldArray != null)
+            if (!keepArray && oldArray != null)
             {
                 int copyLength = Math.Min(oldArrayLength, arrayCapacity);
                 for (int i = 0; i < copyLength; i++)

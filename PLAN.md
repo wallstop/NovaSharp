@@ -80,7 +80,6 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    [stackless/fuel model](docs/proposals/runtime-research-gates.md#stacklessfuel-execution-model)
    in the same study.
 1. Lua parity backlog: [original operands in math extrema](https://github.com/Ambiguous-Interactive/NovaSharp/issues/178),
-   [string sort dispatch and return arity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/179),
    [integral float cursors in next](https://github.com/Ambiguous-Interactive/NovaSharp/issues/185),
    [first visible floating numeric-for value](https://github.com/Ambiguous-Interactive/NovaSharp/issues/186),
    [call-context error names](https://github.com/Ambiguous-Interactive/NovaSharp/issues/124),
@@ -89,8 +88,9 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    [optional-argument validation](https://github.com/Ambiguous-Interactive/NovaSharp/issues/125),
    [residual number/string parity nits](https://github.com/Ambiguous-Interactive/NovaSharp/issues/138),
    [reference builds for legacy floating modulo](https://github.com/Ambiguous-Interactive/NovaSharp/issues/188),
-   [table library exports](https://github.com/Ambiguous-Interactive/NovaSharp/issues/159),
-   [table insert metamethod behavior](https://github.com/Ambiguous-Interactive/NovaSharp/issues/162),
+   [indexed access in remaining table functions](https://github.com/Ambiguous-Interactive/NovaSharp/issues/198),
+   [string ordering in comparisons and sort](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199),
+   [Lua thread metatables](https://github.com/Ambiguous-Interactive/NovaSharp/issues/200),
    other error formats, [Lua 5.5 const loop-variable enforcement](https://github.com/Ambiguous-Interactive/NovaSharp/issues/130),
    `__gc`, Lua 5.4 garbage collector options, version-migration docs, and explicit
    compatibility-version matrix coverage; retain the

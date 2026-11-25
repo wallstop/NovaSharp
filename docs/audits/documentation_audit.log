@@ -2,7 +2,7 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 191 undocumented public/internal type declarations.
+Found 201 undocumented public/internal type declarations.
 
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs
   - line 9: missing XML docs for `class ComVisibleAttribute`
@@ -39,7 +39,7 @@ Found 191 undocumented public/internal type declarations.
   - line 70: missing XML docs for `Next`
   - line 72: missing XML docs for `GetMetamethodDispatcher()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableModule.cs
-  - line 40: missing XML docs for `Compare()`
+  - line 43: missing XML docs for `Compare()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/Utf8Module.cs
   - line 34: missing XML docs for `Strict`
   - line 36: missing XML docs for `Lax`
@@ -132,13 +132,23 @@ Found 191 undocumented public/internal type declarations.
   - line 85: missing XML docs for `Trim()`
   - line 169: missing XML docs for `GetStatistics()`
   - line 194: missing XML docs for `Trim()`
+- src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs
+  - line 617: missing XML docs for `CallLibraryFunction()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs
-  - line 47: missing XML docs for `ReturnAddress`
-  - line 49: missing XML docs for `ErrorHandler`
-  - line 51: missing XML docs for `Continuation`
-  - line 53: missing XML docs for `ErrorHandlerBeforeUnwind`
-  - line 55: missing XML docs for `HasErrorHandlerBeforeUnwind`
-  - line 1859: missing XML docs for `Count`
+  - line 40: missing XML docs for `Options`
+  - line 41: missing XML docs for `Limit`
+  - line 42: missing XML docs for `Executed`
+  - line 62: missing XML docs for `ReturnAddress`
+  - line 64: missing XML docs for `ErrorHandler`
+  - line 66: missing XML docs for `Continuation`
+  - line 68: missing XML docs for `ErrorHandlerBeforeUnwind`
+  - line 70: missing XML docs for `HasErrorHandlerBeforeUnwind`
+  - line 78: missing XML docs for `HasActiveSandboxInstructionBudget`
+  - line 80: missing XML docs for `EnterNativeInstructionBudget()`
+  - line 98: missing XML docs for `struct NativeInstructionBudgetScope`
+  - line 107: missing XML docs for `Dispose()`
+  - line 116: missing XML docs for `ChargeSandboxInstruction()`
+  - line 1984: missing XML docs for `Count`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/BasicDescriptors/DispatchingUserDataDescriptor.cs
   - line 314: missing XML docs for `TryIndex()`
   - line 816: missing XML docs for `TryMetaIndex()`
@@ -160,13 +170,14 @@ Found 191 undocumented public/internal type declarations.
   - line 96: missing XML docs for `Clone()`
   - line 313: missing XML docs for `EnterIsolationScope()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs
-  - line 632: missing XML docs for `BeginDefaultOptionsScope()`
-  - line 740: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
-  - line 2526: missing XML docs for `IsIteratorMetamethodDispatcher()`
-  - line 2529: missing XML docs for `IsCloseMetamethodDispatcher()`
-  - line 4918: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
-  - line 4926: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
-  - line 5053: missing XML docs for `Dispose()`
+  - line 620: missing XML docs for `IsRenewingSandboxInstructionBudget`
+  - line 639: missing XML docs for `BeginDefaultOptionsScope()`
+  - line 747: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
+  - line 2584: missing XML docs for `IsIteratorMetamethodDispatcher()`
+  - line 2587: missing XML docs for `IsHiddenMetamethodDispatcher()`
+  - line 4976: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
+  - line 4984: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
+  - line 5111: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf2.cs
   - line 198: missing XML docs for `FromT0()`
   - line 211: missing XML docs for `FromT1()`

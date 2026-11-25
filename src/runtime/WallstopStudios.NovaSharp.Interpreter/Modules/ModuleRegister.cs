@@ -304,15 +304,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             {
                 RegisterModuleType(table, typeof(TableModule));
 
-                if (!profile.SupportsTableMove)
+                if (profile.Version == LuaCompatibilityVersion.Lua51)
                 {
-                    RemoveTableFunction(table, "move");
+                    RegisterModuleType(table, typeof(TableModule.Globals));
                 }
-            }
-
-            if (modules.Has(CoreModules.Table))
-            {
-                RegisterModuleType(table, typeof(TableModule.Globals));
+                else if (profile.Version == LuaCompatibilityVersion.Lua52)
+                {
+                    // Stock Lua 5.2 builds with LUA_COMPAT_ALL use the same function in both places.
+                    table.Set("unpack", table.Get("table").Table.Get("unpack"));
+                }
             }
 
             if (modules.Has(CoreModules.ErrorHandling))
@@ -1134,21 +1134,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             }
 
             globals.Set(functionName, LuaValue.Nil);
-        }
-
-        private static void RemoveTableFunction(Table globals, string memberName)
-        {
-            if (globals == null || string.IsNullOrEmpty(memberName))
-            {
-                return;
-            }
-
-            LuaValue tableNamespace = globals.RawGet("table");
-
-            if (tableNamespace.Type == DataType.Table)
-            {
-                tableNamespace.Table.Set(memberName, LuaValue.Nil);
-            }
         }
     }
 }

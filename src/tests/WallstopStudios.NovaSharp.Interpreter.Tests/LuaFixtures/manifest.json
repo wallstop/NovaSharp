@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2021,
-  "novasharp_only": 501,
-  "comparable": 1520,
+  "total_snippets": 2033,
+  "novasharp_only": 510,
+  "comparable": 1523,
   "by_version": {
-    "5.1": 1012,
-    "5.2": 718,
-    "5.3": 963,
-    "5.4": 1036,
-    "5.5": 1077
+    "5.1": 1014,
+    "5.2": 719,
+    "5.3": 966,
+    "5.4": 1039,
+    "5.5": 1080
   },
   "snippets": [
     {
@@ -11635,7 +11635,7 @@
         "5.5"
       ],
       "novasharp_only": false,
-      "expects_error": true
+      "expects_error": false
     },
     {
       "path": "TableModuleTUnitTests/SortUsesMetamethodWhenComparerMissing.lua",
@@ -11851,19 +11851,6 @@
       "test": "TableModuleTUnitTests.GlobalUnpackAvailableInLua51",
       "lua_versions": [
         "5.1"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "TableModuleTUnitTests/GlobalUnpackIsNilInLua52Plus.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:552",
-      "test": "TableModuleTUnitTests.GlobalUnpackIsNilInLua52Plus",
-      "lua_versions": [
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
       ],
       "novasharp_only": false,
       "expects_error": false
@@ -22463,6 +22450,130 @@
         "5.5"
       ],
       "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/GlobalUnpackIsNilStartingLua53.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:720",
+      "test": "TableModuleTUnitTests.GlobalUnpackIsNilStartingLua53",
+      "lua_versions": [
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableSortTUnitTests/SortChecksFullLengthBeforeDecidingWhetherToSort.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableSortTUnitTests.cs:86",
+      "test": "TableSortTUnitTests.SortChecksFullLengthBeforeDecidingWhetherToSort",
+      "lua_versions": [
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableSortTUnitTests/SortUsesBuiltInStringOrderAndReturnsNoValues.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableSortTUnitTests.cs:14",
+      "test": "TableSortTUnitTests.SortUsesBuiltInStringOrderAndReturnsNoValues",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableSortTUnitTests/SortValidatesComparatorAfterGettingLength.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableSortTUnitTests.cs:52",
+      "test": "TableSortTUnitTests.SortValidatesComparatorAfterGettingLength",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableInsertInstructionLimitTUnitTests/IndexedInsertCanRenewInstructionBudget.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableInsertInstructionLimitTUnitTests.cs:59",
+      "test": "SandboxTableInsertInstructionLimitTUnitTests.IndexedInsertCanRenewInstructionBudget",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableInsertInstructionLimitTUnitTests/IndexedInsertChargesAcrossCallsInOneVmEntry.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableInsertInstructionLimitTUnitTests.cs:81",
+      "test": "SandboxTableInsertInstructionLimitTUnitTests.IndexedInsertChargesAcrossCallsInOneVmEntry",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableInsertInstructionLimitTUnitTests/IndexedInsertChargesAcrossCallsInOneVmEntry_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableInsertInstructionLimitTUnitTests.cs:82",
+      "test": "SandboxTableInsertInstructionLimitTUnitTests.IndexedInsertChargesAcrossCallsInOneVmEntry",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableInsertInstructionLimitTUnitTests/IndexedInsertConsumesInstructionBudget.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableInsertInstructionLimitTUnitTests.cs:23",
+      "test": "SandboxTableInsertInstructionLimitTUnitTests.IndexedInsertConsumesInstructionBudget",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableIterationInstructionLimitTUnitTests/LegacyIterationConsumesInstructionBudget.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableIterationInstructionLimitTUnitTests.cs:27",
+      "test": "SandboxTableIterationInstructionLimitTUnitTests.LegacyIterationConsumesInstructionBudget",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableIterationInstructionLimitTUnitTests/LegacyIterationConsumesInstructionBudget_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableIterationInstructionLimitTUnitTests.cs:27",
+      "test": "SandboxTableIterationInstructionLimitTUnitTests.LegacyIterationConsumesInstructionBudget",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableIterationInstructionLimitTUnitTests/NativeWorkDuringRenewalCannotRenewRecursively.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableIterationInstructionLimitTUnitTests.cs:60",
+      "test": "SandboxTableIterationInstructionLimitTUnitTests.NativeWorkDuringRenewalCannotRenewRecursively",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableIterationInstructionLimitTUnitTests/NativeWorkDuringRenewalCannotRenewRecursively_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableIterationInstructionLimitTUnitTests.cs:65",
+      "test": "SandboxTableIterationInstructionLimitTUnitTests.NativeWorkDuringRenewalCannotRenewRecursively",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableInsertInstructionLimitTUnitTests/DirectInsertCountsLengthCallbackAndIndexedWritesTogether.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableInsertInstructionLimitTUnitTests.cs:150",
+      "test": "SandboxTableInsertInstructionLimitTUnitTests.DirectInsertCountsLengthCallbackAndIndexedWritesTogether",
+      "lua_versions": [],
+      "novasharp_only": true,
       "expects_error": false
     }
   ]

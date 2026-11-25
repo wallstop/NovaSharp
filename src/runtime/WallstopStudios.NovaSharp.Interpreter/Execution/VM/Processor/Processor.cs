@@ -452,6 +452,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             );
         }
 
+        internal Processor ActiveProcessor
+        {
+            get
+            {
+                List<Processor> stack =
+                    _parent != null ? _parent._coroutinesStack : _coroutinesStack;
+                return stack.Count == 0 ? this : stack[^1];
+            }
+        }
+
         private LuaValue CallChunkCore(
             int entryPointAddress,
             ClosureContext closureScope,
@@ -464,13 +474,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 throw new ArgumentNullException(nameof(closureScope));
             }
 
-            List<Processor> coroutinesStack =
-                _parent != null ? _parent._coroutinesStack : _coroutinesStack;
-
-            if (coroutinesStack.Count > 0 && coroutinesStack[^1] != this)
+            Processor active = ActiveProcessor;
+            if (active != this)
             {
-                return coroutinesStack[^1]
-                    .CallChunkCore(entryPointAddress, closureScope, hasFunction, function);
+                return active.CallChunkCore(entryPointAddress, closureScope, hasFunction, function);
             }
 
             EnterProcessor();
@@ -607,18 +614,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return Call(function, new ClrCallArguments(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
         }
 
+        internal LuaValue CallLibraryFunction(
+            LuaValue function,
+            LuaValue first,
+            LuaValue second,
+            LuaValue? third,
+            LuaValue? fourth
+        )
+        {
+            ClrCallArguments args =
+                fourth.HasValue
+                    ? new ClrCallArguments(first, second, third.GetValueOrDefault(), fourth.Value)
+                : third.HasValue ? new ClrCallArguments(first, second, third.Value)
+                : new ClrCallArguments(first, second);
+            return Call(function, args, reuseInstructionBudget: true);
+        }
+
         private LuaValue Call(
             LuaValue function,
             ClrCallArguments args,
-            SourceRef callingSource = null
+            SourceRef callingSource = null,
+            bool reuseInstructionBudget = false
         )
         {
-            List<Processor> coroutinesStack =
-                _parent != null ? _parent._coroutinesStack : _coroutinesStack;
-
-            if (coroutinesStack.Count > 0 && coroutinesStack[^1] != this)
+            Processor active = ActiveProcessor;
+            if (active != this)
             {
-                return coroutinesStack[^1].Call(function, args, callingSource);
+                return active.Call(function, args, callingSource, reuseInstructionBudget);
             }
 
             EnterProcessor();
@@ -643,7 +665,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     {
                         _executionStack.Peek().CallingSourceRef = callingSource;
                     }
-                    return ProcessingLoop(entrypoint);
+                    return ProcessingLoop(entrypoint, reuseInstructionBudget);
                 }
                 finally
                 {

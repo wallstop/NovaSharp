@@ -26,6 +26,28 @@ table was created. Changing `Script.Options.CompatibilityVersion` applies the
 new key rules to newly created tables. Existing tables keep their key rules so
 entries remain accessible. Ownerless tables use exact numeric keys.
 
+### Table library
+
+Call table-library functions by their Lua names, such as `table.insert`.
+The Lua 5.1 profile provides `table.foreach`, `table.foreachi`, `table.getn`,
+`table.maxn`, and global `unpack`. Calling `table.setn` with a table raises
+`'setn' is obsolete`, as in the stock build with `LUA_COMPAT_GETN` disabled.
+NovaSharp's Lua 5.2 profile follows the upstream build with
+`LUA_COMPAT_ALL`, so it includes `table.maxn` and exposes `table.unpack`
+as global `unpack` too. Builds without those compatibility options may omit
+the Lua 5.2 compatibility exports.
+
+In Lua 5.3–5.5, `table.insert` can shift entries through `__index` and
+`__newindex` hooks. Indexed operations and hook traversal count toward the
+host's configured sandbox instruction budget. The Lua 5.1 iteration helpers
+also charge work as they visit entries. These functions use an independent
+budget when a host calls them directly outside an active interpreter entry.
+
+In Lua 5.5, `table.create(nseq [, nrec])` returns a new empty table. Use
+`nseq` to hint at sequence entries and `nrec` to hint at other keys, with
+zero as the default for `nrec`. NovaSharp limits eager reservation to
+65,536 entries per part and grows the storage as entries are added.
+
 ### Runtime Metadata
 
 Every globals table now exposes `_G._NovaSharp.luacompat`, which holds the active compatibility profile display name (for example, "Lua 5.3"). Hosts and modding tools can read this value to confirm which feature set a script is currently running under without reaching back into the hosting API.
@@ -57,7 +79,7 @@ Every globals table now exposes `_G._NovaSharp.luacompat`, which holds the activ
 
 1. ✅ **Parser/AST toggles** – `AssignmentStatement` now checks the active `LuaCompatibilityProfile` before accepting `<const>`/`<close>` attributes, throwing spec-cited syntax errors (Lua 5.4 manual §§3.3.7–3.3.8) when a Lua 5.2/5.3 profile attempts to use them. Guarded by `AssignmentStatementTests.ConstAttributeRequiresLua54Compatibility` / `CloseAttributeRequiresLua54Compatibility`.
 
-1. ✅ **Standard library shims** – `SupportsUtf8Library` now gates the `utf8` module (Lua 5.4 manual §6.5), `SupportsTableMove` strips `table.move` when profiles opt out (Lua 5.3 manual §6.6), `SupportsWarnFunction` removes the Lua 5.4+ `warn` helper when disabled (Lua 5.4 manual §6.1), and `SupportsBit32Library` hides the legacy `bit32` namespace unless the script targets Lua 5.2. Covered by `Utf8ModuleTests`, `CompatibilityVersionTests.TableMoveOnlyAvailableInLua53Plus`, `CompatibilityVersionTests.WarnFunctionOnlyAvailableInLua54Plus`, and `CompatibilityVersionTests.Bit32LibraryOnlyAvailableInLua52`.
+1. ✅ **Standard library shims** – `SupportsUtf8Library` now gates the `utf8` module (Lua 5.4 manual §6.5), `table.move` is registered starting in Lua 5.3 (Lua 5.3 manual §6.6), `SupportsWarnFunction` removes the Lua 5.4+ `warn` helper when disabled (Lua 5.4 manual §6.1), and `SupportsBit32Library` hides the legacy `bit32` namespace unless the script targets Lua 5.2. Covered by `Utf8ModuleTests`, `CompatibilityVersionTests.TableMoveOnlyAvailableInLua53Plus`, `CompatibilityVersionTests.WarnFunctionOnlyAvailableInLua54Plus`, and `CompatibilityVersionTests.Bit32LibraryOnlyAvailableInLua52`.
 
    In Lua 5.4+ profiles, warning output starts disabled per script. The exact single-argument
    controls `warn("@on")` and `warn("@off")` toggle it, while normal string/number arguments

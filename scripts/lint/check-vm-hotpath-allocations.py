@@ -151,7 +151,7 @@ ALLOWLIST = [
     AllowedMatch(
         "new-script-execution-context",
         "src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs",
-        "ProcessingLoop",
+        "ProcessingLoopCore",
         re.compile(r"new\s+ScriptExecutionContext\s*\("),
         "xpcall error-handler decoration allocates callback context on a slow path.",
     ),
