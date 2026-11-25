@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795585455753,
+  "lastUpdate": 1795591553009,
   "repoUrl": "https://github.com/Ambiguous-Interactive/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -4702,6 +4702,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 758.045,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1e1345e8330ccc2d31a05ea6f7bde1dee9ff4a40",
+          "message": "Match Lua operator metamethod dispatch across profiles (#216)\n\nAlign Lua length and ordering hooks, comparison diagnostics, and bitwise string coercion with the selected profile.\n\nReject forwarded forced-yield markers while preserving protected call state.\n\nFixes #204\nFixes #205\nFixes #211",
+          "timestamp": "2026-11-24T23:20:32-08:00",
+          "tree_id": "3f4058a00dcd9dc51b83fd2b9a9a15a9ba02528b",
+          "url": "https://github.com/Ambiguous-Interactive/NovaSharp/commit/1e1345e8330ccc2d31a05ea6f7bde1dee9ff4a40"
+        },
+        "date": 1795591552659,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 385.695,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 424.232,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 427.022,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 620.442,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 650.454,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 727.019,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 657.394,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 720.696,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 691.89,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 672.441,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 755.904,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 898.514,
             "unit": "ns",
             "extra": ""
           }
