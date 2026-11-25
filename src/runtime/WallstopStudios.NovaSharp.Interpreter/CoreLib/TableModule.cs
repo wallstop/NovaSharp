@@ -166,15 +166,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             Table table = args.AsType(0, "foreach", DataType.Table).Table;
             LuaValue action = GetIterationCallback(args, "foreach");
             LuaValue key = LuaValue.Nil;
+            Processor processor = executionContext.NativeInstructionBudgetProcessor;
             using Processor.NativeInstructionBudgetScope budget =
-                executionContext.EnterNativeInstructionBudget();
-            bool chargeInstruction = executionContext.HasActiveSandboxInstructionBudget;
+                processor.EnterNativeInstructionBudget();
+            bool chargeInstruction = processor.HasActiveSandboxInstructionBudget;
 
             while (true)
             {
                 if (chargeInstruction)
                 {
-                    executionContext.ChargeSandboxInstruction();
+                    processor.ChargeSandboxInstruction();
                 }
 
                 TablePair? next = table.NextKey(key);
@@ -211,14 +212,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             Table table = args.AsType(0, "foreachi", DataType.Table).Table;
             int length = table.Length;
             LuaValue action = GetIterationCallback(args, "foreachi");
+            Processor processor = executionContext.NativeInstructionBudgetProcessor;
             using Processor.NativeInstructionBudgetScope budget =
-                executionContext.EnterNativeInstructionBudget();
-            bool chargeInstruction = executionContext.HasActiveSandboxInstructionBudget;
+                processor.EnterNativeInstructionBudget();
+            bool chargeInstruction = processor.HasActiveSandboxInstructionBudget;
             for (int i = 1; i <= length; i++)
             {
                 if (chargeInstruction)
                 {
-                    executionContext.ChargeSandboxInstruction();
+                    processor.ChargeSandboxInstruction();
                 }
 
                 LuaValue result = executionContext
@@ -498,10 +500,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             // A length hook and the indexed access it enables share the caller's budget.
-            using Processor.NativeInstructionBudgetScope budget =
+            Processor processor =
                 version >= LuaCompatibilityVersion.Lua52 && (list == null || list.MetaTable != null)
-                    ? executionContext.EnterNativeInstructionBudget()
-                    : default;
+                    ? executionContext.NativeInstructionBudgetProcessor
+                    : null;
+            using Processor.NativeInstructionBudgetScope budget =
+                processor?.EnterNativeInstructionBudget() ?? default;
 
             long length = GetLibrarySequenceLength(executionContext, tableValue, version);
             long end =
@@ -527,7 +531,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 if (needsIndexedAccess)
                 {
-                    AccessTableIntegerIndex(executionContext, tableValue, end, args[1]);
+                    AccessTableIntegerIndex(executionContext, processor, tableValue, end, args[1]);
                 }
                 else
                 {
@@ -585,11 +589,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 for (long i = end; i > position; i--)
                 {
-                    LuaValue value = AccessTableIntegerIndex(executionContext, tableValue, i - 1);
-                    AccessTableIntegerIndex(executionContext, tableValue, i, value);
+                    LuaValue value = AccessTableIntegerIndex(
+                        executionContext,
+                        processor,
+                        tableValue,
+                        i - 1
+                    );
+                    AccessTableIntegerIndex(executionContext, processor, tableValue, i, value);
                 }
 
-                AccessTableIntegerIndex(executionContext, tableValue, position, args[2]);
+                AccessTableIntegerIndex(executionContext, processor, tableValue, position, args[2]);
                 return LuaValue.Void;
             }
 
@@ -631,6 +640,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         private static LuaValue AccessTableIntegerIndex(
             ScriptExecutionContext executionContext,
+            Processor processor,
             LuaValue target,
             long index,
             LuaValue? assignedValue = null
@@ -639,13 +649,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaValue key = LuaValue.NewInteger(index);
             bool isWrite = assignedValue.HasValue;
             string eventName = isWrite ? Metamethods.NewIndex : Metamethods.Index;
-            bool chargeInstruction = executionContext.HasActiveSandboxInstructionBudget;
+            bool chargeInstruction = processor.HasActiveSandboxInstructionBudget;
             const int maxHookHops = 2000;
             for (int followed = 0; ; followed++)
             {
                 if (chargeInstruction)
                 {
-                    executionContext.ChargeSandboxInstruction();
+                    processor.ChargeSandboxInstruction();
                 }
 
                 Table table = target.Type == DataType.Table ? target.Table : null;

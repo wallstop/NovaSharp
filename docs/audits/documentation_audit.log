@@ -133,7 +133,7 @@ Found 201 undocumented public/internal type declarations.
   - line 169: missing XML docs for `GetStatistics()`
   - line 194: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs
-  - line 610: missing XML docs for `CallLibraryFunction()`
+  - line 617: missing XML docs for `CallLibraryFunction()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs
   - line 40: missing XML docs for `Options`
   - line 41: missing XML docs for `Limit`

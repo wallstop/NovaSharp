@@ -102,11 +102,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Arguments(LuaCompatibilityVersion.Lua53, false)]
+        [Arguments(LuaCompatibilityVersion.Lua54, false)]
+        [Arguments(LuaCompatibilityVersion.Lua55, false)]
+        [Arguments(LuaCompatibilityVersion.Lua53, true)]
+        [Arguments(LuaCompatibilityVersion.Lua54, true)]
+        [Arguments(LuaCompatibilityVersion.Lua55, true)]
         public async Task DirectInsertCountsLengthCallbackAndIndexedWritesTogether(
-            LuaCompatibilityVersion version
+            LuaCompatibilityVersion version,
+            bool invokeFromCoroutine
         )
         {
             Script script = CreateScript(version, new SandboxOptions(), length: 12);
@@ -132,7 +136,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             LuaValue insert = script.Globals.Get("table").Table.Get("insert");
             LuaValue values = script.Globals.Get("values");
-            script.CallValues(insert, values, LuaValue.NewInteger(1), LuaValue.NewString("new"));
+            if (invokeFromCoroutine)
+            {
+                LuaValue callback = LuaValue.NewCallback(
+                    (_, _) =>
+                        script.CallValues(
+                            insert,
+                            values,
+                            LuaValue.NewInteger(1),
+                            LuaValue.NewString("new")
+                        )
+                );
+                LuaValue run = script.DoString("return function(callback) callback() end");
+                script.CreateCoroutine(run).Coroutine.Resume(new[] { callback });
+            }
+            else
+            {
+                script.CallValues(
+                    insert,
+                    values,
+                    LuaValue.NewInteger(1),
+                    LuaValue.NewString("new")
+                );
+            }
 
             await Assert.That(renewals).IsEqualTo(1).ConfigureAwait(false);
             Table backing = script.Globals.Get("backing").Table;

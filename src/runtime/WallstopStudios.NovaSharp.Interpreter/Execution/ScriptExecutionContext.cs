@@ -459,21 +459,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         public Script Script => _processor.GetScript();
 
         /// <summary>
-        /// Enters the configured instruction budget for native work when no budget is active.
+        /// Gets the processor used for native work and synchronous library callbacks.
         /// </summary>
-        internal Processor.NativeInstructionBudgetScope EnterNativeInstructionBudget() =>
-            _processor.EnterNativeInstructionBudget();
-
-        /// <summary>
-        /// Whether this callback has an active instruction limit.
-        /// </summary>
-        internal bool HasActiveSandboxInstructionBudget =>
-            _processor.HasActiveSandboxInstructionBudget;
-
-        /// <summary>
-        /// Charges one native work unit against the active instruction budget.
-        /// </summary>
-        internal void ChargeSandboxInstruction() => _processor.ChargeSandboxInstruction();
+        internal Processor NativeInstructionBudgetProcessor => _processor.ActiveProcessor;
 
         /// <summary>
         /// Gets the coroutine currently performing the call.

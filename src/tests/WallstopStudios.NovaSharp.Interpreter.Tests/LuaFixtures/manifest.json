@@ -1,7 +1,7 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2032,
-  "novasharp_only": 509,
+  "total_snippets": 2033,
+  "novasharp_only": 510,
   "comparable": 1523,
   "by_version": {
     "5.1": 1014,
@@ -22564,6 +22564,14 @@
       "path": "SandboxTableIterationInstructionLimitTUnitTests/NativeWorkDuringRenewalCannotRenewRecursively_1.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableIterationInstructionLimitTUnitTests.cs:65",
       "test": "SandboxTableIterationInstructionLimitTUnitTests.NativeWorkDuringRenewalCannotRenewRecursively",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableInsertInstructionLimitTUnitTests/DirectInsertCountsLengthCallbackAndIndexedWritesTogether.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableInsertInstructionLimitTUnitTests.cs:150",
+      "test": "SandboxTableInsertInstructionLimitTUnitTests.DirectInsertCountsLengthCallbackAndIndexedWritesTogether",
       "lua_versions": [],
       "novasharp_only": true,
       "expects_error": false

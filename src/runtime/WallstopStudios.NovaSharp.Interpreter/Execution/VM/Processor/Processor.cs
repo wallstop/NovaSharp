@@ -452,6 +452,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             );
         }
 
+        internal Processor ActiveProcessor
+        {
+            get
+            {
+                List<Processor> stack =
+                    _parent != null ? _parent._coroutinesStack : _coroutinesStack;
+                return stack.Count == 0 ? this : stack[^1];
+            }
+        }
+
         private LuaValue CallChunkCore(
             int entryPointAddress,
             ClosureContext closureScope,
@@ -464,13 +474,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 throw new ArgumentNullException(nameof(closureScope));
             }
 
-            List<Processor> coroutinesStack =
-                _parent != null ? _parent._coroutinesStack : _coroutinesStack;
-
-            if (coroutinesStack.Count > 0 && coroutinesStack[^1] != this)
+            Processor active = ActiveProcessor;
+            if (active != this)
             {
-                return coroutinesStack[^1]
-                    .CallChunkCore(entryPointAddress, closureScope, hasFunction, function);
+                return active.CallChunkCore(entryPointAddress, closureScope, hasFunction, function);
             }
 
             EnterProcessor();
@@ -630,13 +637,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             bool reuseInstructionBudget = false
         )
         {
-            List<Processor> coroutinesStack =
-                _parent != null ? _parent._coroutinesStack : _coroutinesStack;
-
-            if (coroutinesStack.Count > 0 && coroutinesStack[^1] != this)
+            Processor active = ActiveProcessor;
+            if (active != this)
             {
-                return coroutinesStack[^1]
-                    .Call(function, args, callingSource, reuseInstructionBudget);
+                return active.Call(function, args, callingSource, reuseInstructionBudget);
             }
 
             EnterProcessor();

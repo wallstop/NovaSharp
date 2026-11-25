@@ -52,9 +52,9 @@ records.
 ## Local verification
 
 - The final quick build passed with zero warnings. The focused table and
-  instruction-limit suites passed 1,190 and 56 tests, respectively. The
-  full quick suite passed all 15,907 tests.
-- Corpus regeneration found 2,032 extracted snippets. The width and
+  instruction-limit suites passed 1,193 and 59 tests, respectively. The
+  full quick suite passed all 15,910 tests.
+- Corpus regeneration found 2,033 extracted snippets. The width and
   comparator fixtures use curated profiles so the extractor's lexical
   heuristics cannot narrow the intended coverage.
 - The enforced Linux corpus passed 6,110 fixture and profile combinations
@@ -87,8 +87,10 @@ Synchronous Lua library callbacks share the caller's active count. Separate
 host entries keep independent budgets. Direct `table.insert` starts its
 count before a possible length callback and retains it through indexed
 access. The three versioned regressions observe one renewal across both
-stages, and independent verification matched reference Lua for 18 ordinary
-insert calls with callback changes and proxy cases.
+stages, including when a host callback calls insert from a running
+coroutine. Native table work and synchronous library callbacks use the same
+active processor. Independent verification matched reference Lua for 18
+ordinary insert calls with callback changes and proxy cases.
 A wall-clock watchdog is listed separately in the
 [sandbox threat model](../docs/security/sandbox-threat-model.md).
 
