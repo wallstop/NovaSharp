@@ -454,6 +454,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         }
 
         /// <summary>
+        /// Applies Lua's less-than operation in a synchronous standard library callback.
+        /// </summary>
+        internal bool CompareLibraryLessThan(LuaValue left, LuaValue right)
+        {
+            if (
+                Processor.TryCompareBuiltInLessThan(
+                    left,
+                    right,
+                    Script.CompatibilityVersion,
+                    out bool less
+                )
+            )
+            {
+                return less;
+            }
+
+            if (TryGetBinaryMetamethod(left, right, Metamethods.Lt, out LuaValue metamethod))
+            {
+                return Script.CallLibraryCallback(metamethod, left, right).CastToBool();
+            }
+
+            throw ScriptRuntimeException.CompareInvalidType(left, right);
+        }
+
+        /// <summary>
         /// Gets the script object associated with this request.
         /// </summary>
         public Script Script => _processor.GetScript();

@@ -11,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
+    using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
@@ -18,7 +19,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     /// Class implementing table Lua functions
     /// </summary>
     [NovaSharpModule(Namespace = "table")]
-    internal static class TableModule
+    internal static partial class TableModule
     {
         /// <summary>
         /// Struct-based comparer for table.sort to avoid closure allocations (Initiative 12 Phase 4).
@@ -27,21 +28,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             private readonly ScriptExecutionContext _ctx;
             private readonly LuaValue _lt;
-            private readonly bool _supportsIntegerSubtype;
 
-            public LuaSortComparer(
-                ScriptExecutionContext ctx,
-                LuaValue lt,
-                bool supportsIntegerSubtype
-            )
+            public LuaSortComparer(ScriptExecutionContext ctx, LuaValue lt)
             {
                 _ctx = ctx;
                 _lt = lt;
-                _supportsIntegerSubtype = supportsIntegerSubtype;
             }
 
-            public int Compare(LuaValue a, LuaValue b) =>
-                SortComparer(_ctx, a, b, _lt, _supportsIntegerSubtype);
+            public int Compare(LuaValue a, LuaValue b) => SortComparer(_ctx, a, b, _lt);
         }
 
         /// <summary>
@@ -61,44 +55,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
 
-            LuaValue s = args.AsType(0, "unpack", DataType.Table, false);
-            LuaValue vi = args.AsType(1, "unpack", DataType.Number, true);
-            LuaValue vj = args.AsType(2, "unpack", DataType.Number, true);
-
-            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
-
-            // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
-            int ii = vi.IsNil
-                ? 1
-                : (int)Utilities.LuaNumberHelpers.ToLongWithValidation(version, vi, "unpack", 2);
-            int ij = vj.IsNil
-                ? GetTableLength(executionContext, s)
-                : (int)Utilities.LuaNumberHelpers.ToLongWithValidation(version, vj, "unpack", 3);
-
-            Table t = s.Table;
-            int count = ij - ii + 1;
-
-            // Fast path for empty range
-            if (count <= 0)
+            const string function = "unpack";
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            bool raw = version <= LuaCompatibilityVersion.Lua52;
+            LuaValue value = raw ? args.AsType(0, function, DataType.Table) : args[0];
+            long first = args[1].IsNil ? 1 : CheckTableInteger(args[1], version, function, 1);
+            Processor processor = executionContext.NativeInstructionBudgetProcessor;
+            using Processor.NativeInstructionBudgetScope budget =
+                processor.EnterNativeInstructionBudget();
+            long last = args[2].IsNil
+                ? GetLibrarySequenceLength(executionContext, value, version)
+                : CheckTableInteger(args[2], version, function, 2);
+            if (first > last)
             {
                 return LuaValue.Void;
             }
 
-            // Fast path for single element - avoid array allocation
-            if (count == 1)
+            // Unsigned subtraction preserves the range even across the signed endpoints.
+            ulong distance = unchecked((ulong)last - (ulong)first);
+            const int lua51MaxCStack = 8000;
+            int referenceCapacity =
+                version == LuaCompatibilityVersion.Lua51
+                    ? lua51MaxCStack - args.Count
+                    : VmStackDefaults.ValueStackMaxCapacity;
+            int capacity = Math.Min(referenceCapacity, processor.AvailableValueStackSlots);
+
+            if (capacity <= 0 || distance >= (ulong)capacity)
             {
-                return t.Get(ii);
+                throw new ScriptRuntimeException("too many results to unpack");
             }
 
-            LuaValue[] v = new LuaValue[count];
-
-            int tidx = 0;
-            for (int i = ii; i <= ij; i++)
+            TableSequence sequence = new(executionContext, processor, value, raw);
+            if (distance == 0)
             {
-                v[tidx++] = t.Get(i);
+                return sequence.Get(first);
             }
 
-            return LuaValue.NewTuple(v);
+            LuaValue[] results = new LuaValue[(int)distance + 1];
+            for (int i = 0; i < results.Length; i++)
+            {
+                results[i] = sequence.Get(first + i);
+            }
+
+            return LuaValue.NewTuple(results);
         }
 
         /// <summary>
@@ -251,8 +252,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            long sequence = CheckCapacityInteger(args[0], 0);
-            long records = args[1].IsNil ? 0 : CheckCapacityInteger(args[1], 1);
+            const LuaCompatibilityVersion version = LuaCompatibilityVersion.Lua55;
+            long sequence = CheckTableInteger(args[0], version, "create", 0);
+            long records = args[1].IsNil ? 0 : CheckTableInteger(args[1], version, "create", 1);
             if (sequence < 0 || sequence > int.MaxValue)
             {
                 throw ScriptRuntimeException.BadArgument(0, "create", "out of range");
@@ -272,31 +274,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return LuaValue.NewTable(
                 new Table(executionContext.Script, (int)sequence, (int)records)
             );
-        }
-
-        private static long CheckCapacityInteger(LuaValue argument, int index)
-        {
-            const string function = "create";
-            LuaNumber? number = GetTableArgumentNumber(argument, LuaCompatibilityVersion.Lua55);
-            if (number.HasValue)
-            {
-                return Utilities.LuaNumberHelpers.ToLongWithValidation(
-                    LuaCompatibilityVersion.Lua55,
-                    LuaValue.NewNumber(number.Value),
-                    function,
-                    index + 1
-                );
-            }
-
-            throw argument.IsVoid()
-                ? ScriptRuntimeException.BadArgumentNoValue(index, function, DataType.Number)
-                : ScriptRuntimeException.BadArgument(
-                    index,
-                    function,
-                    DataType.Number,
-                    argument.Type,
-                    allowNil: false
-                );
         }
 
         /// <summary>
@@ -344,15 +321,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
 
-            LuaValue vlist = args.AsType(0, "sort", DataType.Table, false);
+            const string function = "sort";
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                 executionContext.Script.CompatibilityVersion
             );
-            bool supportsIntegerSubtype = version >= LuaCompatibilityVersion.Lua53;
+            bool indexed = version >= LuaCompatibilityVersion.Lua53;
+            LuaValue vlist = CheckTableSequence(
+                executionContext,
+                args,
+                0,
+                function,
+                version,
+                SequenceAccess.Read | SequenceAccess.Write | SequenceAccess.Length
+            );
+            Processor processor = executionContext.NativeInstructionBudgetProcessor;
+            using Processor.NativeInstructionBudgetScope budget =
+                processor.EnterNativeInstructionBudget();
             long length = GetLibrarySequenceLength(executionContext, vlist, version);
 
             // Lua 5.3 moved comparator validation inside the nontrivial sort path.
-            if (supportsIntegerSubtype)
+            if (indexed)
             {
                 if (length <= 1)
                 {
@@ -378,6 +366,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             int end = (int)length;
+            if (indexed)
+            {
+                TableSequence sequence = new(executionContext, processor, vlist, raw: false);
+                new IndexedTableSort(executionContext, sequence, lt).Sort(1, end, 0);
+                return LuaValue.Void;
+            }
+
             using (ListPool<LuaValue>.Get(end, out List<LuaValue> values))
             {
                 for (int i = 1; i <= end; i++)
@@ -389,7 +384,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 {
                     // Use struct comparer with boxing-free pdqsort (Initiative 16)
                     values.Sort<LuaValue, LuaSortComparer>(
-                        new LuaSortComparer(executionContext, lt, supportsIntegerSubtype)
+                        new LuaSortComparer(executionContext, lt)
                     );
                 }
                 catch (InvalidOperationException ex)
@@ -413,15 +408,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             ScriptExecutionContext executionContext,
             LuaValue a,
             LuaValue b,
-            LuaValue lt,
-            bool supportsIntegerSubtype
+            LuaValue lt
         )
         {
             if (lt.IsNil)
             {
                 if (a.Type == DataType.Number && b.Type == DataType.Number)
                 {
-                    return a.LuaNumber.CompareForSort(b.LuaNumber, supportsIntegerSubtype);
+                    return a.LuaNumber.CompareForSort(b.LuaNumber, supportsIntegerSubtype: false);
                 }
 
                 if (a.Type == DataType.String && b.Type == DataType.String)
@@ -486,18 +480,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                 executionContext.Script.CompatibilityVersion
             );
-            LuaValue tableValue = args[0];
+            LuaValue tableValue = CheckTableSequence(
+                executionContext,
+                args,
+                0,
+                "table.insert",
+                version,
+                SequenceAccess.Read | SequenceAccess.Write | SequenceAccess.Length
+            );
             Table list = tableValue.Type == DataType.Table ? tableValue.Table : null;
-            if (
-                list == null
-                && (
-                    version <= LuaCompatibilityVersion.Lua52
-                    || !HasInsertProxyMetatable(executionContext.GetMetatable(tableValue))
-                )
-            )
-            {
-                _ = args.AsType(0, "table.insert", DataType.Table);
-            }
 
             // A length hook and the indexed access it enables share the caller's budget.
             Processor processor =
@@ -535,7 +526,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
                 else
                 {
-                    SetInsertValue(list, end, args[1]);
+                    SetTableIntegerIndex(list, end, args[1]);
                 }
 
                 return LuaValue.Void;
@@ -563,7 +554,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             long position;
             if (version <= LuaCompatibilityVersion.Lua52)
             {
-                position = NarrowInsertNumber(numericPosition);
+                position = NarrowLegacyTableInteger(numericPosition);
             }
             else
             {
@@ -620,22 +611,132 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 {
                     for (long i = end; i > position; i--)
                     {
-                        SetInsertValue(list, i, list.GetValue(LuaValue.NewInteger(i - 1)));
+                        SetTableIntegerIndex(list, i, list.GetValue(LuaValue.NewInteger(i - 1)));
                     }
                 }
             }
 
-            SetInsertValue(list, position, args[2]);
+            SetTableIntegerIndex(list, position, args[2]);
             return LuaValue.Void;
         }
 
-        private static bool HasInsertProxyMetatable(Table metatable)
+        [Flags]
+        private enum SequenceAccess
         {
-            // Lua checks for raw non-nil fields, even if the hooks will fail when used.
-            return metatable != null
-                && !metatable.Get(Metamethods.Index).IsNil
-                && !metatable.Get(Metamethods.NewIndex).IsNil
-                && !metatable.Get(Metamethods.Len).IsNil;
+            Read = 1,
+            Write = 2,
+            Length = 4,
+        }
+
+        private static LuaValue CheckTableSequence(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args,
+            int position,
+            string function,
+            LuaCompatibilityVersion version,
+            SequenceAccess access
+        )
+        {
+            LuaValue value = args[position];
+            if (value.Type == DataType.Table)
+            {
+                return value;
+            }
+
+            if (version >= LuaCompatibilityVersion.Lua53)
+            {
+                // Stock file userdata exposes __index through its file method table. NovaSharp
+                // handles the same reads through the file descriptor, without length or writes.
+                if (
+                    access == SequenceAccess.Read
+                    && value.Type == DataType.UserData
+                    && value.UserData.Descriptor is IO.FileUserDataDescriptor
+                )
+                {
+                    return value;
+                }
+
+                // Lua checks raw non-nil fields even when a hook will fail when used.
+                Table metatable = executionContext.GetMetatable(value);
+                if (
+                    metatable != null
+                    && (
+                        (access & SequenceAccess.Read) == 0
+                        || !metatable.Get(Metamethods.Index).IsNil
+                    )
+                    && (
+                        (access & SequenceAccess.Write) == 0
+                        || !metatable.Get(Metamethods.NewIndex).IsNil
+                    )
+                    && (
+                        (access & SequenceAccess.Length) == 0
+                        || !metatable.Get(Metamethods.Len).IsNil
+                    )
+                )
+                {
+                    return value;
+                }
+            }
+
+            return args.AsType(position, function, DataType.Table);
+        }
+
+        private readonly struct TableSequence
+        {
+            private readonly ScriptExecutionContext _context;
+            private readonly Processor _processor;
+            private readonly LuaValue _value;
+            private readonly Table _table;
+            private readonly bool _raw;
+            private readonly bool _chargeInstruction;
+
+            public TableSequence(
+                ScriptExecutionContext context,
+                Processor processor,
+                LuaValue value,
+                bool raw
+            )
+            {
+                _context = context;
+                _processor = processor;
+                _value = value;
+                _table = value.Type == DataType.Table ? value.Table : null;
+                _raw = raw;
+                _chargeInstruction = processor.HasActiveSandboxInstructionBudget;
+            }
+
+            public LuaValue Get(long index)
+            {
+                if (!_raw && (_chargeInstruction || _table == null || _table.MetaTable != null))
+                {
+                    return AccessTableIntegerIndex(_context, _processor, _value, index);
+                }
+
+                if (_chargeInstruction)
+                {
+                    _processor.ChargeSandboxInstruction();
+                }
+
+                return index >= int.MinValue && index <= int.MaxValue
+                    ? _table.Get((int)index)
+                    : _table.GetValue(LuaValue.NewInteger(index));
+            }
+
+            public void Set(long index, LuaValue value)
+            {
+                if (!_raw && (_chargeInstruction || _table == null || _table.MetaTable != null))
+                {
+                    AccessTableIntegerIndex(_context, _processor, _value, index, value);
+                    return;
+                }
+
+                if (_chargeInstruction)
+                {
+                    _processor.ChargeSandboxInstruction();
+                }
+
+                SetTableIntegerIndex(_table, index, value);
+            }
         }
 
         private static LuaValue AccessTableIntegerIndex(
@@ -666,6 +767,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     throw new ScriptRuntimeException(
                         "'{0}' chain too long; possible loop",
                         eventName
+                    );
+                }
+
+                if (target.Type == DataType.UserData)
+                {
+                    UserData userData = target.UserData;
+                    if (isWrite)
+                    {
+                        if (
+                            userData.Descriptor.SetIndex(
+                                executionContext.Script,
+                                userData.Object,
+                                key,
+                                assignedValue.GetValueOrDefault(),
+                                isDirectIndexing: false
+                            )
+                        )
+                        {
+                            return LuaValue.Void;
+                        }
+                    }
+                    else if (
+                        UserDataAccess.TryIndex(
+                            userData.Descriptor,
+                            executionContext.Script,
+                            userData.Object,
+                            key,
+                            isDirectIndexing: false,
+                            out LuaValue value
+                        )
+                    )
+                    {
+                        return value.IsNil ? LuaValue.Nil : value;
+                    }
+
+                    throw ScriptRuntimeException.UserDataMissingField(
+                        userData.Descriptor.Name,
+                        key.String
                     );
                 }
 
@@ -710,7 +849,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
         }
 
-        private static void SetInsertValue(Table list, long index, LuaValue value)
+        private static void SetTableIntegerIndex(Table list, long index, LuaValue value)
         {
             if (index >= int.MinValue && index <= int.MaxValue)
             {
@@ -742,6 +881,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 )
             )
             {
+                if (tableValue.Type != DataType.Table)
+                {
+                    throw ScriptRuntimeException.LenOnInvalidType(tableValue);
+                }
+
                 return tableValue.Table.Length;
             }
 
@@ -756,7 +900,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     throw new ScriptRuntimeException("object length is not a number");
                 }
 
-                return NarrowInsertNumber(number.Value);
+                return NarrowLegacyTableInteger(number.Value);
             }
 
             if (!number.HasValue || !number.Value.TryToInteger(out long integerLength))
@@ -767,7 +911,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return integerLength;
         }
 
-        private static int NarrowInsertNumber(LuaNumber number)
+        private static long CheckTableInteger(
+            LuaValue argument,
+            LuaCompatibilityVersion version,
+            string function,
+            int position
+        )
+        {
+            LuaNumber? number = GetTableArgumentNumber(argument, version);
+            if (!number.HasValue)
+            {
+                throw argument.IsVoid()
+                    ? ScriptRuntimeException.BadArgumentNoValue(position, function, DataType.Number)
+                    : ScriptRuntimeException.BadArgument(
+                        position,
+                        function,
+                        DataType.Number,
+                        argument.Type,
+                        allowNil: false
+                    );
+            }
+
+            return version <= LuaCompatibilityVersion.Lua52
+                ? NarrowLegacyTableInteger(number.Value)
+                : Utilities.LuaNumberHelpers.ToLongWithValidation(
+                    version,
+                    LuaValue.NewNumber(number.Value),
+                    function,
+                    position + 1
+                );
+        }
+
+        private static int NarrowLegacyTableInteger(LuaNumber number)
         {
             // Lua 5.1 and 5.2 truncate toward zero before narrowing to C int.
             double value = number.AsFloat;
@@ -847,7 +1022,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 long key = pair.Key.LuaNumber.AsInteger;
                 if (key < end)
                 {
-                    SetInsertValue(list, key + 1, pair.Value);
+                    SetTableIntegerIndex(list, key + 1, pair.Value);
                 }
             }
         }
@@ -867,46 +1042,70 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
 
-            LuaValue vlist = args.AsType(0, "table.remove", DataType.Table, false);
-            LuaValue vpos = args.AsType(1, "table.remove", DataType.Number, true);
-            LuaValue ret = LuaValue.Nil;
+            const string function = "remove";
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            LuaValue target = CheckTableSequence(
+                executionContext,
+                args,
+                0,
+                function,
+                version,
+                SequenceAccess.Read | SequenceAccess.Write | SequenceAccess.Length
+            );
+            Processor processor = executionContext.NativeInstructionBudgetProcessor;
+            using Processor.NativeInstructionBudgetScope budget =
+                processor.EnterNativeInstructionBudget();
+            long length = GetLibrarySequenceLength(executionContext, target, version);
+            long position = args[1].IsNil
+                ? length
+                : CheckTableInteger(args[1], version, function, 1);
 
-            // Note: Lua silently ignores extra arguments (does NOT throw an error)
-            // This behavior is consistent across Lua 5.1, 5.2, 5.3, and 5.4
-
-            int len = GetTableLength(executionContext, vlist);
-            Table list = vlist.Table;
-            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
-
-            // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
-            int pos = vpos.IsNil
-                ? len
-                : (int)Utilities.LuaNumberHelpers.ToLongWithValidation(version, vpos, "remove", 2);
-
-            if (pos >= len + 1 || (pos < 1 && len > 0))
+            if (version == LuaCompatibilityVersion.Lua51)
             {
-                throw new ScriptRuntimeException(
-                    "bad argument #1 to 'remove' (position out of bounds)"
-                );
-            }
-
-            for (int i = pos; i <= len; i++)
-            {
-                if (i == pos)
+                if (position < 1 || position > length)
                 {
-                    ret = list.Get(i);
+                    return LuaValue.Void;
                 }
-
-                list.Set(i, list.Get(i + 1));
+            }
+            else if (position != length)
+            {
+                long lastPosition =
+                    version == LuaCompatibilityVersion.Lua52
+                        ? unchecked((int)length + 1)
+                        : unchecked(length + 1);
+                bool outOfBounds =
+                    version >= LuaCompatibilityVersion.Lua54
+                        ? unchecked((ulong)position - 1) > unchecked((ulong)length)
+                        : position < 1 || position > lastPosition;
+                if (outOfBounds)
+                {
+                    int argument = version >= LuaCompatibilityVersion.Lua54 ? 1 : 0;
+                    throw ScriptRuntimeException.BadArgument(
+                        argument,
+                        function,
+                        "position out of bounds"
+                    );
+                }
             }
 
-            return ret;
+            TableSequence sequence = new(
+                executionContext,
+                processor,
+                target,
+                raw: version <= LuaCompatibilityVersion.Lua52
+            );
+            LuaValue result = sequence.Get(position);
+            for (; position < length; position++)
+            {
+                sequence.Set(position, sequence.Get(position + 1));
+            }
+
+            sequence.Set(position, LuaValue.Nil);
+            return result;
         }
 
-        //table.concat (list [, sep [, i [, j]]])
-        //Given a list where all elements are strings or numbers, returns the string list[i]..sep..list[i+1] (...) sep..list[j].
-        //The default value for sep is the empty string, the default for i is 1, and the default for j is #list. If i is greater
-        //than j, returns the empty string.
         /// <summary>
         /// Implements Lua `table.concat`, concatenating array elements with an optional separator (§6.6).
         /// </summary>
@@ -922,64 +1121,78 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
 
-            LuaValue vlist = args.AsType(0, "concat", DataType.Table, false);
-            LuaValue vsep = args.AsType(executionContext, 1, "concat", DataType.String, true);
-            LuaValue vstart = args.AsType(2, "concat", DataType.Number, true);
-            LuaValue vend = args.AsType(3, "concat", DataType.Number, true);
+            const string function = "concat";
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            bool raw = version <= LuaCompatibilityVersion.Lua52;
+            Processor processor = executionContext.NativeInstructionBudgetProcessor;
+            using Processor.NativeInstructionBudgetScope budget =
+                processor.EnterNativeInstructionBudget();
+            LuaValue target;
+            LuaValue separator;
+            long last = 0;
 
-            Table list = vlist.Table;
-            string sep = vsep.IsNil ? "" : vsep.String;
-            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
-
-            // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
-            int start = vstart.IsNilOrNan()
-                ? 1
-                : (int)
-                    Utilities.LuaNumberHelpers.ToLongWithValidation(version, vstart, "concat", 3);
-            int end;
-
-            if (vend.IsNilOrNan())
+            if (raw)
             {
-                end = GetTableLength(executionContext, vlist);
+                separator = args.AsType(executionContext, 1, function, DataType.String, true);
+                target = args.AsType(0, function, DataType.Table);
             }
             else
             {
-                // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
-                end = (int)
-                    Utilities.LuaNumberHelpers.ToLongWithValidation(version, vend, "concat", 4);
+                target = CheckTableSequence(
+                    executionContext,
+                    args,
+                    0,
+                    function,
+                    version,
+                    SequenceAccess.Read | SequenceAccess.Length
+                );
+                last = GetLibrarySequenceLength(executionContext, target, version);
+                separator = args.AsType(executionContext, 1, function, DataType.String, true);
             }
 
-            if (end < start)
+            long first = args[2].IsNil ? 1 : CheckTableInteger(args[2], version, function, 2);
+            if (!args[3].IsNil)
+            {
+                last = CheckTableInteger(args[3], version, function, 3);
+            }
+            else if (raw)
+            {
+                last = GetLibrarySequenceLength(executionContext, target, version);
+            }
+
+            if (first > last)
             {
                 return LuaValue.NewString(string.Empty);
             }
 
-            using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+            string sep = separator.IsNil ? string.Empty : separator.String;
+            TableSequence sequence = new(executionContext, processor, target, raw);
+            using Utf16ValueStringBuilder result = ZStringBuilder.Create();
 
-            for (int i = start; i <= end; i++)
+            for (long i = first; ; i++)
             {
-                LuaValue v = list.Get(i);
-
-                if (v.Type != DataType.Number && v.Type != DataType.String)
+                LuaValue value = sequence.Get(i);
+                if (value.Type != DataType.Number && value.Type != DataType.String)
                 {
                     throw new ScriptRuntimeException(
                         "invalid value ({1}) at index {0} in table for 'concat'",
-                        i,
-                        v.Type.ToLuaTypeString()
+                        version <= LuaCompatibilityVersion.Lua53 ? unchecked((int)i) : i,
+                        value.Type.ToLuaTypeString()
                     );
                 }
 
-                string s = v.ToPrintString(version);
-
-                if (i != start)
+                result.Append(value.ToPrintString(version));
+                if (i == last)
                 {
-                    sb.Append(sep);
+                    break;
                 }
 
-                sb.Append(s);
+                result.Append(sep);
             }
 
-            return LuaValue.NewString(sb.ToString());
+            return LuaValue.NewString(result.ToString());
         }
 
         /// <summary>
@@ -998,77 +1211,108 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
 
-            const string func = "move";
-            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
+            const string function = "move";
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            long from = CheckTableInteger(args[1], version, function, 1);
+            long to = CheckTableInteger(args[2], version, function, 2);
+            long target = CheckTableInteger(args[3], version, function, 3);
+            bool hasDestination = !args[4].IsNil;
+            LuaValue source = CheckTableSequence(
+                executionContext,
+                args,
+                0,
+                function,
+                version,
+                SequenceAccess.Read
+            );
+            LuaValue destination = CheckTableSequence(
+                executionContext,
+                args,
+                hasDestination ? 4 : 0,
+                function,
+                version,
+                SequenceAccess.Write
+            );
 
-            Table source = args.AsType(0, func, DataType.Table, false).Table;
-            // table.move is Lua 5.3+ only, so always require integer representation
-            LuaValue vFrom = args.AsType(1, func, DataType.Number, false);
-            LuaValue vTo = args.AsType(2, func, DataType.Number, false);
-            LuaValue vTarget = args.AsType(3, func, DataType.Number, false);
-            int from = (int)
-                Utilities.LuaNumberHelpers.ToLongWithValidation(version, vFrom, func, 2);
-            int to = (int)Utilities.LuaNumberHelpers.ToLongWithValidation(version, vTo, func, 3);
-            int target = (int)
-                Utilities.LuaNumberHelpers.ToLongWithValidation(version, vTarget, func, 4);
-            Table destination =
-                (args.Count >= 5 && !args[4].IsNil)
-                    ? args.AsType(4, func, DataType.Table, false).Table
-                    : source;
-
-            int elementsToCopy = to - from;
-
-            if (elementsToCopy >= 0)
+            if (to < from)
             {
-                int offset = target - from;
+                return destination;
+            }
 
-                if (destination == source && offset > 0 && target <= to)
+            if (from <= 0 && to >= long.MaxValue + from)
+            {
+                throw ScriptRuntimeException.BadArgument(2, function, "too many elements to move");
+            }
+
+            long distance = to - from;
+            if (target > long.MaxValue - distance)
+            {
+                throw ScriptRuntimeException.BadArgument(3, function, "destination wrap around");
+            }
+
+            Processor processor = executionContext.NativeInstructionBudgetProcessor;
+            using Processor.NativeInstructionBudgetScope budget =
+                processor.EnterNativeInstructionBudget();
+            TableSequence read = new(executionContext, processor, source, raw: false);
+            TableSequence write = new(executionContext, processor, destination, raw: false);
+            bool moveBackward =
+                target > from
+                && target <= to
+                && (
+                    !hasDestination
+                    || MoveTargetsCompareEqual(executionContext, source, destination, version)
+                );
+
+            if (moveBackward)
+            {
+                for (long i = distance; i >= 0; i--)
                 {
-                    for (int i = elementsToCopy; i >= 0; i--)
-                    {
-                        int srcIndex = from + i;
-                        int destIndex = srcIndex + offset;
-                        LuaValue value = source.Get(srcIndex);
-                        destination.Set(destIndex, value);
-                    }
+                    write.Set(target + i, read.Get(from + i));
                 }
-                else
+            }
+            else
+            {
+                for (long i = 0; i <= distance; i++)
                 {
-                    for (int i = 0; i <= elementsToCopy; i++)
-                    {
-                        int srcIndex = from + i;
-                        int destIndex = srcIndex + offset;
-                        LuaValue value = source.Get(srcIndex);
-                        destination.Set(destIndex, value);
-                    }
+                    write.Set(target + i, read.Get(from + i));
                 }
             }
 
-            return LuaValue.NewTable(destination);
+            return destination;
         }
 
-        private static int GetTableLength(ScriptExecutionContext executionContext, LuaValue vlist)
+        private static bool MoveTargetsCompareEqual(
+            ScriptExecutionContext executionContext,
+            LuaValue source,
+            LuaValue destination,
+            LuaCompatibilityVersion version
+        )
         {
+            if (source.HasSameReferenceIdentity(destination))
+            {
+                return true;
+            }
+
             if (
-                executionContext.TryGetMetamethod(
-                    vlist,
-                    Metamethods.Len,
-                    out LuaValue lengthMetamethod
+                source.Type == destination.Type
+                && source.Type is DataType.Table or DataType.UserData
+                && executionContext.TryGetBinaryMetamethod(
+                    source,
+                    destination,
+                    Metamethods.Eq,
+                    out LuaValue equal
                 )
             )
             {
-                LuaValue lenv = executionContext.Script.CallValues(lengthMetamethod, vlist);
-
-                double? lengthValue = lenv.CastToNumber();
-
-                if (lengthValue == null)
-                {
-                    throw new ScriptRuntimeException("object length is not a number");
-                }
-
-                return (int)lengthValue;
+                return executionContext
+                    .Script.CallLibraryCallback(equal, source, destination)
+                    .ToScalar()
+                    .CastToBool();
             }
-            return (int)vlist.Table.Length;
+
+            return source.Equals(destination, version);
         }
 
         /// <summary>

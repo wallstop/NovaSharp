@@ -65,6 +65,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         private readonly Table _globalTable;
         private IDebugger _debugger;
         private readonly Table[] _typeMetatables = new Table[(int)LuaTypeExtensions.MaxMetaTypes];
+        private Table _threadTypeMetatable;
         private readonly ITimeProvider _timeProvider;
         private readonly IRandomProvider _randomProvider;
         private readonly DateTime _startTimeUtc;
@@ -4859,10 +4860,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
-        /// Gets a type metatable.
+        /// Gets the shared metatable for a type in this script.
         /// </summary>
         /// <param name="type">The type.</param>
-        /// <returns></returns>
+        /// <returns>The metatable, or <see langword="null"/> when unavailable.</returns>
         public Table GetTypeMetatable(DataType type)
         {
             int t = (int)type;
@@ -4872,15 +4873,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 return _typeMetatables[t];
             }
 
-            return null;
+            return type == DataType.Thread ? _threadTypeMetatable : null;
         }
 
         /// <summary>
-        /// Sets a type metatable.
+        /// Sets the shared metatable for a type in this script.
         /// </summary>
-        /// <param name="type">The type. Must be Nil, Boolean, Number, String or Function</param>
-        /// <param name="metatable">The metatable.</param>
-        /// <exception cref="System.ArgumentException">Specified type not supported :  + type.ToString()</exception>
+        /// <param name="type">A type supported by <see cref="LuaTypeExtensions.CanHaveTypeMetatables"/>.</param>
+        /// <param name="metatable">The metatable, or <see langword="null"/> to remove it.</param>
+        /// <exception cref="ArgumentException">The specified type does not support shared metatables.</exception>
         public void SetTypeMetatable(DataType type, Table metatable)
         {
             this.CheckScriptOwnership(metatable);
@@ -4890,6 +4891,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (t >= 0 && t < _typeMetatables.Length)
             {
                 _typeMetatables[t] = metatable;
+            }
+            else if (type == DataType.Thread)
+            {
+                _threadTypeMetatable = metatable;
             }
             else
             {

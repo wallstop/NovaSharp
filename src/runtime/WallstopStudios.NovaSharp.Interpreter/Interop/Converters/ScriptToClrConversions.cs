@@ -37,9 +37,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         internal const int WeightVarArgsEmpty = 40;
 
         /// <summary>
-        /// Converts a LuaValue to a CLR object [simple conversion]
+        /// Converts a LuaValue to a CLR object using its default representation.
         /// </summary>
-        internal static object DynValueToObject(LuaValue value)
+        /// <param name="value">The Lua value.</param>
+        /// <param name="allowThread">
+        /// Exposes the coroutine identity for the CLR userdata equality fallback.
+        /// </param>
+        internal static object DynValueToObject(LuaValue value, bool allowThread = false)
         {
             Func<LuaValue, object> converter =
                 Script.GlobalOptions.CustomConverters.GetScriptToClrCustomConversion(
@@ -92,6 +96,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                     }
                 case DataType.ClrFunction:
                     return value.Callback;
+                case DataType.Thread when allowThread:
+                    return value.Coroutine;
                 default:
                     throw ScriptRuntimeException.ConvertObjectFailed(value.Type);
             }

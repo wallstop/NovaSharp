@@ -79,18 +79,21 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    Lua-CSharp; evaluate the gated
    [stackless/fuel model](docs/proposals/runtime-research-gates.md#stacklessfuel-execution-model)
    in the same study.
-1. Lua parity backlog: [original operands in math extrema](https://github.com/Ambiguous-Interactive/NovaSharp/issues/178),
-   [integral float cursors in next](https://github.com/Ambiguous-Interactive/NovaSharp/issues/185),
-   [first visible floating numeric-for value](https://github.com/Ambiguous-Interactive/NovaSharp/issues/186),
+1. Lua parity backlog: [integral float cursors in next](https://github.com/Ambiguous-Interactive/NovaSharp/issues/185),
    [call-context error names](https://github.com/Ambiguous-Interactive/NovaSharp/issues/124),
    [borrowed line iterators and read formats](https://github.com/Ambiguous-Interactive/NovaSharp/issues/175),
    [closer source lines on generic-for jumps](https://github.com/Ambiguous-Interactive/NovaSharp/issues/176),
    [optional-argument validation](https://github.com/Ambiguous-Interactive/NovaSharp/issues/125),
    [residual number/string parity nits](https://github.com/Ambiguous-Interactive/NovaSharp/issues/138),
    [reference builds for legacy floating modulo](https://github.com/Ambiguous-Interactive/NovaSharp/issues/188),
-   [indexed access in remaining table functions](https://github.com/Ambiguous-Interactive/NovaSharp/issues/198),
-   [string ordering in comparisons and sort](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199),
-   [Lua thread metatables](https://github.com/Ambiguous-Interactive/NovaSharp/issues/200),
+   [Lua string byte identity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/201)
+   to complete [string ordering](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199)
+   and [extrema parity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/178),
+   [custom type labels in comparison errors](https://github.com/Ambiguous-Interactive/NovaSharp/issues/206),
+   [legacy sort comparator side effects](https://github.com/Ambiguous-Interactive/NovaSharp/issues/207),
+   [plain integer sort throughput](https://github.com/Ambiguous-Interactive/NovaSharp/issues/208),
+   [length-operator metatable dispatch](https://github.com/Ambiguous-Interactive/NovaSharp/issues/204),
+   [Lua 5.1 mixed-type ordering hooks](https://github.com/Ambiguous-Interactive/NovaSharp/issues/205),
    other error formats, [Lua 5.5 const loop-variable enforcement](https://github.com/Ambiguous-Interactive/NovaSharp/issues/130),
    `__gc`, Lua 5.4 garbage collector options, version-migration docs, and explicit
    compatibility-version matrix coverage; retain the

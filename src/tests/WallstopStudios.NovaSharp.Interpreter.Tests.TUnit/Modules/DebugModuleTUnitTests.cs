@@ -2149,33 +2149,43 @@ return debug.getmetatable(target).marker, info.what
         }
 
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task SetMetatableThrowsForUserDataWithoutDescriptor(
+        [AllLuaVersions]
+        public void ThreadTypeMetatableSupportsSharedLookupWriteAndRemoval(
             LuaCompatibilityVersion version
         )
         {
-            // Tests debug.setmetatable on unsupported type (line 325-328)
-            // UserData requires special handling, use Thread (coroutine) since
-            // Thread is at the boundary where CanHaveTypeMetatables returns false
             Script script = CreateScriptWithVersion(version);
+            script.DoFile(
+                WallstopStudios
+                    .NovaSharp.Tests.TestInfrastructure.LuaFixtures.LuaFixtureHelper.ForCallingTest<DebugModuleTUnitTests>()
+                    .GetFixturePath()
+            );
+        }
 
-            LuaValue result = script.DoString(
-                @"
-                local co = coroutine.create(function() end)
-                local ok, err = pcall(function() debug.setmetatable(co, {}) end)
-                return ok, err
-                "
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task DebugMetatablePreservesHostDescriptorAndCallbackDispatchNS(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            UserData.RegisterType<ThreadAwareUserData>();
+            script.Globals["hostEquality"] = UserData.Create(new ThreadAwareUserData());
+            script.DoFile(
+                WallstopStudios
+                    .NovaSharp.Tests.TestInfrastructure.LuaFixtures.LuaFixtureHelper.ForCallingTest<DebugModuleTUnitTests>()
+                    .GetFixturePath()
             );
 
-            LuaValue[] tuple = result.Tuple ?? Array.Empty<LuaValue>();
-            await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
             await Assert
-                .That(tuple[1].String)
-                .Contains("cannot debug.setmetatable")
+                .That(script.GetTypeMetatable(DataType.Thread))
+                .IsNotNull()
+                .ConfigureAwait(false);
+
+            Script other = CreateScriptWithVersion(version);
+            await Assert
+                .That(other.GetTypeMetatable(DataType.Thread))
+                .IsNull()
                 .ConfigureAwait(false);
         }
 
@@ -3905,6 +3915,15 @@ return debug.getmetatable(target).marker, info.what
             Script script = new(CoreModulePresets.Complete, options);
             script.Options.DebugPrint = _ => { };
             return script;
+        }
+
+        private sealed class ThreadAwareUserData
+        {
+            [NovaSharpUserDataMetamethod("__eq")]
+            public static bool EqualToThread(LuaValue left, LuaValue right)
+            {
+                return left.Type == DataType.Thread || right.Type == DataType.Thread;
+            }
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage(

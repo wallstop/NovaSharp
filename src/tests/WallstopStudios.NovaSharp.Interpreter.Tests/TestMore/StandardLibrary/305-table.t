@@ -128,9 +128,14 @@ is(table.concat(t, ','), 'b,d')
 if jit then
     todo("LuaJIT TODO. table.remove.", 1)
 end
-error_like(function () table.remove(t,7) end,
-           "^[^:]+:%d+: bad argument #1 to 'remove' %(position out of bounds%)",
-           "function remove (out of bounds)")
+if _VERSION == "Lua 5.1" and not jit then
+    is(select("#", table.remove(t,7)), 0, "function remove (out of bounds)")
+else
+    local position_arg = (_VERSION == "Lua 5.4" or _VERSION == "Lua 5.5") and 2 or 1
+    error_like(function () table.remove(t,7) end,
+               "^[^:]+:%d+: bad argument #" .. position_arg .. " to 'remove' %(position out of bounds%)",
+               "function remove (out of bounds)")
+end
 
 lines = {
     luaH_set = 10,

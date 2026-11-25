@@ -114,13 +114,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         };
 
         /// <summary>
-        /// Determines whether this data type can have type metatables.
+        /// Determines whether values of this data type share a metatable within their script.
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns></returns>
         public static bool CanHaveTypeMetatables(this DataType type)
         {
-            return (int)type < (int)MaxMetaTypes;
+            return (uint)type < (uint)MaxMetaTypes || type == DataType.Thread;
         }
 
         /// <summary>

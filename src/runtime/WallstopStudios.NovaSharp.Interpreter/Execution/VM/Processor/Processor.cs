@@ -452,6 +452,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             );
         }
 
+        internal int AvailableValueStackSlots
+        {
+            get
+            {
+                int capacity = _valueStack.MaxCapacity;
+                return (capacity > 0 ? capacity : VmStackDefaults.ValueStackMaxCapacity)
+                    - _valueStack.Count;
+            }
+        }
+
         internal Processor ActiveProcessor
         {
             get

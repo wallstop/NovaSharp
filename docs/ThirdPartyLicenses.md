@@ -16,6 +16,9 @@ This document summarises the third-party components bundled with NovaSharp and t
 
 > For an authoritative list, run `dotnet list package --include-transitive` in each project and refresh this table with the license declared by the package authors.
 
+Indexed `table.sort` adapts the quicksort in PUC Lua 5.3–5.5's `src/ltablib.c`.
+The repository license includes the Lua MIT notice. [Lua source](https://www.lua.org/source/5.5/ltablib.c.html) · [LICENSE](../LICENSE)
+
 ## Test Fixtures / Real-World Corpora
 
 | Source                        | Location                                                                  | License       | Usage                                                   | Notes                                                    |

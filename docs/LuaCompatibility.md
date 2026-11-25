@@ -38,6 +38,10 @@ in the reference order. Regression coverage includes
 `AssignmentStoresExplicitNilForMissingValues` and
 `GreaterComparisonsPreserveLuaOperandOrder`.
 
+Floating numeric loops in Lua 5.1–5.3 start from the result of subtracting
+and re-adding the step. Rounding can change the visible first value and the
+subsequent sequence. Lua 5.4–5.5 start from the original initial value.
+
 ## Standard Libraries
 
 | Library Area | Feature                                                         | Status | Coverage / Evidence                                                                                                                                | Notes & Owner                                                                                                                                                                                                       |
@@ -73,6 +77,16 @@ in those conversions.
 | Ephemeron tables / weak keys & values                | 🚧     | `WeakTablesTests` (legacy)                  | Behaviour follows legacy-era implementation; 5.4 ephemeron rules still missing. Owner: Runtime Modernization. |
 | GC generational / incremental modes                  | ❌     | —                                           | `collectgarbage("incremental")` unsupported; document limitation. Owner: Runtime Modernization.               |
 | `debug.getmetatable` protection for protected tables | ✅     | `MetatableTests.ProtectedMetatableFailures` | Aligns with Lua raising errors for protected metatables. Owner: Interpreter.                                  |
+
+Lua threads, including coroutines, share a type metatable within each script.
+`debug.setmetatable(thread, nil)` clears it. Lua 5.1 returns `true` from
+`debug.setmetatable`. Lua 5.2–5.5 return the supplied value.
+
+NovaSharp IO handles and other userdata expose members through CLR descriptors.
+When a thread is compared with CLR userdata, the userdata descriptor supplies
+any host equality behavior. CLR callbacks use their attached host
+implementation. For these host-backed values, `debug.getmetatable` returns
+`nil` and `debug.setmetatable` raises an error.
 
 ## Coroutine & Error Handling Semantics
 
