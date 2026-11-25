@@ -71,8 +71,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
         }
 
         /// <summary>
-        /// Gets or sets the maximum number of VM instructions that may execute before
-        /// raising <see cref="SandboxViolationException"/>. Set to 0 for unlimited.
+        /// Gets or sets the instruction budget for an interpreter entry. VM instructions and
+        /// metered work inside built-in functions count toward it. Set to 0 for unlimited.
         /// </summary>
         public long MaxInstructions
         {

@@ -165,9 +165,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             Table table = args.AsType(0, "foreach", DataType.Table).Table;
             LuaValue action = GetIterationCallback(args, "foreach");
             LuaValue key = LuaValue.Nil;
+            bool chargeInstruction = executionContext.HasActiveSandboxInstructionBudget;
 
             while (true)
             {
+                if (chargeInstruction)
+                {
+                    executionContext.ChargeSandboxInstruction();
+                }
+
                 TablePair? next = table.NextKey(key);
                 if (!next.HasValue)
                 {
@@ -202,8 +208,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             Table table = args.AsType(0, "foreachi", DataType.Table).Table;
             int length = table.Length;
             LuaValue action = GetIterationCallback(args, "foreachi");
+            bool chargeInstruction = executionContext.HasActiveSandboxInstructionBudget;
             for (int i = 1; i <= length; i++)
             {
+                if (chargeInstruction)
+                {
+                    executionContext.ChargeSandboxInstruction();
+                }
+
                 LuaValue result = executionContext
                     .Script.CallLibraryCallback(action, LuaValue.NewNumber(i), table.Get(i))
                     .ToScalar();
@@ -616,9 +628,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaValue key = LuaValue.NewInteger(index);
             bool isWrite = assignedValue.HasValue;
             string eventName = isWrite ? Metamethods.NewIndex : Metamethods.Index;
+            bool chargeInstruction = executionContext.HasActiveSandboxInstructionBudget;
             const int maxHookHops = 2000;
             for (int followed = 0; ; followed++)
             {
+                if (chargeInstruction)
+                {
+                    executionContext.ChargeSandboxInstruction();
+                }
+
                 Table table = target.Type == DataType.Table ? target.Table : null;
                 LuaValue stored = table?.GetValue(key) ?? LuaValue.Nil;
                 // Lua checks the raw slot after following the last permitted hook.

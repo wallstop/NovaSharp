@@ -51,9 +51,10 @@ records.
 
 ## Local verification
 
-- The quick build passed with zero warnings. The focused table suite passed
-  all 1,162 tests. The full quick suite passed all 15,879 tests.
-- Corpus regeneration found 2,024 extracted snippets. The width and
+- The final quick build passed with zero warnings. The focused table and
+  instruction-limit suites passed 1,176 and 42 tests, respectively. The
+  full quick suite passed all 15,893 tests.
+- Corpus regeneration found 2,029 extracted snippets. The width and
   comparator fixtures use curated profiles so the extractor's lexical
   heuristics cannot narrow the intended coverage.
 - The enforced Linux corpus passed 6,110 fixture and profile combinations
@@ -66,3 +67,16 @@ records.
   indexed-access boundary, reentrant setters, protected CLR callbacks, sort
   result selection, and record-only growth of hinted tables. Regression
   tests keep these findings executable.
+
+## Hosted review follow-up
+
+Indexed reads, writes, and hook traversal now charge the active VM
+instruction budget. The first PR revision completed a bounded indexed
+insert under a 64-unit ceiling without invoking the budget callback. The
+regression observes the structured violation, explicit host renewal,
+cumulative work across calls, restored outer accounting after reentry, and
+the protected-call result. Lua 5.1 and 5.2 retain the raw insert path.
+Lua 5.1 `foreach` and `foreachi` charge their iteration work through the
+same budget, with bounded regressions for both entry points.
+A wall-clock watchdog is listed separately in the
+[sandbox threat model](../docs/security/sandbox-threat-model.md).

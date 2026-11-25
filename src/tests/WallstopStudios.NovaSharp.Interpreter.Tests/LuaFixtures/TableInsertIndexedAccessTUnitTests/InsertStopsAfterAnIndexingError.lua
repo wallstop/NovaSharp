@@ -40,7 +40,7 @@ if indexed then
     assert(not ok and string.find(err, "'__newindex' chain too long", 1, true))
 
     local function chain(target, hook, hops)
-        for j = 1, hops do
+        for _ = 1, hops do
             target = setmetatable({}, {[hook] = target})
         end
         return target

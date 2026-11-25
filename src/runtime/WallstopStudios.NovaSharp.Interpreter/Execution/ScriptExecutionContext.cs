@@ -459,6 +459,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         public Script Script => _processor.GetScript();
 
         /// <summary>
+        /// Whether this callback is running within a VM entry with an instruction limit.
+        /// </summary>
+        internal bool HasActiveSandboxInstructionBudget =>
+            _processor.HasActiveSandboxInstructionBudget;
+
+        /// <summary>
+        /// Charges one native work unit against the active VM instruction budget.
+        /// </summary>
+        internal void ChargeSandboxInstruction() => _processor.ChargeSandboxInstruction();
+
+        /// <summary>
         /// Gets the coroutine currently performing the call.
         /// </summary>
         public Coroutine CallingCoroutine => _processor.AssociatedCoroutine;

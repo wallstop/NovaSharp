@@ -57,7 +57,8 @@ namespace NovaSharp
         public static LuaSandboxOptions Unrestricted => new LuaSandboxOptions();
 
         /// <summary>
-        /// Gets or sets the maximum VM instructions before sandbox violation. Zero means unlimited.
+        /// Gets or sets the instruction budget for an interpreter entry. VM instructions and
+        /// metered work inside built-in functions count toward it. Zero means unlimited.
         /// </summary>
         public long MaxInstructions
         {

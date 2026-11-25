@@ -21,6 +21,9 @@ local ok, count = pcall(function()
     return select('#', table.insert(false, high, 'after'))
 end)
 assert(ok == indexed, 'non-table proxy eligibility')
+if indexed then
+    assert(count == 0, 'positional insert result count')
+end
 assert(backing[high] == (indexed and 'after' or 'before'), 'proxy destination')
 assert(backing[high + 1] == (indexed and 'before' or nil), 'wide proxy shift')
 

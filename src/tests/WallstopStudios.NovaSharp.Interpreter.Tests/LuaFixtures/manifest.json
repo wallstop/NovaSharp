@@ -1,7 +1,7 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2024,
-  "novasharp_only": 501,
+  "total_snippets": 2029,
+  "novasharp_only": 506,
   "comparable": 1523,
   "by_version": {
     "5.1": 1014,
@@ -22502,6 +22502,46 @@
         "5.5"
       ],
       "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableInsertInstructionLimitTUnitTests/IndexedInsertCanRenewInstructionBudget.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableInsertInstructionLimitTUnitTests.cs:59",
+      "test": "SandboxTableInsertInstructionLimitTUnitTests.IndexedInsertCanRenewInstructionBudget",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableInsertInstructionLimitTUnitTests/IndexedInsertChargesAcrossCallsInOneVmEntry.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableInsertInstructionLimitTUnitTests.cs:81",
+      "test": "SandboxTableInsertInstructionLimitTUnitTests.IndexedInsertChargesAcrossCallsInOneVmEntry",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableInsertInstructionLimitTUnitTests/IndexedInsertChargesAcrossCallsInOneVmEntry_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableInsertInstructionLimitTUnitTests.cs:82",
+      "test": "SandboxTableInsertInstructionLimitTUnitTests.IndexedInsertChargesAcrossCallsInOneVmEntry",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableInsertInstructionLimitTUnitTests/IndexedInsertConsumesInstructionBudget.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableInsertInstructionLimitTUnitTests.cs:23",
+      "test": "SandboxTableInsertInstructionLimitTUnitTests.IndexedInsertConsumesInstructionBudget",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableIterationInstructionLimitTUnitTests/LegacyIterationConsumesInstructionBudget.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableIterationInstructionLimitTUnitTests.cs:27",
+      "test": "SandboxTableIterationInstructionLimitTUnitTests.LegacyIterationConsumesInstructionBudget",
+      "lua_versions": [],
+      "novasharp_only": true,
       "expects_error": false
     }
   ]

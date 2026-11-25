@@ -26,6 +26,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private static readonly LuaValue ReplayCloseResult = LuaValue.NewCallbackView(static args =>
             args[0]
         );
+        private SandboxInstructionBudget _sandboxInstructionBudget;
+
+        private struct SandboxInstructionBudget
+        {
+            public SandboxInstructionBudget(SandboxOptions options, long limit)
+            {
+                Options = options;
+                Limit = limit;
+                Executed = 0;
+            }
+
+            public SandboxOptions Options { get; }
+            public long Limit { get; }
+            public long Executed { get; set; }
+        }
 
         private readonly struct TailCallFrameReuseState
         {
@@ -60,7 +75,69 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         internal long AutoYieldCounter { get; set; }
 
+        internal bool HasActiveSandboxInstructionBudget => _sandboxInstructionBudget.Limit > 0;
+
+        internal bool ChargeSandboxInstruction()
+        {
+            if (++_sandboxInstructionBudget.Executed <= _sandboxInstructionBudget.Limit)
+            {
+                return false;
+            }
+
+            RenewSandboxInstructionBudget();
+            return true;
+        }
+
+        private void RenewSandboxInstructionBudget()
+        {
+            long executed = _sandboxInstructionBudget.Executed;
+            Func<Script, long, bool> callback = _sandboxInstructionBudget
+                .Options
+                .OnInstructionLimitExceeded;
+            if (callback == null || !callback(_script, executed))
+            {
+                throw new SandboxViolationException(
+                    SandboxViolationType.InstructionLimitExceeded,
+                    _sandboxInstructionBudget.Limit,
+                    executed
+                );
+            }
+
+            _sandboxInstructionBudget.Executed = 0;
+        }
+
         private LuaValue ProcessingLoop(int instructionPtr)
+        {
+            SandboxOptions sandbox = _script.Options.Sandbox;
+            long instructionLimit = sandbox.MaxInstructions;
+            if (instructionLimit == 0 && !HasActiveSandboxInstructionBudget)
+            {
+                return ProcessingLoopCore(
+                    instructionPtr,
+                    sandbox,
+                    hasSandboxInstructionLimit: false
+                );
+            }
+
+            // Nested VM entries retain their existing independent budget and restore the caller's
+            // count when they return, including when a native callback reenters Lua.
+            SandboxInstructionBudget previousBudget = _sandboxInstructionBudget;
+            _sandboxInstructionBudget = new SandboxInstructionBudget(sandbox, instructionLimit);
+            try
+            {
+                return ProcessingLoopCore(instructionPtr, sandbox, instructionLimit > 0);
+            }
+            finally
+            {
+                _sandboxInstructionBudget = previousBudget;
+            }
+        }
+
+        private LuaValue ProcessingLoopCore(
+            int instructionPtr,
+            SandboxOptions sandbox,
+            bool hasSandboxInstructionLimit
+        )
         {
             // This is the main loop of the processor, has a weird control flow and needs to be as fast as possible.
             // This sentence is just a convoluted way to say "don't complain about gotos".
@@ -69,9 +146,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             bool canAutoYield =
                 (AutoYieldCounter > 0) && _canYield && (State != CoroutineState.Main);
             bool shouldYieldToCaller = false;
-            SandboxOptions sandbox = _script.Options.Sandbox;
-            bool hasSandboxInstructionLimit = sandbox.HasInstructionLimit;
-            long sandboxMaxInstructions = sandbox.MaxInstructions;
             bool hasSandboxMemoryLimit = sandbox.HasMemoryLimit;
             long sandboxMaxMemoryBytes = sandbox.MaxMemoryBytes;
             AllocationTracker allocationTracker = _script.AllocationTracker;
@@ -99,19 +173,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         return LuaValue.NewForcedYieldReq();
                     }
 
-                    // Check sandbox instruction limit
-                    if (hasSandboxInstructionLimit && executedInstructions > sandboxMaxInstructions)
+                    if (hasSandboxInstructionLimit && ChargeSandboxInstruction())
                     {
-                        Func<Script, long, bool> callback = sandbox.OnInstructionLimitExceeded;
-                        if (callback == null || !callback(_script, executedInstructions))
-                        {
-                            throw new SandboxViolationException(
-                                SandboxViolationType.InstructionLimitExceeded,
-                                sandboxMaxInstructions,
-                                executedInstructions
-                            );
-                        }
-                        // Callback allowed continuation - reset counter
+                        // Keep the existing VM counter reset independent of native work units.
                         executedInstructions = 0;
                     }
 
