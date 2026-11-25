@@ -46,7 +46,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         internal bool IsHiddenFromDebugger =>
             Function.Type == DataType.Function
-            && Function.Function.OwnerScript.IsCloseMetamethodDispatcher(DebugEntryPoint);
+            && Function.Function.OwnerScript.IsHiddenMetamethodDispatcher(DebugEntryPoint);
 
         /// <summary>
         /// Continuation invoked after yielding or tail calls.

@@ -60,7 +60,7 @@ This directory contains comprehensive Lua language specifications for all versio
 
 - `global` keyword for explicit global declarations
 - For-loop control variables are read-only
-- `table.create(size, value)` for pre-allocation
+- `table.create(nseq [, nrec])` for pre-allocation
 - Compact arrays (60% memory reduction)
 - Incremental major GC mode
 

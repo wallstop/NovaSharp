@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2021,
+  "total_snippets": 2024,
   "novasharp_only": 501,
-  "comparable": 1520,
+  "comparable": 1523,
   "by_version": {
-    "5.1": 1012,
-    "5.2": 718,
-    "5.3": 963,
-    "5.4": 1036,
-    "5.5": 1077
+    "5.1": 1014,
+    "5.2": 719,
+    "5.3": 966,
+    "5.4": 1039,
+    "5.5": 1080
   },
   "snippets": [
     {
@@ -11635,7 +11635,7 @@
         "5.5"
       ],
       "novasharp_only": false,
-      "expects_error": true
+      "expects_error": false
     },
     {
       "path": "TableModuleTUnitTests/SortUsesMetamethodWhenComparerMissing.lua",
@@ -11851,19 +11851,6 @@
       "test": "TableModuleTUnitTests.GlobalUnpackAvailableInLua51",
       "lua_versions": [
         "5.1"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "TableModuleTUnitTests/GlobalUnpackIsNilInLua52Plus.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:552",
-      "test": "TableModuleTUnitTests.GlobalUnpackIsNilInLua52Plus",
-      "lua_versions": [
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
       ],
       "novasharp_only": false,
       "expects_error": false
@@ -22458,6 +22445,58 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:213",
       "test": "TableModuleTUnitTests.SortNumbersPreservesExactIntegerAndMixedOrdering",
       "lua_versions": [
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/GlobalUnpackIsNilStartingLua53.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:720",
+      "test": "TableModuleTUnitTests.GlobalUnpackIsNilStartingLua53",
+      "lua_versions": [
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableSortTUnitTests/SortChecksFullLengthBeforeDecidingWhetherToSort.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableSortTUnitTests.cs:86",
+      "test": "TableSortTUnitTests.SortChecksFullLengthBeforeDecidingWhetherToSort",
+      "lua_versions": [
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableSortTUnitTests/SortUsesBuiltInStringOrderAndReturnsNoValues.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableSortTUnitTests.cs:14",
+      "test": "TableSortTUnitTests.SortUsesBuiltInStringOrderAndReturnsNoValues",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableSortTUnitTests/SortValidatesComparatorAfterGettingLength.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableSortTUnitTests.cs:52",
+      "test": "TableSortTUnitTests.SortValidatesComparatorAfterGettingLength",
+      "lua_versions": [
+        "5.1",
+        "5.2",
         "5.3",
         "5.4",
         "5.5"

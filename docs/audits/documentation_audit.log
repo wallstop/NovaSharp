@@ -39,7 +39,7 @@ Found 191 undocumented public/internal type declarations.
   - line 70: missing XML docs for `Next`
   - line 72: missing XML docs for `GetMetamethodDispatcher()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableModule.cs
-  - line 40: missing XML docs for `Compare()`
+  - line 42: missing XML docs for `Compare()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/Utf8Module.cs
   - line 34: missing XML docs for `Strict`
   - line 36: missing XML docs for `Lax`
@@ -160,13 +160,13 @@ Found 191 undocumented public/internal type declarations.
   - line 96: missing XML docs for `Clone()`
   - line 313: missing XML docs for `EnterIsolationScope()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs
-  - line 632: missing XML docs for `BeginDefaultOptionsScope()`
-  - line 740: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
-  - line 2526: missing XML docs for `IsIteratorMetamethodDispatcher()`
-  - line 2529: missing XML docs for `IsCloseMetamethodDispatcher()`
-  - line 4918: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
-  - line 4926: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
-  - line 5053: missing XML docs for `Dispose()`
+  - line 636: missing XML docs for `BeginDefaultOptionsScope()`
+  - line 744: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
+  - line 2558: missing XML docs for `IsIteratorMetamethodDispatcher()`
+  - line 2561: missing XML docs for `IsHiddenMetamethodDispatcher()`
+  - line 4950: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
+  - line 4958: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
+  - line 5085: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf2.cs
   - line 198: missing XML docs for `FromT0()`
   - line 211: missing XML docs for `FromT1()`

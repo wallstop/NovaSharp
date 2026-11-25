@@ -48,6 +48,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _trackedBytes = BaseTableOverhead;
         }
 
+        internal Table(Script owner, int sequenceCapacity, int recordCapacity)
+            : this(owner)
+        {
+            _storage.Preallocate(sequenceCapacity, recordCapacity);
+            SyncTrackedMemory();
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Table"/> class.
         /// </summary>

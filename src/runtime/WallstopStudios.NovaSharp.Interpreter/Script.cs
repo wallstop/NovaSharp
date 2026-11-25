@@ -45,8 +45,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public const string LuaVersion = "5.4";
 
         private const OpCodeMetadataType IteratorDispatcherMetadata = (OpCodeMetadataType)(-1);
-        private const OpCodeMetadataType CloseDispatcherMetadata = (OpCodeMetadataType)(-2);
+        private const OpCodeMetadataType HiddenMetamethodDispatcherMetadata = (OpCodeMetadataType)(
+            -2
+        );
         private static readonly ConditionalWeakTable<Script, Closure> CloseMetamethodDispatchers =
+            new();
+        private static readonly ConditionalWeakTable<Script, Closure> LibraryCallbackDispatchers =
             new();
 
         private readonly Processor _mainProcessor;
@@ -2493,29 +2497,57 @@ namespace WallstopStudios.NovaSharp.Interpreter
         {
             return LuaValue.NewClosure(
                 CloseMetamethodDispatchers.GetValue(this, static script =>
-                    script.CreateCloseMetamethodDispatcher()
+                    script.CreateMetamethodDispatcher(Metamethods.Close, resultCount: 0)
                 )
             );
         }
 
-        private Closure CreateCloseMetamethodDispatcher()
+        /// <summary>
+        /// Invokes a Lua standard library callback synchronously. CLR callbacks run through a VM frame so
+        /// protected calls and other continuations complete before the library consumes the result.
+        /// </summary>
+        internal LuaValue CallLibraryCallback(
+            LuaValue function,
+            LuaValue first,
+            LuaValue second,
+            LuaValue? third = null
+        )
+        {
+            if (function.Type == DataType.Function)
+            {
+                return third is LuaValue argument
+                    ? CallValues(function, first, second, argument)
+                    : CallValues(function, first, second);
+            }
+
+            LuaValue dispatcher = LuaValue.NewClosure(
+                LibraryCallbackDispatchers.GetValue(this, static script =>
+                    script.CreateMetamethodDispatcher("library callback", resultCount: 1)
+                )
+            );
+            return third is LuaValue trailing
+                ? CallValues(dispatcher, function, first, second, trailing)
+                : CallValues(dispatcher, function, first, second);
+        }
+
+        private Closure CreateMetamethodDispatcher(string name, int resultCount)
         {
             using (_byteCode.EnterSource(SourceRef.GetClrLocation()))
             {
-                SymbolRef closer = SymbolRef.Local("closer", 0);
+                SymbolRef metamethod = SymbolRef.Local("metamethod", 0);
                 SymbolRef arguments = SymbolRef.Local(WellKnownSymbols.VARARGS, 1);
                 RuntimeScopeFrame scope = new() { ToFirstBlock = 1 };
-                scope.DebugSymbols.Add(closer);
+                scope.DebugSymbols.Add(metamethod);
                 scope.DebugSymbols.Add(arguments);
 
-                Instruction meta = _byteCode.EmitMeta(Metamethods.Close, CloseDispatcherMetadata);
+                Instruction meta = _byteCode.EmitMeta(name, HiddenMetamethodDispatcherMetadata);
                 int entryPoint = _byteCode.GetJumpPointForNextInstruction();
                 _byteCode.EmitBeginFn(scope);
-                _byteCode.EmitArgs(closer, arguments);
-                _byteCode.EmitLoad(closer);
+                _byteCode.EmitArgs(metamethod, arguments);
+                _byteCode.EmitLoad(metamethod);
                 _byteCode.EmitLoad(arguments);
                 _byteCode.EmitCall(1, debugName: null);
-                _byteCode.EmitRet(0);
+                _byteCode.EmitRet(resultCount);
                 meta.NumVal = _byteCode.GetJumpPointForNextInstruction() - entryPoint;
 
                 SignalByteCodeChange();
@@ -2526,8 +2558,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         internal bool IsIteratorMetamethodDispatcher(int entryPoint) =>
             HasDispatcherMetadata(entryPoint, IteratorDispatcherMetadata);
 
-        internal bool IsCloseMetamethodDispatcher(int entryPoint) =>
-            HasDispatcherMetadata(entryPoint, CloseDispatcherMetadata);
+        internal bool IsHiddenMetamethodDispatcher(int entryPoint) =>
+            HasDispatcherMetadata(entryPoint, HiddenMetamethodDispatcherMetadata);
 
         private bool HasDispatcherMetadata(int entryPoint, OpCodeMetadataType kind)
         {

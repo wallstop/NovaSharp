@@ -43,10 +43,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             }
 
             LuaValue globalUnpack = script.Globals.Get("unpack");
-            if (version == LuaCompatibilityVersion.Lua51)
+            if (version <= LuaCompatibilityVersion.Lua52)
             {
                 await Assert.That(globalUnpack.Type).IsEqualTo(DataType.ClrFunction);
                 await Assert.That(globalUnpack.Callback.HasArgumentViewCallback).IsTrue();
+                if (version == LuaCompatibilityVersion.Lua52)
+                {
+                    await Assert.That(globalUnpack).IsEqualTo(library.Get("unpack"));
+                }
             }
             else
             {
@@ -270,20 +274,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
-        public async Task SortThrowsWhenComparatorIsInvalidType(LuaCompatibilityVersion version)
+        public void SortThrowsWhenComparatorIsInvalidType(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.DoString(
-                    @"
-                    local values = { 1, 2 }
-                    table.sort(values, {})
-                    "
-                )
+            script.DoString(
+                @"
+                local values = { 1, 2 }
+                local ok, message = pcall(function() table.sort(values, {}) end)
+                assert(not ok, 'invalid comparator')
+                assert(message:find('bad argument #2', 1, true), message)
+                assert(message:find('function expected, got table', 1, true), message)
+                assert(values[1] == 1 and values[2] == 2, 'sort did not mutate values')
+                "
             );
-
-            await Assert.That(exception.Message).Contains("bad argument #2 to 'sort'");
         }
 
         [global::TUnit.Core.Test]
@@ -709,15 +713,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         /// <summary>
-        /// Tests that global unpack is NOT available in Lua 5.2+.
-        /// Global unpack was moved to table.unpack in Lua 5.2.
+        /// Tests that the global unpack alias is absent starting in Lua 5.3.
         /// </summary>
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
-        public async Task GlobalUnpackIsNilInLua52Plus(
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task GlobalUnpackIsNilStartingLua53(
             Compatibility.LuaCompatibilityVersion version
         )
         {
@@ -728,7 +728,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .That(result.IsNil)
                 .IsTrue()
                 .Because(
-                    $"Global unpack was moved to table.unpack in Lua 5.2+. Actual type: {result.Type}, value: {result}"
+                    $"Global unpack is absent starting in Lua 5.3. Actual type: {result.Type}, value: {result}"
                 )
                 .ConfigureAwait(false);
         }
