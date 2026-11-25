@@ -903,7 +903,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         private static LuaValue MultiDispatchEqual(Script script, object obj)
         {
             return LuaValue.NewCallback(script, (context, args) =>
-                LuaValue.NewBoolean(CheckEquality(obj, args[0].ToObject(), args[1].ToObject()))
+                LuaValue.NewBoolean(
+                    CheckEquality(
+                        obj,
+                        ScriptToClrConversions.DynValueToObject(args[0], allowThread: true),
+                        ScriptToClrConversions.DynValueToObject(args[1], allowThread: true)
+                    )
+                )
             );
         }
 

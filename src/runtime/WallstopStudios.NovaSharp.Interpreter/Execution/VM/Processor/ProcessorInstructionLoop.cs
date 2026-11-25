@@ -1575,10 +1575,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             double index = coercedIndex.AsFloat;
             double floatLimit = coercedLimit.AsFloat;
             double step = coercedStep.AsFloat;
-            _valueStack.Set(0, LuaValue.NewFloat(index));
-            _valueStack.Set(1, LuaValue.NewFloat(step));
-            _valueStack.Set(2, LuaValue.NewFloat(floatLimit));
-
             bool stepPositive = step > 0.0;
             bool skip;
             if (version >= LuaCompatibilityVersion.Lua54)
@@ -1588,11 +1584,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                // Earlier VMs use the bottom check on the recomputed initial index.
-                double entryIndex = (index - step) + step;
-                skip = !(stepPositive ? entryIndex <= floatLimit : floatLimit <= entryIndex);
+                // Lua 5.1–5.3 subtract the step in FORPREP and add it in the
+                // first FORLOOP. The rounded result becomes the running index.
+                index = (index - step) + step;
+                skip = !(stepPositive ? index <= floatLimit : floatLimit <= index);
             }
 
+            _valueStack.Set(0, LuaValue.NewFloat(index));
+            _valueStack.Set(1, LuaValue.NewFloat(step));
+            _valueStack.Set(2, LuaValue.NewFloat(floatLimit));
             return skip ? i.NumVal : instructionPtr;
         }
 
@@ -3075,33 +3075,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             LuaValue r = _valueStack.Pop().ToScalar();
             LuaValue l = _valueStack.Pop().ToScalar();
 
-            if (l.Type == DataType.Number && r.Type == DataType.Number)
+            if (TryCompareBuiltInLessThan(l, r, _script.CompatibilityVersion, out bool less))
             {
-                _valueStack.Push(
-                    LuaValue.NewBoolean(
-                        LuaNumber.LessThan(l.LuaNumber, r.LuaNumber, _script.CompatibilityVersion)
-                    )
-                );
-            }
-            else if (l.Type == DataType.String && r.Type == DataType.String)
-            {
-                int comparison = string.Compare(l.String, r.String, StringComparison.Ordinal);
-                _valueStack.Push(LuaValue.NewBoolean(comparison < 0));
-            }
-            else
-            {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Lt, instructionPtr);
-                if (ip < 0)
-                {
-                    throw ScriptRuntimeException.CompareInvalidType(l, r);
-                }
-                else
-                {
-                    return ip;
-                }
+                _valueStack.Push(LuaValue.NewBoolean(less));
+                return instructionPtr;
             }
 
-            return instructionPtr;
+            int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Lt, instructionPtr);
+            if (ip < 0)
+            {
+                throw ScriptRuntimeException.CompareInvalidType(l, r);
+            }
+
+            return ip;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool TryCompareBuiltInLessThan(
+            LuaValue left,
+            LuaValue right,
+            LuaCompatibilityVersion version,
+            out bool less
+        )
+        {
+            if (left.Type == DataType.Number && right.Type == DataType.Number)
+            {
+                less = LuaNumber.LessThan(left.LuaNumber, right.LuaNumber, version);
+                return true;
+            }
+
+            if (left.Type == DataType.String && right.Type == DataType.String)
+            {
+                less = string.Compare(left.String, right.String, StringComparison.Ordinal) < 0;
+                return true;
+            }
+
+            less = false;
+            return false;
         }
 
         private int ExecLessEq(Instruction i, int instructionPtr)

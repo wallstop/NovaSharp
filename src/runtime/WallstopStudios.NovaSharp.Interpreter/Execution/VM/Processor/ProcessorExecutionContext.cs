@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System.Runtime.CompilerServices;
     using global::NovaSharp;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
 
@@ -41,24 +42,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             out LuaValue metamethod
         )
         {
-            Table op1MetaTable = GetMetatable(op1);
-            if (op1MetaTable != null)
+            if (
+                TryGetBinaryMetatableMetamethod(op1, eventName, out metamethod)
+                || TryGetBinaryMetatableMetamethod(op2, eventName, out metamethod)
+            )
             {
-                if (op1MetaTable.TryRawGet(eventName, out LuaValue meta1) && meta1.IsNotNil())
-                {
-                    metamethod = meta1;
-                    return true;
-                }
-            }
-
-            Table op2MetaTable = GetMetatable(op2);
-            if (op2MetaTable != null)
-            {
-                if (op2MetaTable.TryRawGet(eventName, out LuaValue meta2) && meta2.IsNotNil())
-                {
-                    metamethod = meta2;
-                    return true;
-                }
+                return true;
             }
 
             if (op1.Type == DataType.UserData)
@@ -95,6 +84,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             metamethod = LuaValue.Nil;
             return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool TryGetBinaryMetatableMetamethod(
+            LuaValue value,
+            string eventName,
+            out LuaValue metamethod
+        )
+        {
+            // Lua thread equality uses identity. A CLR userdata operand can still supply its
+            // descriptor equality operation through TryGetBinaryMetamethod.
+            if (value.Type == DataType.Thread && eventName == Metamethods.Eq)
+            {
+                metamethod = LuaValue.Nil;
+                return false;
+            }
+
+            return TryGetMetamethodRaw(value, eventName, out metamethod);
         }
 
         /// <summary>

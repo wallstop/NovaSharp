@@ -38,6 +38,10 @@ in the reference order. Regression coverage includes
 `AssignmentStoresExplicitNilForMissingValues` and
 `GreaterComparisonsPreserveLuaOperandOrder`.
 
+Floating numeric loops in Lua 5.1–5.3 start from the result of subtracting
+and re-adding the step. Rounding can change the visible first value and the
+subsequent sequence. Lua 5.4–5.5 start from the original initial value.
+
 ## Standard Libraries
 
 | Library Area | Feature                                                         | Status | Coverage / Evidence                                                                                                                                | Notes & Owner                                                                                                                                                                                                       |
@@ -59,6 +63,11 @@ in the reference order. Regression coverage includes
 | `io`         | `io.popen` process pipes                                        | ⏸️     | `IoModuleTests.PopenIsUnsupportedAndProvidesErrorMessage`                                                                                          | Intentionally disabled for sandboxing; hosts must provide a custom `IPlatformAccessor` to enable it. Owner: Tooling.                                                                                                |
 | `os`         | `os.execute` Lua-style status tuples                            | ✅     | `OsSystemModuleTests.ExecuteCommandReturnsSuccessTuple`, `ExecuteCommandReturnsNilTupleOnNonZeroExit`                                              | Now returns \`(true                                                                                                                                                                                                 |
 
+In Lua 5.1 and 5.2, `math.min` and `math.max` coerce numeric strings and
+return a number. In Lua 5.3–5.5 they compare with `<` and return the selected
+argument with its original type and identity. When values tie, the first
+occurrence wins.
+
 Across Lua 5.1–5.5, `string.format` renders infinity as `inf` or `INF`
 according to the conversion, with the requested sign and space padding.
 For numeric-string arithmetic, numeric loop controls, and `tonumber`, Lua 5.1
@@ -73,6 +82,16 @@ in those conversions.
 | Ephemeron tables / weak keys & values                | 🚧     | `WeakTablesTests` (legacy)                  | Behaviour follows legacy-era implementation; 5.4 ephemeron rules still missing. Owner: Runtime Modernization. |
 | GC generational / incremental modes                  | ❌     | —                                           | `collectgarbage("incremental")` unsupported; document limitation. Owner: Runtime Modernization.               |
 | `debug.getmetatable` protection for protected tables | ✅     | `MetatableTests.ProtectedMetatableFailures` | Aligns with Lua raising errors for protected metatables. Owner: Interpreter.                                  |
+
+Lua threads, including coroutines, share a type metatable within each script.
+`debug.setmetatable(thread, nil)` clears it. Lua 5.1 returns `true` from
+`debug.setmetatable`. Lua 5.2–5.5 return the supplied value.
+
+NovaSharp IO handles and other userdata expose members through CLR descriptors.
+When a thread is compared with CLR userdata, the userdata descriptor supplies
+any host equality behavior. CLR callbacks use their attached host
+implementation. For these host-backed values, `debug.getmetatable` returns
+`nil` and `debug.setmetatable` raises an error.
 
 ## Coroutine & Error Handling Semantics
 

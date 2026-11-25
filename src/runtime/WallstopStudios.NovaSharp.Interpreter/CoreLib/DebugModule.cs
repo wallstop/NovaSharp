@@ -443,7 +443,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current execution context.</param>
         /// <param name="args">Arguments (value and optional metatable).</param>
-        /// <returns>The original value after mutation.</returns>
+        /// <returns>
+        /// <see cref="LuaValue.True"/> in Lua 5.1, or the original value in later profiles.
+        /// </returns>
         [NovaSharpModuleMethod(Name = "setmetatable")]
         public static LuaValue SetMetatable(
             ScriptExecutionContext executionContext,
@@ -501,7 +503,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
             }
 
-            return v;
+            return
+                LuaVersionDefaults.Resolve(s.CompatibilityVersion) == LuaCompatibilityVersion.Lua51
+                ? LuaValue.True
+                : v;
         }
 
         /// <summary>

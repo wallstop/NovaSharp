@@ -292,7 +292,11 @@ return detached, colon
                 writable: false
             );
 
-            ScriptOptions options = new(Script.DefaultOptions) { Stdin = stdinStream };
+            ScriptOptions options = new(Script.DefaultOptions)
+            {
+                Stdin = stdinStream,
+                CompatibilityVersion = version,
+            };
             List<string> outputs = new();
             options.DebugPrint = message =>
             {
@@ -314,7 +318,9 @@ end
             script.DoString(chunk);
 
             await Assert.That(outputs.Count).IsEqualTo(2);
-            await Assert.That(outputs[0]).IsEqualTo("15000000000000");
+            string expectedMaximum =
+                version >= LuaCompatibilityVersion.Lua53 ? "15000000000000.0" : "15000000000000";
+            await Assert.That(outputs[0]).IsEqualTo(expectedMaximum);
             await Assert.That(outputs[1]).IsEqualTo("1000001");
         }
 
