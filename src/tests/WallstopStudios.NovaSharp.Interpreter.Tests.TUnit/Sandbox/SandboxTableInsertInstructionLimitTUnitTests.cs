@@ -105,6 +105,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         [Arguments(LuaCompatibilityVersion.Lua53)]
         [Arguments(LuaCompatibilityVersion.Lua54)]
         [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DirectInsertCountsLengthCallbackAndIndexedWritesTogether(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version, new SandboxOptions(), length: 12);
+            script.DoString(
+                """
+                getmetatable(values).__len = function()
+                    local length = 0
+                    for i = 1, 3 do length = length + 1 end
+                    return length * 4
+                end
+                """
+            );
+            int renewals = 0;
+            script.Options.Sandbox = new SandboxOptions
+            {
+                MaxInstructions = Limit,
+                OnInstructionLimitExceeded = (_, _) =>
+                {
+                    renewals++;
+                    return true;
+                },
+            };
+
+            LuaValue insert = script.Globals.Get("table").Table.Get("insert");
+            LuaValue values = script.Globals.Get("values");
+            script.CallValues(insert, values, LuaValue.NewInteger(1), LuaValue.NewString("new"));
+
+            await Assert.That(renewals).IsEqualTo(1).ConfigureAwait(false);
+            Table backing = script.Globals.Get("backing").Table;
+            await Assert.That(backing.Get(1).String).IsEqualTo("new").ConfigureAwait(false);
+            await Assert.That(backing.Get(13).String).IsEqualTo("tail").ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task IndexedInsertChargesAcrossCallsInOneVmEntry(
             LuaCompatibilityVersion version
         )

@@ -497,6 +497,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 _ = args.AsType(0, "table.insert", DataType.Table);
             }
 
+            // A length hook and the indexed access it enables share the caller's budget.
+            using Processor.NativeInstructionBudgetScope budget =
+                version >= LuaCompatibilityVersion.Lua52 && (list == null || list.MetaTable != null)
+                    ? executionContext.EnterNativeInstructionBudget()
+                    : default;
+
             long length = GetLibrarySequenceLength(executionContext, tableValue, version);
             long end =
                 version <= LuaCompatibilityVersion.Lua52
@@ -516,10 +522,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         )
                     )
                 );
-
-            using Processor.NativeInstructionBudgetScope budget = needsIndexedAccess
-                ? executionContext.EnterNativeInstructionBudget()
-                : default;
 
             if (args.Count == 2)
             {
