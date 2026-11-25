@@ -3,8 +3,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System;
     using System.Collections.Generic;
     using global::NovaSharp;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     /// <content>
     /// Provides shared helpers for tuple adjustment, metamethod invocation, and stack inspection.
@@ -59,19 +61,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
-        /// Pushes a unary metamethod on the stack and schedules its execution.
+        /// Pushes a unary metamethod and its two arguments on the stack and schedules its execution.
         /// </summary>
         private int InternalInvokeUnaryMetaMethod(
-            LuaValue op1,
+            LuaValue operand,
+            LuaValue secondArgument,
             string eventName,
             int instructionPtr
         )
         {
-            if (TryGetMetamethod(op1, eventName, out LuaValue metamethod))
+            // In a scalar expression, a call with no results supplies nil.
+            if (operand.Type == DataType.Void)
             {
-                _valueStack.Push(metamethod);
-                _valueStack.Push(op1);
-                return InternalExecCall(1, instructionPtr);
+                operand = LuaValue.Nil;
+                secondArgument = LuaValue.Nil;
+            }
+
+            if (TryGetMetamethod(operand, eventName, out LuaValue metamethod))
+            {
+                return CheckImmediateMetamethodYield(
+                    ScheduleBinaryMetamethod(operand, secondArgument, metamethod, instructionPtr)
+                );
             }
 
             return -1;
@@ -87,60 +97,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             int instructionPtr
         )
         {
-            return InternalInvokeBinaryMetaMethodCore(
-                l,
-                r,
-                eventName,
-                instructionPtr,
-                hasExtraPush: false,
-                LuaValue.Nil
-            );
+            return TryGetBinaryMetamethod(l, r, eventName, out LuaValue metamethod)
+                ? ScheduleBinaryMetamethod(l, r, metamethod, instructionPtr)
+                : -1;
         }
 
-        /// <summary>
-        /// Pushes an additional explicit Lua value before scheduling a binary metamethod.
-        /// </summary>
-        private int InternalInvokeBinaryMetaMethod(
-            LuaValue l,
-            LuaValue r,
-            string eventName,
-            int instructionPtr,
-            LuaValue extraPush
-        )
+        private int CheckImmediateMetamethodYield(int next)
         {
-            return InternalInvokeBinaryMetaMethodCore(
-                l,
-                r,
-                eventName,
-                instructionPtr,
-                hasExtraPush: true,
-                extraPush
-            );
-        }
-
-        private int InternalInvokeBinaryMetaMethodCore(
-            LuaValue l,
-            LuaValue r,
-            string eventName,
-            int instructionPtr,
-            bool hasExtraPush,
-            LuaValue extraPush
-        )
-        {
-            if (TryGetBinaryMetamethod(l, r, eventName, out LuaValue metamethod))
+            if (
+                next == YieldSpecialTrap
+                && _script.CompatibilityVersion == LuaCompatibilityVersion.Lua51
+            )
             {
-                if (hasExtraPush)
-                {
-                    _valueStack.Push(extraPush);
-                }
-
-                _valueStack.Push(metamethod);
-                _valueStack.Push(l);
-                _valueStack.Push(r);
-                return InternalExecCall(2, instructionPtr);
+                throw new ScriptRuntimeException(
+                    "attempt to yield across metamethod/C-call boundary"
+                );
             }
 
-            return -1;
+            return next;
+        }
+
+        private int ScheduleBinaryMetamethod(
+            LuaValue left,
+            LuaValue right,
+            LuaValue metamethod,
+            int instructionPtr
+        )
+        {
+            _valueStack.Push(metamethod);
+            _valueStack.Push(left);
+            _valueStack.Push(right);
+            return InternalExecCall(2, instructionPtr);
         }
 
         /// <summary>

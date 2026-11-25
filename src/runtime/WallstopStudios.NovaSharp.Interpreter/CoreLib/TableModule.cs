@@ -424,11 +424,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
 
                 if (
-                    !executionContext.TryGetBinaryMetamethod(a, b, Metamethods.Lt, out lt)
+                    !executionContext.TryGetOrderingMetamethod(a, b, Metamethods.Lt, out lt)
                     || lt.IsNil
                 )
                 {
-                    throw ScriptRuntimeException.CompareInvalidType(a, b);
+                    throw executionContext.CreateOrderingError(a, b);
                 }
             }
 

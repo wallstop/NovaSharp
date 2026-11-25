@@ -81,33 +81,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         // ====== Bitwise exceptions ======
 
         [global::TUnit.Core.Test]
-        public async Task BitwiseOnNonIntegerThrowsArgumentNullExceptionForNull()
+        [global::TUnit.Core.Arguments("nil")]
+        [global::TUnit.Core.Arguments("string")]
+        [global::TUnit.Core.Arguments("boolean")]
+        public async Task BitwiseOnInvalidTypeFormatsOperandLabel(string typeName)
         {
-            ScriptRuntimeException exception = ScriptRuntimeException.BitwiseOnNonInteger(default);
+            ScriptRuntimeException exception = ScriptRuntimeException.BitwiseOnInvalidType(
+                typeName
+            );
             await Assert
                 .That(exception.Message)
-                .IsEqualTo("attempt to perform bitwise operation on a nil value")
+                .IsEqualTo($"attempt to perform bitwise operation on a {typeName} value")
                 .ConfigureAwait(false);
-        }
-
-        [global::TUnit.Core.Test]
-        public async Task BitwiseOnNonIntegerReturnsDescriptorForString()
-        {
-            LuaValue value = LuaValue.NewString("abc");
-            ScriptRuntimeException ex = ScriptRuntimeException.BitwiseOnNonInteger(value);
-            await Assert
-                .That(ex.Message)
-                .IsEqualTo("attempt to perform bitwise operation on a string value");
-        }
-
-        [global::TUnit.Core.Test]
-        public async Task BitwiseOnNonIntegerReturnsDescriptorForBoolean()
-        {
-            LuaValue value = LuaValue.NewBoolean(true);
-            ScriptRuntimeException ex = ScriptRuntimeException.BitwiseOnNonInteger(value);
-            await Assert
-                .That(ex.Message)
-                .IsEqualTo("attempt to perform bitwise operation on a boolean value");
         }
 
         // ====== Concat exceptions ======
@@ -172,29 +157,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         // ====== Compare exceptions ======
 
         [global::TUnit.Core.Test]
-        public async Task CompareInvalidTypeThrowsArgumentNullExceptionForNullLeft()
+        [global::TUnit.Core.Arguments("nil", "number", "attempt to compare nil with number")]
+        [global::TUnit.Core.Arguments("number", "nil", "attempt to compare number with nil")]
+        [global::TUnit.Core.Arguments("Actor", "Actor", "attempt to compare two Actor values")]
+        public async Task CompareInvalidTypeFormatsOperandLabels(
+            string leftTypeName,
+            string rightTypeName,
+            string expected
+        )
         {
             ScriptRuntimeException exception = ScriptRuntimeException.CompareInvalidType(
-                default,
-                LuaValue.NewNumber(5)
+                leftTypeName,
+                rightTypeName
             );
-            await Assert
-                .That(exception.Message)
-                .IsEqualTo("attempt to compare nil with number")
-                .ConfigureAwait(false);
-        }
-
-        [global::TUnit.Core.Test]
-        public async Task CompareInvalidTypeThrowsArgumentNullExceptionForNullRight()
-        {
-            ScriptRuntimeException exception = ScriptRuntimeException.CompareInvalidType(
-                LuaValue.NewNumber(5),
-                default
-            );
-            await Assert
-                .That(exception.Message)
-                .IsEqualTo("attempt to compare number with nil")
-                .ConfigureAwait(false);
+            await Assert.That(exception.Message).IsEqualTo(expected).ConfigureAwait(false);
         }
 
         // ====== Index and Loop exceptions ======

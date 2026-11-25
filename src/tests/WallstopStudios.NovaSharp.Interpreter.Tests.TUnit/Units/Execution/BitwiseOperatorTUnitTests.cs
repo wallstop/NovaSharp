@@ -7,6 +7,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.LuaFixtures;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class BitwiseOperatorTUnitTests
     {
@@ -126,34 +129,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task BitwiseOperatorsAcceptConvertibleStrings(LuaCompatibilityVersion version)
+        [AllLuaVersions]
+        public void BitwiseStringOperandsFollowLuaVersion(LuaCompatibilityVersion version)
         {
-            LuaValue result = Script.RunString("return '3' & '1'");
-
-            await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
-        }
-
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task BitwiseOperatorsRejectNonIntegers(LuaCompatibilityVersion version)
-        {
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                Script.RunString("return 0.5 & 1")
-            );
-
-            await Assert
-                .That(exception.Message)
-                .Contains("bitwise operation on a float value")
-                .ConfigureAwait(false);
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaFixtureHelper.ForCallingTest<BitwiseOperatorTUnitTests>().RunFixture(script);
         }
 
         [global::TUnit.Core.Test]

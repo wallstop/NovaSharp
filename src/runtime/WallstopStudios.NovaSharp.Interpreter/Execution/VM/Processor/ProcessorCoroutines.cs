@@ -186,7 +186,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else if (_state == CoroutineState.Suspended)
                 {
-                    _valueStack.Push(args.ToTuple());
+                    if (_resumeYieldWithSingleResult)
+                    {
+                        _resumeYieldWithSingleResult = false;
+                        LuaValue first = args.Count == 0 ? LuaValue.Nil : args[0].ToScalar();
+                        _valueStack.Push(first.IsVoid() ? LuaValue.Nil : first);
+                    }
+                    else
+                    {
+                        _valueStack.Push(args.ToTuple());
+                    }
+
                     entrypoint = _savedInstructionPtr;
                 }
                 else if (_state == CoroutineState.ForceSuspended)

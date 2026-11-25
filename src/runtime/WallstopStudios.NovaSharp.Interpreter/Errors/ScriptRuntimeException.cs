@@ -133,20 +133,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         }
 
         /// <summary>
-        /// Creates a ScriptRuntimeException specifying that a bitwise operation received a non-integer operand.
+        /// Creates a ScriptRuntimeException specifying that a bitwise operation received a nonnumeric operand.
         /// </summary>
-        public static ScriptRuntimeException BitwiseOnNonInteger(LuaValue value)
+        /// <param name="typeName">The Lua diagnostic label of the invalid operand.</param>
+        /// <returns>The exception to be raised.</returns>
+        public static ScriptRuntimeException BitwiseOnInvalidType(string typeName)
         {
-            string descriptor = value.Type switch
-            {
-                DataType.Number => "float",
-                DataType.String => "string",
-                _ => value.Type.ToLuaTypeString(),
-            };
-
             return new ScriptRuntimeException(
                 "attempt to perform bitwise operation on a {0} value",
-                descriptor
+                typeName
             );
         }
 
@@ -198,26 +193,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// Creates a ScriptRuntimeException with a predefined error message specifying that
         /// a comparison operator was applied on an invalid combination of operand types
         /// </summary>
-        /// <param name="l">The left operand.</param>
-        /// <param name="r">The right operand.</param>
+        /// <param name="leftTypeName">The Lua diagnostic label of the left operand.</param>
+        /// <param name="rightTypeName">The Lua diagnostic label of the right operand.</param>
         /// <returns>The exception to be raised.</returns>
-        public static ScriptRuntimeException CompareInvalidType(LuaValue l, LuaValue r)
+        public static ScriptRuntimeException CompareInvalidType(
+            string leftTypeName,
+            string rightTypeName
+        )
         {
-            if (l.Type.ToLuaTypeString() == r.Type.ToLuaTypeString())
-            {
-                return new ScriptRuntimeException(
-                    "attempt to compare two {0} values",
-                    l.Type.ToLuaTypeString()
-                );
-            }
-            else
-            {
-                return new ScriptRuntimeException(
+            return leftTypeName == rightTypeName
+                ? new ScriptRuntimeException("attempt to compare two {0} values", leftTypeName)
+                : new ScriptRuntimeException(
                     "attempt to compare {0} with {1}",
-                    l.Type.ToLuaTypeString(),
-                    r.Type.ToLuaTypeString()
+                    leftTypeName,
+                    rightTypeName
                 );
-            }
         }
 
         /// <summary>

@@ -89,11 +89,13 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    [Lua string byte identity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/201)
    to complete [string ordering](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199)
    and [extrema parity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/178),
-   [custom type labels in comparison errors](https://github.com/Ambiguous-Interactive/NovaSharp/issues/206),
+   then verify [custom comparison labels in extrema](https://github.com/Ambiguous-Interactive/NovaSharp/issues/206),
+   [native file userdata metatables](https://github.com/Ambiguous-Interactive/NovaSharp/issues/212),
+   [Lua 5.1 metamethod yield boundaries](https://github.com/Ambiguous-Interactive/NovaSharp/issues/213),
+   [shared function type metatables](https://github.com/Ambiguous-Interactive/NovaSharp/issues/214),
+   [single-result operator hooks](https://github.com/Ambiguous-Interactive/NovaSharp/issues/215),
    [legacy sort comparator side effects](https://github.com/Ambiguous-Interactive/NovaSharp/issues/207),
    [plain integer sort throughput](https://github.com/Ambiguous-Interactive/NovaSharp/issues/208),
-   [length-operator metatable dispatch](https://github.com/Ambiguous-Interactive/NovaSharp/issues/204),
-   [Lua 5.1 mixed-type ordering hooks](https://github.com/Ambiguous-Interactive/NovaSharp/issues/205),
    other error formats, [Lua 5.5 const loop-variable enforcement](https://github.com/Ambiguous-Interactive/NovaSharp/issues/130),
    `__gc`, Lua 5.4 garbage collector options, version-migration docs, and explicit
    compatibility-version matrix coverage; retain the
