@@ -607,10 +607,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return Call(function, new ClrCallArguments(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
         }
 
+        internal LuaValue CallLibraryFunction(
+            LuaValue function,
+            LuaValue first,
+            LuaValue second,
+            LuaValue? third,
+            LuaValue? fourth
+        )
+        {
+            ClrCallArguments args =
+                fourth.HasValue
+                    ? new ClrCallArguments(first, second, third.GetValueOrDefault(), fourth.Value)
+                : third.HasValue ? new ClrCallArguments(first, second, third.Value)
+                : new ClrCallArguments(first, second);
+            return Call(function, args, reuseInstructionBudget: true);
+        }
+
         private LuaValue Call(
             LuaValue function,
             ClrCallArguments args,
-            SourceRef callingSource = null
+            SourceRef callingSource = null,
+            bool reuseInstructionBudget = false
         )
         {
             List<Processor> coroutinesStack =
@@ -618,7 +635,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (coroutinesStack.Count > 0 && coroutinesStack[^1] != this)
             {
-                return coroutinesStack[^1].Call(function, args, callingSource);
+                return coroutinesStack[^1]
+                    .Call(function, args, callingSource, reuseInstructionBudget);
             }
 
             EnterProcessor();
@@ -643,7 +661,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     {
                         _executionStack.Peek().CallingSourceRef = callingSource;
                     }
-                    return ProcessingLoop(entrypoint);
+                    return ProcessingLoop(entrypoint, reuseInstructionBudget);
                 }
                 finally
                 {

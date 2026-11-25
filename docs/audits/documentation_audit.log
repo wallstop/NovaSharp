@@ -2,7 +2,7 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 200 undocumented public/internal type declarations.
+Found 201 undocumented public/internal type declarations.
 
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs
   - line 9: missing XML docs for `class ComVisibleAttribute`
@@ -132,6 +132,8 @@ Found 200 undocumented public/internal type declarations.
   - line 85: missing XML docs for `Trim()`
   - line 169: missing XML docs for `GetStatistics()`
   - line 194: missing XML docs for `Trim()`
+- src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs
+  - line 610: missing XML docs for `CallLibraryFunction()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs
   - line 40: missing XML docs for `Options`
   - line 41: missing XML docs for `Limit`
@@ -146,7 +148,7 @@ Found 200 undocumented public/internal type declarations.
   - line 98: missing XML docs for `struct NativeInstructionBudgetScope`
   - line 107: missing XML docs for `Dispose()`
   - line 116: missing XML docs for `ChargeSandboxInstruction()`
-  - line 1974: missing XML docs for `Count`
+  - line 1984: missing XML docs for `Count`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/BasicDescriptors/DispatchingUserDataDescriptor.cs
   - line 314: missing XML docs for `TryIndex()`
   - line 816: missing XML docs for `TryMetaIndex()`
@@ -171,11 +173,11 @@ Found 200 undocumented public/internal type declarations.
   - line 620: missing XML docs for `IsRenewingSandboxInstructionBudget`
   - line 639: missing XML docs for `BeginDefaultOptionsScope()`
   - line 747: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
-  - line 2561: missing XML docs for `IsIteratorMetamethodDispatcher()`
-  - line 2564: missing XML docs for `IsHiddenMetamethodDispatcher()`
-  - line 4953: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
-  - line 4961: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
-  - line 5088: missing XML docs for `Dispose()`
+  - line 2584: missing XML docs for `IsIteratorMetamethodDispatcher()`
+  - line 2587: missing XML docs for `IsHiddenMetamethodDispatcher()`
+  - line 4976: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
+  - line 4984: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
+  - line 5111: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf2.cs
   - line 198: missing XML docs for `FromT0()`
   - line 211: missing XML docs for `FromT1()`

@@ -157,9 +157,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             _sandboxInstructionBudget.Executed = 0;
         }
 
-        private LuaValue ProcessingLoop(int instructionPtr)
+        private LuaValue ProcessingLoop(int instructionPtr, bool reuseInstructionBudget = false)
         {
             SandboxOptions sandbox = _script.Options.Sandbox;
+            // A synchronous library callback is part of the active execution entry.
+            if (reuseInstructionBudget && HasActiveSandboxInstructionBudget)
+            {
+                return ProcessingLoopCore(
+                    instructionPtr,
+                    sandbox,
+                    hasSandboxInstructionLimit: true
+                );
+            }
+
             long instructionLimit = sandbox.MaxInstructions;
             if (instructionLimit == 0 && !HasActiveSandboxInstructionBudget)
             {

@@ -2516,11 +2516,17 @@ namespace WallstopStudios.NovaSharp.Interpreter
             LuaValue? third = null
         )
         {
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(first);
+            this.CheckScriptOwnership(second);
+            if (third.HasValue)
+            {
+                this.CheckScriptOwnership(third.Value);
+            }
+
             if (function.Type == DataType.Function)
             {
-                return third is LuaValue argument
-                    ? CallValues(function, first, second, argument)
-                    : CallValues(function, first, second);
+                return InvokeLibraryClosure(function, first, second, third);
             }
 
             LuaValue dispatcher = LuaValue.NewClosure(
@@ -2528,10 +2534,27 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     script.CreateMetamethodDispatcher("library callback", resultCount: 1)
                 )
             );
-            return third is LuaValue trailing
-                ? CallValues(dispatcher, function, first, second, trailing)
-                : CallValues(dispatcher, function, first, second);
+            return InvokeLibraryClosure(dispatcher, function, first, second, third);
         }
+
+        private LuaValue InvokeLibraryClosure(
+            LuaValue closure,
+            LuaValue first,
+            LuaValue second,
+            LuaValue? third,
+            LuaValue? fourth = null
+        ) =>
+            ExecuteWithCompatibilityGuard(
+                (_mainProcessor, closure, first, second, third, fourth),
+                static state =>
+                    state._mainProcessor.CallLibraryFunction(
+                        state.closure,
+                        state.first,
+                        state.second,
+                        state.third,
+                        state.fourth
+                    )
+            );
 
         private Closure CreateMetamethodDispatcher(string name, int resultCount)
         {

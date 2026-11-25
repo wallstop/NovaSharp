@@ -141,5 +141,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             return table;
         }
+
+        [Test]
+        [Arguments(false)]
+        [Arguments(true)]
+        public async Task NestedLibraryCallsShareInstructionBudget(bool useCoroutine)
+        {
+            Script script = new(LuaCompatibilityVersion.Lua51);
+            LuaValue run = script.DoString(
+                """
+                return function()
+                    local values = {1, 2, 3, 4}
+                    local visits = 0
+                    table.foreachi(values, function()
+                        table.foreachi(values, function() visits = visits + 1 end)
+                    end)
+                    return visits
+                end
+                """
+            );
+            LuaValue coroutine = useCoroutine ? script.CreateCoroutine(run) : LuaValue.Nil;
+            script.Options.Sandbox = new SandboxOptions { MaxInstructions = Limit };
+
+            SandboxViolationException error = await Assert
+                .That(() => useCoroutine ? coroutine.Coroutine.Resume() : script.CallValues(run))
+                .Throws<SandboxViolationException>()
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(error.ViolationType)
+                .IsEqualTo(SandboxViolationType.InstructionLimitExceeded)
+                .ConfigureAwait(false);
+            await Assert.That(error.ConfiguredLimit).IsEqualTo(Limit).ConfigureAwait(false);
+            await Assert.That(error.ActualValue).IsEqualTo(Limit + 1).ConfigureAwait(false);
+        }
     }
 }

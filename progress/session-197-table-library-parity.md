@@ -52,8 +52,8 @@ records.
 ## Local verification
 
 - The final quick build passed with zero warnings. The focused table and
-  instruction-limit suites passed 1,185 and 51 tests, respectively. The
-  full quick suite passed all 15,902 tests.
+  instruction-limit suites passed 1,187 and 53 tests, respectively. The
+  full quick suite passed all 15,904 tests.
 - Corpus regeneration found 2,032 extracted snippets. The width and
   comparator fixtures use curated profiles so the extractor's lexical
   heuristics cannot narrow the intended coverage.
@@ -83,6 +83,8 @@ it on return or exception. Separate host calls receive fresh budgets.
 The host renewal callback has a temporary allowance. Work performed inside
 it can report a limit violation without calling the renewal callback again,
 including work on another coroutine in the same script.
+Synchronous Lua library callbacks share the caller's active count. Separate
+host entries keep independent budgets.
 A wall-clock watchdog is listed separately in the
 [sandbox threat model](../docs/security/sandbox-threat-model.md).
 
