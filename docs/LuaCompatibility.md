@@ -74,6 +74,18 @@ For numeric-string arithmetic, numeric loop controls, and `tonumber`, Lua 5.1
 treats NUL as the end of the string. Lua 5.2–5.5 reject strings containing NUL
 in those conversions.
 
+Built-in string comparisons, default `table.sort`, and Lua 5.3–5.5 extrema
+use C-locale byte order. Embedded NUL bytes participate in ordering. The
+comparison reads Lua's stored bytes directly and compares CLR text above the
+byte range as UTF-8. A CLR code unit in the byte range can represent either a
+raw Lua byte or source text. Byte identity needs a representation that
+distinguishes them.
+[#201](https://github.com/Ambiguous-Interactive/NovaSharp/issues/201)
+
+NovaSharp's `os.setlocale` leaves collation unchanged. On Linux, reference Lua
+orders `Z` before `a` in the C locale and orders `a` before `Z` in the
+`en_US.utf8` locale.
+
 ## Metatables, GC, and Weak Tables
 
 | Feature                                              | Status | Coverage / Evidence                         | Notes & Owner                                                                                                 |

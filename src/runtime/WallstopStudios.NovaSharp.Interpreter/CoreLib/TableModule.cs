@@ -420,7 +420,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 if (a.Type == DataType.String && b.Type == DataType.String)
                 {
-                    return string.Compare(a.String, b.String, StringComparison.Ordinal);
+                    return LuaStringComparison.Compare(a.String, b.String);
                 }
 
                 if (

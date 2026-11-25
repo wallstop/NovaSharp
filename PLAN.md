@@ -86,8 +86,9 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    [optional-argument validation](https://github.com/Ambiguous-Interactive/NovaSharp/issues/125),
    [residual number/string parity nits](https://github.com/Ambiguous-Interactive/NovaSharp/issues/138),
    [reference builds for legacy floating modulo](https://github.com/Ambiguous-Interactive/NovaSharp/issues/188),
-   [string ordering in comparisons, sort, and math extrema](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199)
-   to finish [extrema parity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/178),
+   [Lua string byte identity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/201)
+   to complete [string ordering](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199)
+   and [extrema parity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/178),
    [custom type labels in comparison errors](https://github.com/Ambiguous-Interactive/NovaSharp/issues/206),
    [legacy sort comparator side effects](https://github.com/Ambiguous-Interactive/NovaSharp/issues/207),
    [plain integer sort throughput](https://github.com/Ambiguous-Interactive/NovaSharp/issues/208),

@@ -3106,7 +3106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (left.Type == DataType.String && right.Type == DataType.String)
             {
-                less = string.Compare(left.String, right.String, StringComparison.Ordinal) < 0;
+                less = LuaStringComparison.Compare(left.String, right.String) < 0;
                 return true;
             }
 
@@ -3135,7 +3135,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             else if (l.Type == DataType.String && r.Type == DataType.String)
             {
                 _valueStack.Push(LuaValue.False);
-                int comparison = string.Compare(l.String, r.String, StringComparison.Ordinal);
+                int comparison = LuaStringComparison.Compare(l.String, r.String);
                 _valueStack.Push(LuaValue.NewBoolean(comparison <= 0));
             }
             else

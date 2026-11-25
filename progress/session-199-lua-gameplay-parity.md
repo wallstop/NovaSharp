@@ -56,6 +56,18 @@ assignment changes remain queued separately in [PLAN.md](../PLAN.md).
   coverage verifies isolation and the existing CLR descriptor dispatch.
   [#200](https://github.com/Ambiguous-Interactive/NovaSharp/issues/200)
 
+## Hosted review correction
+
+The hosted review reproduced a C-locale discrepancy between U+E000 and
+U+10000. The first PR revision failed the same literal comparison across all
+five profiles. The corrected comparison uses a single byte-order implementation
+for VM and constant comparisons, default sort, and extrema. Raw bytes retain
+their values. The comparator reads UTF-8 bytes on demand for CLR code units
+above the byte range. The source-text versus byte distinction for Latin-1
+is still tracked in #201.
+[PR review](https://github.com/Ambiguous-Interactive/NovaSharp/pull/209#discussion_r4690612211)
+[#199](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199)
+
 ## Independent verification
 
 The floating-loop review compared 26 bounded cases on each pinned Lua build.

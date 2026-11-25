@@ -2,7 +2,7 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 206 undocumented public/internal type declarations.
+Found 208 undocumented public/internal type declarations.
 
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs
   - line 9: missing XML docs for `class ComVisibleAttribute`
@@ -118,6 +118,9 @@ Found 206 undocumented public/internal type declarations.
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/Coroutine.cs
   - line 207: missing XML docs for `ResumeValues()`
   - line 455: missing XML docs for `ResumeValues()`
+- src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/LuaStringComparison.cs
+  - line 10: missing XML docs for `Compare()`
+  - line 96: missing XML docs for `Read()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/UserData.cs
   - line 682: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Debugging/WatchItem.cs

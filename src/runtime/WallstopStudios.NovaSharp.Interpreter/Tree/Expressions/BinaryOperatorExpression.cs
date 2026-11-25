@@ -700,7 +700,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                     }
                     else if (l.Type == DataType.String && r.Type == DataType.String)
                     {
-                        return string.Compare(l.String, r.String, StringComparison.Ordinal) < 0;
+                        return LuaStringComparison.Compare(l.String, r.String) < 0;
                     }
                     else
                     {
@@ -715,7 +715,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                     }
                     else if (l.Type == DataType.String && r.Type == DataType.String)
                     {
-                        return string.Compare(l.String, r.String, StringComparison.Ordinal) <= 0;
+                        return LuaStringComparison.Compare(l.String, r.String) <= 0;
                     }
                     else
                     {
