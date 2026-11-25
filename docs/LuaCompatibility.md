@@ -89,11 +89,14 @@ Lua threads, including coroutines, share a type metatable within each script.
 `debug.setmetatable(thread, nil)` clears it. Lua 5.1 returns `true` from
 `debug.setmetatable`. Lua 5.2–5.5 return the supplied value.
 
-NovaSharp IO handles and other userdata expose members through CLR descriptors.
-When a thread is compared with CLR userdata, the userdata descriptor supplies
-any host equality behavior. CLR callbacks use their attached host
-implementation. For these host-backed values, `debug.getmetatable` returns
-`nil` and `debug.setmetatable` raises an error.
+NovaSharp IO handles and other CLR userdata expose members through CLR
+descriptors. For CLR userdata, `debug.getmetatable` returns `nil` and
+`debug.setmetatable` raises an error. When a thread is compared with CLR
+userdata, the userdata descriptor supplies any host equality behavior.
+
+CLR callbacks run their attached host implementation. The debug metatable
+functions read and update the shared function type metatable through either
+a CLR callback or a Lua closure.
 
 ## Coroutine & Error Handling Semantics
 
