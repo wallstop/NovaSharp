@@ -71,8 +71,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
         }
 
         /// <summary>
-        /// Gets or sets the instruction budget for an interpreter entry. VM instructions and
-        /// metered work inside built-in functions count toward it. Set to 0 for unlimited.
+        /// Gets or sets the instruction budget for VM entry or a direct call to a metered built-in.
+        /// VM instructions and metered built-in work count toward it. Set to 0 for unlimited.
         /// </summary>
         public long MaxInstructions
         {

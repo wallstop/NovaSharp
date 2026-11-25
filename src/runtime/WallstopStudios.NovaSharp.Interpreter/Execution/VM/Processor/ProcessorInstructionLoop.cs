@@ -77,6 +77,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         internal bool HasActiveSandboxInstructionBudget => _sandboxInstructionBudget.Limit > 0;
 
+        internal NativeInstructionBudgetScope EnterNativeInstructionBudget()
+        {
+            if (_sandboxInstructionBudget.Options != null)
+            {
+                return default;
+            }
+
+            SandboxOptions sandbox = _script.Options.Sandbox;
+            long limit = sandbox.MaxInstructions;
+            if (limit == 0)
+            {
+                return default;
+            }
+
+            _sandboxInstructionBudget = new SandboxInstructionBudget(sandbox, limit);
+            return new NativeInstructionBudgetScope(this);
+        }
+
+        internal readonly struct NativeInstructionBudgetScope : IDisposable
+        {
+            private readonly Processor _processor;
+
+            internal NativeInstructionBudgetScope(Processor processor)
+            {
+                _processor = processor;
+            }
+
+            public void Dispose()
+            {
+                if (_processor != null)
+                {
+                    _processor._sandboxInstructionBudget = default;
+                }
+            }
+        }
+
         internal bool ChargeSandboxInstruction()
         {
             if (++_sandboxInstructionBudget.Executed <= _sandboxInstructionBudget.Limit)

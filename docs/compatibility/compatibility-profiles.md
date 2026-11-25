@@ -40,7 +40,8 @@ the Lua 5.2 compatibility exports.
 In Lua 5.3–5.5, `table.insert` can shift entries through `__index` and
 `__newindex` hooks. Indexed operations and hook traversal count toward the
 host's configured sandbox instruction budget. The Lua 5.1 iteration helpers
-also charge work as they visit entries.
+also charge work as they visit entries. These functions use an independent
+budget when a host calls them directly outside an active interpreter entry.
 
 In Lua 5.5, `table.create(nseq [, nrec])` returns a new empty table. Use
 `nseq` to hint at sequence entries and `nrec` to hint at other keys, with

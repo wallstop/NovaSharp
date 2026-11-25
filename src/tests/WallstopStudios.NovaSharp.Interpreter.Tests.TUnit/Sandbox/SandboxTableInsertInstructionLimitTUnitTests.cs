@@ -68,6 +68,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         [Arguments(LuaCompatibilityVersion.Lua53)]
         [Arguments(LuaCompatibilityVersion.Lua54)]
         [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DirectIndexedInsertUsesAnIndependentBudget(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version, new SandboxOptions { MaxInstructions = Limit });
+            LuaValue insert = script.Globals.Get("table").Table.Get("insert");
+            LuaValue values = script.Globals.Get("values");
+
+            SandboxViolationException error = await Assert
+                .That(() =>
+                    script.CallValues(
+                        insert,
+                        values,
+                        LuaValue.NewInteger(1),
+                        LuaValue.NewString("new")
+                    )
+                )
+                .Throws<SandboxViolationException>()
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(error.ViolationType)
+                .IsEqualTo(SandboxViolationType.InstructionLimitExceeded)
+                .ConfigureAwait(false);
+            await Assert.That(error.ActualValue).IsEqualTo(Limit + 1).ConfigureAwait(false);
+
+            script.CallValues(insert, values, LuaValue.NewString("append"));
+            await Assert
+                .That(script.Globals.Get("backing").Table.Get(129).String)
+                .IsEqualTo("append")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task IndexedInsertChargesAcrossCallsInOneVmEntry(
             LuaCompatibilityVersion version
         )

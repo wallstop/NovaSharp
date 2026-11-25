@@ -10,6 +10,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
@@ -165,6 +166,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             Table table = args.AsType(0, "foreach", DataType.Table).Table;
             LuaValue action = GetIterationCallback(args, "foreach");
             LuaValue key = LuaValue.Nil;
+            using Processor.NativeInstructionBudgetScope budget =
+                executionContext.EnterNativeInstructionBudget();
             bool chargeInstruction = executionContext.HasActiveSandboxInstructionBudget;
 
             while (true)
@@ -208,6 +211,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             Table table = args.AsType(0, "foreachi", DataType.Table).Table;
             int length = table.Length;
             LuaValue action = GetIterationCallback(args, "foreachi");
+            using Processor.NativeInstructionBudgetScope budget =
+                executionContext.EnterNativeInstructionBudget();
             bool chargeInstruction = executionContext.HasActiveSandboxInstructionBudget;
             for (int i = 1; i <= length; i++)
             {
@@ -511,6 +516,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         )
                     )
                 );
+
+            using Processor.NativeInstructionBudgetScope budget = needsIndexedAccess
+                ? executionContext.EnterNativeInstructionBudget()
+                : default;
 
             if (args.Count == 2)
             {

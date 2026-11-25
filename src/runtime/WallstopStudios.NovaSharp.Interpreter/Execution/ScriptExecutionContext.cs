@@ -459,13 +459,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         public Script Script => _processor.GetScript();
 
         /// <summary>
-        /// Whether this callback is running within a VM entry with an instruction limit.
+        /// Enters the configured instruction budget for native work when no budget is active.
+        /// </summary>
+        internal Processor.NativeInstructionBudgetScope EnterNativeInstructionBudget() =>
+            _processor.EnterNativeInstructionBudget();
+
+        /// <summary>
+        /// Whether this callback has an active instruction limit.
         /// </summary>
         internal bool HasActiveSandboxInstructionBudget =>
             _processor.HasActiveSandboxInstructionBudget;
 
         /// <summary>
-        /// Charges one native work unit against the active VM instruction budget.
+        /// Charges one native work unit against the active instruction budget.
         /// </summary>
         internal void ChargeSandboxInstruction() => _processor.ChargeSandboxInstruction();
 

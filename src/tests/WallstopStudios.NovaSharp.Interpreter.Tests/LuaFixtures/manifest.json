@@ -1,7 +1,7 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2029,
-  "novasharp_only": 506,
+  "total_snippets": 2030,
+  "novasharp_only": 507,
   "comparable": 1523,
   "by_version": {
     "5.1": 1014,
@@ -22538,6 +22538,14 @@
     },
     {
       "path": "SandboxTableIterationInstructionLimitTUnitTests/LegacyIterationConsumesInstructionBudget.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableIterationInstructionLimitTUnitTests.cs:27",
+      "test": "SandboxTableIterationInstructionLimitTUnitTests.LegacyIterationConsumesInstructionBudget",
+      "lua_versions": [],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "SandboxTableIterationInstructionLimitTUnitTests/LegacyIterationConsumesInstructionBudget_1.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxTableIterationInstructionLimitTUnitTests.cs:27",
       "test": "SandboxTableIterationInstructionLimitTUnitTests.LegacyIterationConsumesInstructionBudget",
       "lua_versions": [],

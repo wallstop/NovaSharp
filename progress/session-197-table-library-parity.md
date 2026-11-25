@@ -52,9 +52,9 @@ records.
 ## Local verification
 
 - The final quick build passed with zero warnings. The focused table and
-  instruction-limit suites passed 1,176 and 42 tests, respectively. The
-  full quick suite passed all 15,893 tests.
-- Corpus regeneration found 2,029 extracted snippets. The width and
+  instruction-limit suites passed 1,181 and 47 tests, respectively. The
+  full quick suite passed all 15,898 tests.
+- Corpus regeneration found 2,030 extracted snippets. The width and
   comparator fixtures use curated profiles so the extractor's lexical
   heuristics cannot narrow the intended coverage.
 - The enforced Linux corpus passed 6,110 fixture and profile combinations
@@ -78,5 +78,7 @@ cumulative work across calls, restored outer accounting after reentry, and
 the protected-call result. Lua 5.1 and 5.2 retain the raw insert path.
 Lua 5.1 `foreach` and `foreachi` charge their iteration work through the
 same budget, with bounded regressions for both entry points.
+Direct host calls to these functions use the configured budget and release
+it on return or exception. Separate host calls receive fresh budgets.
 A wall-clock watchdog is listed separately in the
 [sandbox threat model](../docs/security/sandbox-threat-model.md).
