@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2035,
+  "total_snippets": 2032,
   "novasharp_only": 510,
-  "comparable": 1525,
+  "comparable": 1522,
   "by_version": {
-    "5.1": 1014,
-    "5.2": 720,
-    "5.3": 968,
-    "5.4": 1041,
-    "5.5": 1082
+    "5.1": 1013,
+    "5.2": 719,
+    "5.3": 966,
+    "5.4": 1039,
+    "5.5": 1080
   },
   "snippets": [
     {
@@ -22564,41 +22564,6 @@
       "test": "SandboxTableInsertInstructionLimitTUnitTests.DirectInsertCountsLengthCallbackAndIndexedWritesTogether",
       "lua_versions": [],
       "novasharp_only": true,
-      "expects_error": false
-    },
-    {
-      "path": "MathModuleTUnitTests/ExtremaCoerceNumeralsInLegacyProfiles.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2710",
-      "test": "MathModuleTUnitTests.ExtremaCoerceNumeralsInLegacyProfiles",
-      "lua_versions": [
-        "5.1",
-        "5.2"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "MathModuleTUnitTests/ExtremaInvokeLessThanInReferenceOrder.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2657",
-      "test": "MathModuleTUnitTests.ExtremaInvokeLessThanInReferenceOrder",
-      "lua_versions": [
-        "5.3",
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "MathModuleTUnitTests/ExtremaPreserveOriginalOperands.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2615",
-      "test": "MathModuleTUnitTests.ExtremaPreserveOriginalOperands",
-      "lua_versions": [
-        "5.3",
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
       "expects_error": false
     }
   ]

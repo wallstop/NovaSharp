@@ -63,28 +63,11 @@ subsequent sequence. Lua 5.4–5.5 start from the original initial value.
 | `io`         | `io.popen` process pipes                                        | ⏸️     | `IoModuleTests.PopenIsUnsupportedAndProvidesErrorMessage`                                                                                          | Intentionally disabled for sandboxing; hosts must provide a custom `IPlatformAccessor` to enable it. Owner: Tooling.                                                                                                |
 | `os`         | `os.execute` Lua-style status tuples                            | ✅     | `OsSystemModuleTests.ExecuteCommandReturnsSuccessTuple`, `ExecuteCommandReturnsNilTupleOnNonZeroExit`                                              | Now returns \`(true                                                                                                                                                                                                 |
 
-In Lua 5.1 and 5.2, `math.min` and `math.max` coerce numeric strings and
-return a number. In Lua 5.3–5.5 they compare with `<` and return the selected
-argument with its original type and identity. When values tie, the first
-occurrence wins.
-
 Across Lua 5.1–5.5, `string.format` renders infinity as `inf` or `INF`
 according to the conversion, with the requested sign and space padding.
 For numeric-string arithmetic, numeric loop controls, and `tonumber`, Lua 5.1
 treats NUL as the end of the string. Lua 5.2–5.5 reject strings containing NUL
 in those conversions.
-
-Built-in string comparisons, default `table.sort`, and Lua 5.3–5.5 extrema
-use C-locale byte order. Embedded NUL bytes participate in ordering. The
-comparison reads Lua's stored bytes directly and compares CLR text above the
-byte range as UTF-8. A CLR code unit in the byte range can represent either a
-raw Lua byte or source text. Byte identity needs a representation that
-distinguishes them.
-[#201](https://github.com/Ambiguous-Interactive/NovaSharp/issues/201)
-
-NovaSharp's `os.setlocale` leaves collation unchanged. On Linux, reference Lua
-orders `Z` before `a` in the C locale and orders `a` before `Z` in the
-`en_US.utf8` locale.
 
 ## Metatables, GC, and Weak Tables
 

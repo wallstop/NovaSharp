@@ -128,9 +128,7 @@ while true do
 end
 ]]
 lines = run_with_stdin(chunk, 'number.txt')
-local legacy_numbers = _VERSION == 'Lua 5.1' or _VERSION == 'Lua 5.2'
-local expected_maximum = legacy_numbers and '15000000000000' or '15000000000000.0'
-is(lines[1], expected_maximum, "function io:read *number")
+is(lines[1], '15000000000000', "function io:read *number")
 is(lines[2], '1000001')
 
 os.remove('number.txt') -- clean up

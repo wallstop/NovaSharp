@@ -30,17 +30,6 @@ assignment changes remain queued separately in [PLAN.md](../PLAN.md).
   bounded entry with infinite or NaN steps.
   [#186](https://github.com/Ambiguous-Interactive/NovaSharp/issues/186)
 
-- In Lua 5.3–5.5, `math.min` and `math.max` select and return one original
-  operand. The base converted integers above the exact double range and
-  coerced strings before comparing them. The fixed numeric, string, and
-  metamethod probes check the selected value, subtype, identity, operand
-  order, and first-wins ties. Lua 5.1–5.2 retain numeric coercion with the
-  active profile's numeral rules. Full issue closure still requires
-  reference-compatible non-ASCII string ordering and the legacy NaN payload
-  parser case.
-  [#178](https://github.com/Ambiguous-Interactive/NovaSharp/issues/178)
-  [#199](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199)
-  [#195](https://github.com/Ambiguous-Interactive/NovaSharp/issues/195)
 
 - Lua 5.3–5.5 table-library operations now respect indexed reads and writes
   for proxy tables and eligible non-table values. Reference probes cover
@@ -56,17 +45,24 @@ assignment changes remain queued separately in [PLAN.md](../PLAN.md).
   coverage verifies isolation and the existing CLR descriptor dispatch.
   [#200](https://github.com/Ambiguous-Interactive/NovaSharp/issues/200)
 
-## Hosted review correction
+## Deferred extrema and string ordering
 
-The hosted review reproduced a C-locale discrepancy between U+E000 and
-U+10000. The first PR revision failed the same literal comparison across all
-five profiles. The corrected comparison uses a single byte-order implementation
-for VM and constant comparisons, default sort, and extrema. Raw bytes retain
-their values. The comparator reads UTF-8 bytes on demand for CLR code units
-above the byte range. The source-text versus byte distinction for Latin-1
-is still tracked in #201.
-[PR review](https://github.com/Ambiguous-Interactive/NovaSharp/pull/209#discussion_r4690612211)
+The initial extrema candidate preserved the selected operand, including
+integers above the exact double range and objects selected through `__lt`.
+The hosted review showed a newly exposed ordering discrepancy for U+E000 and
+U+10000. A shared byte comparator corrected that case, then a second review
+showed a regression for `'é' < 'Ā'`. Reference Lua distinguishes the UTF-8
+source literal `'é'` from `string.char(233)`. NovaSharp represents both as the
+same value. The two comparisons need different results, so changing their
+shared comparator cannot recover source provenance.
+
+Both experimental changes were removed from the delivery. The two candidates
+and their reproductions remain in the PR history. Byte identity needs to
+survive source loading, concatenation, and the host boundary before the
+ordering and extrema changes can ship.
+[#178](https://github.com/Ambiguous-Interactive/NovaSharp/issues/178)
 [#199](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199)
+[#201](https://github.com/Ambiguous-Interactive/NovaSharp/issues/201)
 
 ## Independent verification
 
@@ -74,12 +70,10 @@ The floating-loop review compared 26 bounded cases on each pinned Lua build.
 The base differed on seven cases per affected profile. The fixed results
 matched on all five, including signed zeros, subnormals, infinities, and NaNs.
 
-Independent table and extrema verification matched all 21 paired
-fixture/profile cases, including native file access and the bounded Lua 5.2
-remove check. In-place sort matched 90 additional normal, write-error, and
-invalid-comparator traces per modern profile. Cross-feature probes exercised
-thread metatable replacement during an extrema comparison and coroutine
-recovery after non-yieldable table and math hooks raised errors.
+Independent table verification matched all 13 paired fixture/profile
+cases, including native file access and the bounded Lua 5.2 remove check.
+In-place sort matched 90 additional normal, write-error, and
+invalid-comparator traces per modern profile.
 
 ## Follow-up issues
 

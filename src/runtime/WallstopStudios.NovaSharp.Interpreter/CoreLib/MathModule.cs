@@ -58,6 +58,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         private static readonly Func<double, double, double> LdexpOp = (d1, d2) =>
             d1 * Math.Pow(2, d2);
 
+        // Lua max/min use standard comparison which makes NaN comparisons always false
+        // This means NaN values are effectively "skipped" - the non-NaN value wins
+        // Do NOT use Math.Max/Math.Min which propagate NaN per IEEE 754
+        private static readonly Func<double, double, double> MaxOp = (d1, d2) => d2 > d1 ? d2 : d1;
+        private static readonly Func<double, double, double> MinOp = (d1, d2) => d2 < d1 ? d2 : d1;
         private static readonly Func<double, double, double> PowOp = Math.Pow;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -143,78 +148,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return LuaValue.NewNumber(func(arg.Number, arg2.IsNil ? defVal : arg2.Number));
         }
 
-        private static LuaValue FindExtremum(
-            ScriptExecutionContext executionContext,
+        private static LuaValue Execaccum(
             CallbackArgumentsView args,
-            string functionName,
-            bool findMinimum
+            string funcName,
+            Func<double, double, double> func
         )
         {
-            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
-                executionContext.Script.CompatibilityVersion
-            );
-            bool coerceNumbers = version < LuaCompatibilityVersion.Lua53;
+            double accum = double.NaN;
+
             if (args.Count == 0)
             {
-                throw coerceNumbers
-                    ? ScriptRuntimeException.BadArgumentNoValue(0, functionName, DataType.Number)
-                    : ScriptRuntimeException.BadArgumentValueExpected(0, functionName);
-            }
-
-            if (coerceNumbers)
-            {
-                double selectedNumber = RequireExtremumNumber(args[0], 0, functionName, version);
-                for (int i = 1; i < args.Count; i++)
-                {
-                    double candidate = RequireExtremumNumber(args[i], i, functionName, version);
-                    if (findMinimum ? candidate < selectedNumber : selectedNumber < candidate)
-                    {
-                        selectedNumber = candidate;
-                    }
-                }
-
-                return LuaValue.NewFloat(selectedNumber);
-            }
-
-            LuaValue selected = args[0];
-            for (int i = 1; i < args.Count; i++)
-            {
-                LuaValue candidate = args[i];
-                // Lua compares in opposite directions for the two functions. An __lt
-                // metamethod observes both that order and exactly one comparison per candidate.
-                if (
-                    findMinimum
-                        ? executionContext.CompareLibraryLessThan(candidate, selected)
-                        : executionContext.CompareLibraryLessThan(selected, candidate)
-                )
-                {
-                    selected = candidate;
-                }
-            }
-
-            return selected;
-        }
-
-        private static double RequireExtremumNumber(
-            LuaValue value,
-            int index,
-            string functionName,
-            LuaCompatibilityVersion version
-        )
-        {
-            LuaNumber? number = value.CastToLuaNumber(version);
-            if (!number.HasValue)
-            {
-                throw ScriptRuntimeException.BadArgument(
-                    index,
-                    functionName,
-                    DataType.Number,
-                    value.Type,
-                    false
+                throw new ScriptRuntimeException(
+                    "bad argument #1 to '{0}' (number expected, got no value)",
+                    funcName
                 );
             }
 
-            return number.Value.ToDouble;
+            for (int i = 0; i < args.Count; i++)
+            {
+                LuaValue arg = args.AsType(i, funcName, DataType.Number, false);
+
+                if (i == 0)
+                {
+                    accum = arg.Number;
+                }
+                else
+                {
+                    accum = func(accum, arg.Number);
+                }
+            }
+
+            return LuaValue.NewNumber(accum);
         }
 
         /// <summary>
@@ -979,55 +943,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `math.max`, returning the largest argument (§6.7).
         /// </summary>
-        /// <remarks>Lua 5.3 and later compare with <c>&lt;</c> and return the selected argument.</remarks>
         /// <param name="executionContext">Current script execution context.</param>
-        /// <param name="args">Arguments to compare, coerced to numbers in Lua 5.1 and 5.2.</param>
+        /// <param name="args">Numeric arguments to compare.</param>
         /// <returns>Maximum value.</returns>
         [NovaSharpModuleMethod(Name = "max")]
         public static LuaValue Max(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+            ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            return Max(executionContext, new CallbackArgumentsView(args));
+            return Max(new CallbackArgumentsView(args));
         }
 
         [NovaSharpModuleMethod(Name = "max")]
-        private static LuaValue Max(
-            ScriptExecutionContext executionContext,
-            CallbackArgumentsView args
-        )
+        private static LuaValue Max(CallbackArgumentsView args)
         {
-            return FindExtremum(executionContext, args, "max", findMinimum: false);
+            return Execaccum(args, "max", MaxOp);
         }
 
         /// <summary>
         /// Implements Lua `math.min`, returning the smallest argument (§6.7).
         /// </summary>
-        /// <remarks>Lua 5.3 and later compare with <c>&lt;</c> and return the selected argument.</remarks>
         /// <param name="executionContext">Current script execution context.</param>
-        /// <param name="args">Arguments to compare, coerced to numbers in Lua 5.1 and 5.2.</param>
+        /// <param name="args">Numeric arguments to compare.</param>
         /// <returns>Minimum value.</returns>
         [NovaSharpModuleMethod(Name = "min")]
         public static LuaValue Min(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+            ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            return Min(executionContext, new CallbackArgumentsView(args));
+            return Min(new CallbackArgumentsView(args));
         }
 
         [NovaSharpModuleMethod(Name = "min")]
-        private static LuaValue Min(
-            ScriptExecutionContext executionContext,
-            CallbackArgumentsView args
-        )
+        private static LuaValue Min(CallbackArgumentsView args)
         {
-            return FindExtremum(executionContext, args, "min", findMinimum: true);
+            return Execaccum(args, "min", MinOp);
         }
 
         /// <summary>
