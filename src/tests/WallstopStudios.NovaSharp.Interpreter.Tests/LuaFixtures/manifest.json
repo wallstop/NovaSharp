@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
   "total_snippets": 2032,
-  "novasharp_only": 510,
-  "comparable": 1522,
+  "novasharp_only": 511,
+  "comparable": 1521,
   "by_version": {
-    "5.1": 1013,
-    "5.2": 719,
-    "5.3": 966,
-    "5.4": 1039,
-    "5.5": 1080
+    "5.1": 1012,
+    "5.2": 718,
+    "5.3": 965,
+    "5.4": 1038,
+    "5.5": 1079
   },
   "snippets": [
     {
@@ -4667,14 +4667,8 @@
       "path": "MyObject/MetatableExtensibleObjectSample.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/MetatableTUnitTests.cs:226",
       "test": "MyObject.MetatableExtensibleObjectSample",
-      "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
+      "lua_versions": [],
+      "novasharp_only": true,
       "expects_error": false
     },
     {

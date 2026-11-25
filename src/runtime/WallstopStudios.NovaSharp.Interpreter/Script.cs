@@ -4861,12 +4861,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Gets the shared metatable for a type in this script.
+        /// Lua closures and CLR callbacks use the same function metatable.
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns>The metatable, or <see langword="null"/> when unavailable.</returns>
         public Table GetTypeMetatable(DataType type)
         {
-            int t = (int)type;
+            int t = (int)type.GetSharedMetatableType();
 
             if (t >= 0 && t < _typeMetatables.Length)
             {
@@ -4878,6 +4879,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Sets the shared metatable for a type in this script.
+        /// Lua closures and CLR callbacks use the same function metatable.
         /// </summary>
         /// <param name="type">A type supported by <see cref="LuaTypeExtensions.CanHaveTypeMetatables"/>.</param>
         /// <param name="metatable">The metatable, or <see langword="null"/> to remove it.</param>
@@ -4886,7 +4888,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         {
             this.CheckScriptOwnership(metatable);
 
-            int t = (int)type;
+            int t = (int)type.GetSharedMetatableType();
 
             if (t >= 0 && t < _typeMetatables.Length)
             {

@@ -25,14 +25,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 return value.Table.MetaTable;
             }
-            else if (value.Type.CanHaveTypeMetatables())
-            {
-                return _script.GetTypeMetatable(value.Type);
-            }
-            else
-            {
-                return null;
-            }
+
+            return _script.GetTypeMetatable(value.Type);
         }
 
         /// <summary>
@@ -75,13 +69,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DataType rightType = GetOrderingType(right.Type);
             if (
                 leftType == rightType
+                && TryGetMetamethodRaw(GetOrderingMetatable(left), eventName, out metamethod)
                 && TryGetMetamethodRaw(
-                    GetOrderingMetatable(left, leftType),
-                    eventName,
-                    out metamethod
-                )
-                && TryGetMetamethodRaw(
-                    GetOrderingMetatable(right, rightType),
+                    GetOrderingMetatable(right),
                     eventName,
                     out LuaValue rightMetamethod
                 )
@@ -101,17 +91,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private static DataType GetOrderingType(DataType type)
         {
-            return type switch
-            {
-                DataType.Void => DataType.Nil,
-                DataType.ClrFunction => DataType.Function,
-                _ => type,
-            };
+            return type == DataType.Void ? DataType.Nil : type.GetSharedMetatableType();
         }
 
-        private Table GetOrderingMetatable(LuaValue value, DataType type)
+        private Table GetOrderingMetatable(LuaValue value)
         {
-            return value.Type == type ? GetMetatable(value) : _script.GetTypeMetatable(type);
+            return value.Type == DataType.Void
+                ? _script.GetTypeMetatable(DataType.Nil)
+                : GetMetatable(value);
         }
 
         private bool TryGetBinaryDescriptorMetamethod(
@@ -164,9 +151,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             out LuaValue metamethod
         )
         {
-            // Lua thread equality uses identity. A CLR userdata operand can still supply its
-            // descriptor equality operation through TryGetBinaryMetamethod.
-            if (value.Type == DataType.Thread && eventName == Metamethods.Eq)
+            // Lua function and thread equality use identity. A CLR userdata operand can still
+            // supply its descriptor equality operation through TryGetBinaryMetamethod.
+            if (
+                value.Type is DataType.Thread or DataType.Function or DataType.ClrFunction
+                && eventName == Metamethods.Eq
+            )
             {
                 metamethod = LuaValue.Nil;
                 return false;
