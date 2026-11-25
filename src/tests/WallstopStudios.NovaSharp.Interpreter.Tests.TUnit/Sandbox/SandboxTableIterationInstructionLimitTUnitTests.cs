@@ -49,16 +49,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        [Arguments(8, false)]
-        [Arguments(80, true)]
+        [Arguments(8, false, false)]
+        [Arguments(80, true, false)]
+        [Arguments(8, false, true)]
+        [Arguments(80, true, true)]
         public async Task NativeWorkDuringRenewalCannotRenewRecursively(
             int nestedCount,
-            bool nestedExhaustionExpected
+            bool nestedExhaustionExpected,
+            bool useCoroutine
         )
         {
             Script script = new(LuaCompatibilityVersion.Lua51);
             LuaValue iterate = script.Globals.Get("table").Table.Get("foreachi");
             LuaValue action = script.DoString("return function() end");
+            LuaValue coroutineBody = script.DoString(
+                "return function(visit, values, action) visit(values, action) end"
+            );
             LuaValue outer = LuaValue.NewTable(CreateSequence(script, 128));
             LuaValue nested = LuaValue.NewTable(CreateSequence(script, nestedCount));
             int renewals = 0;
@@ -84,7 +90,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                     );
                     try
                     {
-                        script.CallValues(iterate, nested, action);
+                        if (useCoroutine)
+                        {
+                            script
+                                .CreateCoroutine(coroutineBody)
+                                .Coroutine.Resume(new[] { iterate, nested, action });
+                        }
+                        else
+                        {
+                            script.CallValues(iterate, nested, action);
+                        }
                     }
                     catch (SandboxViolationException error)
                     {

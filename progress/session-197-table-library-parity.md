@@ -52,9 +52,9 @@ records.
 ## Local verification
 
 - The final quick build passed with zero warnings. The focused table and
-  instruction-limit suites passed 1,183 and 49 tests, respectively. The
-  full quick suite passed all 15,900 tests.
-- Corpus regeneration found 2,031 extracted snippets. The width and
+  instruction-limit suites passed 1,185 and 51 tests, respectively. The
+  full quick suite passed all 15,902 tests.
+- Corpus regeneration found 2,032 extracted snippets. The width and
   comparator fixtures use curated profiles so the extractor's lexical
   heuristics cannot narrow the intended coverage.
 - The enforced Linux corpus passed 6,110 fixture and profile combinations
@@ -81,6 +81,11 @@ same budget, with bounded regressions for both entry points.
 Direct host calls to these functions use the configured budget and release
 it on return or exception. Separate host calls receive fresh budgets.
 The host renewal callback has a temporary allowance. Work performed inside
-it can report a limit violation without calling the renewal callback again.
+it can report a limit violation without calling the renewal callback again,
+including work on another coroutine in the same script.
 A wall-clock watchdog is listed separately in the
 [sandbox threat model](../docs/security/sandbox-threat-model.md).
+
+The review also prompted two exploratory API follow-ups.
+[#203](https://github.com/Ambiguous-Interactive/NovaSharp/issues/203)
+[#124](https://github.com/Ambiguous-Interactive/NovaSharp/issues/124#issuecomment-7150662642)

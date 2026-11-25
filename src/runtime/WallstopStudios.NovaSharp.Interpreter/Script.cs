@@ -616,6 +616,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
             get { return Options.CompatibilityVersion; }
         }
 
+        // A host renewal callback can enter another processor belonging to this script.
+        internal bool IsRenewingSandboxInstructionBudget { get; set; }
+
         /// <summary>
         /// Gets the derived compatibility profile describing the selected Lua feature set.
         /// </summary>

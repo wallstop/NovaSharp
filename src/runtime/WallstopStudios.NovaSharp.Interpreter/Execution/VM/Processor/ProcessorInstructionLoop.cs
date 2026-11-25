@@ -30,22 +30,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private struct SandboxInstructionBudget
         {
-            public SandboxInstructionBudget(
-                SandboxOptions options,
-                long limit,
-                bool isRenewing = false
-            )
+            public SandboxInstructionBudget(SandboxOptions options, long limit)
             {
                 Options = options;
                 Limit = limit;
                 Executed = 0;
-                IsRenewing = isRenewing;
             }
 
             public SandboxOptions Options { get; }
             public long Limit { get; }
             public long Executed { get; set; }
-            public bool IsRenewing { get; set; }
         }
 
         private readonly struct TailCallFrameReuseState
@@ -135,11 +129,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             SandboxInstructionBudget exhausted = _sandboxInstructionBudget;
             Func<Script, long, bool> callback = exhausted.Options.OnInstructionLimitExceeded;
             bool renewed = false;
-            if (callback != null && !exhausted.IsRenewing)
+            if (callback != null && !_script.IsRenewingSandboxInstructionBudget)
             {
                 // Give host renewal work a fresh allowance without recursively calling the host.
                 _sandboxInstructionBudget.Executed = 0;
-                _sandboxInstructionBudget.IsRenewing = true;
+                _script.IsRenewingSandboxInstructionBudget = true;
                 try
                 {
                     renewed = callback(_script, exhausted.Executed);
@@ -147,6 +141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 finally
                 {
                     _sandboxInstructionBudget = exhausted;
+                    _script.IsRenewingSandboxInstructionBudget = false;
                 }
             }
 
@@ -178,11 +173,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             // Nested VM entries retain their existing independent budget and restore the caller's
             // count when they return, including when a native callback reenters Lua.
             SandboxInstructionBudget previousBudget = _sandboxInstructionBudget;
-            _sandboxInstructionBudget = new SandboxInstructionBudget(
-                sandbox,
-                instructionLimit,
-                previousBudget.IsRenewing
-            );
+            _sandboxInstructionBudget = new SandboxInstructionBudget(sandbox, instructionLimit);
             try
             {
                 return ProcessingLoopCore(instructionPtr, sandbox, instructionLimit > 0);
