@@ -35,8 +35,8 @@ Review hardening added the remaining boundary rules:
   protecting local unwind across direct CLR `pcall`/`xpcall` boundaries;
 - close a failed `coroutine.wrap` result and propagate a replacement handler
   error;
-- reject reentrant `coroutine.close` and `coroutine.resume` while handlers are
-  running instead of draining live frames;
+- reject reentrant `coroutine.resume` while handlers run, and reject reentrant
+  `coroutine.close` in Lua 5.4 while reproducing Lua 5.5's silent handler abort;
 - keep the original deferred error when a later resume is rejected;
 - report `running` and non-yieldable status inside close handlers.
 
@@ -45,20 +45,13 @@ Review hardening added the remaining boundary rules:
 - Red on the base revision: the reproduction printed `resume false boom 2` and
   `close2 false boom`; reference Lua 5.4/5.5 print `resume false boom 0` and
   `close2 true nil`.
-- Green TUnit: `ProcessorCoroutineCloseTUnitTests` 73/73,
-  `CoroutineModuleTUnitTests` 346/346, full suite `16189/16189`.
+- Green TUnit: `ProcessorCoroutineCloseTUnitTests` 74/74,
+  `CoroutineModuleTUnitTests` 348/348, full suite `16192/16192`.
 - Reference Lua 5.4 and 5.5 outputs match for the new deferred-close,
-  suspended-close, reentrant-close, self-resume, status, wrap, protected CLR
-  callback, and unprotected CLR callback fixtures.
+  suspended-close, reentrant-close, self-close, self-resume, status, wrap,
+  protected CLR callback, and unprotected CLR callback fixtures.
 - Lua comparison 5.1, 5.2, 5.3, and 5.5: zero unexpected mismatches and no
   ratchet changes. Lua 5.4 has the two pre-existing 5.4.4-vs-5.4.7 reference
   deltas (`OperationsUseVersionedIndexingAndLength` and
   `GenericForClosingValueFollowsLexicalExitOrder`), unchanged by this session.
 - `bash ./scripts/dev/pre-commit.sh`: passed.
-
-## Residual risk
-
-Lua 5.5 silently aborts a close handler that reenters `coroutine.close`; the
-guard here raises Lua 5.4's running-coroutine error for both profiles. That keeps
-the VM safe, and the 5.4 fixture locks the guarded behavior, but the 5.5-only
-silent-abort variant is not modeled.

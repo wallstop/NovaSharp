@@ -1222,6 +1222,47 @@ return first, second
 
         [global::TUnit.Core.Test]
         [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task WrapPreservesRejectedResumeInsideCloseHandler(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local wrapper
+                local observed
+                wrapper = coroutine.wrap(function()
+                    local pending <close> = setmetatable({}, {
+                        __close = function()
+                            local ok, err = pcall(wrapper)
+                            observed = tostring(ok) .. ':' .. tostring(err) .. ':' .. type(err)
+                        end
+                    })
+                    coroutine.yield('pause')
+                    error('boom', 0)
+                end)
+
+                local first = wrapper()
+                local ok, err = pcall(wrapper)
+
+                print('first', first)
+                print('second', ok, err)
+                print('observed', observed)
+
+                return first, ok, err, observed
+                "
+            );
+
+            await Assert.That(result.Tuple[0].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[1].Boolean).IsFalse();
+            await Assert.That(result.Tuple[2].String).IsEqualTo("boom");
+            await Assert
+                .That(result.Tuple[3].String)
+                .IsEqualTo("false:cannot resume non-suspended coroutine:string");
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
         public async Task WrapClosesFailedCoroutineAndUsesHandlerError(
             LuaCompatibilityVersion version
         )

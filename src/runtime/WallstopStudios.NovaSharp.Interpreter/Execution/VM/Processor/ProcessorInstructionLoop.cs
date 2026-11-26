@@ -1297,6 +1297,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 CloseValue(symbol, previous, activeError, instructionPtr);
             }
+            catch (CoroutineSelfCloseException)
+            {
+                return activeException;
+            }
             catch (ScriptRuntimeException closeException)
             {
                 if (closeException.CallStack == null)

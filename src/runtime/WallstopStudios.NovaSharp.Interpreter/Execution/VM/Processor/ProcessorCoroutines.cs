@@ -297,6 +297,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 if (_isClosingCoroutine)
                 {
+                    LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                        _script.CompatibilityVersion
+                    );
+                    if (version >= LuaCompatibilityVersion.Lua55 && _closeUnwindBoundaryDepth >= 0)
+                    {
+                        while (_executionStack.Count > _closeUnwindBoundaryDepth)
+                        {
+                            CallStackItem frame = PopToBasePointer();
+                            try
+                            {
+                                CloseAllPendingBlocks(frame, _lastCloseError);
+                            }
+                            finally
+                            {
+                                CallStackItemPool.Return(frame);
+                            }
+                        }
+
+                        throw new CoroutineSelfCloseException();
+                    }
+
                     throw ScriptRuntimeException.CannotCloseCoroutine(CoroutineState.Running);
                 }
 
@@ -424,6 +445,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             return LuaValue.True;
+        }
+
+        public sealed class CoroutineSelfCloseException : Exception
+        {
+            public CoroutineSelfCloseException() { }
+
+            public CoroutineSelfCloseException(string message)
+                : base(message) { }
+
+            public CoroutineSelfCloseException(string message, Exception innerException)
+                : base(message, innerException) { }
         }
     }
 }

@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2082,
+  "total_snippets": 2084,
   "novasharp_only": 510,
-  "comparable": 1572,
+  "comparable": 1574,
   "by_version": {
     "5.1": 1035,
     "5.2": 741,
     "5.3": 988,
-    "5.4": 1083,
-    "5.5": 1126
+    "5.4": 1084,
+    "5.5": 1128
   },
   "snippets": [
     {
@@ -23167,6 +23167,27 @@
       "test": "ProcessorCoroutineCloseTUnitTests.CloseHandlerCannotResumeItsOwnCoroutine",
       "lua_versions": [
         "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "CoroutineModuleTUnitTests/WrapPreservesRejectedResumeInsideCloseHandler.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:1230",
+      "test": "CoroutineModuleTUnitTests.WrapPreservesRejectedResumeInsideCloseHandler",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "ProcessorCoroutineCloseTUnitTests/CloseHandlerSelfCloseAbortsHandlerAndContinuesInLua55.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:632",
+      "test": "ProcessorCoroutineCloseTUnitTests.CloseHandlerSelfCloseAbortsHandlerAndContinuesInLua55",
+      "lua_versions": [
         "5.5"
       ],
       "novasharp_only": false,
