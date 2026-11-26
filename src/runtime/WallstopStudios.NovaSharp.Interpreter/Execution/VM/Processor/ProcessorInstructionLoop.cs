@@ -1299,6 +1299,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             catch (CoroutineSelfCloseException)
             {
+                activeError = LuaValue.Nil;
                 return activeException;
             }
             catch (ScriptRuntimeException closeException)

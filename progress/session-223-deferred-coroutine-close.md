@@ -45,8 +45,8 @@ Review hardening added the remaining boundary rules:
 - Red on the base revision: the reproduction printed `resume false boom 2` and
   `close2 false boom`; reference Lua 5.4/5.5 print `resume false boom 0` and
   `close2 true nil`.
-- Green TUnit: `ProcessorCoroutineCloseTUnitTests` 74/74,
-  `CoroutineModuleTUnitTests` 348/348, full suite `16192/16192`.
+- Green TUnit: `ProcessorCoroutineCloseTUnitTests` 75/75,
+  `CoroutineModuleTUnitTests` 348/348, full suite `16193/16193`.
 - Reference Lua 5.4 and 5.5 outputs match for the new deferred-close,
   suspended-close, reentrant-close, self-close, self-resume, status, wrap,
   protected CLR callback, and unprotected CLR callback fixtures.

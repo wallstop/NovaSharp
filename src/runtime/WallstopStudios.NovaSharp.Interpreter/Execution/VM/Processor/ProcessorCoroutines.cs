@@ -302,12 +302,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     );
                     if (version >= LuaCompatibilityVersion.Lua55 && _closeUnwindBoundaryDepth >= 0)
                     {
+                        _lastCloseError = LuaValue.Nil;
+                        _selfCloseResetRequested = true;
                         while (_executionStack.Count > _closeUnwindBoundaryDepth)
                         {
                             CallStackItem frame = PopToBasePointer();
                             try
                             {
-                                CloseAllPendingBlocks(frame, _lastCloseError);
+                                CloseAllPendingBlocks(frame, LuaValue.Nil);
                             }
                             finally
                             {
@@ -419,6 +421,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 finally
                 {
+                    if (_selfCloseResetRequested)
+                    {
+                        activeError = LuaValue.Nil;
+                        _selfCloseResetRequested = false;
+                    }
+
                     _closeUnwindBoundaryDepth = previousBoundaryDepth;
                     CallStackItemPool.Return(frame);
                 }

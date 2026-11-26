@@ -624,6 +624,59 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelfCloseDuringDeferredCleanupResetsActiveError(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local task
+                task = coroutine.create(function()
+                    local sibling <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'sibling:' .. tostring(err)
+                        end
+                    })
+                    local failing <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'failing:' .. tostring(err)
+                            local inner <close> = setmetatable({}, {
+                                __close = function(_, innerError)
+                                    log[#log + 1] = 'inner:' .. tostring(innerError)
+                                end
+                            })
+                            coroutine.close(task)
+                            log[#log + 1] = 'after'
+                        end
+                    })
+                    error('original', 0)
+                end)
+
+                local resumed, resumeError = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, resumeError)
+                print('close', closed, closeError, #log, log[1], log[2], log[3])
+
+                return resumed, resumeError, closed, closeError,
+                    #log, log[1], log[2], log[3]
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("original");
+            await Assert.That(result.Tuple[2].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].IsNil).IsTrue();
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(3);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("failing:original");
+            await Assert.That(result.Tuple[6].String).IsEqualTo("inner:nil");
+            await Assert.That(result.Tuple[7].String).IsEqualTo("sibling:nil");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CloseHandlerSelfCloseAbortsHandlerAndContinuesInLua55(
             LuaCompatibilityVersion version
         )
