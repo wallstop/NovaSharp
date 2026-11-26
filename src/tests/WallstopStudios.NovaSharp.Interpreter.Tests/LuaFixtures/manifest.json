@@ -3270,7 +3270,7 @@
     },
     {
       "path": "CoroutineTUnitTests/CoroutineVariousErrorHandlingMatchesNunitSuite.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/CoroutineTUnitTests.cs:177",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/CoroutineTUnitTests.cs:178",
       "test": "CoroutineTUnitTests.CoroutineVariousErrorHandlingMatchesNunitSuite",
       "lua_versions": [],
       "novasharp_only": true,

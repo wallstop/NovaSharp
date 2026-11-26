@@ -721,7 +721,6 @@ return first, second
             MethodInfo moduleResume = RequireMethod(
                 typeof(CoroutineModule),
                 nameof(CoroutineModule.Resume),
-                typeof(ScriptExecutionContext),
                 typeof(CallbackArgumentsView)
             );
             MethodInfo helper = RequireMethod(

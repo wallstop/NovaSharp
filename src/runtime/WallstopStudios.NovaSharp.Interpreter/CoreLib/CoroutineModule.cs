@@ -105,14 +105,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            return Resume(executionContext, new CallbackArgumentsView(args));
+            return Resume(new CallbackArgumentsView(args));
         }
 
         [NovaSharpModuleMethod(Name = "resume")]
-        private static LuaValue Resume(
-            ScriptExecutionContext executionContext,
-            CallbackArgumentsView args
-        )
+        private static LuaValue Resume(CallbackArgumentsView args)
         {
             LuaValue handle = args.AsType(0, "resume", DataType.Thread);
 
@@ -150,10 +147,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
             catch (ScriptRuntimeException ex)
             {
-                return LuaValue.NewTuple(
-                    LuaValue.False,
-                    ex.GetCaughtErrorObject(executionContext.Script.CompatibilityVersion)
-                );
+                Script ownerScript = handle.Coroutine.OwnerScript;
+                LuaCompatibilityVersion version = ownerScript?.CompatibilityVersion
+                    ?? LuaVersionDefaults.CurrentDefault;
+                return LuaValue.NewTuple(LuaValue.False, ex.GetCaughtErrorObject(version));
             }
         }
 

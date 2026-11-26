@@ -42,3 +42,6 @@ Issue: #168 (unblocks #169, #174).
 - Both-error ratchet: no new, changed, or missing entries. Five stale
   `SortThrowsWhenComparatorIsInvalidType` baseline entries were already passing on
   `main` before this session and remain harmless removals.
+- Benchmark: keeping `coroutine.resume` on the no-context callback path restored
+  CoroutinePingPong Execute allocations to `80.55 KB` (Phase A0 baseline `80.5 KB`)
+  after a context-taking signature briefly added `12 KB/op`.
