@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795684155311,
+  "lastUpdate": 1795723834641,
   "repoUrl": "https://github.com/Ambiguous-Interactive/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -5086,6 +5086,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 637.179,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9a9a1fa29ffe89d604853079560f7be91a5b42d3",
+          "message": "Preserve Lua error values through protected calls and unwinding (#222)\n\n## Summary\n\nPreserves originating Lua error values across protected calls, `xpcall`\nmessage handlers, `__close` unwinding, and coroutine resume/close\ninstead of stringifying them. This closes #168 and removes the main\nblocker for #169 and #174.\n\n- `ScriptRuntimeException` now carries `ErrorValue` with a\ndecorated-message fallback and normalizes nil to Lua 5.5's `<no error\nobject>` at catch boundaries.\n- `error` accepts any Lua value; Lua 5.1/5.2 keep numeric-to-string\ncoercion, while Lua 5.3+ preserve numbers, booleans, tables, and nil.\nLevel decoration now treats CLR callers like reference Lua (no location)\nwhile still locating Lua callers.\n- `assert` shares the construction path, preserving non-string messages\nand explicit nil on Lua 5.3+ and the `luaL_optstring` contract on Lua\n5.1/5.2.\n- `pcall`, `xpcall`, `__close`, `coroutine.resume`, `coroutine.wrap`,\nand `coroutine.close` now observe the original object; a raising closer\nreplaces the active error. `xpcall` handlers contribute only their first\nresult.\n- Coroutines track failure separately from the error value, so closing a\ndead coroutine after `error(nil)` reports `false, nil` under Lua 5.4.\n- Added `WatchItem.IsClrFunction` and\n`ScriptExecutionContext.CurrentCallback` to support reference-accurate\nlevel decoration.\n- `coroutine.resume` stays on the no-context callback path, so\nCoroutinePingPong allocations remain at the Phase A0 baseline (`80.55\nKB` vs `80.5 KB`).\n\n## Evidence\n\n- Full TUnit suite: `16163/16163` passed.\n- Eight new paired Lua fixtures match reference Lua 5.1–5.5 outputs\nexactly, including `<no error object>` under Lua 5.5.\n- Lua comparison: zero unexpected mismatches for 5.1, 5.2, 5.3, and 5.5.\nThe two local Lua 5.4.4 differences are the pre-existing\n`table.remove`/generic-for-close deltas noted in session 221.\n- Both-error ratchet: no new, changed, or missing entries.\n- `./scripts/dev/pre-commit.sh` passed.\n\nCloses #168.",
+          "timestamp": "2026-11-26T12:05:02-08:00",
+          "tree_id": "af0ab516f2fb510e7b006da6d1ed9329d1da195b",
+          "url": "https://github.com/Ambiguous-Interactive/NovaSharp/commit/9a9a1fa29ffe89d604853079560f7be91a5b42d3"
+        },
+        "date": 1795723833979,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 347.605,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 353.503,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 373.491,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 505.482,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 543.677,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 649.436,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 569.54,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 593.444,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 592.742,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 560.233,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 638.147,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 637.743,
             "unit": "ns",
             "extra": ""
           }
