@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
     using Debugging;
     using Execution.Scopes;
     using Expressions;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
@@ -64,9 +65,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             lcontext.Scope.PushBlock();
 
             _names = new SymbolRef[names.Count];
+            // Lua 5.5 makes only the first generic-for variable (the iterator control)
+            // const inside the loop body.
+            SymbolRefAttributes controlVariableAttributes =
+                LuaVersionDefaults.Resolve(lcontext.Script.CompatibilityVersion)
+                >= LuaCompatibilityVersion.Lua55
+                    ? SymbolRefAttributes.Const
+                    : default;
             for (int i = 0; i < names.Count; i++)
             {
-                _names[i] = lcontext.Scope.TryDefineLocal(names[i]);
+                _names[i] = lcontext.Scope.TryDefineLocal(
+                    names[i],
+                    i == 0 ? controlVariableAttributes : default
+                );
             }
 
             _nameExps = new IVariable[_names.Length];

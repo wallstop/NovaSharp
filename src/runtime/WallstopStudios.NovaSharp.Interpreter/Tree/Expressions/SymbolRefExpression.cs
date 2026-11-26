@@ -17,11 +17,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
     {
         private readonly SymbolRef _ref;
         private readonly string _varName;
+        private readonly Token _nameToken;
+        private readonly bool _allowsConstAssignment;
 
         public SymbolRefExpression(Token t, ScriptLoadingContext lcontext)
             : base(lcontext)
         {
             _varName = t.text;
+            _nameToken = t;
 
             if (t.type == TokenType.VarArgs)
             {
@@ -54,6 +57,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             : base(lcontext)
         {
             _ref = refr;
+            // Declarations and the compiler's loop-variable writes initialize a const slot;
+            // only source-level assignments resolve symbols through the token constructor.
+            _allowsConstAssignment = true;
 
             if (lcontext.IsDynamicExpression)
             {
@@ -80,6 +86,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// <param name="tupleidx">Tuple index when assignment consumes multi-return values.</param>
         public void CompileAssignment(Execution.VM.ByteCode bc, int stackofs, int tupleidx)
         {
+            if (!_allowsConstAssignment && _ref.IsConst)
+            {
+                throw new SyntaxErrorException(
+                    _nameToken,
+                    "attempt to assign to const variable '{0}'",
+                    _varName
+                );
+            }
+
             bc.EmitStore(_ref, stackofs, tupleidx);
         }
 

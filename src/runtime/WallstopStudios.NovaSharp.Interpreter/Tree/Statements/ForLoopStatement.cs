@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
     using Debugging;
     using Execution.Scopes;
     using Expressions;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
@@ -58,7 +59,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             }
 
             lcontext.Scope.PushBlock();
-            _varName = lcontext.Scope.DefineLocal(nameToken.text);
+            // Lua 5.5 makes the numeric control variable const inside the loop body.
+            SymbolRefAttributes loopVariableAttributes =
+                LuaVersionDefaults.Resolve(lcontext.Script.CompatibilityVersion)
+                >= LuaCompatibilityVersion.Lua55
+                    ? SymbolRefAttributes.Const
+                    : default;
+            _varName = lcontext.Scope.DefineLocal(nameToken.text, loopVariableAttributes);
             _refFor = forToken.GetSourceRef(CheckTokenType(lcontext, TokenType.Do));
             _innerBlock = new CompositeStatement(lcontext);
             _refEnd = CheckTokenType(lcontext, TokenType.End).GetSourceRef();

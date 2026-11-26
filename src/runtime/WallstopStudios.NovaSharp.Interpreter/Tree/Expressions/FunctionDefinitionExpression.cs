@@ -251,11 +251,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// <returns>An upvalue pointing to the captured symbol.</returns>
         public SymbolRef CreateUpValue(BuildTimeScope scope, SymbolRef symbol)
         {
+            SymbolRefAttributes attributes = symbol.IsConst ? SymbolRefAttributes.Const : default;
             for (int i = 0; i < _closure.Count; i++)
             {
                 if (_closure[i].NameValue == symbol.NameValue)
                 {
-                    return SymbolRef.UpValue(symbol.NameValue, i);
+                    return SymbolRef.UpValue(symbol.NameValue, i, attributes);
                 }
             }
 
@@ -266,7 +267,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 _closureSymbolListDirty = true;
             }
 
-            return SymbolRef.UpValue(symbol.NameValue, _closure.Count - 1);
+            return SymbolRef.UpValue(symbol.NameValue, _closure.Count - 1, attributes);
         }
 
         /// <summary>

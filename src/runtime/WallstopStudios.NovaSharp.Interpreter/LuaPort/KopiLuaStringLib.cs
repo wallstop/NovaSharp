@@ -1594,8 +1594,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             LuaState l,
             CharPtr strfrmt,
             CharPtr form,
-            LuaCompatibilityVersion version,
-            int argumentIndex
+            LuaCompatibilityVersion version
         )
         {
             CharPtr p = strfrmt;
@@ -1629,18 +1628,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                     p = p.Next(); /* (2 digits at most) */
                 }
             }
-            // The infinity renderer can handle long flag sequences in Lua 5.4 and later.
-            if (
-                flagCount > FLAGS.Length
-                && (
-                    version < LuaCompatibilityVersion.Lua54
-                    || p[0] is not ('a' or 'A' or 'e' or 'E' or 'f' or 'g' or 'G')
-                    || GetArgument(l, argumentIndex).CastToNumber() is not double number
-                    || !double.IsInfinity(number)
-                )
-            )
+            // Lua 5.4 removed the length limit on flag runs but checks the flags
+            // against the conversion that follows them.
+            if (version < LuaCompatibilityVersion.Lua54)
             {
-                LuaLError(l, "invalid format (repeated flags)");
+                if (flagCount > FLAGS.Length)
+                {
+                    LuaLError(l, "invalid format (repeated flags)");
+                }
+            }
+            else if (p[0] == 'q')
+            {
+                if (flagCount > 0 || p != strfrmt)
+                {
+                    LuaLError(l, "specifier '%q' cannot have modifiers");
+                }
+            }
+            else if (p[0] != '\0')
+            {
+                string allowedFlags = GetAllowedFlags(p[0]);
+                for (int i = 0; i < flagCount; i++)
+                {
+                    if (!allowedFlags.Contains(strfrmt[i], StringComparison.Ordinal))
+                    {
+                        LuaLError(
+                            l,
+                            "invalid conversion specification: '"
+                                + strfrmt.ToString(p - strfrmt + 1)
+                                + "'"
+                        );
+                    }
+                }
             }
 
             if (p[0] is >= '0' and <= '9')
@@ -1660,6 +1678,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             form += p - strfrmt + 1;
             form[0] = '\0';
             return p;
+        }
+
+        private static string GetAllowedFlags(char conversion)
+        {
+            return conversion switch
+            {
+                'c' or 's' => "-",
+                'd' or 'i' => "-+0 ",
+                'o' or 'x' or 'X' => "-#0",
+                'u' => "-0",
+                'e' or 'E' or 'f' or 'g' or 'G' or 'a' or 'A' => "-+#0 ",
+                _ => string.Empty,
+            };
         }
 
         private static void Addintlen(CharPtr form)
@@ -1713,7 +1744,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         LuaLArgError(l, arg, "no value");
                     }
 
-                    strfrmt = Scanformat(l, strfrmt, form, version, arg);
+                    strfrmt = Scanformat(l, strfrmt, form, version);
                     char ch = strfrmt[0];
                     strfrmt = strfrmt.Next();
                     switch (ch)

@@ -416,7 +416,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
         }
 
         internal static Regex FormatRegex = new(
-            @"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])"
+            @"\%(\d*\$)?([\'\#0\-\+ ]*)(\d*)(?:\.(\d*))?([hl])?([dioxXucsfeEgGpn%])"
         );
 
         public static string StringFormat(string format, object parameter)
@@ -487,6 +487,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                     flagPositiveSign = ContainsCharOrdinal(flags, '+');
                     flagPositiveSpace = ContainsCharOrdinal(flags, ' ');
                     flagGroupThousands = ContainsCharOrdinal(flags, '\'');
+                    flagZeroPadding = ContainsCharOrdinal(flags, '0');
 
                     // positive + indicator overrides a
                     // positive space character
@@ -503,7 +504,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 if (m.Groups[3] != null && m.Groups[3].Value.Length > 0)
                 {
                     fieldLength = Convert.ToInt32(m.Groups[3].Value, CultureInfo.InvariantCulture);
-                    flagZeroPadding = (m.Groups[3].Value[0] == '0');
+                    flagZeroPadding |= (m.Groups[3].Value[0] == '0');
                 }
 
                 if (flagZeroPadding)
@@ -518,14 +519,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                     paddingCharacter = ' ';
                 }
 
-                // extract field precision
+                // extract field precision ('%.g' means precision zero)
                 fieldPrecision = int.MinValue;
-                if (m.Groups[4] != null && m.Groups[4].Value.Length > 0)
+                if (m.Groups[4] != null && m.Groups[4].Success)
                 {
-                    fieldPrecision = Convert.ToInt32(
-                        m.Groups[4].Value,
-                        CultureInfo.InvariantCulture
-                    );
+                    fieldPrecision =
+                        m.Groups[4].Value.Length > 0
+                            ? Convert.ToInt32(m.Groups[4].Value, CultureInfo.InvariantCulture)
+                            : 0;
                 }
 
                 // extract short / long indicator
@@ -552,6 +553,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 )
                 {
                     fieldPrecision = 6;
+                }
+
+                // C treats a zero precision as one significant digit for %g/%G.
+                if (fieldPrecision == 0 && formatSpecifier is 'g' or 'G')
+                {
+                    fieldPrecision = 1;
                 }
 
                 // get next value parameter and convert value parameter depending on short / long indicator
@@ -952,6 +959,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return w;
         }
 
+        /// <summary>
+        /// Trims the CLR's three-digit exponent to C printf's minimum of two digits.
+        /// </summary>
+        private static string NormalizeExponentDigits(string value)
+        {
+            ReadOnlySpan<char> span = value.AsSpan();
+            int exponent = span.IndexOf('e');
+            if (exponent < 0)
+            {
+                exponent = span.IndexOf('E');
+                if (exponent < 0)
+                {
+                    return value;
+                }
+            }
+
+            int digitsStart = exponent + 1;
+            if (
+                digitsStart < value.Length
+                && (value[digitsStart] == '+' || value[digitsStart] == '-')
+            )
+            {
+                digitsStart++;
+            }
+
+            int end = digitsStart;
+            while (end < value.Length && value[end] >= '0' && value[end] <= '9')
+            {
+                end++;
+            }
+
+            int leadingZeros = 0;
+            while (digitsStart + leadingZeros < end - 2 && value[digitsStart + leadingZeros] == '0')
+            {
+                leadingZeros++;
+            }
+
+            return leadingZeros == 0 ? value : value.Remove(digitsStart, leadingZeros);
+        }
+
         private static string FormatNumber(
             string nativeFormat,
             bool alternate,
@@ -988,6 +1035,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             if (IsNumericType(value))
             {
                 w = String.Format(CultureInfo.InvariantCulture, numberFormat, value);
+
+                if (nativeFormat is "e" or "E" or "g" or "G")
+                {
+                    w = NormalizeExponentDigits(w);
+                }
 
                 if (left2Right || padding == ' ')
                 {

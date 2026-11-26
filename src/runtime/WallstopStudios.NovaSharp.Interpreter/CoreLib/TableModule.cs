@@ -14,6 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// Class implementing table Lua functions
@@ -420,7 +421,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 if (a.Type == DataType.String && b.Type == DataType.String)
                 {
-                    return string.Compare(a.String, b.String, StringComparison.Ordinal);
+                    return LuaStringOrdering.Compare(a.String, b.String);
                 }
 
                 if (

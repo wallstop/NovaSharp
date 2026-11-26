@@ -1009,6 +1009,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     return _storage.TryLocateString(key.String, out arrayIndex, out nodeIndex);
                 case DataType.Number:
                 {
+                    // Lua 5.4+ stores exact integral floats as integer keys and rejects
+                    // the float spelling as a traversal cursor, even though normal lookup
+                    // treats the two spellings as the same key.
+                    if (
+                        ResolveCompatibilityVersion() >= LuaCompatibilityVersion.Lua54
+                        && key.LuaNumber.IsFloat
+                        && LuaNumber.TryConvertToInteger(key.LuaNumber.ToDouble, out _)
+                    )
+                    {
+                        arrayIndex = 0;
+                        nodeIndex = 0;
+                        return false;
+                    }
+
                     int idx = GetIntegralKey(key.Number);
                     if (idx > 0)
                     {
@@ -1067,11 +1081,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private LuaValue NormalizeNumericHashKey(LuaValue key)
         {
             LuaNumber number = key.LuaNumber;
+            if (_roundsNumericKeys)
+            {
+                return number.IsInteger && !LuaNumber.InExactDoubleRange(number.AsInteger)
+                    ? LuaValue.NewFloat(number.ToDouble)
+                    : key;
+            }
+
+            // Lua 5.3+ stores a float key with an exact integer value as an integer key.
             return
-                _roundsNumericKeys
-                && number.IsInteger
-                && !LuaNumber.InExactDoubleRange(number.AsInteger)
-                ? LuaValue.NewFloat(number.ToDouble)
+                number.IsFloat && LuaNumber.TryConvertToInteger(number.ToDouble, out long integral)
+                ? LuaValue.NewInteger(integral)
                 : key;
         }
 

@@ -447,7 +447,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                 12345.0,
                 12345.0
             );
-            await Assert.That(result).IsEqualTo("1.23|1.23e+000|1.23E+000|1.2e+04|1.2E+04");
+            await Assert.That(result).IsEqualTo("1.23|1.23e+00|1.23E+00|1.2e+04|1.2E+04");
         }
 
         [global::TUnit.Core.Test]
