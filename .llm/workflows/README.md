@@ -8,6 +8,9 @@ Use [evidence-driven-change](evidence-driven-change.md) for material behavior,
 architecture, performance, reliability, CI, or LLM-system work. Small,
 documentation-only edits may use the same stages with proportionate evidence.
 
+Use [github-interaction](github-interaction.md) before inventorying issues,
+reading pull requests or checks, polling CI, or writing any GitHub-hosted state.
+
 ## Workflow Contract
 
 Every workflow declares:
