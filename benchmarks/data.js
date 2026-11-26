@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795639516155,
+  "lastUpdate": 1795655775865,
   "repoUrl": "https://github.com/Ambiguous-Interactive/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -4894,6 +4894,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 655.146,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7b4e66a9f44f85aa7576bb446f393e3e96b89a9c",
+          "message": "Match Lua local comparison reads and 5.3+ extrema operands (#191, #178, #206) (#220)\n\n## Summary\n\nAddress three open Lua compatibility issues around comparison-time reads\nand Lua 5.3+ extrema.\n\n- **#191** — Direct local operands in `<` and `<=` are now read after\nthe right operand runs. The compiler emits the right operand first,\nreloads the direct local, and swaps; the AST evaluator follows the same\norder. Parenthesized locals are covered. Computed operands, globals,\nupvalues, and indexed operands keep their earlier snapshot, and\nlocal-to-local comparisons keep their existing dispatch count.\n- **#178** — `math.min` and `math.max` on Lua 5.3–5.5 now use Lua\nrelational semantics and return the selected original operand: subtype\nand precision are preserved, the first operand wins ties, strings\ncompare as strings, and tables keep identity and `__lt` operand order.\nLua 5.1/5.2 keep numeric validation and coercion.\n- **#206** — The extrema path now uses the shared ordering diagnostic,\nso failed comparisons report raw metatable `__name` labels (including\nequal names, non-string names, unnamed tables, and locked metatables).\n\n## Tests\n\n- New paired fixtures `LessComparisonsPreserveLuaOperandOrder.lua` and\n`ExtremaPreserveOperandsAndOrdering.lua` pass under PUC Lua 5.1.5,\n5.2.4, 5.3.6, 5.4.7, and 5.5.0 and through the TUnit fixture harness in\nall five profiles.\n- Added bytecode coverage that direct-local comparisons keep their\ncompact dispatch and side-effecting right operands emit the reload swap.\n- The TestMore stdin suite is pinned to Lua 5.1 because it asserts\npre-5.3 float formatting for an integral `math.max` result; its\nparameterized stdout test now exercises the requested profile instead of\nthe default one.\n- Full quick suite: 16,031 passed, 0 failed. CSharpier, fixture\nmetadata, and error-ratchet checks pass. `pre-commit.sh` passes.\n\nFixes #191\nFixes #178\nFixes #206",
+          "timestamp": "2026-11-25T17:11:05-08:00",
+          "tree_id": "25c099aa0f2803cc9897de98ec3d062842260672",
+          "url": "https://github.com/Ambiguous-Interactive/NovaSharp/commit/7b4e66a9f44f85aa7576bb446f393e3e96b89a9c"
+        },
+        "date": 1795655775490,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 310.313,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 335.152,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 324.498,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 417.599,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 442.797,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 440.663,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 447.705,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 476.666,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 498.693,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 465.35,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 514.984,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 551.905,
             "unit": "ns",
             "extra": ""
           }
