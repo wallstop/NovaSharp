@@ -61,6 +61,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
         /// <returns>
         /// 	<c>true</c> if o is a numeric type; otherwise, <c>false</c>.
         /// </returns>
+        private static bool IsNumericZero(object value)
+        {
+            return value switch
+            {
+                sbyte v => v == 0,
+                short v => v == 0,
+                int v => v == 0,
+                long v => v == 0,
+                byte v => v == 0,
+                ushort v => v == 0,
+                uint v => v == 0,
+                ulong v => v == 0,
+                float v => v == 0,
+                double v => v == 0,
+                decimal v => v == 0,
+                _ => false,
+            };
+        }
+
         public static bool IsNumericType(object o)
         {
             return (
@@ -622,6 +641,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
                 // convert value parameters to a string depending on the formatSpecifier
                 w = String.Empty;
+                // An explicit integer precision disables zero padding in C printf.
+                char integerPadding = integerPrecision != int.MinValue ? ' ' : paddingCharacter;
                 switch (formatSpecifier)
                 {
                     case '%': // % character
@@ -636,7 +657,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             flagLeft2Right,
                             flagPositiveSign,
                             flagPositiveSpace,
-                            paddingCharacter,
+                            integerPadding,
                             o
                         );
                         defaultParamIx++;
@@ -650,7 +671,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             fieldLength,
                             integerPrecision,
                             flagLeft2Right,
-                            paddingCharacter,
+                            integerPadding,
                             o
                         );
                         defaultParamIx++;
@@ -660,9 +681,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             "x",
                             flagAlternate,
                             fieldLength,
-                            fieldPrecision,
+                            integerPrecision,
                             flagLeft2Right,
-                            paddingCharacter,
+                            integerPadding,
                             o
                         );
                         defaultParamIx++;
@@ -672,9 +693,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             "X",
                             flagAlternate,
                             fieldLength,
-                            fieldPrecision,
+                            integerPrecision,
                             flagLeft2Right,
-                            paddingCharacter,
+                            integerPadding,
                             o
                         );
                         defaultParamIx++;
@@ -688,7 +709,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             flagLeft2Right,
                             false,
                             false,
-                            paddingCharacter,
+                            integerPadding,
                             ToUnsigned(o)
                         );
                         defaultParamIx++;
@@ -947,6 +968,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             if (IsNumericType(value))
             {
                 w = string.Format(CultureInfo.InvariantCulture, numberFormat, value);
+                if (fieldPrecision == 0 && IsNumericZero(value))
+                {
+                    w = String.Empty;
+                }
 
                 if (left2Right || padding == ' ')
                 {
@@ -1050,6 +1075,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             if (IsNumericType(value))
             {
                 w = String.Format(CultureInfo.InvariantCulture, numberFormat, value);
+                if (
+                    fieldPrecision == 0
+                    && (nativeFormat == "d" || nativeFormat == "n")
+                    && IsNumericZero(value)
+                )
+                {
+                    w = String.Empty;
+                }
 
                 if (nativeFormat is "e" or "E" or "g" or "G")
                 {
@@ -1067,6 +1100,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 }
                 else
                 {
+                    bool positive = IsPositive(value, true);
+                    string sign = positive
+                        ? (positiveSign ? "+" : (positiveSpace ? " " : String.Empty))
+                        : "-";
                     if (w.Length > 0 && w[0] == '-')
                     {
                         w = w.Substring(1);
@@ -1074,23 +1111,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
                     if (fieldLength != int.MinValue)
                     {
-                        if (positiveSign) // xan - change here
-                        {
-                            w = w.PadLeft(fieldLength - 1, padding);
-                        }
-                        else
-                        {
-                            w = w.PadLeft(fieldLength, padding);
-                        }
-                    }
-
-                    if (IsPositive(value, true))
-                    {
-                        w = (positiveSign ? "+" : "") + w; // xan - change here
+                        w =
+                            padding == '0'
+                                ? sign + w.PadLeft(fieldLength - sign.Length, '0')
+                                : (sign + w).PadLeft(fieldLength, ' ');
                     }
                     else
                     {
-                        w = "-" + w;
+                        w = sign + w;
                     }
                 }
             }

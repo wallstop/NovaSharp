@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2055,
+  "total_snippets": 2059,
   "novasharp_only": 510,
-  "comparable": 1545,
+  "comparable": 1549,
   "by_version": {
-    "5.1": 1023,
-    "5.2": 729,
-    "5.3": 976,
-    "5.4": 1056,
-    "5.5": 1100
+    "5.1": 1027,
+    "5.2": 733,
+    "5.3": 980,
+    "5.4": 1060,
+    "5.5": 1104
   },
   "snippets": [
     {
@@ -22830,6 +22830,62 @@
       "path": "StringFormatFiniteTUnitTests/FormatPadsIntegerPrecision.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:70",
       "test": "StringFormatFiniteTUnitTests.FormatPadsIntegerPrecision",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "LuaStringOrderingTUnitTests/RawBytesSortAfterSupplementaryPlaneLeadBytes.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/LuaStringOrderingTUnitTests.cs:51",
+      "test": "LuaStringOrderingTUnitTests.RawBytesSortAfterSupplementaryPlaneLeadBytes",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringFormatFiniteTUnitTests/FormatIntegerPrecisionOverridesZeroPadding.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:104",
+      "test": "StringFormatFiniteTUnitTests.FormatIntegerPrecisionOverridesZeroPadding",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringFormatFiniteTUnitTests/FormatPreservesSpaceSignWithZeroPadding.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:90",
+      "test": "StringFormatFiniteTUnitTests.FormatPreservesSpaceSignWithZeroPadding",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringFormatFiniteTUnitTests/FormatSuppressesZeroAtZeroIntegerPrecision.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:118",
+      "test": "StringFormatFiniteTUnitTests.FormatSuppressesZeroAtZeroIntegerPrecision",
       "lua_versions": [
         "5.1",
         "5.2",

@@ -83,6 +83,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task FormatPreservesSpaceSignWithZeroPadding(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"return string.format('%0 9g', 1.5) .. ',' .. string.format('%0 9f', 1.5)"
+            );
+
+            await Assert.That(result.String).IsEqualTo(" 000001.5, 1.500000").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task FormatIntegerPrecisionOverridesZeroPadding(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                "return string.format('%05.3d', 2) .. ',' .. string.format('%05.3o', 2)"
+            );
+
+            await Assert.That(result.String).IsEqualTo("  002,  002").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task FormatSuppressesZeroAtZeroIntegerPrecision(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"return table.concat({
+                    '[' .. string.format('%.d', 0) .. ']',
+                    '[' .. string.format('%.o', 0) .. ']',
+                    '[' .. string.format('%.x', 0) .. ']',
+                    '[' .. string.format('%.u', 0) .. ']',
+                    string.format('%.d', 42)
+                }, ',')"
+            );
+
+            await Assert.That(result.String).IsEqualTo("[],[],[],[],42").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
         public async Task FormatRejectsCharacterPrecision(LuaCompatibilityVersion version)
         {

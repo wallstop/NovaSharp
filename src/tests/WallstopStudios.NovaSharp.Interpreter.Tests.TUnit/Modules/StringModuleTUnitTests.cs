@@ -1507,8 +1507,8 @@ return iterator, upper, substring, formatted
             Script script = new Script(version, CoreModulePresets.Complete);
             LuaValue result = script.DoString("return string.format('%08d', -42)");
 
-            // Note: Lua counts the minus sign as part of the width
-            await Assert.That(result.String).IsEqualTo("-00000042").ConfigureAwait(false);
+            // The minus sign is part of the field width, so width 8 yields 7 digits.
+            await Assert.That(result.String).IsEqualTo("-0000042").ConfigureAwait(false);
         }
 
         [Test]
