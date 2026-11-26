@@ -32,6 +32,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public void LessComparisonsPreserveLuaOperandOrder(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            LuaFixtureHelper fixture =
+                LuaFixtureHelper.ForCallingTest<BinaryOperatorExpressionTUnitTests>();
+            script.DoFile(fixture.GetFixturePath());
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task LessComparisonOnDirectLocalsKeepsCompactDispatch()
+        {
+            Script script = new();
+            script.LoadString("local left, right = 1, 2; return left < right");
+
+            ByteCode byteCode = script.GetByteCodeForTests();
+
+            await Assert
+                .That(byteCode.Code.Any(instruction => instruction.OpCode == OpCode.Swap))
+                .IsFalse()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task LessComparisonReloadsLocalAfterSideEffectingRightOperand()
+        {
+            Script script = new();
+            script.LoadString(
+                "local value = 0; local function update() value = 2; return 1 end; return value < update()"
+            );
+
+            ByteCode byteCode = script.GetByteCodeForTests();
+
+            await Assert
+                .That(byteCode.Code.Any(instruction => instruction.OpCode == OpCode.Swap))
+                .IsTrue()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public void CompareMixedNumbersInLua(LuaCompatibilityVersion version)
         {
             Script script = new(version);

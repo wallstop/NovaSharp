@@ -148,6 +148,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return LuaValue.NewNumber(func(arg.Number, arg2.IsNil ? defVal : arg2.Number));
         }
 
+        /// <summary>
+        /// Lua 5.3+ extrema use relational comparison instead of numeric validation, so
+        /// strings, comparable tables, and mixed integer/float operands keep their identity.
+        /// </summary>
+        private static bool UseOrderedExtrema(ScriptExecutionContext executionContext)
+        {
+            return LuaVersionDefaults.Resolve(executionContext.Script.CompatibilityVersion)
+                >= LuaCompatibilityVersion.Lua53;
+        }
+
+        private static LuaValue ExecOrderedExtrema(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args,
+            string funcName,
+            bool selectMaximum
+        )
+        {
+            if (args.Count == 0)
+            {
+                throw new ScriptRuntimeException(
+                    "bad argument #1 to '{0}' (value expected)",
+                    funcName
+                );
+            }
+
+            LuaValue selected = args[0];
+            for (int i = 1; i < args.Count; i++)
+            {
+                LuaValue candidate = args[i];
+                bool replaceSelected = selectMaximum
+                    ? executionContext.CompareLibraryLessThan(selected, candidate)
+                    : executionContext.CompareLibraryLessThan(candidate, selected);
+                if (replaceSelected)
+                {
+                    selected = candidate;
+                }
+            }
+
+            return selected;
+        }
+
         private static LuaValue Execaccum(
             CallbackArgumentsView args,
             string funcName,
@@ -954,13 +995,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            return Max(new CallbackArgumentsView(args));
+            return Max(executionContext, new CallbackArgumentsView(args));
         }
 
         [NovaSharpModuleMethod(Name = "max")]
-        private static LuaValue Max(CallbackArgumentsView args)
+        private static LuaValue Max(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
         {
-            return Execaccum(args, "max", MaxOp);
+            return UseOrderedExtrema(executionContext)
+                ? ExecOrderedExtrema(executionContext, args, "max", selectMaximum: true)
+                : Execaccum(args, "max", MaxOp);
         }
 
         /// <summary>
@@ -977,13 +1023,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            return Min(new CallbackArgumentsView(args));
+            return Min(executionContext, new CallbackArgumentsView(args));
         }
 
         [NovaSharpModuleMethod(Name = "min")]
-        private static LuaValue Min(CallbackArgumentsView args)
+        private static LuaValue Min(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
         {
-            return Execaccum(args, "min", MinOp);
+            return UseOrderedExtrema(executionContext)
+                ? ExecOrderedExtrema(executionContext, args, "min", selectMaximum: false)
+                : Execaccum(args, "min", MinOp);
         }
 
         /// <summary>

@@ -87,9 +87,9 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    [residual number/string parity nits](https://github.com/Ambiguous-Interactive/NovaSharp/issues/138),
    [reference builds for legacy floating modulo](https://github.com/Ambiguous-Interactive/NovaSharp/issues/188),
    [Lua string byte identity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/201)
-   to complete [string ordering](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199)
-   and [extrema parity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/178),
-   then verify [custom comparison labels in extrema](https://github.com/Ambiguous-Interactive/NovaSharp/issues/206),
+   to complete [string ordering](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199),
+   [NUL handling in numeric callback arguments](https://github.com/Ambiguous-Interactive/NovaSharp/issues/192),
+   [string.format flags and exponents](https://github.com/Ambiguous-Interactive/NovaSharp/issues/193),
    [native file userdata metatables](https://github.com/Ambiguous-Interactive/NovaSharp/issues/212),
    [protected calls to coroutine.yield](https://github.com/Ambiguous-Interactive/NovaSharp/issues/217),
    [CLR tail-call error cleanup](https://github.com/Ambiguous-Interactive/NovaSharp/issues/218),
