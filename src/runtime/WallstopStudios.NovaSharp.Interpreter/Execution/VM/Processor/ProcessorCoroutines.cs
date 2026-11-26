@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using global::NovaSharp;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
@@ -238,7 +239,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             catch (ScriptRuntimeException ex)
             {
                 _state = CoroutineState.Dead;
-                _lastCloseError = LuaValue.NewString(ex.DecoratedMessage);
+                _lastCloseError = ex.GetCaughtErrorObject(
+                    LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                );
                 throw;
             }
             catch (Exception)
@@ -311,7 +314,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 catch (ScriptRuntimeException ex)
                 {
-                    LuaValue error = LuaValue.NewString(ex.DecoratedMessage);
+                    LuaValue error = ex.GetCaughtErrorObject(
+                        LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                    );
                     _lastCloseError = error;
                     _state = CoroutineState.Dead;
                     return LuaValue.NewTuple(LuaValue.False, error);

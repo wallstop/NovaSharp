@@ -94,21 +94,109 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         )
         {
             LuaValue v = args[0];
-            LuaValue message = args[1];
 
-            if (!v.CastToBool())
+            if (v.CastToBool())
             {
-                if (message.IsNil)
+                return LuaValue.NewTupleNested(args.GetArray());
+            }
+
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+
+            LuaValue message;
+            if (version >= LuaCompatibilityVersion.Lua53)
+            {
+                // Lua 5.3+ forwards any message value, including an explicit nil, to error().
+                if (
+                    !args.TryRawGet(1, translateVoids: false, out message)
+                    || message.Type == DataType.Void
+                )
                 {
-                    throw new ScriptRuntimeException("assertion failed!"); // { DoNotDecorateMessage = true };
+                    message = LuaValue.NewString("assertion failed!");
                 }
                 else
                 {
-                    throw new ScriptRuntimeException(message.ToPrintString()); // { DoNotDecorateMessage = true };
+                    message = message.ToScalar();
+                }
+            }
+            else
+            {
+                // Lua 5.1/5.2 use luaL_optstring, so the message must be string-convertible.
+                message = args.AsType(
+                    executionContext,
+                    1,
+                    "assert",
+                    DataType.String,
+                    allowNil: true
+                );
+                if (message.IsNil)
+                {
+                    message = LuaValue.NewString("assertion failed!");
                 }
             }
 
-            return LuaValue.NewTupleNested(args.GetArray());
+            throw CreateLuaError(executionContext, message, level: 1, funcName: "assert");
+        }
+
+        /// <summary>
+        /// Builds a runtime error that carries the original Lua error object and applies the
+        /// version-specific source decoration rules shared by <c>error</c> and <c>assert</c>.
+        /// </summary>
+        private static ScriptRuntimeException CreateLuaError(
+            ScriptExecutionContext executionContext,
+            LuaValue message,
+            long level,
+            string funcName
+        )
+        {
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+
+            if (version < LuaCompatibilityVersion.Lua53 && message.Type == DataType.Number)
+            {
+                message = LuaValue.NewString(message.CastToString(version));
+            }
+
+            string messageText =
+                message.Type == DataType.String ? message.String : message.ToPrintString(version);
+            ScriptRuntimeException error = new(messageText);
+            error.SetErrorValue(message);
+
+            if (message.Type != DataType.String || level <= 0)
+            {
+                error.DoNotDecorateMessage = true;
+                return error;
+            }
+
+            WatchItem[] stacktrace = executionContext.CallingCoroutine.GetStackTrace(
+                0,
+                executionContext.CallingLocation
+            );
+            CallbackFunction currentCallback = executionContext.CurrentCallback;
+            bool invokedFromLua =
+                currentCallback == null
+                || string.Equals(currentCallback.Name, funcName, StringComparison.Ordinal);
+            long frameIndex = level - (invokedFromLua ? 0 : 1);
+            if (
+                frameIndex >= 0
+                && frameIndex < stacktrace.Length
+                && !stacktrace[(int)frameIndex].IsClrFunction
+            )
+            {
+                error.DecorateMessage(
+                    executionContext.Script,
+                    stacktrace[(int)frameIndex].Location
+                );
+                error.SetErrorValue(LuaValue.NewString(error.DecoratedMessage));
+            }
+            else
+            {
+                error.DoNotDecorateMessage = true;
+            }
+
+            return error;
         }
 
         /// <summary>
@@ -181,7 +269,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArgumentsView args
         )
         {
-            LuaValue message = args.AsType(executionContext, 0, "error", DataType.String, false);
+            LuaValue message = args[0];
+            if (message.Type == DataType.Void)
+            {
+                message = LuaValue.Nil;
+            }
+
             LuaValue level = args.AsType(1, "error", DataType.Number, true);
 
             // Lua 5.3+: level must have integer representation
@@ -191,12 +284,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 "error",
                 2
             );
-
-            Coroutine cor = executionContext.CallingCoroutine;
-
-            WatchItem[] stacktrace = cor.GetStackTrace(0, executionContext.CallingLocation);
-
-            ScriptRuntimeException e = new(message.String);
 
             long levelValue;
             if (level.IsNil)
@@ -212,20 +299,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     : (long)Math.Floor(levelNum.AsFloat);
             }
 
-            if (levelValue > 0 && levelValue < stacktrace.Length)
-            {
-                // Lua allows levels up to max. value of a double, while this has to be cast to int
-                // Probably never will be a problem, just leaving this note here
-                WatchItem wi = stacktrace[(int)levelValue];
-
-                e.DecorateMessage(executionContext.Script, wi.Location);
-            }
-            else
-            {
-                e.DoNotDecorateMessage = true;
-            }
-
-            throw e;
+            throw CreateLuaError(
+                executionContext,
+                message.ToScalar(),
+                levelValue,
+                funcName: "error"
+            );
         }
 
         /// <summary>

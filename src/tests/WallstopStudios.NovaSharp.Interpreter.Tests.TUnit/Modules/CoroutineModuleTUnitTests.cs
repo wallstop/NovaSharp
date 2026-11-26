@@ -113,6 +113,83 @@ return first, second
             await Assert.That(results.Tuple[1].Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ResumePreservesLuaErrorValues(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            LuaValue result = script.DoString(
+                @"
+                local original = {}
+                local co = coroutine.create(function() error(original) end)
+                local ok, e = coroutine.resume(co)
+
+                local co2 = coroutine.create(function() error('boom') end)
+                local ok2, e2 = coroutine.resume(co2)
+
+                local co3 = coroutine.create(function() error(nil) end)
+                local ok3, e3 = coroutine.resume(co3)
+
+                print('table', ok, rawequal(original, e), type(e))
+                print('string', ok2, type(e2), e2:find('boom') ~= nil)
+                print('nil', ok3, type(e3), e3)
+
+                return
+                    ok, rawequal(original, e), type(e),
+                    ok2, type(e2), e2:find('boom') ~= nil,
+                    ok3, type(e3), e3
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].String).IsEqualTo("table").ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].String).IsEqualTo("string").ConfigureAwait(false);
+            await Assert.That(result.Tuple[5].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[6].Boolean).IsFalse().ConfigureAwait(false);
+            if (UsesNoErrorObjectMarker(version))
+            {
+                await Assert.That(result.Tuple[7].String).IsEqualTo("string").ConfigureAwait(false);
+                await Assert
+                    .That(result.Tuple[8].String)
+                    .IsEqualTo("<no error object>")
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(result.Tuple[7].String).IsEqualTo("nil").ConfigureAwait(false);
+                await Assert.That(result.Tuple[8].IsNil).IsTrue().ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task CloseReturnsThePreservedLuaErrorValue(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            LuaValue result = script.DoString(
+                @"
+                local original = {}
+                local co = coroutine.create(function() error(original) end)
+                local ok, e = coroutine.resume(co)
+                local closed, closeError = coroutine.close(co)
+
+                print('close', ok, rawequal(original, e), closed, rawequal(original, closeError), type(closeError))
+
+                return ok, rawequal(original, e), closed, rawequal(original, closeError), type(closeError)
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].String).IsEqualTo("table").ConfigureAwait(false);
+        }
+
         // =====================================================
         // coroutine.running() Tests (Version-specific behavior)
         // Lua 5.1: returns only the coroutine
@@ -644,6 +721,7 @@ return first, second
             MethodInfo moduleResume = RequireMethod(
                 typeof(CoroutineModule),
                 nameof(CoroutineModule.Resume),
+                typeof(ScriptExecutionContext),
                 typeof(CallbackArgumentsView)
             );
             MethodInfo helper = RequireMethod(
@@ -2179,6 +2257,11 @@ return first, second
             );
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        private static bool UsesNoErrorObjectMarker(LuaCompatibilityVersion version)
+        {
+            return LuaVersionDefaults.Resolve(version) >= LuaCompatibilityVersion.Lua55;
         }
 
         private static Script CreateScript()

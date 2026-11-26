@@ -158,14 +158,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 }
             );
 
-            string result = processor.PerformMessageDecorationBeforeUnwind(
+            LuaValue result = processor.PerformMessageDecorationBeforeUnwind(
                 handler,
-                "boom",
-                SourceRef.GetClrLocation()
+                LuaValue.NewString("boom"),
+                SourceRef.GetClrLocation(),
+                out string decoratedMessage
             );
 
             await Assert.That(invoked).IsTrue();
-            await Assert.That(result).IsEqualTo("decorated");
+            await Assert.That(result.String).IsEqualTo("decorated");
+            await Assert.That(decoratedMessage).IsEqualTo("decorated");
         }
 
         [global::TUnit.Core.Test]
@@ -177,13 +179,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Processor processor = script.GetMainProcessorForTests();
             LuaValue handler = LuaValue.NewNumber(42);
 
-            string result = processor.PerformMessageDecorationBeforeUnwind(
+            LuaValue result = processor.PerformMessageDecorationBeforeUnwind(
                 handler,
-                "boom",
-                SourceRef.GetClrLocation()
+                LuaValue.NewString("boom"),
+                SourceRef.GetClrLocation(),
+                out string decoratedMessage
             );
 
-            await Assert.That(result).IsEqualTo("error in error handling").ConfigureAwait(false);
+            await Assert
+                .That(result.String)
+                .IsEqualTo("error in error handling")
+                .ConfigureAwait(false);
+            await Assert
+                .That(decoratedMessage)
+                .IsEqualTo("error in error handling")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -200,13 +210,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 }
             );
 
-            string decorated = processor.PerformMessageDecorationBeforeUnwind(
+            LuaValue result = processor.PerformMessageDecorationBeforeUnwind(
                 handler,
-                "boom",
-                SourceRef.GetClrLocation()
+                LuaValue.NewString("boom"),
+                SourceRef.GetClrLocation(),
+                out string decoratedMessage
             );
 
-            await Assert.That(decorated).IsEqualTo("error in error handling").ConfigureAwait(false);
+            await Assert
+                .That(result.String)
+                .IsEqualTo("error in error handling")
+                .ConfigureAwait(false);
+            await Assert
+                .That(decoratedMessage)
+                .IsEqualTo("error in error handling")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

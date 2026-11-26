@@ -149,7 +149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     }
                     return LuaValue.NewTupleNested(
                         LuaValue.False,
-                        LuaValue.NewString(ex.DecoratedMessage)
+                        ex.GetCaughtErrorObject(executionContext.Script.CompatibilityVersion)
                     );
                 }
             }

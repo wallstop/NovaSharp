@@ -61,6 +61,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
         internal bool IsIteratorMetamethodDispatcher { get; set; }
 
         /// <summary>
+        /// Gets or sets whether this call-stack item represents a CLR callback rather than a Lua
+        /// function. CLR frames do not contribute a source location to Lua's <c>error</c> level
+        /// decoration.
+        /// </summary>
+        internal bool IsClrFunction { get; set; }
+
+        /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
         /// </summary>
         /// <returns>

@@ -127,7 +127,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 .ConfigureAwait(false);
             await Assert
                 .That(resumeResult.Tuple[1].String)
-                .EndsWith("attempt to yield across a CLR-call boundary", StringComparison.Ordinal)
+                .Contains("attempt to yield across a CLR-call boundary")
                 .ConfigureAwait(false);
         }
 
@@ -149,7 +149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 function checkresume(step, ex, ey)
                     local x, y = coroutine.resume(c)
                     assert(x == ex, 'Step ' .. step .. ': ' .. tostring(ex) .. ' was expected, got ' .. tostring(x));
-                    assert(y:endsWith(ey), 'Step ' .. step .. ': ' .. tostring(ey) .. ' was expected, got ' .. tostring(y));
+                    assert(y:find(ey, 1, true) ~= nil, 'Step ' .. step .. ': ' .. tostring(ey) .. ' was expected, got ' .. tostring(y));
                 end
 
                 t = { }
