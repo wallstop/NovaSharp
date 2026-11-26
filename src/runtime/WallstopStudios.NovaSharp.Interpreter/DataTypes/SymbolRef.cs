@@ -114,6 +114,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public bool IsConst => (_symbolAttributes & SymbolRefAttributes.Const) != 0;
 
         /// <summary>
+        /// Gets a value indicating whether the symbol rejects write access. To-be-closed
+        /// variables are immutable in Lua 5.4 and later even without an explicit const
+        /// attribute.
+        /// </summary>
+        public bool IsImmutable =>
+            (_symbolAttributes & (SymbolRefAttributes.Const | SymbolRefAttributes.ToBeClosed)) != 0;
+
+        /// <summary>
         /// Gets a value indicating whether the symbol participates in the to-be-closed cleanup flow.
         /// </summary>
         public bool IsToBeClosed => (_symbolAttributes & SymbolRefAttributes.ToBeClosed) != 0;

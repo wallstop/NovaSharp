@@ -1615,8 +1615,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                 p = p.Next(); /* (2 digits at most) */
             }
 
+            bool hasPrecision = false;
             if (p[0] == '.')
             {
+                hasPrecision = true;
                 p = p.Next();
                 if (p[0] is >= '0' and <= '9')
                 {
@@ -1653,11 +1655,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                     {
                         LuaLError(
                             l,
-                            "invalid conversion specification: '"
+                            "invalid conversion specification: '%"
                                 + strfrmt.ToString(p - strfrmt + 1)
                                 + "'"
                         );
                     }
+                }
+
+                if (hasPrecision && p[0] == 'c')
+                {
+                    LuaLError(
+                        l,
+                        "invalid conversion specification: '%"
+                            + strfrmt.ToString(p - strfrmt + 1)
+                            + "'"
+                    );
                 }
             }
 

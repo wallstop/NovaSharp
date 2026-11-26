@@ -153,7 +153,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                     && _methodName == null
                     && (_tableAccessors == null || _tableAccessors.Count == 0)
                     && _funcSymbol != null
-                    && _funcSymbol.IsConst
+                    && _funcSymbol.IsImmutable
                 )
                 {
                     throw new SyntaxErrorException(

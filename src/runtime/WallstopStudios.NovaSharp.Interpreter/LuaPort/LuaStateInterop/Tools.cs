@@ -520,14 +520,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 }
 
                 // extract field precision ('%.g' means precision zero)
+                bool hasExplicitPrecision = m.Groups[4] != null && m.Groups[4].Success;
                 fieldPrecision = int.MinValue;
-                if (m.Groups[4] != null && m.Groups[4].Success)
+                if (hasExplicitPrecision)
                 {
                     fieldPrecision =
                         m.Groups[4].Value.Length > 0
                             ? Convert.ToInt32(m.Groups[4].Value, CultureInfo.InvariantCulture)
                             : 0;
                 }
+
+                int integerPrecision = hasExplicitPrecision ? fieldPrecision : int.MinValue;
 
                 // extract short / long indicator
                 shortLongIndicator = Char.MinValue;
@@ -629,7 +632,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             (flagGroupThousands ? "n" : "d"),
                             flagAlternate,
                             fieldLength,
-                            int.MinValue,
+                            integerPrecision,
                             flagLeft2Right,
                             flagPositiveSign,
                             flagPositiveSpace,
@@ -645,7 +648,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             "o",
                             flagAlternate,
                             fieldLength,
-                            int.MinValue,
+                            integerPrecision,
                             flagLeft2Right,
                             paddingCharacter,
                             o
@@ -681,7 +684,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             (flagGroupThousands ? "n" : "d"),
                             flagAlternate,
                             fieldLength,
-                            int.MinValue,
+                            integerPrecision,
                             flagLeft2Right,
                             false,
                             false,
@@ -709,7 +712,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                     case 's': // string
                         //string t = "{0" + ( fieldLength != int.MinValue ? "," + ( flagLeft2Right ? "-" : String.Empty ) + fieldLength.ToString() : String.Empty ) + ":s}";
                         w = o.ToString();
-                        if (fieldPrecision >= 0)
+                        if (fieldPrecision >= 0 && fieldPrecision < w.Length)
                         {
                             w = w.Substring(0, fieldPrecision);
                         }
@@ -871,10 +874,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             if (IsNumericType(value))
             {
                 w = Convert.ToString(UnboxToLong(value, true), 8);
+                if (fieldPrecision != int.MinValue)
+                {
+                    if (fieldPrecision == 0 && w == "0")
+                    {
+                        w = String.Empty;
+                    }
+                    else if (w.Length < fieldPrecision)
+                    {
+                        w = w.PadLeft(fieldPrecision, '0');
+                    }
+                }
 
+                bool needsOctalPrefix = alternate && (w.Length == 0 || w[0] != '0');
                 if (left2Right || padding == ' ')
                 {
-                    if (alternate && w != "0")
+                    if (needsOctalPrefix)
                     {
                         w = "0" + w;
                     }
@@ -885,10 +900,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 {
                     if (fieldLength != int.MinValue)
                     {
-                        w = w.PadLeft(fieldLength - (alternate && w != "0" ? 1 : 0), padding);
+                        w = w.PadLeft(fieldLength - (needsOctalPrefix ? 1 : 0), padding);
                     }
 
-                    if (alternate && w != "0")
+                    if (needsOctalPrefix)
                     {
                         w = "0" + w;
                     }

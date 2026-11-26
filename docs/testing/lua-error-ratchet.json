@@ -14673,6 +14673,50 @@
       "nova_error_sha256": "1d82de05e09cccea23a3b2887b110ec57fb78c1877e545b8901246dd99acd740",
       "lua_error_excerpt": "lua: ...sts/FunctionDefinitionSyntaxRejectsConstLoopVariable.lua:<line>: attempt to assign to const variable 'i'",
       "nova_error_excerpt": "attempt to assign to const variable 'i'"
+    },
+    {
+      "file": "ForLoopConstVariableTUnitTests/CloseLocalRejectsAssignment.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "65ce9dbcb20257629c0251dfd3b2dd2cdda88daeae90b1db874401b21d7c4e3d",
+      "nova_error_sha256": "bde4a17247305c5c52f6477452c92ababf2087d6ef836569937441da71c79f9c",
+      "lua_error_excerpt": "lua: ...pConstVariableTUnitTests/CloseLocalRejectsAssignment.lua:<line>: attempt to assign to const variable 'value'",
+      "nova_error_excerpt": "attempt to assign to const variable 'value'"
+    },
+    {
+      "file": "StringFormatFiniteTUnitTests/FormatRejectsCharacterPrecision.lua",
+      "lua_version": "5.4",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "4c0ff33c4c6dc8a90ac93d306c29dbfafbb4d55a8629ea50e10491da4d59f568",
+      "nova_error_sha256": "1d574d9f8d18edc6ddcd78fd71086912d5689a717c0c3a0eeff8d66fc8de53be",
+      "lua_error_excerpt": "lua: ...rmatFiniteTUnitTests/FormatRejectsCharacterPrecision.lua:<line>: invalid conversion specification: '%.1c' | stack traceback: | \t[C]: in function 'string.format' | \t...rm...",
+      "nova_error_excerpt": "LuaFixtures/StringFormatFiniteTUnitTests/FormatRejectsCharacterPrecision.lua:(7,0-32): invalid conversion specification: '%.1c' [compatibility: Lua 5.4]"
+    },
+    {
+      "file": "ForLoopConstVariableTUnitTests/CloseLocalRejectsAssignment.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "65ce9dbcb20257629c0251dfd3b2dd2cdda88daeae90b1db874401b21d7c4e3d",
+      "nova_error_sha256": "bde4a17247305c5c52f6477452c92ababf2087d6ef836569937441da71c79f9c",
+      "lua_error_excerpt": "lua: ...pConstVariableTUnitTests/CloseLocalRejectsAssignment.lua:<line>: attempt to assign to const variable 'value'",
+      "nova_error_excerpt": "attempt to assign to const variable 'value'"
+    },
+    {
+      "file": "StringFormatFiniteTUnitTests/FormatRejectsCharacterPrecision.lua",
+      "lua_version": "5.5",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "527266fa347f14872e7a13794eba1eb2952379701ef3d1836bab023d0ac66c14",
+      "nova_error_sha256": "182238984204cffbce7e690300d78c18854c63b8570c08a18d8b719a0545336b",
+      "lua_error_excerpt": "lua: ...rmatFiniteTUnitTests/FormatRejectsCharacterPrecision.lua:<line>: invalid conversion specification: '%.1c' | stack traceback: | \t[C]: in field 'format' | \t...rmatFiniteTU...",
+      "nova_error_excerpt": "LuaFixtures/StringFormatFiniteTUnitTests/FormatRejectsCharacterPrecision.lua:(7,0-32): invalid conversion specification: '%.1c' [compatibility: Lua 5.5]"
     }
   ]
 }

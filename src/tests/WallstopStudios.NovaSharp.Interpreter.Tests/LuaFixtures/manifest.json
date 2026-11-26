@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2052,
-  "novasharp_only": 511,
-  "comparable": 1541,
+  "total_snippets": 2055,
+  "novasharp_only": 510,
+  "comparable": 1545,
   "by_version": {
-    "5.1": 1021,
-    "5.2": 727,
-    "5.3": 974,
-    "5.4": 1052,
-    "5.5": 1096
+    "5.1": 1023,
+    "5.2": 729,
+    "5.3": 976,
+    "5.4": 1056,
+    "5.5": 1100
   },
   "snippets": [
     {
@@ -8040,14 +8040,6 @@
         "5.5"
       ],
       "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "CloseAttributeTUnitTests/ReassignmentClosesPreviousValueImmediately.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/CloseAttributeTUnitTests.cs:59",
-      "test": "CloseAttributeTUnitTests.ReassignmentClosesPreviousValueImmediately",
-      "lua_versions": [],
-      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -22744,18 +22736,6 @@
       "expects_error": false
     },
     {
-      "path": "TableNextContractTUnitTests/NextAcceptsIntegralFloatCursorsBeforeLua54.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:441",
-      "test": "TableNextContractTUnitTests.NextAcceptsIntegralFloatCursorsBeforeLua54",
-      "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
       "path": "TableNextContractTUnitTests/NextRejectsIntegralFloatCursorsForArrayAndHashKeys.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:391",
       "test": "TableNextContractTUnitTests.NextRejectsIntegralFloatCursorsForArrayAndHashKeys",
@@ -22792,6 +22772,68 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:355",
       "test": "TableNextContractTUnitTests.NextRejectsIntegralFloatCursorAndReturnsIntegerKey",
       "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringFormatFiniteTUnitTests/FormatClampsStringPrecision.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:58",
+      "test": "StringFormatFiniteTUnitTests.FormatClampsStringPrecision",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringFormatFiniteTUnitTests/FormatRejectsCharacterPrecision.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:88",
+      "test": "StringFormatFiniteTUnitTests.FormatRejectsCharacterPrecision",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "TableNextContractTUnitTests/NextAcceptsIntegralFloatCursorsBeforeLua54.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:449",
+      "test": "TableNextContractTUnitTests.NextAcceptsIntegralFloatCursorsBeforeLua54",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ForLoopConstVariableTUnitTests/CloseLocalRejectsAssignment.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ForLoopConstVariableTUnitTests.cs:144",
+      "test": "ForLoopConstVariableTUnitTests.CloseLocalRejectsAssignment",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "StringFormatFiniteTUnitTests/FormatPadsIntegerPrecision.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:70",
+      "test": "StringFormatFiniteTUnitTests.FormatPadsIntegerPrecision",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
         "5.4",
         "5.5"
       ],

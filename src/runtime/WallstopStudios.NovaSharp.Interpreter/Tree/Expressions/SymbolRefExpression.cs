@@ -86,7 +86,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// <param name="tupleidx">Tuple index when assignment consumes multi-return values.</param>
         public void CompileAssignment(Execution.VM.ByteCode bc, int stackofs, int tupleidx)
         {
-            if (!_allowsConstAssignment && _ref.IsConst)
+            if (!_allowsConstAssignment && _ref.IsImmutable)
             {
                 throw new SyntaxErrorException(
                     _nameToken,

@@ -137,6 +137,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task CloseLocalRejectsAssignment(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                script.DoString(
+                    @"local value <close> = setmetatable({}, { __close = function() end })
+                      value = setmetatable({}, { __close = function() end })"
+                )
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("attempt to assign to const variable 'value'")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
         public async Task ConstLocalInitializationRemainsAllowed(LuaCompatibilityVersion version)
         {
             Script script = new(version);

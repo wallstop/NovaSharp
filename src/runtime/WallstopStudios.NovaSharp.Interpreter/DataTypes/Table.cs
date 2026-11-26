@@ -1009,17 +1009,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     return _storage.TryLocateString(key.String, out arrayIndex, out nodeIndex);
                 case DataType.Number:
                 {
-                    // Lua 5.4+ stores exact integral floats as integer keys and rejects
-                    // the float spelling as a traversal cursor, even though normal lookup
-                    // treats the two spellings as the same key.
-                    if (
-                        ResolveCompatibilityVersion() >= LuaCompatibilityVersion.Lua54
-                        && key.LuaNumber.IsFloat
+                    LuaCompatibilityVersion version = ResolveCompatibilityVersion();
+                    bool integralFloat =
+                        key.LuaNumber.IsFloat
                         && (
                             key.LuaNumber.ToDouble == 0.0
                             || LuaNumber.TryConvertToInteger(key.LuaNumber.ToDouble, out _)
-                        )
-                    )
+                        );
+
+                    // Lua 5.4+ stores exact integral floats as integer keys and rejects
+                    // the float spelling as a traversal cursor, even though normal lookup
+                    // treats the two spellings as the same key.
+                    if (integralFloat && version >= LuaCompatibilityVersion.Lua54)
                     {
                         arrayIndex = 0;
                         nodeIndex = 0;
@@ -1029,7 +1030,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     int idx = GetIntegralKey(key.Number);
                     if (idx > 0)
                     {
-                        return _storage.TryLocateInt(idx, out arrayIndex, out nodeIndex);
+                        bool located = _storage.TryLocateInt(idx, out arrayIndex, out nodeIndex);
+                        // Lua 5.3 accepts float cursors for hash keys but not for keys
+                        // that live in the array part.
+                        if (
+                            located
+                            && integralFloat
+                            && version == LuaCompatibilityVersion.Lua53
+                            && arrayIndex > 0
+                        )
+                        {
+                            arrayIndex = 0;
+                            nodeIndex = 0;
+                            return false;
+                        }
+
+                        return located;
                     }
 
                     key = NormalizeNumericHashKey(key);

@@ -9,15 +9,18 @@ Issues: #199, #193, #130, #185.
   comparison. Routed relational operators, constant folding, and `table.sort`
   through it.
 - `string.format` now accepts flags in any order (including `0`), parses empty
-  precision (`%.g`), emits C printf's two-digit minimum exponent, and matches Lua
-  5.4+ repeated/invalid-flag rules per conversion type.
-- Lua 5.4/5.5 `<const>` locals and Lua 5.5 for-loop control variables now reject
-  writes at compile time, including captured upvalues and `function name()`
-  declaration syntax. The Lua 5.4 repeated-flag expectation in TAP `304-string.t`
-  is version-aware.
-- Lua 5.3+ stores exact integral float table keys as integer keys; Lua 5.4/5.5
-  reject the float spelling as a `next` cursor after normalizing insertion,
-  matching reference traversal keys and errors.
+  precision (`%.g`), clamps string precision instead of aborting, applies integer
+  `d`/`o`/`u` precision, emits C printf's two-digit minimum exponent, and matches
+  Lua 5.4+ repeated/invalid-flag and character-precision rules per conversion
+  type. The Lua 5.4 repeated-flag expectation in TAP `304-string.t` is
+  version-aware.
+- Lua 5.4/5.5 `<const>` and `<close>` locals and Lua 5.5 for-loop control
+  variables now reject writes at compile time, including captured upvalues and
+  `function name()` declaration syntax.
+- Lua 5.3+ stores exact integral float table keys (including negative zero) as
+  integer keys; Lua 5.4/5.5 reject the float spelling as a `next` cursor, and
+  Lua 5.3 rejects it only for array-part keys, matching reference traversal keys
+  and errors.
 
 ## Evidence
 
