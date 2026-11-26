@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795655775865,
+  "lastUpdate": 1795684155311,
   "repoUrl": "https://github.com/Ambiguous-Interactive/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -4990,6 +4990,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 551.905,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bf9f24c1e19aa9e7383725d7eacad497b2b5f8c8",
+          "message": "Match Lua string ordering, format flags, const writes, and next cursors (#221)\n\n## Summary\n\nCloses #193, #130, and #185 with reference-matched Lua behavior across\n5.1–5.5. Advances #199 (byte-escape identity/order remains gated by the\n#201 representation work).\n\n### String ordering (#199, partial)\n- Added `LuaStringOrdering.Compare`, which orders decoded source text by\ncode point so supplementary-plane characters sort after BMP characters\nlike reference Lua's UTF-8 byte order.\n- Routed relational operators, constant folding, and `table.sort`\nthrough the shared helper.\n- Raw byte-escape identity and ordering still depend on #201, so #199 is\nintentionally left open.\n\n### `string.format` finite conversions (#193)\n- Flags may appear in any order and `0` is parsed as a flag (`%0+9g`).\n- Empty precision is zero (`%.g` → `2`).\n- Scientific exponents use C printf's two-digit minimum\n(`1.500000e+00`).\n- Lua 5.4+ accepts long flag runs but validates flags against the\nconversion (`%------g`, `%++++++s` rejected); pre-5.4 keeps the\nrepeated-flag limit. Lua 5.4+ `%q` modifiers are rejected.\n- Space signs survive zero padding, field width counts the sign, string\nprecision clamps instead of aborting, integer precision overrides zero\npadding with C's zero-digit suppression, and character width/alignment\nis applied.\n- TAP `304-string.t` now has a version-aware repeated-flag expectation.\n\n### Const writes (#130)\n- Lua 5.4/5.5 `<const>` and `<close>` locals and Lua 5.5\nnumeric/generic-for control variables reject source writes at compile\ntime.\n- Includes captured upvalues, `function name()` declaration syntax, and\nsource-located diagnostics.\n- Local-declaration initialization and the compiler's internal loop\nassignment remain allowed.\n\n### `next` cursors (#185)\n- Lua 5.3+ stores exact integral float keys (including negative zero) as\ninteger table keys, matching traversal key subtypes.\n- Lua 5.4/5.5 reject the float spelling as a `next` cursor while\nordinary lookup still treats integer and float spellings as the same\nkey.\n- Lua 5.3 rejects float cursors for array-part keys but keeps hash-part\nand lone keyed-constructor cursors valid.\n- Fractional float cursors remain accepted.\n\n## Verification\n- Full TUnit suite: `16132/16132` passed.\n- New fixtures print their outcomes so the reference comparison observes\nreal output.\n- Lua comparison corpus: zero mismatches for 5.1, 5.2, 5.3, and 5.5;\nclean error ratchet.\n- Local 5.4.4 differs from CI's pinned 5.4.7 in two pre-existing\nfixtures (not touched here; both are version-sensitive reference\nexpectations).\n- `string.format` preserves the space sign under zero padding, clamps\nstring precision, honors integer minimum digits with C's zero-padding\noverride, and rejects Lua 5.4+ character precision.\n- New paired TUnit classes and extracted `.lua` fixtures:\n  - `LuaStringOrderingTUnitTests`\n  - `StringFormatFiniteTUnitTests`\n  - `ForLoopConstVariableTUnitTests`\n  - `TableNextContractTUnitTests` additions",
+          "timestamp": "2026-11-26T01:04:00-08:00",
+          "tree_id": "3986d5c20fbda31c69d7106b5e46415160480c66",
+          "url": "https://github.com/Ambiguous-Interactive/NovaSharp/commit/bf9f24c1e19aa9e7383725d7eacad497b2b5f8c8"
+        },
+        "date": 1795684154847,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 338.794,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 360.186,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 354.819,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 525.324,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 557.891,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 543.3,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 541.692,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 585.894,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 607.051,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 586.726,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 627.608,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 637.179,
             "unit": "ns",
             "extra": ""
           }
