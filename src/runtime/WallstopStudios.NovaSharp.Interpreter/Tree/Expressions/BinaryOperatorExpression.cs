@@ -470,6 +470,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 _exp2.Compile(bc);
                 _exp1.Compile(bc);
             }
+            else if (ReadsLeftLocalAfterRight())
+            {
+                // `<` and `<=` keep the left local live until the comparison, so a
+                // right operand that runs Lua code can update the value being read.
+                // Emit the right operand first, then reload the local and swap.
+                _exp2.Compile(bc);
+                _exp1.Compile(bc);
+                bc.EmitSwap(0, 1);
+            }
             else
             {
                 _exp1.Compile(bc);
@@ -511,14 +520,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
         private static bool CanReverseComparisonLoads(Expression left, Expression right)
         {
-            left = UnwrapAdjustments(left);
-            return left is LiteralExpression
-                || UnwrapAdjustments(right) is LiteralExpression
-                || (
-                    left is SymbolRefExpression symbol
-                    && symbol.GetSymbolRef() is SymbolRef symbolRef
-                    && symbolRef.Type == SymbolRefType.Local
-                );
+            return IsDirectLocal(left)
+                || UnwrapAdjustments(left) is LiteralExpression
+                || UnwrapAdjustments(right) is LiteralExpression;
+        }
+
+        /// <summary>
+        /// Determines whether the left local must stay live until the right operand runs.
+        /// Reference Lua keeps a direct local in its register, so a call on the right can
+        /// change the value read by <c>&lt;</c> or <c>&lt;=</c>.
+        /// </summary>
+        private bool ReadsLeftLocalAfterRight()
+        {
+            return (_operator == Operator.Less || _operator == Operator.LessOrEqual)
+                && IsDirectLocal(_exp1)
+                && UnwrapAdjustments(_exp2) is not LiteralExpression
+                && !IsDirectLocal(_exp2);
+        }
+
+        private static bool IsDirectLocal(Expression expression)
+        {
+            return UnwrapAdjustments(expression) is SymbolRefExpression symbol
+                && symbol.GetSymbolRef() is SymbolRef symbolRef
+                && symbolRef.Type == SymbolRefType.Local;
         }
 
         private static Expression UnwrapAdjustments(Expression operand)
@@ -534,6 +558,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// <inheritdoc />
         public override LuaValue Eval(ScriptExecutionContext context)
         {
+            if (ReadsLeftLocalAfterRight())
+            {
+                LuaValue rightValue = _exp2.Eval(context).ToScalar();
+                LuaValue leftValue = _exp1.Eval(context).ToScalar();
+                Compatibility.LuaCompatibilityVersion orderedVersion = context
+                    .Script
+                    .Options
+                    .CompatibilityVersion;
+                return LuaValue.FromBoolean(
+                    EvalComparison(leftValue, rightValue, _operator, orderedVersion)
+                );
+            }
+
             LuaValue v1 = _exp1.Eval(context).ToScalar();
 
             if (_operator == Operator.Or)

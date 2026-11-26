@@ -10,6 +10,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.LuaFixtures;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class MathModuleTUnitTests
@@ -100,6 +101,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             LuaValue result = script.DoString("return math.min(-1, 5, 12, 3)");
 
             await Assert.That(result.Number).IsEqualTo(-1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public void ExtremaPreserveOperandsAndOrdering(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaFixtureHelper fixture = LuaFixtureHelper.ForCallingTest<MathModuleTUnitTests>();
+            script.DoFile(fixture.GetFixturePath());
         }
 
         /// <summary>

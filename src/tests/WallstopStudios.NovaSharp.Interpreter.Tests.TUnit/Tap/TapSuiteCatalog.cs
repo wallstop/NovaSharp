@@ -87,6 +87,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
                 return LuaCompatibilityVersion.Lua52;
             }
 
+            // 320-stdin.t expects Lua 5.1/5.2 float formatting for an integral max
+            // (math.max returns "15000000000000" rather than "15000000000000.0").
+            if (IsLua51StdinSuite(path))
+            {
+                return LuaCompatibilityVersion.Lua51;
+            }
+
             return null;
         }
 
@@ -149,6 +156,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
             return string.Equals(
                 path,
                 "TestMore/Metatables/231-metatable.t",
+                StringComparison.OrdinalIgnoreCase
+            );
+        }
+
+        private static bool IsLua51StdinSuite(string path)
+        {
+            return string.Equals(
+                path,
+                "TestMore/LanguageExtensions/320-stdin.t",
                 StringComparison.OrdinalIgnoreCase
             );
         }
