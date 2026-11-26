@@ -642,6 +642,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                                 : (LuaValue?)null,
                             IsTailCall = false,
                             IsIteratorMetamethodDispatcher = dispatcherOrigin != null,
+                            IsClrFunction = true,
                         }
                     );
                 }

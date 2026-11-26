@@ -1,13 +1,13 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/CoroutineTUnitTests.cs:177
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/CoroutineTUnitTests.cs:178
 -- @test: CoroutineTUnitTests.CoroutineVariousErrorHandlingMatchesNunitSuite
--- NovaSharp: NovaSharp string extension (method-style); NovaSharp: NovaSharp CLR-call boundary error message
+-- Compatibility notes: NovaSharp: NovaSharp CLR-call boundary error message
 function checkresume(step, ex, ey)
                     local x, y = coroutine.resume(c)
                     assert(x == ex, 'Step ' .. step .. ': ' .. tostring(ex) .. ' was expected, got ' .. tostring(x));
-                    assert(y:endsWith(ey), 'Step ' .. step .. ': ' .. tostring(ey) .. ' was expected, got ' .. tostring(y));
+                    assert(y:find(ey, 1, true) ~= nil, 'Step ' .. step .. ': ' .. tostring(ey) .. ' was expected, got ' .. tostring(y));
                 end
 
                 t = { }

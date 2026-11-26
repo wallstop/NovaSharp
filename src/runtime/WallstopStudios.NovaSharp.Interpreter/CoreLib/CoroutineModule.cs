@@ -147,7 +147,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
             catch (ScriptRuntimeException ex)
             {
-                return LuaValue.NewTuple(LuaValue.False, LuaValue.NewString(ex.Message));
+                Script ownerScript = handle.Coroutine.OwnerScript;
+                LuaCompatibilityVersion version = ownerScript?.CompatibilityVersion
+                    ?? LuaVersionDefaults.CurrentDefault;
+                return LuaValue.NewTuple(LuaValue.False, ex.GetCaughtErrorObject(version));
             }
         }
 

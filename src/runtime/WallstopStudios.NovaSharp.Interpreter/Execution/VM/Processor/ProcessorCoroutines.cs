@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using global::NovaSharp;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
@@ -225,6 +226,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     {
                         _state = CoroutineState.Suspended;
                         _lastCloseError = LuaValue.Nil;
+                        _lastCloseFailed = false;
                         return retVal.YieldRequest.ToTuple();
                     }
                 }
@@ -232,13 +234,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     _state = CoroutineState.Dead;
                     _lastCloseError = LuaValue.Nil;
+                    _lastCloseFailed = false;
                     return retVal;
                 }
             }
             catch (ScriptRuntimeException ex)
             {
                 _state = CoroutineState.Dead;
-                _lastCloseError = LuaValue.NewString(ex.DecoratedMessage);
+                _lastCloseError = ex.GetCaughtErrorObject(
+                    LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                );
+                _lastCloseFailed = true;
                 throw;
             }
             catch (Exception)
@@ -281,6 +287,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     _state = CoroutineState.Dead;
                     _lastCloseError = LuaValue.Nil;
+                    _lastCloseFailed = false;
                     return LuaValue.True;
                 }
 
@@ -306,13 +313,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                     _valueStack.Clear();
                     _lastCloseError = LuaValue.Nil;
+                    _lastCloseFailed = false;
                     _state = CoroutineState.Dead;
                     return LuaValue.True;
                 }
                 catch (ScriptRuntimeException ex)
                 {
-                    LuaValue error = LuaValue.NewString(ex.DecoratedMessage);
+                    LuaValue error = ex.GetCaughtErrorObject(
+                        LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                    );
                     _lastCloseError = error;
+                    _lastCloseFailed = true;
                     _state = CoroutineState.Dead;
                     return LuaValue.NewTuple(LuaValue.False, error);
                 }
@@ -328,7 +339,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         private LuaValue BuildCloseResultFromLastError()
         {
-            if (!_lastCloseError.IsNil)
+            if (_lastCloseFailed)
             {
                 return LuaValue.NewTuple(LuaValue.False, _lastCloseError);
             }

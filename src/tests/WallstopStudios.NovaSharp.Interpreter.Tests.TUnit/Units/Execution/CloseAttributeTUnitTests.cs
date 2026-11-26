@@ -227,5 +227,80 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(log.Get(1).String).IsEqualTo("second:nil").ConfigureAwait(false);
             await Assert.That(log.Get(2).String).IsEqualTo("first:nil").ConfigureAwait(false);
         }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task CloseMetamethodsReceiveLuaErrorObjects(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"
+                local original, replacement = {}, {}
+                local captured, replacedCaptured
+
+                local ok, caught = pcall(function()
+                    local value <close> = setmetatable({}, {
+                        __close = function(_, err) captured = err end
+                    })
+                    error(original)
+                end)
+
+                local ok2, caught2 = pcall(function()
+                    local first <close> = setmetatable({}, {
+                        __close = function(_, err) replacedCaptured = err end
+                    })
+                    local second <close> = setmetatable({}, {
+                        __close = function() error(replacement) end
+                    })
+                    error(original)
+                end)
+
+                local argCount, nilArgType = 0, 'none'
+                local ok3, caught3 = pcall(function()
+                    local value <close> = setmetatable({}, {
+                        __close = function(...)
+                            argCount = select('#', ...)
+                            nilArgType = type((select(2, ...)))
+                        end
+                    })
+                    error(nil)
+                end)
+
+                print('table', ok, rawequal(original, caught), rawequal(original, captured))
+                print('replacement', ok2, rawequal(replacement, caught2), rawequal(replacement, replacedCaptured))
+                print('nil', ok3, argCount, nilArgType, type(caught3), caught3)
+
+                return
+                    ok, rawequal(original, caught), rawequal(original, captured),
+                    ok2, rawequal(replacement, caught2), rawequal(replacement, replacedCaptured),
+                    ok3, argCount, nilArgType, type(caught3), caught3
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[5].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[6].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[7].Number).IsEqualTo(2d).ConfigureAwait(false);
+
+            if (version >= LuaCompatibilityVersion.Lua55)
+            {
+                await Assert.That(result.Tuple[8].String).IsEqualTo("string").ConfigureAwait(false);
+                await Assert.That(result.Tuple[9].String).IsEqualTo("string").ConfigureAwait(false);
+                await Assert
+                    .That(result.Tuple[10].String)
+                    .IsEqualTo("<no error object>")
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(result.Tuple[8].String).IsEqualTo("nil").ConfigureAwait(false);
+                await Assert.That(result.Tuple[9].String).IsEqualTo("nil").ConfigureAwait(false);
+                await Assert.That(result.Tuple[10].IsNil).IsTrue().ConfigureAwait(false);
+            }
+        }
     }
 }

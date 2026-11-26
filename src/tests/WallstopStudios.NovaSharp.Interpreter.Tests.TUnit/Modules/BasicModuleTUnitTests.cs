@@ -1926,6 +1926,101 @@ return reader()
             return count;
         }
 
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task AssertPreservesLuaErrorValues(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.Options.DebugPrint = _ => { };
+
+            LuaValue result = script.DoString(
+                @"
+                local original = {}
+                local ok, e = pcall(function() assert(false, original) end)
+                local ok2, e2 = pcall(function() assert(false) end)
+                local ok3, e3 = pcall(function() assert(false, 42) end)
+                local ok4, e4 = pcall(function() assert(false, nil) end)
+
+                print('table', ok, type(e), rawequal(original, e),
+                    type(e) == 'string' and e:find('string expected') ~= nil)
+                print('default', ok2, type(e2), tostring(e2):find('assertion failed!') ~= nil)
+                print('number', ok3, type(e3), type(e3) == 'number' and e3 or (tostring(e3):find('42') ~= nil))
+                print('nil', ok4, type(e4), e4 == nil,
+                    type(e4) == 'string' and e4:find('assertion failed!') ~= nil)
+
+                return
+                    ok, type(e), rawequal(original, e),
+                    type(e) == 'string' and e:find('string expected') ~= nil,
+                    ok2, type(e2), tostring(e2):find('assertion failed!') ~= nil,
+                    ok3, type(e3), type(e3) == 'number' and e3 or tostring(e3):find('42') ~= nil,
+                    ok4, type(e4), e4 == nil, tostring(e4)
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("string").ConfigureAwait(false);
+            await Assert.That(result.Tuple[6].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[7].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[10].Boolean).IsFalse().ConfigureAwait(false);
+
+            if (KeepsNumericErrorValues(version))
+            {
+                await Assert.That(result.Tuple[1].String).IsEqualTo("table").ConfigureAwait(false);
+                await Assert.That(result.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+                await Assert.That(result.Tuple[3].Boolean).IsFalse().ConfigureAwait(false);
+                await Assert.That(result.Tuple[8].String).IsEqualTo("number").ConfigureAwait(false);
+                await Assert.That(result.Tuple[9].Number).IsEqualTo(42d).ConfigureAwait(false);
+                if (UsesNoErrorObjectMarker(version))
+                {
+                    await Assert
+                        .That(result.Tuple[11].String)
+                        .IsEqualTo("string")
+                        .ConfigureAwait(false);
+                    await Assert.That(result.Tuple[12].Boolean).IsFalse().ConfigureAwait(false);
+                    await Assert
+                        .That(result.Tuple[13].String)
+                        .IsEqualTo("<no error object>")
+                        .ConfigureAwait(false);
+                }
+                else
+                {
+                    await Assert
+                        .That(result.Tuple[11].String)
+                        .IsEqualTo("nil")
+                        .ConfigureAwait(false);
+                    await Assert.That(result.Tuple[12].Boolean).IsTrue().ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                await Assert.That(result.Tuple[1].String).IsEqualTo("string").ConfigureAwait(false);
+                await Assert.That(result.Tuple[2].Boolean).IsFalse().ConfigureAwait(false);
+                await Assert.That(result.Tuple[3].Boolean).IsTrue().ConfigureAwait(false);
+                await Assert.That(result.Tuple[8].String).IsEqualTo("string").ConfigureAwait(false);
+                await Assert.That(result.Tuple[9].Boolean).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(result.Tuple[11].String)
+                    .IsEqualTo("string")
+                    .ConfigureAwait(false);
+                await Assert.That(result.Tuple[12].Boolean).IsFalse().ConfigureAwait(false);
+                await Assert
+                    .That(result.Tuple[13].String)
+                    .Contains("assertion failed!")
+                    .ConfigureAwait(false);
+            }
+        }
+
+        private static bool KeepsNumericErrorValues(LuaCompatibilityVersion version)
+        {
+            return LuaVersionDefaults.Resolve(version) >= LuaCompatibilityVersion.Lua53;
+        }
+
+        private static bool UsesNoErrorObjectMarker(LuaCompatibilityVersion version)
+        {
+            return LuaVersionDefaults.Resolve(version) >= LuaCompatibilityVersion.Lua55;
+        }
+
         private static OpCode ReadOpCode(byte[] il, ref int offset)
         {
             byte value = il[offset++];

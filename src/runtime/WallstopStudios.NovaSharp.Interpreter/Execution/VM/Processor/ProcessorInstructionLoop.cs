@@ -602,6 +602,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 DecorateNearestErrorHandlerBeforeUnwind(exception, instructionPtr);
 
+                LuaCompatibilityVersion errorVersion = LuaVersionDefaults.Resolve(
+                    _script.CompatibilityVersion
+                );
                 ScriptRuntimeException activeException = exception;
                 while (_executionStack.Count > 0)
                 {
@@ -610,7 +613,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                     try
                     {
-                        LuaValue closeError = LuaValue.NewString(activeException.DecoratedMessage);
+                        LuaValue closeError = activeException.GetCaughtErrorObject(errorVersion);
                         try
                         {
                             CloseAllPendingBlocks(
@@ -649,7 +652,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                                 )
                             )
                             {
-                                cbargs[0] = LuaValue.NewString(activeException.DecoratedMessage);
+                                cbargs[0] = activeException.GetCaughtErrorObject(errorVersion);
 
                                 LuaValue handled = errorHandler.Invoke(
                                     new ScriptExecutionContext(this, errorHandler, sourceRef),
@@ -761,11 +764,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 frame.ErrorHandlerBeforeUnwindInProgress = true;
                 try
                 {
-                    exception.DecoratedMessage = PerformMessageDecorationBeforeUnwind(
+                    LuaValue leadingError = PerformMessageDecorationBeforeUnwind(
                         messageHandler,
-                        exception.DecoratedMessage,
-                        GetCurrentSourceRef(instructionPtr)
+                        exception.GetErrorObject(),
+                        GetCurrentSourceRef(instructionPtr),
+                        out string decoratedMessage
                     );
+                    exception.SetErrorValue(leadingError);
+                    exception.DecoratedMessage = decoratedMessage;
                     exception.ErrorHandlerBeforeUnwindDecorated = true;
                 }
                 finally
@@ -778,16 +784,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
-        /// Invokes the provided message handler to decorate an error before the stack unwinds.
+        /// Invokes the provided message handler with the Lua error object before the stack unwinds.
         /// </summary>
         /// <param name="messageHandler">Function handling the error.</param>
-        /// <param name="decoratedMessage">Existing decorated message (if any).</param>
+        /// <param name="errorObject">Lua error object observed by the handler.</param>
         /// <param name="sourceRef">Source reference associated with the error.</param>
-        /// <returns>The new decorated message.</returns>
-        internal string PerformMessageDecorationBeforeUnwind(
+        /// <param name="decoratedMessage">Host-facing text produced from the handler result.</param>
+        /// <returns>The Lua error object produced by the handler.</returns>
+        internal LuaValue PerformMessageDecorationBeforeUnwind(
             LuaValue messageHandler,
-            string decoratedMessage,
-            SourceRef sourceRef
+            LuaValue errorObject,
+            SourceRef sourceRef,
+            out string decoratedMessage
         )
         {
             try
@@ -800,7 +808,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     )
                 )
                 {
-                    args[0] = LuaValue.NewString(decoratedMessage);
+                    args[0] = errorObject;
                     LuaValue ret = LuaValue.Nil;
 
                     if (messageHandler.Type == DataType.Function)
@@ -817,11 +825,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         throw new ScriptRuntimeException("error handler not set to a function");
                     }
 
-                    string newmsg = ret.ToPrintString();
-                    if (newmsg != null)
-                    {
-                        return newmsg;
-                    }
+                    ret = ret.ToScalar();
+                    ret = ret.IsVoid() ? LuaValue.Nil : ret;
+                    decoratedMessage = ret.ToPrintString(
+                        LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                    );
+                    return ret;
                 }
             }
             catch (ScriptRuntimeException)
@@ -829,10 +838,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 // When the error handler fails for any reason (including when it's not callable
                 // in Lua 5.1/5.2, or when it throws an error in any version), the result is
                 // always "error in error handling" per the Lua specification.
-                return "error in error handling";
+                decoratedMessage = "error in error handling";
+                return LuaValue.NewString(decoratedMessage);
             }
-
-            return decoratedMessage;
         }
 
         private void AssignLocal(SymbolRef symref, LuaValue value)
@@ -1261,7 +1269,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     );
                 }
 
-                activeError = LuaValue.NewString(closeException.DecoratedMessage);
+                activeError = closeException.GetCaughtErrorObject(
+                    LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                );
                 activeException = closeException;
             }
             finally

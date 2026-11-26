@@ -318,6 +318,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         public SourceRef CallingLocation { get; private set; }
 
         /// <summary>
+        /// Gets the CLR callback that owns this execution context. Nested invocations reuse the
+        /// outer callback's context, which lets error decoration follow reference Lua's rule that
+        /// a CLR caller contributes no source location.
+        /// </summary>
+        internal CallbackFunction CurrentCallback => _callback;
+
+        /// <summary>
         /// Gets or sets the additional data associated to this CLR function call.
         /// </summary>
         public object AdditionalData
@@ -1467,11 +1474,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(exception));
             }
 
-            exception.DecoratedMessage = _processor.PerformMessageDecorationBeforeUnwind(
+            LuaValue result = _processor.PerformMessageDecorationBeforeUnwind(
                 messageHandler,
-                exception.Message,
-                CallingLocation
+                exception.GetErrorObject(),
+                CallingLocation,
+                out string decoratedMessage
             );
+            exception.SetErrorValue(result);
+            exception.DecoratedMessage = decoratedMessage;
         }
 
         /// <summary>

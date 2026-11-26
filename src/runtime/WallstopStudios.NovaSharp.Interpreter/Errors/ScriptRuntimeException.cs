@@ -22,10 +22,64 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
     /// </summary>
     public class ScriptRuntimeException : InterpreterException
     {
+        [NonSerialized]
+        private LuaValue _errorValue = LuaValue.Void;
+
         /// <summary>
         /// Initializes a new <see cref="ScriptRuntimeException"/> without a message; primarily used by serializers/reflection.
         /// </summary>
         public ScriptRuntimeException() { }
+
+        /// <summary>
+        /// Gets the Lua error object associated with this failure, or <see cref="LuaValue.Void"/> when
+        /// the error originated outside Lua (for example, a host exception) and needs the decorated
+        /// message fallback.
+        /// </summary>
+        public LuaValue ErrorValue => _errorValue;
+
+        /// <summary>
+        /// Gets whether <see cref="ErrorValue"/> carries a Lua error object instead of the
+        /// host-facing decorated message fallback.
+        /// </summary>
+        public bool HasErrorValue => _errorValue.Type != DataType.Void;
+
+        /// <summary>
+        /// Gets the Lua value that a protected call or closing value should observe for this
+        /// failure. Runtime errors raised as plain strings fall back to the decorated message so
+        /// reference Lua callers see the source-annotated text.
+        /// </summary>
+        public LuaValue GetErrorObject()
+        {
+            if (HasErrorValue)
+            {
+                return _errorValue;
+            }
+
+            return LuaValue.NewString(DecoratedMessage ?? Message ?? string.Empty);
+        }
+
+        /// <summary>
+        /// Gets the error object observed by Lua language versions that substitute the
+        /// <c>&lt;no error object&gt;</c> marker for a nil error value.
+        /// </summary>
+        internal LuaValue GetCaughtErrorObject(LuaCompatibilityVersion version)
+        {
+            LuaValue errorValue = GetErrorObject();
+            if (
+                errorValue.IsNil
+                && LuaVersionDefaults.Resolve(version) >= LuaCompatibilityVersion.Lua55
+            )
+            {
+                return LuaValue.NewString("<no error object>");
+            }
+
+            return errorValue;
+        }
+
+        internal void SetErrorValue(LuaValue errorValue)
+        {
+            _errorValue = errorValue;
+        }
 
         /// <summary>
         /// Initializes a new <see cref="ScriptRuntimeException"/> using the provided <paramref name="message"/>.
@@ -59,6 +113,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
             DecoratedMessage = Message;
             DoNotDecorateMessage = true;
             ErrorHandlerBeforeUnwindDecorated = ex.ErrorHandlerBeforeUnwindDecorated;
+            _errorValue = ex._errorValue;
         }
 
         /// <summary>
