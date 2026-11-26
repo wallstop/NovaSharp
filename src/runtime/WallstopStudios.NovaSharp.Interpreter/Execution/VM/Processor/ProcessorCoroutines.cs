@@ -280,6 +280,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 if (_state == CoroutineState.Dead)
                 {
+                    if (_lastCloseFailed && _executionStack.Count > 0)
+                    {
+                        return CloseDeferredCoroutineFrames();
+                    }
+
                     return BuildCloseResultFromLastError();
                 }
 
@@ -296,37 +301,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     throw ScriptRuntimeException.CannotCloseCoroutine(_state);
                 }
 
-                try
-                {
-                    while (_executionStack.Count > 0)
-                    {
-                        CallStackItem frame = PopToBasePointer();
-                        try
-                        {
-                            CloseAllPendingBlocks(frame, LuaValue.Nil);
-                        }
-                        finally
-                        {
-                            CallStackItemPool.Return(frame);
-                        }
-                    }
-
-                    _valueStack.Clear();
-                    _lastCloseError = LuaValue.Nil;
-                    _lastCloseFailed = false;
-                    _state = CoroutineState.Dead;
-                    return LuaValue.True;
-                }
-                catch (ScriptRuntimeException ex)
-                {
-                    LuaValue error = ex.GetCaughtErrorObject(
-                        LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
-                    );
-                    _lastCloseError = error;
-                    _lastCloseFailed = true;
-                    _state = CoroutineState.Dead;
-                    return LuaValue.NewTuple(LuaValue.False, error);
-                }
+                bool failed = UnwindFramesForClose(LuaValue.Nil, out LuaValue closeError);
+                _lastCloseError = LuaValue.Nil;
+                _lastCloseFailed = false;
+                _state = CoroutineState.Dead;
+                return failed ? LuaValue.NewTuple(LuaValue.False, closeError) : LuaValue.True;
             }
             finally
             {
@@ -335,13 +314,70 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
+        /// Runs the close handlers a failed coroutine kept past its uncaught error.
+        /// </summary>
+        private LuaValue CloseDeferredCoroutineFrames()
+        {
+            try
+            {
+                UnwindFramesForClose(_lastCloseError, out LuaValue closeError);
+                return LuaValue.NewTuple(LuaValue.False, closeError);
+            }
+            finally
+            {
+                _lastCloseError = LuaValue.Nil;
+                _lastCloseFailed = false;
+                _state = CoroutineState.Dead;
+            }
+        }
+
+        /// <summary>
+        /// Closes every pending block in stack order, continuing after a handler fails.
+        /// </summary>
+        private bool UnwindFramesForClose(LuaValue initialError, out LuaValue closeError)
+        {
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                _script.CompatibilityVersion
+            );
+            LuaValue activeError = initialError;
+            bool failed = false;
+
+            while (_executionStack.Count > 0)
+            {
+                CallStackItem frame = PopToBasePointer();
+                try
+                {
+                    CloseAllPendingBlocks(frame, activeError);
+                }
+                catch (ScriptRuntimeException closeException)
+                {
+                    activeError = closeException.GetCaughtErrorObject(version);
+                    failed = true;
+                }
+                finally
+                {
+                    CallStackItemPool.Return(frame);
+                }
+            }
+
+            _valueStack.Clear();
+            closeError = activeError;
+            return failed;
+        }
+
+        /// <summary>
         /// Builds the result tuple returned by <see cref="CloseCoroutine"/> based on the last error.
         /// </summary>
         private LuaValue BuildCloseResultFromLastError()
         {
-            if (_lastCloseFailed)
+            LuaValue error = _lastCloseError;
+            bool failed = _lastCloseFailed;
+            _lastCloseError = LuaValue.Nil;
+            _lastCloseFailed = false;
+
+            if (failed)
             {
-                return LuaValue.NewTuple(LuaValue.False, _lastCloseError);
+                return LuaValue.NewTuple(LuaValue.False, error);
             }
 
             return LuaValue.True;

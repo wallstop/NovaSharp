@@ -602,6 +602,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 DecorateNearestErrorHandlerBeforeUnwind(exception, instructionPtr);
 
+                if (ShouldDeferCoroutineClose())
+                {
+                    exception.Rethrow();
+                    throw;
+                }
+
                 LuaCompatibilityVersion errorVersion = LuaVersionDefaults.Resolve(
                     _script.CompatibilityVersion
                 );
@@ -697,6 +703,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             return_to_native_code:
             return _valueStack.Pop();
+        }
+
+        /// <summary>
+        /// Lua keeps a failed coroutine's pending close handlers until <c>coroutine.close</c>.
+        /// A protected call in the stack still unwinds immediately to its handler.
+        /// </summary>
+        private bool ShouldDeferCoroutineClose()
+        {
+            if (State == CoroutineState.Main)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < _executionStack.Count; index++)
+            {
+                if (_executionStack[index].ErrorHandler != null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private void DecorateNearestErrorHandlerBeforeUnwind(
