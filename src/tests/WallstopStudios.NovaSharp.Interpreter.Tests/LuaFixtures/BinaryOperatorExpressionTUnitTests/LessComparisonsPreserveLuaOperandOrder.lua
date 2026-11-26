@@ -78,17 +78,17 @@ local mt = {
     end,
 }
 local hooked = setmetatable({tag = 'a'}, mt)
+local replacement = setmetatable({tag = 'c'}, mt)
 local function makeHooked()
-    current = 2
-    return setmetatable({tag = 'b'}, mt)
+    hooked = replacement
+    return setmetatable({tag = 'd'}, mt)
 end
-current = 0
 assert(hooked < makeHooked(), 'hook result with live local')
-assert(trace == 'ab', 'hook arguments after right-side call')
+assert(trace == 'cd', 'hook arguments after right-side call')
 trace = ''
-current = 0
+hooked = setmetatable({tag = 'a'}, mt)
 assert(hooked <= makeHooked(), 'hook result with live local <=')
-assert(trace == 'eab', 'hook arguments after right-side call <=')
+assert(trace == 'ecd', 'hook arguments after right-side call <=')
 
 -- Errors from the right operand surface before the comparison runs.
 local function boom()
