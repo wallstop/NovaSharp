@@ -32,6 +32,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private readonly DebugContext _debug;
         private LuaValue _lastCloseError = LuaValue.Nil;
         private bool _lastCloseFailed;
+        private bool _isClosingCoroutine;
+        private int _closeUnwindBoundaryDepth = -1;
         private int _errorHandlerBeforeUnwindScanBoundaryDepth = -1;
 
         private readonly ref struct ClrCallArguments

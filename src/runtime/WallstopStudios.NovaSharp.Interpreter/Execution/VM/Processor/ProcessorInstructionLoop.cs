@@ -614,6 +614,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 ScriptRuntimeException activeException = exception;
                 while (_executionStack.Count > 0)
                 {
+                    if (
+                        _isClosingCoroutine
+                        && _closeUnwindBoundaryDepth >= 0
+                        && _executionStack.Count <= _closeUnwindBoundaryDepth
+                    )
+                    {
+                        break;
+                    }
+
                     CallStackItem csi = PopToBasePointer();
                     bool returnedToPool = false;
 
@@ -707,24 +716,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         /// <summary>
         /// Lua keeps a failed coroutine's pending close handlers until <c>coroutine.close</c>.
-        /// A protected call in the stack still unwinds immediately to its handler.
+        /// Protected calls and CLR re-entry boundaries still unwind immediately.
         /// </summary>
         private bool ShouldDeferCoroutineClose()
         {
-            if (State == CoroutineState.Main)
+            if (State == CoroutineState.Main || _isClosingCoroutine)
             {
                 return false;
             }
 
-            for (int index = 0; index < _executionStack.Count; index++)
+            for (int index = _executionStack.Count - 1; index >= 0; index--)
             {
-                if (_executionStack[index].ErrorHandler != null)
+                CallStackItem frame = _executionStack[index];
+
+                if (frame.ErrorHandler != null)
                 {
                     return false;
                 }
+
+                if ((frame.Flags & CallStackItemFlags.EntryPoint) != 0)
+                {
+                    return (frame.Flags & CallStackItemFlags.ResumeEntryPointBit) != 0;
+                }
             }
 
-            return true;
+            return false;
         }
 
         private void DecorateNearestErrorHandlerBeforeUnwind(

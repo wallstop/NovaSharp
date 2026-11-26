@@ -57,7 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         public CoroutineState State
         {
-            get { return _state; }
+            get { return _isClosingCoroutine ? CoroutineState.Running : _state; }
         }
 
         /// <summary>
@@ -164,6 +164,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private LuaValue ResumeCoroutine(ClrCallArguments args)
         {
             EnterProcessor();
+            bool executionStarted = false;
 
             try
             {
@@ -213,6 +214,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
 
                 _state = CoroutineState.Running;
+                executionStarted = true;
                 LuaValue retVal = ProcessingLoop(entrypoint);
 
                 if (retVal.Type == DataType.YieldRequest)
@@ -241,10 +243,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             catch (ScriptRuntimeException ex)
             {
                 _state = CoroutineState.Dead;
-                _lastCloseError = ex.GetCaughtErrorObject(
-                    LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
-                );
-                _lastCloseFailed = true;
+
+                if (executionStarted)
+                {
+                    _lastCloseError = ex.GetCaughtErrorObject(
+                        LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                    );
+                    _lastCloseFailed = true;
+                }
+
                 throw;
             }
             catch (Exception)
@@ -271,6 +278,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 if (_state == CoroutineState.Main)
                 {
                     throw ScriptRuntimeException.CannotCloseCoroutine(_state);
+                }
+
+                if (_isClosingCoroutine)
+                {
+                    throw ScriptRuntimeException.CannotCloseCoroutine(CoroutineState.Running);
                 }
 
                 if (_state == CoroutineState.Running)
@@ -301,7 +313,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     throw ScriptRuntimeException.CannotCloseCoroutine(_state);
                 }
 
-                bool failed = UnwindFramesForClose(LuaValue.Nil, out LuaValue closeError);
+                _isClosingCoroutine = true;
+                bool failed;
+                LuaValue closeError;
+                try
+                {
+                    failed = UnwindFramesForClose(LuaValue.Nil, out closeError);
+                }
+                finally
+                {
+                    _isClosingCoroutine = false;
+                }
+
                 _lastCloseError = LuaValue.Nil;
                 _lastCloseFailed = false;
                 _state = CoroutineState.Dead;
@@ -320,11 +343,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             try
             {
+                _isClosingCoroutine = true;
                 UnwindFramesForClose(_lastCloseError, out LuaValue closeError);
                 return LuaValue.NewTuple(LuaValue.False, closeError);
             }
             finally
             {
+                _isClosingCoroutine = false;
                 _lastCloseError = LuaValue.Nil;
                 _lastCloseFailed = false;
                 _state = CoroutineState.Dead;
@@ -345,6 +370,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             while (_executionStack.Count > 0)
             {
                 CallStackItem frame = PopToBasePointer();
+                int previousBoundaryDepth = _closeUnwindBoundaryDepth;
+                _closeUnwindBoundaryDepth = _executionStack.Count;
                 try
                 {
                     CloseAllPendingBlocks(frame, activeError);
@@ -356,6 +383,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 finally
                 {
+                    _closeUnwindBoundaryDepth = previousBoundaryDepth;
                     CallStackItemPool.Return(frame);
                 }
             }

@@ -29,19 +29,35 @@ coroutine is closed. If a handler raises, later handlers receive the replacement
 error and close reports it. A repeated close reports success, matching reference
 Lua, instead of replaying the earlier failure forever.
 
+Review hardening added the remaining boundary rules:
+
+- defer only when the nearest entry frame is the coroutine resume boundary, so
+  errors crossing a CLR re-entry or a protected call unwind locally;
+- close a failed `coroutine.wrap` result and propagate a replacement handler
+  error;
+- reject a reentrant `coroutine.close` while handlers are running instead of
+  draining live frames;
+- keep the original deferred error when a later resume is rejected;
+- report `running` and non-yieldable status inside close handlers.
+
 ## Evidence
 
 - Red on the base revision: the reproduction printed `resume false boom 2` and
   `close2 false boom`; reference Lua 5.4/5.5 print `resume false boom 0` and
   `close2 true nil`.
-- Green TUnit: `ProcessorCoroutineCloseTUnitTests` 64/64; full suite
-  `16169/16169`.
-- Reference Lua 5.4 and 5.5 outputs match for the three new fixtures:
-  `UncaughtErrorDefersCloseHandlersUntilClose`,
-  `DeferredCloseHandlerErrorReplacesActiveErrorAndClosesOnce`, and
-  `SuspendedCloseContinuesThroughOuterCloseHandlers`.
+- Green TUnit: `ProcessorCoroutineCloseTUnitTests` 71/71,
+  `CoroutineModuleTUnitTests` 342/342, full suite `16185/16185`.
+- Reference Lua 5.4 and 5.5 outputs match for the new deferred-close,
+  suspended-close, reentrant-close, status, wrap, and CLR-boundary fixtures.
 - Lua comparison 5.1, 5.2, 5.3, and 5.5: zero unexpected mismatches and no
   ratchet changes. Lua 5.4 has the two pre-existing 5.4.4-vs-5.4.7 reference
   deltas (`OperationsUseVersionedIndexingAndLength` and
   `GenericForClosingValueFollowsLexicalExitOrder`), unchanged by this session.
 - `bash ./scripts/dev/pre-commit.sh`: passed.
+
+## Residual risk
+
+Lua 5.5 silently aborts a close handler that reenters `coroutine.close`; the
+guard here raises Lua 5.4's running-coroutine error for both profiles. That keeps
+the VM safe, and the 5.4 fixture locks the guarded behavior, but the 5.5-only
+silent-abort variant is not modeled.

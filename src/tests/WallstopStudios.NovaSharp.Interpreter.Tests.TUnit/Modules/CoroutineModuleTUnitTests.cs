@@ -768,6 +768,13 @@ return first, second
                 typeof(CallbackArgumentsView),
                 typeof(int)
             );
+            MethodInfo wrappedHelper = RequireMethod(
+                typeof(CoroutineModule),
+                "ResumeWrappedCoroutine",
+                BindingFlags.NonPublic | BindingFlags.Static,
+                typeof(Coroutine),
+                typeof(CallbackArgumentsView)
+            );
             MethodInfo resumeOne = RequireMethod(
                 typeof(Coroutine),
                 nameof(Coroutine.ResumeValues),
@@ -801,6 +808,10 @@ return first, second
                 .ConfigureAwait(false);
             await Assert
                 .That(CountMethodCalls(moduleResume, helper))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(wrappedHelper, helper))
                 .IsEqualTo(1)
                 .ConfigureAwait(false);
 
@@ -840,7 +851,7 @@ return first, second
             }
 
             await Assert.That(nestedGetArrayCalls).IsEqualTo(0).ConfigureAwait(false);
-            await Assert.That(nestedHelperCalls).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(nestedHelperCalls).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1210,6 +1221,55 @@ return first, second
         }
 
         [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task WrapClosesFailedCoroutineAndUsesHandlerError(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local wrapped = coroutine.wrap(function()
+                    local pending <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'first:' .. tostring(err)
+                        end
+                    })
+                    error('boom', 0)
+                end)
+
+                local ok, err = pcall(wrapped)
+
+                local replacement = coroutine.wrap(function()
+                    local pending <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'second:' .. tostring(err)
+                            error('closeboom', 0)
+                        end
+                    })
+                    error('original', 0)
+                end)
+
+                local ok2, err2 = pcall(replacement)
+
+                print('first', ok, err, #log, log[1])
+                print('second', ok2, err2, #log, log[2])
+
+                return ok, err, ok2, err2, #log, log[1], log[2]
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("boom");
+            await Assert.That(result.Tuple[2].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].String).IsEqualTo("closeboom");
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(2);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("first:boom");
+            await Assert.That(result.Tuple[6].String).IsEqualTo("second:original");
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task WrapPropagatesErrorsAfterYield(LuaCompatibilityVersion version)
         {
@@ -1321,6 +1381,69 @@ return first, second
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task PcallClrCallbackInsideCoroutineUnwindsLocally(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local task = coroutine.create(function()
+                    local ok, err = pcall(string.gsub, 'abc', 'b', function()
+                        error('rep', 0)
+                    end)
+                    return ok, err
+                end)
+
+                local resumed, ok, err = coroutine.resume(task)
+
+                print('resume', resumed, ok, err)
+
+                return resumed, ok, err
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].String).IsEqualTo("rep").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task PcallClrCallbackRunsLocalCloseBeforeReturning(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local seen
+                local task = coroutine.create(function()
+                    local ok, err = pcall(string.gsub, 'abc', 'b', function()
+                        local pending <close> = setmetatable({}, {
+                            __close = function(_, closeError) seen = closeError end
+                        })
+                        error('rep', 0)
+                    end)
+                    return ok, err, seen
+                end)
+
+                local resumed, ok, err, observed = coroutine.resume(task)
+
+                print('resume', resumed, ok, err, observed)
+
+                return resumed, ok, err, observed
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].String).IsEqualTo("rep").ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].String).IsEqualTo("rep").ConfigureAwait(false);
         }
 
         // =====================================================

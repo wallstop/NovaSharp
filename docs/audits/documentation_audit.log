@@ -142,7 +142,7 @@ Found 209 undocumented public/internal type declarations.
   - line 169: missing XML docs for `GetStatistics()`
   - line 194: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs
-  - line 629: missing XML docs for `CallLibraryFunction()`
+  - line 631: missing XML docs for `CallLibraryFunction()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs
   - line 43: missing XML docs for `Options`
   - line 44: missing XML docs for `Limit`
@@ -158,8 +158,8 @@ Found 209 undocumented public/internal type declarations.
   - line 104: missing XML docs for `struct NativeInstructionBudgetScope`
   - line 113: missing XML docs for `Dispose()`
   - line 122: missing XML docs for `ChargeSandboxInstruction()`
-  - line 2029: missing XML docs for `Count`
-  - line 3241: missing XML docs for `TryCompareBuiltInLessThan()`
+  - line 2045: missing XML docs for `Count`
+  - line 3257: missing XML docs for `TryCompareBuiltInLessThan()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/BasicDescriptors/DispatchingUserDataDescriptor.cs
   - line 314: missing XML docs for `TryIndex()`
   - line 816: missing XML docs for `TryMetaIndex()`
