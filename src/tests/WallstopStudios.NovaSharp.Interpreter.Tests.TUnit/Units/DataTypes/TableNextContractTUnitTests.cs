@@ -369,6 +369,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                         return tostring(message)
                     end
 
+                    local negativeZero = { [-0.0] = true }
+                    if math.type(next(negativeZero)) ~= 'integer' then
+                        return 'negative zero key is ' .. math.type(next(negativeZero))
+                    end
+                    if pcall(next, negativeZero, -0.0) then
+                        return 'negative zero cursor accepted'
+                    end
+
                     return 'ok'
                 end
 

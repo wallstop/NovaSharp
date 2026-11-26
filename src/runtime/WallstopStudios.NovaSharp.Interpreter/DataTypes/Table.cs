@@ -1015,7 +1015,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     if (
                         ResolveCompatibilityVersion() >= LuaCompatibilityVersion.Lua54
                         && key.LuaNumber.IsFloat
-                        && LuaNumber.TryConvertToInteger(key.LuaNumber.ToDouble, out _)
+                        && (
+                            key.LuaNumber.ToDouble == 0.0
+                            || LuaNumber.TryConvertToInteger(key.LuaNumber.ToDouble, out _)
+                        )
                     )
                     {
                         arrayIndex = 0;
@@ -1089,6 +1092,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             // Lua 5.3+ stores a float key with an exact integer value as an integer key.
+            // Negative zero is an exact integer key even though arithmetic keeps its sign.
+            if (number.IsFloat && number.ToDouble == 0.0)
+            {
+                return LuaValue.NewInteger(0);
+            }
+
             return
                 number.IsFloat && LuaNumber.TryConvertToInteger(number.ToDouble, out long integral)
                 ? LuaValue.NewInteger(integral)

@@ -7,7 +7,7 @@
     "5.1": 1021,
     "5.2": 727,
     "5.3": 974,
-    "5.4": 1053,
+    "5.4": 1052,
     "5.5": 1096
   },
   "snippets": [
@@ -22756,17 +22756,6 @@
       "expects_error": false
     },
     {
-      "path": "TableNextContractTUnitTests/NextRejectsIntegralFloatCursorAndReturnsIntegerKey.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:355",
-      "test": "TableNextContractTUnitTests.NextRejectsIntegralFloatCursorAndReturnsIntegerKey",
-      "lua_versions": [
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
       "path": "TableNextContractTUnitTests/NextRejectsIntegralFloatCursorsForArrayAndHashKeys.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:391",
       "test": "TableNextContractTUnitTests.NextRejectsIntegralFloatCursorsForArrayAndHashKeys",
@@ -22793,11 +22782,21 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ForLoopConstVariableTUnitTests.cs:71",
       "test": "ForLoopConstVariableTUnitTests.FunctionDefinitionSyntaxRejectsConstLoopVariable",
       "lua_versions": [
-        "5.4",
         "5.5"
       ],
       "novasharp_only": false,
       "expects_error": true
+    },
+    {
+      "path": "TableNextContractTUnitTests/NextRejectsIntegralFloatCursorAndReturnsIntegerKey.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:355",
+      "test": "TableNextContractTUnitTests.NextRejectsIntegralFloatCursorAndReturnsIntegerKey",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
     }
   ]
 }
