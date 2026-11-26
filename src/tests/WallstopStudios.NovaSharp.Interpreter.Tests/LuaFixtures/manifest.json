@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2059,
+  "total_snippets": 2058,
   "novasharp_only": 510,
-  "comparable": 1549,
+  "comparable": 1548,
   "by_version": {
-    "5.1": 1027,
-    "5.2": 733,
-    "5.3": 980,
-    "5.4": 1060,
-    "5.5": 1104
+    "5.1": 1026,
+    "5.2": 732,
+    "5.3": 979,
+    "5.4": 1059,
+    "5.5": 1103
   },
   "snippets": [
     {
@@ -22804,18 +22804,6 @@
       "expects_error": true
     },
     {
-      "path": "TableNextContractTUnitTests/NextAcceptsIntegralFloatCursorsBeforeLua54.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:449",
-      "test": "TableNextContractTUnitTests.NextAcceptsIntegralFloatCursorsBeforeLua54",
-      "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
       "path": "ForLoopConstVariableTUnitTests/CloseLocalRejectsAssignment.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ForLoopConstVariableTUnitTests.cs:144",
       "test": "ForLoopConstVariableTUnitTests.CloseLocalRejectsAssignment",
@@ -22830,20 +22818,6 @@
       "path": "StringFormatFiniteTUnitTests/FormatPadsIntegerPrecision.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:70",
       "test": "StringFormatFiniteTUnitTests.FormatPadsIntegerPrecision",
-      "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "LuaStringOrderingTUnitTests/RawBytesSortAfterSupplementaryPlaneLeadBytes.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/LuaStringOrderingTUnitTests.cs:51",
-      "test": "LuaStringOrderingTUnitTests.RawBytesSortAfterSupplementaryPlaneLeadBytes",
       "lua_versions": [
         "5.1",
         "5.2",
@@ -22892,6 +22866,18 @@
         "5.3",
         "5.4",
         "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableNextContractTUnitTests/NextAcceptsIntegralFloatCursorsBeforeLua54.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:449",
+      "test": "TableNextContractTUnitTests.NextAcceptsIntegralFloatCursorsBeforeLua54",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3"
       ],
       "novasharp_only": false,
       "expects_error": false

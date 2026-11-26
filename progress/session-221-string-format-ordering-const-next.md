@@ -1,13 +1,14 @@
 # Session 221 — string ordering, format flags, const writes, next cursors
 
-Issues: #199, #193, #130, #185.
+Issues: #193, #130, #185; advances #199 (byte-escape cases remain gated by #201).
 
 ## Changes
 
-- Added `LuaStringOrdering.Compare`, which streams Lua bytes (raw code units up to
-  U+00FF and UTF-8 bytes for decoded source text) so supplementary-plane
-  characters and binary byte strings sort like Lua's byte comparison. Routed
-  relational operators, constant folding, and `table.sort` through it.
+- Added `LuaStringOrdering.Compare`, which orders decoded source text by code
+  point so supplementary-plane characters sort after BMP characters like Lua's
+  UTF-8 byte comparison. Routed relational operators, constant folding, and
+  `table.sort` through it. Raw byte-escape identity and ordering still require the
+  representation work in #201, so #199 stays open.
 - `string.format` now accepts flags in any order (including `0`), preserves the
   space sign under zero padding, parses empty precision (`%.g`), clamps string
   precision instead of aborting, applies integer `d`/`o`/`u`/`x` precision with

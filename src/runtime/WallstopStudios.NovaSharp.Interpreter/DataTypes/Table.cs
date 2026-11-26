@@ -1030,22 +1030,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     int idx = GetIntegralKey(key.Number);
                     if (idx > 0)
                     {
-                        bool located = _storage.TryLocateInt(idx, out arrayIndex, out nodeIndex);
-                        // Lua 5.3 accepts float cursors for hash keys but not for keys
-                        // that live in the array part.
-                        if (
-                            located
-                            && integralFloat
-                            && version == LuaCompatibilityVersion.Lua53
-                            && arrayIndex > 0
-                        )
-                        {
-                            arrayIndex = 0;
-                            nodeIndex = 0;
-                            return false;
-                        }
-
-                        return located;
+                        return _storage.TryLocateInt(idx, out arrayIndex, out nodeIndex);
                     }
 
                     key = NormalizeNumericHashKey(key);

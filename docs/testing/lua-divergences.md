@@ -80,9 +80,11 @@ All items previously listed as "Potential Bugs" have been investigated and resol
 
 #### `<close>` Reassignment Behavior — RESOLVED
 
-- **Fixture**: `CloseAttributeTUnitTests/ReassignmentClosesPreviousValueImmediately.lua`
-- **Resolution**: Fixture is correctly marked `@novasharp-only: true` because it uses injected CLR variables
-- **Status**: ✅ Skipped in comparison (not a spec divergence)
+- **Fixture**: `ForLoopConstVariableTUnitTests/CloseLocalRejectsAssignment.lua`
+- **Resolution**: Lua 5.4+ treats to-be-closed variables as const; reassignment is a
+  compile-time error. The obsolete NovaSharp-only fixture that reassigned a
+  `<close>` local was removed.
+- **Status**: ✅ Matches reference Lua 5.4–5.5
 
 #### xpcall Behavior — RESOLVED
 

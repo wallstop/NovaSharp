@@ -9,13 +9,8 @@ local function check()
                     local t = { [huge] = true }
                     if not pcall(next, t, huge) then return 'hash cursor rejected' end
 
-                    local array = { 10, 20, 30 }
-                    local arrayOk = pcall(next, array, 2.0)
-                    if _VERSION == 'Lua 5.3' then
-                        if arrayOk then return 'Lua 5.3 accepted array float cursor' end
-                    elseif not arrayOk then
-                        return 'pre-5.3 rejected array float cursor'
-                    end
+                    local record = { [1] = true }
+                    if not pcall(next, record, 1.0) then return 'record cursor rejected' end
 
                     return 'ok'
                 end

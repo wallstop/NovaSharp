@@ -85,7 +85,9 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    [optional-argument validation](https://github.com/Ambiguous-Interactive/NovaSharp/issues/125),
    [residual number/string parity nits](https://github.com/Ambiguous-Interactive/NovaSharp/issues/138),
    [reference builds for legacy floating modulo](https://github.com/Ambiguous-Interactive/NovaSharp/issues/188),
-   [Lua string byte identity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/201),
+   [Lua string byte identity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/201)
+   and the remaining [string ordering](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199)
+   byte-escape cases it gates,
    [NUL handling in numeric callback arguments](https://github.com/Ambiguous-Interactive/NovaSharp/issues/192),
    [native file userdata metatables](https://github.com/Ambiguous-Interactive/NovaSharp/issues/212),
    [protected calls to coroutine.yield](https://github.com/Ambiguous-Interactive/NovaSharp/issues/217),

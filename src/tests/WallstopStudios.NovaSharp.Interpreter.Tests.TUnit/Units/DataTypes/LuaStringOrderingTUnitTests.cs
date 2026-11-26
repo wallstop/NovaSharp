@@ -43,31 +43,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
-        public async Task RawBytesSortAfterSupplementaryPlaneLeadBytes(
-            LuaCompatibilityVersion version
-        )
-        {
-            Script script = new(version);
-            LuaValue result = script.DoString(
-                @"
-                local raw = string.char(255)
-                local astral = '𐀀'
-                local values = { raw, astral }
-                table.sort(values)
-
-                return table.concat({
-                    tostring(raw < astral),
-                    tostring(astral < raw),
-                    tostring(values[1] == astral),
-                }, ',')
-            "
-            );
-
-            await Assert.That(result.String).IsEqualTo("false,true,true").ConfigureAwait(false);
-        }
-
-        [global::TUnit.Core.Test]
-        [AllLuaVersions]
         public async Task SortPreservesAsciiOrderingAfterSupplementaryPlaneValues(
             LuaCompatibilityVersion version
         )

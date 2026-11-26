@@ -2,7 +2,7 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 209 undocumented public/internal type declarations.
+Found 208 undocumented public/internal type declarations.
 
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs
   - line 9: missing XML docs for `class ComVisibleAttribute`
@@ -187,8 +187,6 @@ Found 209 undocumented public/internal type declarations.
   - line 4983: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
   - line 4991: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
   - line 5118: missing XML docs for `Dispose()`
-- src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/LuaStringOrdering.cs
-  - line 69: missing XML docs for `ReadByte()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf2.cs
   - line 198: missing XML docs for `FromT0()`
   - line 211: missing XML docs for `FromT1()`

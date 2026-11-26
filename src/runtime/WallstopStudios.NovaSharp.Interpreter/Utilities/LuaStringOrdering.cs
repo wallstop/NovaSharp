@@ -1,15 +1,17 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Utilities
 {
+    using System;
+
     /// <summary>
-    /// Orders strings the way Lua's <c>l_strcmp</c> does: by byte. NovaSharp stores Lua
-    /// bytes as single UTF-16 code units up to U+00FF and decoded source text as Unicode
-    /// code points, so comparisons read raw bytes for the former and UTF-8 bytes for the
-    /// latter.
+    /// Orders decoded source text the way Lua's <c>l_strcmp</c> compares UTF-8 source bytes.
+    /// NovaSharp stores source text as UTF-16, so comparing code points reproduces the byte
+    /// order for BMP and supplementary-plane text. Raw byte strings from <c>string.char</c>
+    /// or byte escapes remain governed by the string byte-identity work in issue #201.
     /// </summary>
     internal static class LuaStringOrdering
     {
         /// <summary>
-        /// Compares two strings using Lua's built-in string ordering.
+        /// Compares two strings using Lua's built-in string ordering for Unicode source text.
         /// </summary>
         /// <returns>A negative value when <paramref name="left"/> sorts first, a positive value when
         /// <paramref name="right"/> does, and zero when the strings are equal.</returns>
@@ -30,96 +32,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
                 return 1;
             }
 
-            ByteReader leftReader = new(left);
-            ByteReader rightReader = new(right);
-            while (true)
+            int commonLength = Math.Min(left.Length, right.Length);
+            int index = 0;
+            while (index < commonLength)
             {
-                int leftByte = leftReader.ReadByte();
-                int rightByte = rightReader.ReadByte();
-                if (leftByte != rightByte)
+                char leftChar = left[index];
+                char rightChar = right[index];
+
+                if (leftChar == rightChar)
                 {
-                    return leftByte < rightByte ? -1 : 1;
+                    index++;
+                    continue;
                 }
 
-                if (leftByte < 0)
-                {
-                    return 0;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Streams Lua bytes from a CLR string without allocating an encoded copy.
-        /// </summary>
-        private struct ByteReader
-        {
-            private readonly string _value;
-            private int _index;
-            private int _pendingBytes;
-            private int _pendingCount;
-
-            internal ByteReader(string value)
-            {
-                _value = value;
-                _index = 0;
-                _pendingBytes = 0;
-                _pendingCount = 0;
-            }
-
-            internal int ReadByte()
-            {
-                if (_pendingCount > 0)
-                {
-                    _pendingCount--;
-                    int pending = _pendingBytes & 0xFF;
-                    _pendingBytes >>= 8;
-                    return pending;
-                }
-
-                if (_index >= _value.Length)
-                {
-                    return -1;
-                }
-
-                char current = _value[_index++];
-                if (current <= '\u00FF')
-                {
-                    return current;
-                }
-
-                int codePoint = current;
+                int leftCodePoint = leftChar;
+                int leftLength = 1;
                 if (
-                    char.IsHighSurrogate(current)
-                    && _index < _value.Length
-                    && char.IsLowSurrogate(_value[_index])
+                    char.IsHighSurrogate(leftChar)
+                    && index + 1 < left.Length
+                    && char.IsLowSurrogate(left[index + 1])
                 )
                 {
-                    codePoint = char.ConvertToUtf32(current, _value[_index]);
-                    _index++;
+                    leftCodePoint = char.ConvertToUtf32(leftChar, left[index + 1]);
+                    leftLength = 2;
                 }
 
-                if (codePoint <= 0x7FF)
+                int rightCodePoint = rightChar;
+                int rightLength = 1;
+                if (
+                    char.IsHighSurrogate(rightChar)
+                    && index + 1 < right.Length
+                    && char.IsLowSurrogate(right[index + 1])
+                )
                 {
-                    _pendingBytes = 0x80 | (codePoint & 0x3F);
-                    _pendingCount = 1;
-                    return 0xC0 | (codePoint >> 6);
+                    rightCodePoint = char.ConvertToUtf32(rightChar, right[index + 1]);
+                    rightLength = 2;
                 }
 
-                if (codePoint <= 0xFFFF)
+                if (leftCodePoint != rightCodePoint)
                 {
-                    _pendingBytes =
-                        (0x80 | ((codePoint >> 6) & 0x3F)) | ((0x80 | (codePoint & 0x3F)) << 8);
-                    _pendingCount = 2;
-                    return 0xE0 | (codePoint >> 12);
+                    return leftCodePoint < rightCodePoint ? -1 : 1;
                 }
 
-                _pendingBytes =
-                    (0x80 | ((codePoint >> 12) & 0x3F))
-                    | ((0x80 | ((codePoint >> 6) & 0x3F)) << 8)
-                    | ((0x80 | (codePoint & 0x3F)) << 16);
-                _pendingCount = 3;
-                return 0xF0 | (codePoint >> 18);
+                index += Math.Max(leftLength, rightLength);
             }
+
+            return left.Length.CompareTo(right.Length);
         }
     }
 }
