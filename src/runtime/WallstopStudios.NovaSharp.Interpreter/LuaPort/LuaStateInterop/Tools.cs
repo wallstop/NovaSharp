@@ -928,7 +928,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 {
                     if (fieldLength != int.MinValue)
                     {
-                        w = w.PadLeft(fieldLength - (needsOctalPrefix ? 1 : 0), padding);
+                        int padWidth = fieldLength - (needsOctalPrefix ? 1 : 0);
+                        if (padWidth > 0)
+                        {
+                            w = w.PadLeft(padWidth, padding);
+                        }
                     }
 
                     if (needsOctalPrefix)
@@ -994,7 +998,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 {
                     if (fieldLength != int.MinValue)
                     {
-                        w = w.PadLeft(fieldLength - (prefix ? 2 : 0), padding);
+                        int padWidth = fieldLength - (prefix ? 2 : 0);
+                        if (padWidth > 0)
+                        {
+                            w = w.PadLeft(padWidth, padding);
+                        }
                     }
 
                     if (prefix)
@@ -1119,9 +1127,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
                     if (fieldLength != int.MinValue)
                     {
+                        int padWidth = fieldLength - sign.Length;
                         w =
                             padding == '0'
-                                ? sign + w.PadLeft(fieldLength - sign.Length, '0')
+                                ? sign + (padWidth > 0 ? w.PadLeft(padWidth, '0') : w)
                                 : (sign + w).PadLeft(fieldLength, ' ');
                     }
                     else

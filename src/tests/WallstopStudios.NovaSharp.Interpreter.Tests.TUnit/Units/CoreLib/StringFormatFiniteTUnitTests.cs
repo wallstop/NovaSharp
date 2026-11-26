@@ -149,6 +149,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task FormatClampsAlternateHexWidth(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"local outcome = string.format('%0#1x', 42)
+                print(outcome)
+                return outcome"
+            );
+
+            await Assert.That(result.String).IsEqualTo("0x2a").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task FormatAppliesCharacterWidth(LuaCompatibilityVersion version)
         {
             Script script = new(version);

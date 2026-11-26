@@ -23,6 +23,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         private int _initArray;
         private int _constructorArrayLength;
+        private int _listConstructorIntegerKeys;
+        private int _keyedConstructorIntegerKeys;
+        private int _runtimeIntegerKeys;
         private int _cachedLength = -1;
         private readonly bool _roundsNumericKeys;
         private bool _containsNilEntries;
@@ -90,6 +93,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _storage.Clear();
             _initArray = 0;
             _constructorArrayLength = 0;
+            _listConstructorIntegerKeys = 0;
+            _keyedConstructorIntegerKeys = 0;
+            _runtimeIntegerKeys = 0;
             _cachedLength = -1;
             _containsNilEntries = false;
             SyncTrackedMemory();
@@ -426,6 +432,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             bool hadPrevious = _storage.SetInt(key, value, out LuaValue previousInt);
+            if (!hadPrevious)
+            {
+                _runtimeIntegerKeys++;
+            }
+
             OnEntryWritten(hadPrevious, previousInt, value, true, key, -1);
         }
 
@@ -963,6 +974,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             _containsNilEntries = false;
             _constructorArrayLength = 0;
+            _listConstructorIntegerKeys = 0;
+            _keyedConstructorIntegerKeys = 0;
+            _runtimeIntegerKeys = 0;
             _cachedLength = -1;
             SyncTrackedMemory();
         }
@@ -1030,7 +1044,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     int idx = GetIntegralKey(key.Number);
                     if (idx > 0)
                     {
-                        return _storage.TryLocateInt(idx, out arrayIndex, out nodeIndex);
+                        bool located = _storage.TryLocateInt(idx, out arrayIndex, out nodeIndex);
+                        if (
+                            located
+                            && integralFloat
+                            && version == LuaCompatibilityVersion.Lua53
+                            && nodeIndex == 0
+                            && !HasSingleKeyedConstructorIntegerKey()
+                        )
+                        {
+                            arrayIndex = 0;
+                            nodeIndex = 0;
+                            return false;
+                        }
+
+                        return located;
                     }
 
                     key = NormalizeNumericHashKey(key);
@@ -1080,6 +1108,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _cachedLength = CalculatePrefixLength();
                 return _cachedLength;
             }
+        }
+
+        private bool HasSingleKeyedConstructorIntegerKey()
+        {
+            // A lone keyed constructor field remains in PUC Lua 5.3's hash part; any list
+            // field, a second keyed field, or a later integer write triggers an array rehash.
+            return _listConstructorIntegerKeys == 0
+                && _runtimeIntegerKeys == 0
+                && _keyedConstructorIntegerKeys == 1;
         }
 
         private LuaValue NormalizeNumericHashKey(LuaValue key)
@@ -1217,6 +1254,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 {
                     this.CheckScriptOwnership(value);
                     bool hadPrevious = _storage.SetInt(idx, value, out LuaValue previousInt);
+                    if (!hadPrevious)
+                    {
+                        _keyedConstructorIntegerKeys++;
+                    }
+
                     OnEntryWritten(
                         hadPrevious,
                         previousInt,
@@ -1257,6 +1299,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 LuaValue value = val.ToScalar();
                 this.CheckScriptOwnership(value);
                 _initArray++;
+                _listConstructorIntegerKeys++;
                 bool hadPrevious = _storage.SetInt(_initArray, value, out LuaValue previous);
                 OnEntryWritten(
                     hadPrevious,
