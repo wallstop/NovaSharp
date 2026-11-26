@@ -79,25 +79,24 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    Lua-CSharp; evaluate the gated
    [stackless/fuel model](docs/proposals/runtime-research-gates.md#stacklessfuel-execution-model)
    in the same study.
-1. Lua parity backlog: [integral float cursors in next](https://github.com/Ambiguous-Interactive/NovaSharp/issues/185),
-   [call-context error names](https://github.com/Ambiguous-Interactive/NovaSharp/issues/124),
+1. Lua parity backlog: [call-context error names](https://github.com/Ambiguous-Interactive/NovaSharp/issues/124),
    [borrowed line iterators and read formats](https://github.com/Ambiguous-Interactive/NovaSharp/issues/175),
    [closer source lines on generic-for jumps](https://github.com/Ambiguous-Interactive/NovaSharp/issues/176),
    [optional-argument validation](https://github.com/Ambiguous-Interactive/NovaSharp/issues/125),
    [residual number/string parity nits](https://github.com/Ambiguous-Interactive/NovaSharp/issues/138),
    [reference builds for legacy floating modulo](https://github.com/Ambiguous-Interactive/NovaSharp/issues/188),
    [Lua string byte identity](https://github.com/Ambiguous-Interactive/NovaSharp/issues/201)
-   to complete [string ordering](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199),
+   and the remaining [string ordering](https://github.com/Ambiguous-Interactive/NovaSharp/issues/199)
+   byte-escape cases it gates,
    [NUL handling in numeric callback arguments](https://github.com/Ambiguous-Interactive/NovaSharp/issues/192),
-   [string.format flags and exponents](https://github.com/Ambiguous-Interactive/NovaSharp/issues/193),
    [native file userdata metatables](https://github.com/Ambiguous-Interactive/NovaSharp/issues/212),
    [protected calls to coroutine.yield](https://github.com/Ambiguous-Interactive/NovaSharp/issues/217),
    [CLR tail-call error cleanup](https://github.com/Ambiguous-Interactive/NovaSharp/issues/218),
    [legacy sort comparator side effects](https://github.com/Ambiguous-Interactive/NovaSharp/issues/207),
    [plain integer sort throughput](https://github.com/Ambiguous-Interactive/NovaSharp/issues/208),
-   other error formats, [Lua 5.5 const loop-variable enforcement](https://github.com/Ambiguous-Interactive/NovaSharp/issues/130),
-   `__gc`, Lua 5.4 garbage collector options, version-migration docs, and explicit
-   compatibility-version matrix coverage; retain the
+   other error formats, `__gc`, Lua 5.4 garbage collector options,
+   version-migration docs, and explicit compatibility-version matrix coverage;
+   retain the
    [host-GC and byte-fidelity constraints](docs/proposals/runtime-research-gates.md#host-gc-and-string-fidelity).
 1. Maintenance backlog: complete TUnit data-driving migration and numeric
    conversion boundary audits; consolidate repeated error-message and module-name

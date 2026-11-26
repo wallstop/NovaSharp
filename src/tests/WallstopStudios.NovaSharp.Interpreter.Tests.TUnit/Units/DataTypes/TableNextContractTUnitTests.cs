@@ -344,5 +344,142 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             await Assert.That(result.String).IsEqualTo("false").ConfigureAwait(false);
         }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task NextRejectsIntegralFloatCursorAndReturnsIntegerKey(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"
+                local function check()
+                    local huge = 9007199254740992.0
+                    local t = { [huge] = true }
+
+                    local key = next(t)
+                    if math.type(key) ~= 'integer' then
+                        return 'stored key is ' .. math.type(key)
+                    end
+
+                    local ok, message = pcall(next, t, huge)
+                    if ok then return 'integral float cursor accepted' end
+                    if not tostring(message):find(""invalid key to 'next'"", 1, true) then
+                        return tostring(message)
+                    end
+
+                    local negativeZero = { [-0.0] = true }
+                    if math.type(next(negativeZero)) ~= 'integer' then
+                        return 'negative zero key is ' .. math.type(next(negativeZero))
+                    end
+                    if pcall(next, negativeZero, -0.0) then
+                        return 'negative zero cursor accepted'
+                    end
+
+                    return 'ok'
+                end
+
+                local outcome = check()
+                print(outcome)
+                return outcome
+            "
+            );
+
+            await Assert.That(result.String).IsEqualTo("ok").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task NextRejectsIntegralFloatCursorsForArrayAndHashKeys(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"
+                local function check()
+                    local array = { 10, 20, 30 }
+                    if pcall(next, array, 2.0) then return 'array cursor accepted' end
+
+                    local hash = { [500] = true }
+                    if pcall(next, hash, 500.0) then return 'hash cursor accepted' end
+
+                    return 'ok'
+                end
+
+                local outcome = check()
+                print(outcome)
+                return outcome
+            "
+            );
+
+            await Assert.That(result.String).IsEqualTo("ok").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task NextAcceptsFractionalFloatCursors(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"
+                local function check()
+                    local t = { [1.5] = true }
+                    if not pcall(next, t, 1.5) then return 'fractional cursor rejected' end
+                    return 'ok'
+                end
+
+                local outcome = check()
+                print(outcome)
+                return outcome
+            "
+            );
+
+            await Assert.That(result.String).IsEqualTo("ok").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
+        public async Task NextAcceptsIntegralFloatCursorsBeforeLua54(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"
+                local function check()
+                    local huge = 9007199254740992.0
+                    local t = { [huge] = true }
+                    if not pcall(next, t, huge) then return 'hash cursor rejected' end
+
+                    local record = { [1] = true }
+                    if not pcall(next, record, 1.0) then return 'record cursor rejected' end
+
+                    local array = { 10, 20, 30 }
+                    local arrayOk = pcall(next, array, 2.0)
+                    if _VERSION == 'Lua 5.3' then
+                        if arrayOk then return 'Lua 5.3 accepted array float cursor' end
+                    elseif not arrayOk then
+                        return 'pre-5.3 rejected array float cursor'
+                    end
+
+                    local mixed = { 10, 20, 30 }
+                    mixed[500] = true
+                    if not pcall(next, mixed, 500.0) then
+                        return 'mixed hash cursor rejected'
+                    end
+
+                    return 'ok'
+                end
+
+                local outcome = check()
+                print(outcome)
+                return outcome
+            "
+            );
+
+            await Assert.That(result.String).IsEqualTo("ok").ConfigureAwait(false);
+        }
     }
 }

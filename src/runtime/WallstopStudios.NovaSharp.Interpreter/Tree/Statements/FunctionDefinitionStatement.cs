@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
     using Debugging;
     using Expressions;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
 
@@ -20,6 +21,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         private readonly bool _local;
         private readonly bool _isMethodCallingConvention;
         private readonly string _methodName;
+        private readonly Token _nameToken;
 
         private readonly string _friendlyName;
         private readonly List<string> _tableAccessors;
@@ -75,6 +77,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             if (_local)
             {
                 Token name = CheckTokenType(lcontext, TokenType.Name);
+                _nameToken = name;
                 _funcSymbol = lcontext.Scope.TryDefineLocal(name.text);
                 _friendlyName = ZString.Concat(name.text, " (local)");
                 _sourceRef = funcKeyword.GetSourceRef(name);
@@ -83,6 +86,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             {
                 Token name = CheckTokenType(lcontext, TokenType.Name);
                 string firstName = name.text;
+                _nameToken = name;
 
                 _sourceRef = funcKeyword.GetSourceRef(name);
 
@@ -144,6 +148,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         {
             using (bc.EnterSource(_sourceRef))
             {
+                if (
+                    !_local
+                    && _methodName == null
+                    && (_tableAccessors == null || _tableAccessors.Count == 0)
+                    && _funcSymbol != null
+                    && _funcSymbol.IsImmutable
+                )
+                {
+                    throw new SyntaxErrorException(
+                        _nameToken,
+                        "{0}: attempt to assign to const variable '{1}'",
+                        _nameToken.GetSourceRef().FormatLocation(bc.Script),
+                        _nameToken.text
+                    )
+                    {
+                        DoNotDecorateMessage = true,
+                    };
+                }
+
                 if (_local)
                 {
                     bc.EmitLiteral(LuaValue.Nil);

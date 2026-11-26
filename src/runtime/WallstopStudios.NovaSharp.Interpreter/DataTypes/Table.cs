@@ -1009,10 +1009,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     return _storage.TryLocateString(key.String, out arrayIndex, out nodeIndex);
                 case DataType.Number:
                 {
+                    LuaCompatibilityVersion version = ResolveCompatibilityVersion();
+                    bool integralFloat =
+                        key.LuaNumber.IsFloat
+                        && (
+                            key.LuaNumber.ToDouble == 0.0
+                            || LuaNumber.TryConvertToInteger(key.LuaNumber.ToDouble, out _)
+                        );
+
+                    // Lua 5.4+ stores exact integral floats as integer keys and rejects
+                    // the float spelling as a traversal cursor, even though normal lookup
+                    // treats the two spellings as the same key.
+                    if (integralFloat && version >= LuaCompatibilityVersion.Lua54)
+                    {
+                        arrayIndex = 0;
+                        nodeIndex = 0;
+                        return false;
+                    }
+
                     int idx = GetIntegralKey(key.Number);
                     if (idx > 0)
                     {
-                        return _storage.TryLocateInt(idx, out arrayIndex, out nodeIndex);
+                        bool located = _storage.TryLocateInt(idx, out arrayIndex, out nodeIndex);
+                        if (
+                            located
+                            && integralFloat
+                            && version == LuaCompatibilityVersion.Lua53
+                            && nodeIndex == 0
+                            && !HasSingleKeyedConstructorIntegerKey()
+                        )
+                        {
+                            arrayIndex = 0;
+                            nodeIndex = 0;
+                            return false;
+                        }
+
+                        return located;
                     }
 
                     key = NormalizeNumericHashKey(key);
@@ -1064,14 +1096,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
         }
 
+        private bool HasSingleKeyedConstructorIntegerKey()
+        {
+            // A lone keyed constructor field remains in PUC Lua 5.3's hash part; a list
+            // field, a second field, or a later integer write triggers an array rehash.
+            return _initArray == 0 && _constructorArrayLength == 1 && _storage.Count == 1;
+        }
+
         private LuaValue NormalizeNumericHashKey(LuaValue key)
         {
             LuaNumber number = key.LuaNumber;
+            if (_roundsNumericKeys)
+            {
+                return number.IsInteger && !LuaNumber.InExactDoubleRange(number.AsInteger)
+                    ? LuaValue.NewFloat(number.ToDouble)
+                    : key;
+            }
+
+            // Lua 5.3+ stores a float key with an exact integer value as an integer key.
+            // Negative zero is an exact integer key even though arithmetic keeps its sign.
+            if (number.IsFloat && number.ToDouble == 0.0)
+            {
+                return LuaValue.NewInteger(0);
+            }
+
             return
-                _roundsNumericKeys
-                && number.IsInteger
-                && !LuaNumber.InExactDoubleRange(number.AsInteger)
-                ? LuaValue.NewFloat(number.ToDouble)
+                number.IsFloat && LuaNumber.TryConvertToInteger(number.ToDouble, out long integral)
+                ? LuaValue.NewInteger(integral)
                 : key;
         }
 

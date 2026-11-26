@@ -114,6 +114,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public bool IsConst => (_symbolAttributes & SymbolRefAttributes.Const) != 0;
 
         /// <summary>
+        /// Gets a value indicating whether the symbol rejects write access. To-be-closed
+        /// variables are immutable in Lua 5.4 and later even without an explicit const
+        /// attribute.
+        /// </summary>
+        public bool IsImmutable =>
+            (_symbolAttributes & (SymbolRefAttributes.Const | SymbolRefAttributes.ToBeClosed)) != 0;
+
+        /// <summary>
         /// Gets a value indicating whether the symbol participates in the to-be-closed cleanup flow.
         /// </summary>
         public bool IsToBeClosed => (_symbolAttributes & SymbolRefAttributes.ToBeClosed) != 0;
@@ -180,7 +188,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="name">The name.</param>
         /// <param name="index">The index of the var in closure scope.</param>
         /// <returns></returns>
-        internal static SymbolRef UpValue(string name, int index)
+        internal static SymbolRef UpValue(
+            string name,
+            int index,
+            SymbolRefAttributes attributes = default
+        )
         {
             //Debug.Assert(index >= 0, "Symbol Index < 0");
             return new SymbolRef()
@@ -188,7 +200,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _indexValue = index,
                 _symbolType = SymbolRefType.UpValue,
                 _nameValue = name,
-                _symbolAttributes = default,
+                _symbolAttributes = attributes,
             };
         }
 

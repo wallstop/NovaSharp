@@ -51,44 +51,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
-        public async Task ReassignmentClosesPreviousValueImmediately(
-            LuaCompatibilityVersion version
-        )
-        {
-            // <close> attribute is Lua 5.4+
-            Script script = new(version);
-            LuaValue result = script.DoString(
-                @"
-                local log = {}
-
-                local function newcloser(name)
-                    local token = {}
-                    setmetatable(token, {
-                        __close = function(_, err)
-                            table.insert(log, string.format('%s:%s', name, err or 'nil'))
-                        end
-                    })
-                    return token
-                end
-
-                local function run()
-                    local target <close> = newcloser('first')
-                    target = newcloser('second')
-                end
-
-                run()
-                return log
-                "
-            );
-
-            Table log = result.Table;
-            await Assert.That(log.Length).IsEqualTo(2).ConfigureAwait(false);
-            await Assert.That(log.Get(1).String).IsEqualTo("first:nil").ConfigureAwait(false);
-            await Assert.That(log.Get(2).String).IsEqualTo("second:nil").ConfigureAwait(false);
-        }
-
-        [global::TUnit.Core.Test]
-        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
         public async Task ErrorPathPassesErrorObjectToCloseMetamethod(
             LuaCompatibilityVersion version
         )

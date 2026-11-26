@@ -61,6 +61,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
         /// <returns>
         /// 	<c>true</c> if o is a numeric type; otherwise, <c>false</c>.
         /// </returns>
+        private static bool IsNumericZero(object value)
+        {
+            return value switch
+            {
+                sbyte v => v == 0,
+                short v => v == 0,
+                int v => v == 0,
+                long v => v == 0,
+                byte v => v == 0,
+                ushort v => v == 0,
+                uint v => v == 0,
+                ulong v => v == 0,
+                float v => v == 0,
+                double v => v == 0,
+                decimal v => v == 0,
+                _ => false,
+            };
+        }
+
         public static bool IsNumericType(object o)
         {
             return (
@@ -416,7 +435,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
         }
 
         internal static Regex FormatRegex = new(
-            @"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])"
+            @"\%(\d*\$)?([\'\#0\-\+ ]*)(\d*)(?:\.(\d*))?([hl])?([dioxXucsfeEgGpn%])"
         );
 
         public static string StringFormat(string format, object parameter)
@@ -487,6 +506,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                     flagPositiveSign = ContainsCharOrdinal(flags, '+');
                     flagPositiveSpace = ContainsCharOrdinal(flags, ' ');
                     flagGroupThousands = ContainsCharOrdinal(flags, '\'');
+                    flagZeroPadding = ContainsCharOrdinal(flags, '0');
 
                     // positive + indicator overrides a
                     // positive space character
@@ -503,7 +523,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 if (m.Groups[3] != null && m.Groups[3].Value.Length > 0)
                 {
                     fieldLength = Convert.ToInt32(m.Groups[3].Value, CultureInfo.InvariantCulture);
-                    flagZeroPadding = (m.Groups[3].Value[0] == '0');
+                    flagZeroPadding |= (m.Groups[3].Value[0] == '0');
                 }
 
                 if (flagZeroPadding)
@@ -518,15 +538,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                     paddingCharacter = ' ';
                 }
 
-                // extract field precision
+                // extract field precision ('%.g' means precision zero)
+                bool hasExplicitPrecision = m.Groups[4] != null && m.Groups[4].Success;
                 fieldPrecision = int.MinValue;
-                if (m.Groups[4] != null && m.Groups[4].Value.Length > 0)
+                if (hasExplicitPrecision)
                 {
-                    fieldPrecision = Convert.ToInt32(
-                        m.Groups[4].Value,
-                        CultureInfo.InvariantCulture
-                    );
+                    fieldPrecision =
+                        m.Groups[4].Value.Length > 0
+                            ? Convert.ToInt32(m.Groups[4].Value, CultureInfo.InvariantCulture)
+                            : 0;
                 }
+
+                int integerPrecision = hasExplicitPrecision ? fieldPrecision : int.MinValue;
 
                 // extract short / long indicator
                 shortLongIndicator = Char.MinValue;
@@ -552,6 +575,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 )
                 {
                     fieldPrecision = 6;
+                }
+
+                // C treats a zero precision as one significant digit for %g/%G.
+                if (fieldPrecision == 0 && formatSpecifier is 'g' or 'G')
+                {
+                    fieldPrecision = 1;
                 }
 
                 // get next value parameter and convert value parameter depending on short / long indicator
@@ -612,6 +641,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
                 // convert value parameters to a string depending on the formatSpecifier
                 w = String.Empty;
+                // An explicit integer precision disables zero padding in C printf.
+                char integerPadding = integerPrecision != int.MinValue ? ' ' : paddingCharacter;
                 switch (formatSpecifier)
                 {
                     case '%': // % character
@@ -622,11 +653,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             (flagGroupThousands ? "n" : "d"),
                             flagAlternate,
                             fieldLength,
-                            int.MinValue,
+                            integerPrecision,
                             flagLeft2Right,
                             flagPositiveSign,
                             flagPositiveSpace,
-                            paddingCharacter,
+                            integerPadding,
                             o
                         );
                         defaultParamIx++;
@@ -638,9 +669,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             "o",
                             flagAlternate,
                             fieldLength,
-                            int.MinValue,
+                            integerPrecision,
                             flagLeft2Right,
-                            paddingCharacter,
+                            integerPadding,
                             o
                         );
                         defaultParamIx++;
@@ -650,9 +681,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             "x",
                             flagAlternate,
                             fieldLength,
-                            fieldPrecision,
+                            integerPrecision,
                             flagLeft2Right,
-                            paddingCharacter,
+                            integerPadding,
                             o
                         );
                         defaultParamIx++;
@@ -662,9 +693,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             "X",
                             flagAlternate,
                             fieldLength,
-                            fieldPrecision,
+                            integerPrecision,
                             flagLeft2Right,
-                            paddingCharacter,
+                            integerPadding,
                             o
                         );
                         defaultParamIx++;
@@ -674,11 +705,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             (flagGroupThousands ? "n" : "d"),
                             flagAlternate,
                             fieldLength,
-                            int.MinValue,
+                            integerPrecision,
                             flagLeft2Right,
                             false,
                             false,
-                            paddingCharacter,
+                            integerPadding,
                             ToUnsigned(o)
                         );
                         defaultParamIx++;
@@ -697,12 +728,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             w = s[0].ToString();
                         }
 
+                        if (fieldLength != int.MinValue)
+                        {
+                            w = flagLeft2Right
+                                ? w.PadRight(fieldLength, ' ')
+                                : w.PadLeft(fieldLength, ' ');
+                        }
+
                         defaultParamIx++;
                         break;
                     case 's': // string
                         //string t = "{0" + ( fieldLength != int.MinValue ? "," + ( flagLeft2Right ? "-" : String.Empty ) + fieldLength.ToString() : String.Empty ) + ":s}";
                         w = o.ToString();
-                        if (fieldPrecision >= 0)
+                        if (fieldPrecision >= 0 && fieldPrecision < w.Length)
                         {
                             w = w.Substring(0, fieldPrecision);
                         }
@@ -864,10 +902,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             if (IsNumericType(value))
             {
                 w = Convert.ToString(UnboxToLong(value, true), 8);
+                if (fieldPrecision != int.MinValue)
+                {
+                    if (fieldPrecision == 0 && w == "0")
+                    {
+                        w = String.Empty;
+                    }
+                    else if (w.Length < fieldPrecision)
+                    {
+                        w = w.PadLeft(fieldPrecision, '0');
+                    }
+                }
 
+                bool needsOctalPrefix = alternate && (w.Length == 0 || w[0] != '0');
                 if (left2Right || padding == ' ')
                 {
-                    if (alternate && w != "0")
+                    if (needsOctalPrefix)
                     {
                         w = "0" + w;
                     }
@@ -878,10 +928,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 {
                     if (fieldLength != int.MinValue)
                     {
-                        w = w.PadLeft(fieldLength - (alternate && w != "0" ? 1 : 0), padding);
+                        int padWidth = fieldLength - (needsOctalPrefix ? 1 : 0);
+                        if (padWidth > 0)
+                        {
+                            w = w.PadLeft(padWidth, padding);
+                        }
                     }
 
-                    if (alternate && w != "0")
+                    if (needsOctalPrefix)
                     {
                         w = "0" + w;
                     }
@@ -925,10 +979,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             if (IsNumericType(value))
             {
                 w = string.Format(CultureInfo.InvariantCulture, numberFormat, value);
+                if (fieldPrecision == 0 && IsNumericZero(value))
+                {
+                    w = String.Empty;
+                }
 
+                bool prefix = alternate && !IsNumericZero(value);
                 if (left2Right || padding == ' ')
                 {
-                    if (alternate)
+                    if (prefix)
                     {
                         w = (nativeFormat == "x" ? "0x" : "0X") + w;
                     }
@@ -939,10 +998,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 {
                     if (fieldLength != int.MinValue)
                     {
-                        w = w.PadLeft(fieldLength - (alternate ? 2 : 0), padding);
+                        int padWidth = fieldLength - (prefix ? 2 : 0);
+                        if (padWidth > 0)
+                        {
+                            w = w.PadLeft(padWidth, padding);
+                        }
                     }
 
-                    if (alternate)
+                    if (prefix)
                     {
                         w = (nativeFormat == "x" ? "0x" : "0X") + w;
                     }
@@ -950,6 +1013,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             }
 
             return w;
+        }
+
+        /// <summary>
+        /// Trims the CLR's three-digit exponent to C printf's minimum of two digits.
+        /// </summary>
+        private static string NormalizeExponentDigits(string value)
+        {
+            ReadOnlySpan<char> span = value.AsSpan();
+            int exponent = span.IndexOf('e');
+            if (exponent < 0)
+            {
+                exponent = span.IndexOf('E');
+                if (exponent < 0)
+                {
+                    return value;
+                }
+            }
+
+            int digitsStart = exponent + 1;
+            if (
+                digitsStart < value.Length
+                && (value[digitsStart] == '+' || value[digitsStart] == '-')
+            )
+            {
+                digitsStart++;
+            }
+
+            int end = digitsStart;
+            while (end < value.Length && value[end] >= '0' && value[end] <= '9')
+            {
+                end++;
+            }
+
+            int leadingZeros = 0;
+            while (digitsStart + leadingZeros < end - 2 && value[digitsStart + leadingZeros] == '0')
+            {
+                leadingZeros++;
+            }
+
+            return leadingZeros == 0 ? value : value.Remove(digitsStart, leadingZeros);
         }
 
         private static string FormatNumber(
@@ -988,6 +1091,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             if (IsNumericType(value))
             {
                 w = String.Format(CultureInfo.InvariantCulture, numberFormat, value);
+                if (
+                    fieldPrecision == 0
+                    && (nativeFormat == "d" || nativeFormat == "n")
+                    && IsNumericZero(value)
+                )
+                {
+                    w = String.Empty;
+                }
+
+                if (nativeFormat is "e" or "E" or "g" or "G")
+                {
+                    w = NormalizeExponentDigits(w);
+                }
 
                 if (left2Right || padding == ' ')
                 {
@@ -1000,6 +1116,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 }
                 else
                 {
+                    bool positive = IsPositive(value, true);
+                    string sign = positive
+                        ? (positiveSign ? "+" : (positiveSpace ? " " : String.Empty))
+                        : "-";
                     if (w.Length > 0 && w[0] == '-')
                     {
                         w = w.Substring(1);
@@ -1007,23 +1127,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
                     if (fieldLength != int.MinValue)
                     {
-                        if (positiveSign) // xan - change here
-                        {
-                            w = w.PadLeft(fieldLength - 1, padding);
-                        }
-                        else
-                        {
-                            w = w.PadLeft(fieldLength, padding);
-                        }
-                    }
-
-                    if (IsPositive(value, true))
-                    {
-                        w = (positiveSign ? "+" : "") + w; // xan - change here
+                        int padWidth = fieldLength - sign.Length;
+                        w =
+                            padding == '0'
+                                ? sign + (padWidth > 0 ? w.PadLeft(padWidth, '0') : w)
+                                : (sign + w).PadLeft(fieldLength, ' ');
                     }
                     else
                     {
-                        w = "-" + w;
+                        w = sign + w;
                     }
                 }
             }

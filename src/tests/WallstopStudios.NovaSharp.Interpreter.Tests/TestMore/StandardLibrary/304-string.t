@@ -139,9 +139,14 @@ error_like(function () string.format('%k', 'toto') end,
 if jit and jit.version_num >= 20100 then
     todo("LuaJIT TODO. format.", 1)
 end
-error_like(function () string.format('%------s', 'toto') end,
-           "^[^:]+:%d+: invalid format %(repeated flags%)",
-           "function format (invalid format)")
+if _VERSION == "Lua 5.4" or _VERSION == "Lua 5.5" then
+    -- Lua 5.4 removed the limit on repeated flags.
+    is(string.format('%------s', 'toto'), 'toto')
+else
+    error_like(function () string.format('%------s', 'toto') end,
+               "^[^:]+:%d+: invalid format %(repeated flags%)",
+               "function format (invalid format)")
+end
 
 error_like(function () string.format('pi = %.123f', math.pi) end,
            "^[^:]+:%d+: invalid ",

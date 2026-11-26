@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
+    using WallstopStudios.NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// Represents any binary operator expression (arithmetic, logical, bitwise, concatenation).
@@ -737,7 +738,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                     }
                     else if (l.Type == DataType.String && r.Type == DataType.String)
                     {
-                        return string.Compare(l.String, r.String, StringComparison.Ordinal) < 0;
+                        return LuaStringOrdering.Compare(l.String, r.String) < 0;
                     }
                     else
                     {
@@ -752,7 +753,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                     }
                     else if (l.Type == DataType.String && r.Type == DataType.String)
                     {
-                        return string.Compare(l.String, r.String, StringComparison.Ordinal) <= 0;
+                        return LuaStringOrdering.Compare(l.String, r.String) <= 0;
                     }
                     else
                     {
