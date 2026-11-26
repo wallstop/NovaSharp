@@ -4,9 +4,9 @@
   "novasharp_only": 510,
   "comparable": 1549,
   "by_version": {
-    "5.1": 1026,
-    "5.2": 732,
-    "5.3": 979,
+    "5.1": 1027,
+    "5.2": 733,
+    "5.3": 980,
     "5.4": 1060,
     "5.5": 1104
   },
@@ -22701,11 +22701,14 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:138",
       "test": "StringFormatFiniteTUnitTests.FormatAlternateHexOmitsPrefixForZero",
       "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
         "5.4",
         "5.5"
       ],
       "novasharp_only": false,
-      "expects_error": true
+      "expects_error": false
     },
     {
       "path": "ForLoopConstVariableTUnitTests/ConstLocalInitializationRemainsAllowed.lua",
