@@ -148,6 +148,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task FormatAppliesCharacterWidth(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"local outcome = '[' .. string.format('%5c', 65) .. '][' .. string.format('%-5c', 65) .. ']'
+                print(outcome)
+                return outcome"
+            );
+
+            await Assert.That(result.String).IsEqualTo("[    A][A    ]").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task FormatAllowsRepeatedCharacterFlags(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"local outcome = string.format('%------9c', 65)
+                print(outcome)
+                return outcome"
+            );
+
+            await Assert.That(result.String).IsEqualTo("A        ").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
         public async Task FormatRejectsCharacterPrecision(LuaCompatibilityVersion version)
         {

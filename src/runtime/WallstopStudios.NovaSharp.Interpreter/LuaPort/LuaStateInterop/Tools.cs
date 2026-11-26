@@ -728,6 +728,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                             w = s[0].ToString();
                         }
 
+                        if (fieldLength != int.MinValue)
+                        {
+                            w = flagLeft2Right
+                                ? w.PadRight(fieldLength, ' ')
+                                : w.PadLeft(fieldLength, ' ');
+                        }
+
                         defaultParamIx++;
                         break;
                     case 's': // string

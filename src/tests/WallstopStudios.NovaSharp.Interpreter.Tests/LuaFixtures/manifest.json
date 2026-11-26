@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2059,
+  "total_snippets": 2061,
   "novasharp_only": 510,
-  "comparable": 1549,
+  "comparable": 1551,
   "by_version": {
-    "5.1": 1027,
-    "5.2": 733,
-    "5.3": 980,
-    "5.4": 1060,
-    "5.5": 1104
+    "5.1": 1028,
+    "5.2": 734,
+    "5.3": 981,
+    "5.4": 1062,
+    "5.5": 1106
   },
   "snippets": [
     {
@@ -22886,6 +22886,31 @@
       "path": "StringFormatFiniteTUnitTests/FormatUsesTwoDigitMinimumExponent.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:45",
       "test": "StringFormatFiniteTUnitTests.FormatUsesTwoDigitMinimumExponent",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringFormatFiniteTUnitTests/FormatAllowsRepeatedCharacterFlags.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:169",
+      "test": "StringFormatFiniteTUnitTests.FormatAllowsRepeatedCharacterFlags",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringFormatFiniteTUnitTests/FormatAppliesCharacterWidth.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:155",
+      "test": "StringFormatFiniteTUnitTests.FormatAppliesCharacterWidth",
       "lua_versions": [
         "5.1",
         "5.2",
