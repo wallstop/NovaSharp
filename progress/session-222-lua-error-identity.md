@@ -8,10 +8,11 @@ Issue: #168 (unblocks #169, #174).
   host-facing decorated message. `GetErrorObject()` falls back to the decorated string
   for runtime failures that have no explicit object, and caught errors normalize a nil
   object to Lua 5.5's `<no error object>` marker.
-- `error` accepts any Lua value (not just strings). Lua 5.1/5.2 still coerce numeric
-  messages to strings before decoration; Lua 5.3+ preserve numbers, booleans, tables,
-  and nil. Source decoration follows reference Lua's level rules, including CLR callers
-  contributing no location.
+- `error` accepts any Lua value (not just strings). Lua 5.1/5.2 coerce numeric
+  messages to strings only when level decoration is requested, preserving numbers for
+  level 0 and below; Lua 5.3+ preserve numbers, booleans, tables, and nil. Source
+  decoration follows reference Lua's level rules, including CLR callers contributing
+  no location.
 - `assert` shares the same error-construction path. Lua 5.1/5.2 keep the
   `luaL_optstring` contract; Lua 5.3+ preserve non-string messages and explicit nil.
 - `pcall`/`xpcall` pass the raw error object to `xpcall` message handlers and return the

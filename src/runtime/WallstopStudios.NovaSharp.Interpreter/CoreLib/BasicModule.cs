@@ -154,7 +154,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext.Script.CompatibilityVersion
             );
 
-            if (version < LuaCompatibilityVersion.Lua53 && message.Type == DataType.Number)
+            // Lua 5.1/5.2 convert numbers only when level decoration is requested;
+            // level 0 or below preserves the numeric error object.
+            if (
+                version < LuaCompatibilityVersion.Lua53
+                && level > 0
+                && message.Type == DataType.Number
+            )
             {
                 message = LuaValue.NewString(message.CastToString(version));
             }
