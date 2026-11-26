@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2080,
+  "total_snippets": 2082,
   "novasharp_only": 510,
-  "comparable": 1570,
+  "comparable": 1572,
   "by_version": {
     "5.1": 1035,
     "5.2": 741,
     "5.3": 988,
-    "5.4": 1081,
-    "5.5": 1124
+    "5.4": 1083,
+    "5.5": 1126
   },
   "snippets": [
     {
@@ -23143,6 +23143,28 @@
       "path": "ProcessorCoroutineCloseTUnitTests/FailedResumeKeepsDeferredCloseError.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:705",
       "test": "ProcessorCoroutineCloseTUnitTests.FailedResumeKeepsDeferredCloseError",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "CoroutineModuleTUnitTests/ClrCallbackErrorDefersLocalCloseUntilCoroutineClose.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:1456",
+      "test": "CoroutineModuleTUnitTests.ClrCallbackErrorDefersLocalCloseUntilCoroutineClose",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ProcessorCoroutineCloseTUnitTests/CloseHandlerCannotResumeItsOwnCoroutine.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:672",
+      "test": "ProcessorCoroutineCloseTUnitTests.CloseHandlerCannotResumeItsOwnCoroutine",
       "lua_versions": [
         "5.4",
         "5.5"

@@ -31,12 +31,12 @@ Lua, instead of replaying the earlier failure forever.
 
 Review hardening added the remaining boundary rules:
 
-- defer only when the nearest entry frame is the coroutine resume boundary, so
-  errors crossing a CLR re-entry or a protected call unwind locally;
+- defer only when the error reaches the coroutine resume boundary, while
+  protecting local unwind across direct CLR `pcall`/`xpcall` boundaries;
 - close a failed `coroutine.wrap` result and propagate a replacement handler
   error;
-- reject a reentrant `coroutine.close` while handlers are running instead of
-  draining live frames;
+- reject reentrant `coroutine.close` and `coroutine.resume` while handlers are
+  running instead of draining live frames;
 - keep the original deferred error when a later resume is rejected;
 - report `running` and non-yieldable status inside close handlers.
 
@@ -45,10 +45,11 @@ Review hardening added the remaining boundary rules:
 - Red on the base revision: the reproduction printed `resume false boom 2` and
   `close2 false boom`; reference Lua 5.4/5.5 print `resume false boom 0` and
   `close2 true nil`.
-- Green TUnit: `ProcessorCoroutineCloseTUnitTests` 71/71,
-  `CoroutineModuleTUnitTests` 342/342, full suite `16185/16185`.
+- Green TUnit: `ProcessorCoroutineCloseTUnitTests` 73/73,
+  `CoroutineModuleTUnitTests` 346/346, full suite `16189/16189`.
 - Reference Lua 5.4 and 5.5 outputs match for the new deferred-close,
-  suspended-close, reentrant-close, status, wrap, and CLR-boundary fixtures.
+  suspended-close, reentrant-close, self-resume, status, wrap, protected CLR
+  callback, and unprotected CLR callback fixtures.
 - Lua comparison 5.1, 5.2, 5.3, and 5.5: zero unexpected mismatches and no
   ratchet changes. Lua 5.4 has the two pre-existing 5.4.4-vs-5.4.7 reference
   deltas (`OperationsUseVersionedIndexingAndLength` and

@@ -513,6 +513,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         internal Processor NativeInstructionBudgetProcessor => _processor.ActiveProcessor;
 
         /// <summary>
+        /// Gets the processor currently executing this context.
+        /// </summary>
+        internal Processor ActiveProcessor => _processor.ActiveProcessor;
+
+        /// <summary>
         /// Gets the coroutine currently performing the call.
         /// </summary>
         public Coroutine CallingCoroutine => _processor.AssociatedCoroutine;

@@ -666,6 +666,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseHandlerCannotResumeItsOwnCoroutine(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local observed
+                local task
+                task = coroutine.create(function()
+                    local pending <close> = setmetatable({}, {
+                        __close = function()
+                            local resumed, value, message = pcall(coroutine.resume, task)
+                            observed = tostring(resumed) .. ':' .. tostring(value) .. ':' .. tostring(message)
+                        end
+                    })
+                    coroutine.yield('pause')
+                end)
+
+                local resumed, paused = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, paused)
+                print('close', closed, closeError, observed)
+
+                return resumed, paused, closed, closeError, observed
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsTrue();
+            await Assert.That(result.Tuple[3].IsNil).IsTrue();
+            await Assert
+                .That(result.Tuple[4].String)
+                .IsEqualTo("true:false:cannot resume non-suspended coroutine");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CloseHandlerObservesRunningCoroutineState(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);

@@ -2,7 +2,7 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 209 undocumented public/internal type declarations.
+Found 211 undocumented public/internal type declarations.
 
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs
   - line 9: missing XML docs for `class ComVisibleAttribute`
@@ -142,7 +142,10 @@ Found 209 undocumented public/internal type declarations.
   - line 169: missing XML docs for `GetStatistics()`
   - line 194: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs
-  - line 631: missing XML docs for `CallLibraryFunction()`
+  - line 632: missing XML docs for `CallLibraryFunction()`
+- src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorCoroutines.cs
+  - line 164: missing XML docs for `EnterProtectedClrCall()`
+  - line 169: missing XML docs for `LeaveProtectedClrCall()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs
   - line 43: missing XML docs for `Options`
   - line 44: missing XML docs for `Limit`

@@ -161,6 +161,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return ResumeCoroutine(new ClrCallArguments(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
         }
 
+        internal void EnterProtectedClrCall()
+        {
+            _protectedClrCallDepth++;
+        }
+
+        internal void LeaveProtectedClrCall()
+        {
+            _protectedClrCallDepth--;
+        }
+
         private LuaValue ResumeCoroutine(ClrCallArguments args)
         {
             EnterProcessor();
@@ -169,6 +179,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             try
             {
                 int entrypoint = 0;
+
+                if (_isClosingCoroutine)
+                {
+                    throw ScriptRuntimeException.CannotResumeNotSuspended(CoroutineState.Running);
+                }
 
                 if (
                     _state != CoroutineState.NotStarted

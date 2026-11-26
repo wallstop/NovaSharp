@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     /// <summary>
@@ -92,65 +93,74 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (args[0].Type == DataType.ClrFunction)
             {
+                Processor protectedProcessor = executionContext.ActiveProcessor;
+                protectedProcessor.EnterProtectedClrCall();
                 try
                 {
-                    LuaValue ret = args[0].Callback.Invoke(executionContext, a);
-                    if (ret.Type == DataType.TailCallRequest)
+                    try
                     {
-                        if (
-                            ret.TailCallData.Continuation != null
-                            || ret.TailCallData.ErrorHandler != null
-                        )
+                        LuaValue ret = args[0].Callback.Invoke(executionContext, a);
+                        if (ret.Type == DataType.TailCallRequest)
+                        {
+                            if (
+                                ret.TailCallData.Continuation != null
+                                || ret.TailCallData.ErrorHandler != null
+                            )
+                            {
+                                throw new ScriptRuntimeException(
+                                    "the function passed to {0} cannot be called directly by {0}. wrap in a script function instead.",
+                                    funcName
+                                );
+                            }
+
+                            TailCallData tailCallData = new()
+                            {
+                                Args = ret.TailCallData.Args,
+                                Function = ret.TailCallData.Function,
+                                Continuation = continuationCallback,
+                                ErrorHandler = errorCallback,
+                            };
+                            if (hasHandlerBeforeUnwind)
+                            {
+                                tailCallData.ErrorHandlerBeforeUnwind = handlerBeforeUnwind;
+                            }
+
+                            return LuaValue.NewTailCallReq(tailCallData);
+                        }
+                        else if (ret.Type == DataType.YieldRequest)
                         {
                             throw new ScriptRuntimeException(
                                 "the function passed to {0} cannot be called directly by {0}. wrap in a script function instead.",
                                 funcName
                             );
                         }
-
-                        TailCallData tailCallData = new()
+                        else
                         {
-                            Args = ret.TailCallData.Args,
-                            Function = ret.TailCallData.Function,
-                            Continuation = continuationCallback,
-                            ErrorHandler = errorCallback,
-                        };
+                            return LuaValue.NewTupleNested(LuaValue.True, ret);
+                        }
+                    }
+                    catch (ScriptRuntimeException ex)
+                    {
                         if (hasHandlerBeforeUnwind)
                         {
-                            tailCallData.ErrorHandlerBeforeUnwind = handlerBeforeUnwind;
+                            executionContext.PerformMessageDecorationBeforeUnwind(
+                                handlerBeforeUnwind,
+                                ex
+                            );
                         }
-
-                        return LuaValue.NewTailCallReq(tailCallData);
-                    }
-                    else if (ret.Type == DataType.YieldRequest)
-                    {
-                        throw new ScriptRuntimeException(
-                            "the function passed to {0} cannot be called directly by {0}. wrap in a script function instead.",
-                            funcName
+                        else
+                        {
+                            ex.DecoratedMessage = ex.Message;
+                        }
+                        return LuaValue.NewTupleNested(
+                            LuaValue.False,
+                            ex.GetCaughtErrorObject(executionContext.Script.CompatibilityVersion)
                         );
-                    }
-                    else
-                    {
-                        return LuaValue.NewTupleNested(LuaValue.True, ret);
                     }
                 }
-                catch (ScriptRuntimeException ex)
+                finally
                 {
-                    if (hasHandlerBeforeUnwind)
-                    {
-                        executionContext.PerformMessageDecorationBeforeUnwind(
-                            handlerBeforeUnwind,
-                            ex
-                        );
-                    }
-                    else
-                    {
-                        ex.DecoratedMessage = ex.Message;
-                    }
-                    return LuaValue.NewTupleNested(
-                        LuaValue.False,
-                        ex.GetCaughtErrorObject(executionContext.Script.CompatibilityVersion)
-                    );
+                    protectedProcessor.LeaveProtectedClrCall();
                 }
             }
             else if (args[0].Type != DataType.Function)
