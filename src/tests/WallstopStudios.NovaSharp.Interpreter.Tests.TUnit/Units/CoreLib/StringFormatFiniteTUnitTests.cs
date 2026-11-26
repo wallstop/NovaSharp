@@ -18,7 +18,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         public async Task FormatAcceptsZeroPaddingBeforeSignFlag(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            LuaValue result = script.DoString("return string.format('%0+9g', 1.5)");
+            LuaValue result = script.DoString(
+                "local outcome = string.format('%0+9g', 1.5) print(outcome) return outcome"
+            );
 
             await Assert.That(result.String).IsEqualTo("+000001.5").ConfigureAwait(false);
         }
@@ -29,7 +31,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = new(version);
             LuaValue result = script.DoString(
-                "return string.format('%.g', 1.5) .. ',' .. string.format('%.e', 1.5)"
+                "local outcome = string.format('%.g', 1.5) .. ',' .. string.format('%.e', 1.5) print(outcome) return outcome"
             );
 
             await Assert.That(result.String).IsEqualTo("2,2e+00").ConfigureAwait(false);
@@ -41,7 +43,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = new(version);
             LuaValue result = script.DoString(
-                "return string.format('%e', 1.5) .. ',' .. string.format('%E', 0.015625)"
+                "local outcome = string.format('%e', 1.5) .. ',' .. string.format('%E', 0.015625) print(outcome) return outcome"
             );
 
             await Assert
@@ -56,7 +58,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = new(version);
             LuaValue result = script.DoString(
-                "return string.format('%.5s', 'abc') .. ',' .. string.format('%.2s', 'xyz')"
+                "local outcome = string.format('%.5s', 'abc') .. ',' .. string.format('%.2s', 'xyz') print(outcome) return outcome"
             );
 
             await Assert.That(result.String).IsEqualTo("abc,xy").ConfigureAwait(false);
@@ -68,12 +70,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = new(version);
             LuaValue result = script.DoString(
-                @"return table.concat({
+                @"local outcome = table.concat({
                     string.format('%.5d', 42),
                     string.format('%.5o', 42),
                     string.format('%.5x', 42),
                     string.format('%.5u', 42)
-                }, ',')"
+                }, ',') print(outcome) return outcome"
             );
 
             await Assert
@@ -88,7 +90,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = new(version);
             LuaValue result = script.DoString(
-                @"return string.format('%0 9g', 1.5) .. ',' .. string.format('%0 9f', 1.5)"
+                @"local outcome = string.format('%0 9g', 1.5) .. ',' .. string.format('%0 9f', 1.5) print(outcome) return outcome"
             );
 
             await Assert.That(result.String).IsEqualTo(" 000001.5, 1.500000").ConfigureAwait(false);
@@ -102,7 +104,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = new(version);
             LuaValue result = script.DoString(
-                "return string.format('%05.3d', 2) .. ',' .. string.format('%05.3o', 2)"
+                "local outcome = string.format('%05.3d', 2) .. ',' .. string.format('%05.3o', 2) print(outcome) return outcome"
             );
 
             await Assert.That(result.String).IsEqualTo("  002,  002").ConfigureAwait(false);
@@ -116,16 +118,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             Script script = new(version);
             LuaValue result = script.DoString(
-                @"return table.concat({
+                @"local outcome = table.concat({
                     '[' .. string.format('%.d', 0) .. ']',
                     '[' .. string.format('%.o', 0) .. ']',
                     '[' .. string.format('%.x', 0) .. ']',
                     '[' .. string.format('%.u', 0) .. ']',
                     string.format('%.d', 42)
-                }, ',')"
+                }, ',') print(outcome) return outcome"
             );
 
             await Assert.That(result.String).IsEqualTo("[],[],[],[],42").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task FormatAlternateHexOmitsPrefixForZero(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            LuaValue result = script.DoString(
+                @"local outcome = table.concat({
+                    string.format('%#x', 0),
+                    '[' .. string.format('%#.x', 0) .. ']',
+                    '[' .. string.format('%#5.x', 0) .. ']',
+                    string.format('%#x', 42)
+                }, ',') print(outcome) return outcome"
+            );
+
+            await Assert.That(result.String).IsEqualTo("0,[],[     ],0x2a").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -163,7 +182,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         public async Task FormatAllowsRepeatedFlagsFromLua54(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            LuaValue result = script.DoString("return string.format('%------9g', 1.5)");
+            LuaValue result = script.DoString(
+                "local outcome = string.format('%------9g', 1.5) print(outcome) return outcome"
+            );
 
             await Assert.That(result.String).IsEqualTo("1.5      ").ConfigureAwait(false);
         }

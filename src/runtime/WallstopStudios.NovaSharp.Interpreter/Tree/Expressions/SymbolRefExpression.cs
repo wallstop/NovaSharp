@@ -90,9 +90,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             {
                 throw new SyntaxErrorException(
                     _nameToken,
-                    "attempt to assign to const variable '{0}'",
+                    "{0}: attempt to assign to const variable '{1}'",
+                    _nameToken.GetSourceRef().FormatLocation(bc.Script),
                     _varName
-                );
+                )
+                {
+                    DoNotDecorateMessage = true,
+                };
             }
 
             bc.EmitStore(_ref, stackofs, tupleidx);

@@ -14593,9 +14593,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "a1ae3805378a03d1415bc5ec1d546d652f0803c7e735497065e7842e86a05c9b",
-      "nova_error_sha256": "bde4a17247305c5c52f6477452c92ababf2087d6ef836569937441da71c79f9c",
+      "nova_error_sha256": "f28710e865946dbf3678267a0709e9fae031fbef77ac23d48f7e0f1625dd5a89",
       "lua_error_excerpt": "lua: ...riableTUnitTests/CapturedConstLocalRejectsAssignment.lua:<line>: attempt to assign to const variable 'value'",
-      "nova_error_excerpt": "attempt to assign to const variable 'value'"
+      "nova_error_excerpt": "LuaFixtures/ForLoopConstVariableTUnitTests/CapturedConstLocalRejectsAssignment.lua:(7,48-53): attempt to assign to const variable 'value'"
     },
     {
       "file": "ForLoopConstVariableTUnitTests/CapturedConstLocalRejectsAssignment.lua",
@@ -14604,9 +14604,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "a1ae3805378a03d1415bc5ec1d546d652f0803c7e735497065e7842e86a05c9b",
-      "nova_error_sha256": "bde4a17247305c5c52f6477452c92ababf2087d6ef836569937441da71c79f9c",
+      "nova_error_sha256": "f28710e865946dbf3678267a0709e9fae031fbef77ac23d48f7e0f1625dd5a89",
       "lua_error_excerpt": "lua: ...riableTUnitTests/CapturedConstLocalRejectsAssignment.lua:<line>: attempt to assign to const variable 'value'",
-      "nova_error_excerpt": "attempt to assign to const variable 'value'"
+      "nova_error_excerpt": "LuaFixtures/ForLoopConstVariableTUnitTests/CapturedConstLocalRejectsAssignment.lua:(7,48-53): attempt to assign to const variable 'value'"
     },
     {
       "file": "ForLoopConstVariableTUnitTests/CapturedLoopVariableRejectsAssignment.lua",
@@ -14615,9 +14615,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "11e38206ef4b8414c15ac3455f1ae2b3e387fe1adf61a7bddb6ac8821563efb1",
-      "nova_error_sha256": "1d82de05e09cccea23a3b2887b110ec57fb78c1877e545b8901246dd99acd740",
+      "nova_error_sha256": "8eb71045e36474df658f84ce8b8c18b4517a50812602b8ecd9019975a6e728da",
       "lua_error_excerpt": "lua: ...ableTUnitTests/CapturedLoopVariableRejectsAssignment.lua:<line>: attempt to assign to const variable 'i'",
-      "nova_error_excerpt": "attempt to assign to const variable 'i'"
+      "nova_error_excerpt": "LuaFixtures/ForLoopConstVariableTUnitTests/CapturedLoopVariableRejectsAssignment.lua:(7,58-59): attempt to assign to const variable 'i'"
     },
     {
       "file": "ForLoopConstVariableTUnitTests/GenericForControlVariableRejectsAssignment.lua",
@@ -14626,9 +14626,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "5d33bee5c97211db2eeb57270ff66713fe70bbe53817faa432ceace009476299",
-      "nova_error_sha256": "2249108e63c4d8393dbe591a57009d37dafa431114758ccc220e42d65b8dd422",
+      "nova_error_sha256": "caa414ffa4d0128b70910f01cef520b4cfafe2f9dd9421a707c1ad3f9826b95e",
       "lua_error_excerpt": "lua: ...UnitTests/GenericForControlVariableRejectsAssignment.lua:<line>: attempt to assign to const variable 'key'",
-      "nova_error_excerpt": "attempt to assign to const variable 'key'"
+      "nova_error_excerpt": "LuaFixtures/ForLoopConstVariableTUnitTests/GenericForControlVariableRejectsAssignment.lua:(7,34-37): attempt to assign to const variable 'key'"
     },
     {
       "file": "ForLoopConstVariableTUnitTests/NumericForControlVariableRejectsAssignment.lua",
@@ -14637,9 +14637,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "8a5c7348b604ccb4f9847470f0b3405ec9d373c0e64d8061d926dabc314e2c72",
-      "nova_error_sha256": "1d82de05e09cccea23a3b2887b110ec57fb78c1877e545b8901246dd99acd740",
+      "nova_error_sha256": "ddbaded755754c9dd73e58a04c844e70d0b66ae19c227d5be3c82f5a51915acc",
       "lua_error_excerpt": "lua: ...UnitTests/NumericForControlVariableRejectsAssignment.lua:<line>: attempt to assign to const variable 'i'",
-      "nova_error_excerpt": "attempt to assign to const variable 'i'"
+      "nova_error_excerpt": "LuaFixtures/ForLoopConstVariableTUnitTests/NumericForControlVariableRejectsAssignment.lua:(7,16-17): attempt to assign to const variable 'i'"
     },
     {
       "file": "ForLoopConstVariableTUnitTests/FunctionDefinitionSyntaxRejectsConstLocal.lua",
@@ -14648,9 +14648,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "d5741a944281c5f6fe23470cc3140e1307427e0f6cf5aa4fc94b8e86a39a719e",
-      "nova_error_sha256": "bde4a17247305c5c52f6477452c92ababf2087d6ef836569937441da71c79f9c",
+      "nova_error_sha256": "7e03c72573bf8c82b86b175c7a752913a5d52ccc203453d1f87258e2ffbef7cb",
       "lua_error_excerpt": "lua: ...TUnitTests/FunctionDefinitionSyntaxRejectsConstLocal.lua:<line>: attempt to assign to const variable 'value'",
-      "nova_error_excerpt": "attempt to assign to const variable 'value'"
+      "nova_error_excerpt": "LuaFixtures/ForLoopConstVariableTUnitTests/FunctionDefinitionSyntaxRejectsConstLocal.lua:(7,33-38): attempt to assign to const variable 'value'"
     },
     {
       "file": "ForLoopConstVariableTUnitTests/FunctionDefinitionSyntaxRejectsConstLocal.lua",
@@ -14659,9 +14659,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "d5741a944281c5f6fe23470cc3140e1307427e0f6cf5aa4fc94b8e86a39a719e",
-      "nova_error_sha256": "bde4a17247305c5c52f6477452c92ababf2087d6ef836569937441da71c79f9c",
+      "nova_error_sha256": "7e03c72573bf8c82b86b175c7a752913a5d52ccc203453d1f87258e2ffbef7cb",
       "lua_error_excerpt": "lua: ...TUnitTests/FunctionDefinitionSyntaxRejectsConstLocal.lua:<line>: attempt to assign to const variable 'value'",
-      "nova_error_excerpt": "attempt to assign to const variable 'value'"
+      "nova_error_excerpt": "LuaFixtures/ForLoopConstVariableTUnitTests/FunctionDefinitionSyntaxRejectsConstLocal.lua:(7,33-38): attempt to assign to const variable 'value'"
     },
     {
       "file": "ForLoopConstVariableTUnitTests/FunctionDefinitionSyntaxRejectsConstLoopVariable.lua",
@@ -14670,9 +14670,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "fa10a7a8eaaa145c026044d6ff763ba8a919619721fb5d8633170586b97b5ced",
-      "nova_error_sha256": "1d82de05e09cccea23a3b2887b110ec57fb78c1877e545b8901246dd99acd740",
+      "nova_error_sha256": "d6d696f2691d6924141fe46ff842c78625a0b67ff210b41a1f8e828715e68b59",
       "lua_error_excerpt": "lua: ...sts/FunctionDefinitionSyntaxRejectsConstLoopVariable.lua:<line>: attempt to assign to const variable 'i'",
-      "nova_error_excerpt": "attempt to assign to const variable 'i'"
+      "nova_error_excerpt": "LuaFixtures/ForLoopConstVariableTUnitTests/FunctionDefinitionSyntaxRejectsConstLoopVariable.lua:(7,25-26): attempt to assign to const variable 'i'"
     },
     {
       "file": "ForLoopConstVariableTUnitTests/CloseLocalRejectsAssignment.lua",
@@ -14681,9 +14681,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "65ce9dbcb20257629c0251dfd3b2dd2cdda88daeae90b1db874401b21d7c4e3d",
-      "nova_error_sha256": "bde4a17247305c5c52f6477452c92ababf2087d6ef836569937441da71c79f9c",
+      "nova_error_sha256": "35ac07ec8d25b1541eaf60a8797341b1d5124826423c59363547b155c00a18c2",
       "lua_error_excerpt": "lua: ...pConstVariableTUnitTests/CloseLocalRejectsAssignment.lua:<line>: attempt to assign to const variable 'value'",
-      "nova_error_excerpt": "attempt to assign to const variable 'value'"
+      "nova_error_excerpt": "LuaFixtures/ForLoopConstVariableTUnitTests/CloseLocalRejectsAssignment.lua:(8,22-27): attempt to assign to const variable 'value'"
     },
     {
       "file": "StringFormatFiniteTUnitTests/FormatRejectsCharacterPrecision.lua",
@@ -14703,9 +14703,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "65ce9dbcb20257629c0251dfd3b2dd2cdda88daeae90b1db874401b21d7c4e3d",
-      "nova_error_sha256": "bde4a17247305c5c52f6477452c92ababf2087d6ef836569937441da71c79f9c",
+      "nova_error_sha256": "35ac07ec8d25b1541eaf60a8797341b1d5124826423c59363547b155c00a18c2",
       "lua_error_excerpt": "lua: ...pConstVariableTUnitTests/CloseLocalRejectsAssignment.lua:<line>: attempt to assign to const variable 'value'",
-      "nova_error_excerpt": "attempt to assign to const variable 'value'"
+      "nova_error_excerpt": "LuaFixtures/ForLoopConstVariableTUnitTests/CloseLocalRejectsAssignment.lua:(8,22-27): attempt to assign to const variable 'value'"
     },
     {
       "file": "StringFormatFiniteTUnitTests/FormatRejectsCharacterPrecision.lua",

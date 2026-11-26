@@ -26,12 +26,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 local values = { astral, bmp }
                 table.sort(values)
 
-                return table.concat({
+                local outcome = table.concat({
                     tostring(bmp < astral),
                     tostring(bmp <= astral),
                     tostring(astral < bmp),
                     tostring(values[1] == bmp),
                 }, ',')
+                print(outcome)
+                return outcome
             "
             );
 
@@ -52,7 +54,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 @"
                 local values = { 'z', '𐀀', 'A', '', '' }
                 table.sort(values)
-                return table.concat(values, '|')
+                local outcome = table.concat(values, '|')
+                print(outcome)
+                return outcome
             "
             );
 

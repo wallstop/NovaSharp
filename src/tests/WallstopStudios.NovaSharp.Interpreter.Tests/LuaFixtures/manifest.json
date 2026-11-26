@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2058,
+  "total_snippets": 2059,
   "novasharp_only": 510,
-  "comparable": 1548,
+  "comparable": 1549,
   "by_version": {
     "5.1": 1026,
     "5.2": 732,
     "5.3": 979,
-    "5.4": 1059,
-    "5.5": 1103
+    "5.4": 1060,
+    "5.5": 1104
   },
   "snippets": [
     {
@@ -22574,17 +22574,6 @@
       "expects_error": true
     },
     {
-      "path": "ForLoopConstVariableTUnitTests/ConstLocalInitializationRemainsAllowed.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ForLoopConstVariableTUnitTests.cs:109",
-      "test": "ForLoopConstVariableTUnitTests.ConstLocalInitializationRemainsAllowed",
-      "lua_versions": [
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
       "path": "ForLoopConstVariableTUnitTests/GenericForControlVariableRejectsAssignment.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ForLoopConstVariableTUnitTests.cs:37",
       "test": "ForLoopConstVariableTUnitTests.GenericForControlVariableRejectsAssignment",
@@ -22593,30 +22582,6 @@
       ],
       "novasharp_only": false,
       "expects_error": true
-    },
-    {
-      "path": "ForLoopConstVariableTUnitTests/GenericForValueVariableRemainsWritable.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ForLoopConstVariableTUnitTests.cs:68",
-      "test": "ForLoopConstVariableTUnitTests.GenericForValueVariableRemainsWritable",
-      "lua_versions": [
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "ForLoopConstVariableTUnitTests/LoopVariablesRemainWritableBeforeLua55.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ForLoopConstVariableTUnitTests.cs:80",
-      "test": "ForLoopConstVariableTUnitTests.LoopVariablesRemainWritableBeforeLua55",
-      "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3",
-        "5.4"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
     },
     {
       "path": "ForLoopConstVariableTUnitTests/NumericForControlVariableRejectsAssignment.lua",
@@ -22629,59 +22594,6 @@
       "expects_error": true
     },
     {
-      "path": "LuaStringOrderingTUnitTests/RelationalOperatorsAndSortUseCodePointOrder.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/LuaStringOrderingTUnitTests.cs:19",
-      "test": "LuaStringOrderingTUnitTests.RelationalOperatorsAndSortUseCodePointOrder",
-      "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "LuaStringOrderingTUnitTests/SortPreservesAsciiOrderingAfterSupplementaryPlaneValues.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/LuaStringOrderingTUnitTests.cs:46",
-      "test": "LuaStringOrderingTUnitTests.SortPreservesAsciiOrderingAfterSupplementaryPlaneValues",
-      "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "StringFormatFiniteTUnitTests/FormatAcceptsZeroPaddingBeforeSignFlag.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:21",
-      "test": "StringFormatFiniteTUnitTests.FormatAcceptsZeroPaddingBeforeSignFlag",
-      "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "StringFormatFiniteTUnitTests/FormatAllowsRepeatedFlagsFromLua54.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:73",
-      "test": "StringFormatFiniteTUnitTests.FormatAllowsRepeatedFlagsFromLua54",
-      "lua_versions": [
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
       "path": "StringFormatFiniteTUnitTests/FormatRejectsRepeatedFlagsBeforeLua54.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:59",
       "test": "StringFormatFiniteTUnitTests.FormatRejectsRepeatedFlagsBeforeLua54",
@@ -22692,34 +22604,6 @@
       ],
       "novasharp_only": false,
       "expects_error": true
-    },
-    {
-      "path": "StringFormatFiniteTUnitTests/FormatTreatsEmptyPrecisionAsZero.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:31",
-      "test": "StringFormatFiniteTUnitTests.FormatTreatsEmptyPrecisionAsZero",
-      "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "StringFormatFiniteTUnitTests/FormatUsesTwoDigitMinimumExponent.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:43",
-      "test": "StringFormatFiniteTUnitTests.FormatUsesTwoDigitMinimumExponent",
-      "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
     },
     {
       "path": "TableNextContractTUnitTests/NextAcceptsFractionalFloatCursors.lua",
@@ -22779,20 +22663,6 @@
       "expects_error": false
     },
     {
-      "path": "StringFormatFiniteTUnitTests/FormatClampsStringPrecision.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:58",
-      "test": "StringFormatFiniteTUnitTests.FormatClampsStringPrecision",
-      "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
       "path": "StringFormatFiniteTUnitTests/FormatRejectsCharacterPrecision.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:88",
       "test": "StringFormatFiniteTUnitTests.FormatRejectsCharacterPrecision",
@@ -22815,9 +22685,120 @@
       "expects_error": true
     },
     {
-      "path": "StringFormatFiniteTUnitTests/FormatPadsIntegerPrecision.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:70",
-      "test": "StringFormatFiniteTUnitTests.FormatPadsIntegerPrecision",
+      "path": "TableNextContractTUnitTests/NextAcceptsIntegralFloatCursorsBeforeLua54.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:449",
+      "test": "TableNextContractTUnitTests.NextAcceptsIntegralFloatCursorsBeforeLua54",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringFormatFiniteTUnitTests/FormatAlternateHexOmitsPrefixForZero.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:138",
+      "test": "StringFormatFiniteTUnitTests.FormatAlternateHexOmitsPrefixForZero",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "ForLoopConstVariableTUnitTests/ConstLocalInitializationRemainsAllowed.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ForLoopConstVariableTUnitTests.cs:161",
+      "test": "ForLoopConstVariableTUnitTests.ConstLocalInitializationRemainsAllowed",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ForLoopConstVariableTUnitTests/GenericForValueVariableRemainsWritable.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ForLoopConstVariableTUnitTests.cs:104",
+      "test": "ForLoopConstVariableTUnitTests.GenericForValueVariableRemainsWritable",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ForLoopConstVariableTUnitTests/LoopVariablesRemainWritableBeforeLua55.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ForLoopConstVariableTUnitTests.cs:116",
+      "test": "ForLoopConstVariableTUnitTests.LoopVariablesRemainWritableBeforeLua55",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "LuaStringOrderingTUnitTests/RelationalOperatorsAndSortUseCodePointOrder.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/LuaStringOrderingTUnitTests.cs:21",
+      "test": "LuaStringOrderingTUnitTests.RelationalOperatorsAndSortUseCodePointOrder",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "LuaStringOrderingTUnitTests/SortPreservesAsciiOrderingAfterSupplementaryPlaneValues.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/LuaStringOrderingTUnitTests.cs:53",
+      "test": "LuaStringOrderingTUnitTests.SortPreservesAsciiOrderingAfterSupplementaryPlaneValues",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringFormatFiniteTUnitTests/FormatAcceptsZeroPaddingBeforeSignFlag.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:21",
+      "test": "StringFormatFiniteTUnitTests.FormatAcceptsZeroPaddingBeforeSignFlag",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringFormatFiniteTUnitTests/FormatAllowsRepeatedFlagsFromLua54.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:185",
+      "test": "StringFormatFiniteTUnitTests.FormatAllowsRepeatedFlagsFromLua54",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringFormatFiniteTUnitTests/FormatClampsStringPrecision.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:60",
+      "test": "StringFormatFiniteTUnitTests.FormatClampsStringPrecision",
       "lua_versions": [
         "5.1",
         "5.2",
@@ -22830,7 +22811,7 @@
     },
     {
       "path": "StringFormatFiniteTUnitTests/FormatIntegerPrecisionOverridesZeroPadding.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:104",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:106",
       "test": "StringFormatFiniteTUnitTests.FormatIntegerPrecisionOverridesZeroPadding",
       "lua_versions": [
         "5.1",
@@ -22843,8 +22824,22 @@
       "expects_error": false
     },
     {
+      "path": "StringFormatFiniteTUnitTests/FormatPadsIntegerPrecision.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:72",
+      "test": "StringFormatFiniteTUnitTests.FormatPadsIntegerPrecision",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
       "path": "StringFormatFiniteTUnitTests/FormatPreservesSpaceSignWithZeroPadding.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:90",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:92",
       "test": "StringFormatFiniteTUnitTests.FormatPreservesSpaceSignWithZeroPadding",
       "lua_versions": [
         "5.1",
@@ -22858,7 +22853,7 @@
     },
     {
       "path": "StringFormatFiniteTUnitTests/FormatSuppressesZeroAtZeroIntegerPrecision.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:118",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:120",
       "test": "StringFormatFiniteTUnitTests.FormatSuppressesZeroAtZeroIntegerPrecision",
       "lua_versions": [
         "5.1",
@@ -22871,13 +22866,29 @@
       "expects_error": false
     },
     {
-      "path": "TableNextContractTUnitTests/NextAcceptsIntegralFloatCursorsBeforeLua54.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:449",
-      "test": "TableNextContractTUnitTests.NextAcceptsIntegralFloatCursorsBeforeLua54",
+      "path": "StringFormatFiniteTUnitTests/FormatTreatsEmptyPrecisionAsZero.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:33",
+      "test": "StringFormatFiniteTUnitTests.FormatTreatsEmptyPrecisionAsZero",
       "lua_versions": [
         "5.1",
         "5.2",
-        "5.3"
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringFormatFiniteTUnitTests/FormatUsesTwoDigitMinimumExponent.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/StringFormatFiniteTUnitTests.cs:45",
+      "test": "StringFormatFiniteTUnitTests.FormatUsesTwoDigitMinimumExponent",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
       ],
       "novasharp_only": false,
       "expects_error": false

@@ -18,7 +18,7 @@ Issues: #193, #130, #185; advances #199 (byte-escape cases remain gated by #201)
   expectation in TAP `304-string.t` is version-aware.
 - Lua 5.4/5.5 `<const>` and `<close>` locals and Lua 5.5 for-loop control
   variables now reject writes at compile time, including captured upvalues and
-  `function name()` declaration syntax.
+  `function name()` declaration syntax. Diagnostics include the source location.
 - Lua 5.3+ stores exact integral float table keys (including negative zero) as
   integer keys; Lua 5.4/5.5 reject the float spelling as a `next` cursor, and
   Lua 5.3 rejects it only for array-part keys, matching reference traversal keys
@@ -31,7 +31,8 @@ Issues: #193, #130, #185; advances #199 (byte-escape cases remain gated by #201)
   `next(t, 2^53)` under Lua 5.5.
 - Green: focused TUnit classes pass (`LuaStringOrderingTUnitTests`,
   `StringFormatFiniteTUnitTests`, `ForLoopConstVariableTUnitTests`,
-  `TableNextContractTUnitTests`), full TUnit suite `16120/16120` passes.
+  `TableNextContractTUnitTests`), full TUnit suite `16120/16120` passes. New
+  fixtures print their compared outcomes so the corpus gate observes real output.
 - Lua comparison: 5.1, 5.2, 5.3, and 5.5 corpus comparisons report zero
   mismatches and a clean error ratchet. Local Lua 5.4.4 differs from the pinned CI
   5.4.7 reference in two pre-existing fixtures (table.remove argument index and

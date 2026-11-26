@@ -102,7 +102,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version);
             LuaValue result = script.DoString(
-                "for key, value in pairs({ 1 }) do value = 'changed' end return 'ok'"
+                "for key, value in pairs({ 1 }) do value = 'changed' end print('ok') return 'ok'"
             );
 
             await Assert.That(result.String).IsEqualTo("ok").ConfigureAwait(false);
@@ -114,7 +114,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             Script script = new(version);
             LuaValue result = script.DoString(
-                "for i = 1, 2 do i = i + 1 end for key, value in pairs({ 1 }) do key = 'x' value = 'y' end return 'ok'"
+                "for i = 1, 2 do i = i + 1 end for key, value in pairs({ 1 }) do key = 'x' value = 'y' end print('ok') return 'ok'"
             );
 
             await Assert.That(result.String).IsEqualTo("ok").ConfigureAwait(false);
@@ -158,7 +158,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task ConstLocalInitializationRemainsAllowed(LuaCompatibilityVersion version)
         {
             Script script = new(version);
-            LuaValue result = script.DoString("local value <const> = 7 return value");
+            LuaValue result = script.DoString("local value <const> = 7 print(value) return value");
 
             await Assert.That(result.Number).IsEqualTo(7d).ConfigureAwait(false);
         }

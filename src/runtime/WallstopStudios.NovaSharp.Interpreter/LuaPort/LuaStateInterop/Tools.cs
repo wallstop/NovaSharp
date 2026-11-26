@@ -973,9 +973,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                     w = String.Empty;
                 }
 
+                bool prefix = alternate && !IsNumericZero(value);
                 if (left2Right || padding == ' ')
                 {
-                    if (alternate)
+                    if (prefix)
                     {
                         w = (nativeFormat == "x" ? "0x" : "0X") + w;
                     }
@@ -986,10 +987,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 {
                     if (fieldLength != int.MinValue)
                     {
-                        w = w.PadLeft(fieldLength - (alternate ? 2 : 0), padding);
+                        w = w.PadLeft(fieldLength - (prefix ? 2 : 0), padding);
                     }
 
-                    if (alternate)
+                    if (prefix)
                     {
                         w = (nativeFormat == "x" ? "0x" : "0X") + w;
                     }

@@ -158,9 +158,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                 {
                     throw new SyntaxErrorException(
                         _nameToken,
-                        "attempt to assign to const variable '{0}'",
+                        "{0}: attempt to assign to const variable '{1}'",
+                        _nameToken.GetSourceRef().FormatLocation(bc.Script),
                         _nameToken.text
-                    );
+                    )
+                    {
+                        DoNotDecorateMessage = true,
+                    };
                 }
 
                 if (_local)
