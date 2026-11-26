@@ -825,6 +825,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         throw new ScriptRuntimeException("error handler not set to a function");
                     }
 
+                    ret = ret.ToScalar();
                     ret = ret.IsVoid() ? LuaValue.Nil : ret;
                     decoratedMessage = ret.ToPrintString(
                         LuaVersionDefaults.Resolve(_script.CompatibilityVersion)

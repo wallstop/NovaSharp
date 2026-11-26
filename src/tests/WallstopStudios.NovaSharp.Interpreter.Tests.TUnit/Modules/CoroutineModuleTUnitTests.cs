@@ -190,6 +190,43 @@ return first, second
             await Assert.That(result.Tuple[4].String).IsEqualTo("table").ConfigureAwait(false);
         }
 
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task CloseReportsFailureForNilErrorValue(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            LuaValue result = script.DoString(
+                @"
+                local co = coroutine.create(function() error(nil) end)
+                local ok, e = coroutine.resume(co)
+                local closed, closeError = coroutine.close(co)
+
+                print('nil', ok, type(e), closed, type(closeError), closeError)
+
+                return ok, type(e), closed, type(closeError), closeError
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Boolean).IsFalse().ConfigureAwait(false);
+            if (UsesNoErrorObjectMarker(version))
+            {
+                await Assert.That(result.Tuple[1].String).IsEqualTo("string").ConfigureAwait(false);
+                await Assert.That(result.Tuple[3].String).IsEqualTo("string").ConfigureAwait(false);
+                await Assert
+                    .That(result.Tuple[4].String)
+                    .IsEqualTo("<no error object>")
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(result.Tuple[1].String).IsEqualTo("nil").ConfigureAwait(false);
+                await Assert.That(result.Tuple[3].String).IsEqualTo("nil").ConfigureAwait(false);
+                await Assert.That(result.Tuple[4].IsNil).IsTrue().ConfigureAwait(false);
+            }
+        }
+
         // =====================================================
         // coroutine.running() Tests (Version-specific behavior)
         // Lua 5.1: returns only the coroutine

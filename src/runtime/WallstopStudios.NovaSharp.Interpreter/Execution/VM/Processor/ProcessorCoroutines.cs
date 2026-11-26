@@ -226,6 +226,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     {
                         _state = CoroutineState.Suspended;
                         _lastCloseError = LuaValue.Nil;
+                        _lastCloseFailed = false;
                         return retVal.YieldRequest.ToTuple();
                     }
                 }
@@ -233,6 +234,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     _state = CoroutineState.Dead;
                     _lastCloseError = LuaValue.Nil;
+                    _lastCloseFailed = false;
                     return retVal;
                 }
             }
@@ -242,6 +244,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _lastCloseError = ex.GetCaughtErrorObject(
                     LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
                 );
+                _lastCloseFailed = true;
                 throw;
             }
             catch (Exception)
@@ -284,6 +287,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     _state = CoroutineState.Dead;
                     _lastCloseError = LuaValue.Nil;
+                    _lastCloseFailed = false;
                     return LuaValue.True;
                 }
 
@@ -309,6 +313,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                     _valueStack.Clear();
                     _lastCloseError = LuaValue.Nil;
+                    _lastCloseFailed = false;
                     _state = CoroutineState.Dead;
                     return LuaValue.True;
                 }
@@ -318,6 +323,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
                     );
                     _lastCloseError = error;
+                    _lastCloseFailed = true;
                     _state = CoroutineState.Dead;
                     return LuaValue.NewTuple(LuaValue.False, error);
                 }
@@ -333,7 +339,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         private LuaValue BuildCloseResultFromLastError()
         {
-            if (!_lastCloseError.IsNil)
+            if (_lastCloseFailed)
             {
                 return LuaValue.NewTuple(LuaValue.False, _lastCloseError);
             }

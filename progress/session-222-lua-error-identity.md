@@ -15,8 +15,10 @@ Issue: #168 (unblocks #169, #174).
 - `assert` shares the same error-construction path. Lua 5.1/5.2 keep the
   `luaL_optstring` contract; Lua 5.3+ preserve non-string messages and explicit nil.
 - `pcall`/`xpcall` pass the raw error object to `xpcall` message handlers and return the
-  handler's result (or the original object) from protected calls. `__close` handlers
+  handler's first result (or the original object) from protected calls. `__close` handlers
   receive the same object, and a closer that raises replaces the active error object.
+- Coroutines track failure separately from the error value so a dead coroutine closed
+  after `error(nil)` still reports `false, nil` under Lua 5.4.
 - `coroutine.resume`, `coroutine.wrap`, and `coroutine.close` preserve the error object
   and now return the decorated location text for string failures instead of the bare
   message.
@@ -31,8 +33,9 @@ Issue: #168 (unblocks #169, #174).
 - Green: paired TUnit coverage across Lua 5.1–5.5 in
   `PcallPreservesLuaErrorValues`, `XpcallPassesErrorObjectsToHandlerAndUsesItsResult`,
   `AssertPreservesLuaErrorValues`, `CloseMetamethodsReceiveLuaErrorObjects`,
-  `ResumePreservesLuaErrorValues`, and `CloseReturnsThePreservedLuaErrorValue`.
-  Full TUnit suite: `16156/16156` passed.
+  `ResumePreservesLuaErrorValues`, `CloseReturnsThePreservedLuaErrorValue`,
+  `XpcallUsesOnlyTheFirstHandlerResult`, and `CloseReportsFailureForNilErrorValue`.
+  Full TUnit suite: `16163/16163` passed.
 - Fixtures: six generated `.lua` fixtures produce stable printed outcomes that match
   reference Lua 5.1–5.5 exactly (including `<no error object>` under 5.5).
 - Lua comparison: zero unexpected mismatches for 5.1, 5.2, 5.3, and 5.5; the two

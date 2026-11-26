@@ -298,6 +298,54 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task XpcallUsesOnlyTheFirstHandlerResult(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            LuaValue result = script.DoString(
+                @"
+                local ok, first, extra = xpcall(function() error('boom', 0) end, function() return 1, 2 end)
+                local ok2, value = xpcall(function() error('boom', 0) end, function() return nil end)
+                local ok3, value3 = xpcall(function() error('boom', 0) end, function() end)
+
+                print('multi', ok, first, extra)
+                print('nil', ok2, value, type(value))
+                print('none', ok3, value3, type(value3))
+
+                return ok, first, extra, ok2, value, type(value), ok3, value3, type(value3)
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[6].Boolean).IsFalse().ConfigureAwait(false);
+
+            if (UsesNoErrorObjectMarker(version))
+            {
+                await Assert.That(result.Tuple[5].String).IsEqualTo("string").ConfigureAwait(false);
+                await Assert
+                    .That(result.Tuple[4].String)
+                    .IsEqualTo("<no error object>")
+                    .ConfigureAwait(false);
+                await Assert.That(result.Tuple[8].String).IsEqualTo("string").ConfigureAwait(false);
+                await Assert
+                    .That(result.Tuple[7].String)
+                    .IsEqualTo("<no error object>")
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(result.Tuple[5].String).IsEqualTo("nil").ConfigureAwait(false);
+                await Assert.That(result.Tuple[4].IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(result.Tuple[8].String).IsEqualTo("nil").ConfigureAwait(false);
+                await Assert.That(result.Tuple[7].IsNil).IsTrue().ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task PcallCapturesScriptErrors(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
