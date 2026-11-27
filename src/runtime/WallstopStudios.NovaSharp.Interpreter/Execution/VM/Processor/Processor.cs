@@ -35,6 +35,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private bool _isClosingCoroutine;
         private int _closeUnwindBoundaryDepth = -1;
         private bool _selfCloseResetRequested;
+        private int _closeHandlerDepth;
         private int _protectedClrCallDepth;
         private int _errorHandlerBeforeUnwindScanBoundaryDepth = -1;
 

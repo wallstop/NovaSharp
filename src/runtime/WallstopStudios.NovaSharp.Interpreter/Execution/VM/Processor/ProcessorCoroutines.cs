@@ -37,7 +37,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         public LuaValue RecycleCoroutine(Processor mainProcessor, Closure closure)
         {
-            if (_lastCloseFailed && _executionStack.Count > 0)
+            if (HasPendingCloseHandlers())
             {
                 throw new InvalidOperationException(
                     "cannot recycle a coroutine with pending close handlers; call coroutine.close first"
@@ -57,6 +57,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             // Return the coroutine handle
             return LuaValue.NewCoroutine(new Coroutine(p));
+        }
+
+        private bool HasPendingCloseHandlers()
+        {
+            for (int index = 0; index < _executionStack.Count; index++)
+            {
+                CallStackItem frame = _executionStack[index];
+
+                if (frame.ToBeClosedIndices != null && frame.ToBeClosedIndices.Count > 0)
+                {
+                    return true;
+                }
+
+                if (frame.BlocksToClose == null)
+                {
+                    continue;
+                }
+
+                for (int blockIndex = 0; blockIndex < frame.BlocksToClose.Count; blockIndex++)
+                {
+                    if (frame.BlocksToClose[blockIndex].Count > 0)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

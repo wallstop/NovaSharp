@@ -157,6 +157,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task RecycleCoroutineAllowsFailedCoroutineWithoutCloseHandlers(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            script.DoString(
+                @"
+                function failingWithoutClose()
+                    error('failure')
+                end
+
+                function replacement()
+                    return 'recycled'
+                end
+                "
+            );
+
+            LuaValue coroutineValue = script.CreateCoroutineValue(
+                script.Globals.Get("failingWithoutClose")
+            );
+            Assert.Throws<ScriptRuntimeException>(() => coroutineValue.Coroutine.Resume());
+
+            LuaValue recycled = script.RecycleCoroutine(
+                coroutineValue.Coroutine,
+                script.Globals.Get("replacement")
+            );
+            await Assert
+                .That(recycled.Coroutine.Resume().String)
+                .IsEqualTo("recycled")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task AutoYieldCounterForcesYieldAndResumesCleanly(
             LuaCompatibilityVersion version
         )

@@ -100,8 +100,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         internal LuaValue Recycle(Processor mainProcessor, Closure closure)
         {
+            LuaValue recycled = _processor.RecycleCoroutine(mainProcessor, closure);
             Type = CoroutineType.Recycled;
-            return _processor.RecycleCoroutine(mainProcessor, closure);
+            return recycled;
         }
 
         /// <summary>

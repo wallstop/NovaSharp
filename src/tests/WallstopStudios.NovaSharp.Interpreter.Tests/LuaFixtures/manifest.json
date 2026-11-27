@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2088,
+  "total_snippets": 2091,
   "novasharp_only": 510,
-  "comparable": 1578,
+  "comparable": 1581,
   "by_version": {
-    "5.1": 1035,
-    "5.2": 741,
-    "5.3": 988,
-    "5.4": 1086,
-    "5.5": 1132
+    "5.1": 1036,
+    "5.2": 742,
+    "5.3": 989,
+    "5.4": 1087,
+    "5.5": 1135
   },
   "snippets": [
     {
@@ -23181,7 +23181,7 @@
         "5.5"
       ],
       "novasharp_only": false,
-      "expects_error": true
+      "expects_error": false
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseHandlerSelfCloseAbortsHandlerAndContinuesInLua55.lua",
@@ -23229,6 +23229,40 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/CoroutineLifecycleTUnitTests.cs:128",
       "test": "CoroutineLifecycleTUnitTests.RecycleCoroutineThrowsWhileCloseHandlersArePending",
       "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ProcessorCoroutineCloseTUnitTests/SelfCloseClearsPriorHandlerErrorBeforeSiblings.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:733",
+      "test": "ProcessorCoroutineCloseTUnitTests.SelfCloseClearsPriorHandlerErrorBeforeSiblings",
+      "lua_versions": [
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ProcessorCoroutineCloseTUnitTests/SelfCloseInsideNestedBlockDoesNotResumeRemovedFrame.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:685",
+      "test": "ProcessorCoroutineCloseTUnitTests.SelfCloseInsideNestedBlockDoesNotResumeRemovedFrame",
+      "lua_versions": [
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "CoroutineLifecycleTUnitTests/RecycleCoroutineAllowsFailedCoroutineWithoutCloseHandlers.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/CoroutineLifecycleTUnitTests.cs:165",
+      "test": "CoroutineLifecycleTUnitTests.RecycleCoroutineAllowsFailedCoroutineWithoutCloseHandlers",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
         "5.4",
         "5.5"
       ],

@@ -1293,14 +1293,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             LuaValue previous = slot.Value;
             int previousBoundaryDepth = _errorHandlerBeforeUnwindScanBoundaryDepth;
             _errorHandlerBeforeUnwindScanBoundaryDepth = _executionStack.Count;
+            _closeHandlerDepth++;
             try
             {
                 CloseValue(symbol, previous, activeError, instructionPtr);
             }
             catch (CoroutineSelfCloseException)
             {
+                if (_closeHandlerDepth > 1)
+                {
+                    throw;
+                }
+
                 activeError = LuaValue.Nil;
-                return activeException;
+                activeException = null;
+                return null;
             }
             catch (ScriptRuntimeException closeException)
             {
@@ -1326,6 +1333,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             finally
             {
+                _closeHandlerDepth--;
                 _errorHandlerBeforeUnwindScanBoundaryDepth = previousBoundaryDepth;
                 slot.Deactivate();
             }

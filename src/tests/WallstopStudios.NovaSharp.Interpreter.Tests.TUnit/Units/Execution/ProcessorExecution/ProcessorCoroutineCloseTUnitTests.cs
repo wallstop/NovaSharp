@@ -677,6 +677,100 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelfCloseInsideNestedBlockDoesNotResumeRemovedFrame(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local task
+                task = coroutine.create(function()
+                    local outer <close> = setmetatable({}, {
+                        __close = function()
+                            log[#log + 1] = 'outer-start'
+                            do
+                                local inner <close> = setmetatable({}, {
+                                    __close = function()
+                                        log[#log + 1] = 'inner'
+                                        coroutine.close(task)
+                                    end
+                                })
+                            end
+                            log[#log + 1] = 'outer-after'
+                        end
+                    })
+                    coroutine.yield('pause')
+                end)
+
+                local resumed, paused = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, paused)
+                print('close', closed, closeError, #log, log[1], log[2])
+
+                return resumed, paused, closed, closeError, #log, log[1], log[2]
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsTrue();
+            await Assert.That(result.Tuple[3].IsNil).IsTrue();
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(2);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("outer-start");
+            await Assert.That(result.Tuple[6].String).IsEqualTo("inner");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelfCloseClearsPriorHandlerErrorBeforeSiblings(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local task
+                task = coroutine.create(function()
+                    local first <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'first:' .. tostring(err)
+                            error('firstboom', 0)
+                        end
+                    })
+                    local second <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'second:' .. tostring(err)
+                            coroutine.close(task)
+                        end
+                    })
+                    coroutine.yield('pause')
+                end)
+
+                local resumed, paused = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, paused)
+                print('close', closed, closeError, #log, log[1], log[2])
+
+                return resumed, paused, closed, closeError, #log, log[1], log[2]
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].String).IsEqualTo("firstboom");
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(2);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("second:nil");
+            await Assert.That(result.Tuple[6].String).IsEqualTo("first:nil");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task SelfCloseDuringDeferredCleanupKeepsInnerHandlerError(
             LuaCompatibilityVersion version
         )
