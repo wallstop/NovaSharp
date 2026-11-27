@@ -456,6 +456,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             bool failed = false;
             _selfCloseStarted = false;
             _selfCloseFailed = false;
+            _selfCloseError = null;
+            _selfCloseErrorSet = false;
 
             while (_executionStack.Count > 0)
             {
@@ -484,6 +486,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     {
                         failed = true;
                         _selfCloseFailed = false;
+                    }
+
+                    if (_selfCloseErrorSet)
+                    {
+                        failed = true;
+                        activeError = _selfCloseError.GetCaughtErrorObject(version);
+                        _selfCloseError = null;
+                        _selfCloseErrorSet = false;
                     }
 
                     _closeUnwindBoundaryDepth = previousBoundaryDepth;
@@ -516,6 +526,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         public sealed class CoroutineSelfCloseException : Exception
         {
+            public ScriptRuntimeException CloseError { get; set; }
+
             public CoroutineSelfCloseException() { }
 
             public CoroutineSelfCloseException(string message)

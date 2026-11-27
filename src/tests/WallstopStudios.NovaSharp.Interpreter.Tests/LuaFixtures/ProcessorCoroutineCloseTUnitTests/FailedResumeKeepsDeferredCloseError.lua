@@ -1,7 +1,7 @@
 -- @lua-versions: 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1461
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1600
 -- @test: ProcessorCoroutineCloseTUnitTests.FailedResumeKeepsDeferredCloseError
 -- Compatibility notes: Test targets Lua 5.4+; Lua 5.4+: close attribute
 local original = {}

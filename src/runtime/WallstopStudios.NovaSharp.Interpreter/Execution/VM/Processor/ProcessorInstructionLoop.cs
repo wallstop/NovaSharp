@@ -725,7 +725,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return true;
             }
 
-            for (int index = _executionStack.Count - 1; index >= 0; index--)
+            // Suspended protected calls below the frame being closed can never
+            // catch a close error raised above them.
+            int boundary = _closeUnwindBoundaryDepth >= 0 ? _closeUnwindBoundaryDepth : 0;
+            for (int index = _executionStack.Count - 1; index >= boundary; index--)
             {
                 CallStackItem frame = _executionStack[index];
                 if (frame.ErrorHandler != null || frame.HasErrorHandlerBeforeUnwind)
@@ -1280,7 +1283,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         decorateCloseErrorsBeforeUnwind
                     );
                 }
-                catch (CoroutineSelfCloseException)
+                catch (CoroutineSelfCloseException selfCloseException)
                 {
                     // The first self-close preserves a failure that happened
                     // before it, but every self-close resets the error seen by
@@ -1301,7 +1304,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     if (drainSelfClose)
                     {
                         // Another closer requested its own self-close; it must
-                        // not skip the closers that remain in this block.
+                        // not skip the closers that remain in this block. Carry
+                        // its error with the abort instead of throwing it as a
+                        // normal error that a protected call could catch.
+                        closeException = selfCloseException.CloseError;
                         continue;
                     }
 
@@ -1321,7 +1327,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                     if (closeException != null)
                     {
-                        throw closeException;
+                        selfCloseException.CloseError = closeException;
                     }
 
                     throw;
@@ -1420,7 +1426,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 CloseValue(symbol, previous, activeError, instructionPtr);
             }
-            catch (CoroutineSelfCloseException)
+            catch (CoroutineSelfCloseException selfCloseException)
             {
                 if (_closeHandlerDepth > 1)
                 {
@@ -1434,6 +1440,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     {
                         _selfCloseFailed = true;
                     }
+                }
+
+                if (selfCloseException.CloseError != null)
+                {
+                    _selfCloseError = selfCloseException.CloseError;
+                    _selfCloseErrorSet = true;
                 }
 
                 activeError = LuaValue.Nil;
