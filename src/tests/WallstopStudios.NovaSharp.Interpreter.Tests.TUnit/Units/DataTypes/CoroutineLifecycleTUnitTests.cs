@@ -171,6 +171,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 function replacement()
                     return 'recycled'
                 end
+
+                local task = coroutine.create(failingWithoutClose)
+                local resumed, resumeError = coroutine.resume(task)
+                print('resume', resumed, resumeError)
                 "
             );
 
