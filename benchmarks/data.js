@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795758761590,
+  "lastUpdate": 1795766334756,
   "repoUrl": "https://github.com/Ambiguous-Interactive/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -5374,6 +5374,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 632.872,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d9ef40af810e697421d92ad7052242b88cf0f6a9",
+          "message": "Preserve Lua parallel assignment targets and values (#194) (#230)\n\nCloses #194.\n\n## Summary\n\nParallel assignments now follow PUC Lua 5.1–5.5 evaluation order:\n\n- Evaluate indexed targets left to right before the right-hand side.\n- Perform stores right to left.\n- Preserve prepared target operands and pending values on the VM stack.\n- Keep reference read timing: direct locals stay register-like,\nunconflicted local keys are read at store time, Lua 5.1 upvalues are\nsnapshotted, and Lua 5.4–5.5 snapshot dynamic upvalue-table keys.\n- Apply the reference compiler's conflict copy when a later direct\nassignment targets a local or upvalue used by an earlier indexed target.\n- Replace a discarded `__newindex` result in its assigned slot instead\nof pushing it on top, so setter returns cannot displace other pending\nassignment values. Yieldable setters retain all pending values across\nsuspension.\n\nThe thread-level review audit covered the 25 PRs merged since\n2026-11-20. It found unresolved threads only on #222, #224, and #228.\nThe dead-coroutine double-close case and later-outer-sibling error case\nnow have regressions here and pass on main. Remaining candidate\ncoroutine-close cases are tracked in #229. The audit also folded in the\npending-rollup policy clarification and removed prohibited null\noperators from `CoroutineModule.Resume`.\n\n## Validation\n\n- Red on `main`: `p[mark('i')], q[mark('j')] = mark('x'), mark('y')`\nlogged `xyij`; `proxy.x, kept = true, false` kept the setter return\ninstead of `false`; conflicting aliases and duplicate targets diverged\nfrom PUC.\n- Green after the fix: all five PUC interpreters agree on target order,\nright-to-left stores, setter return discard, conflicts, duplicate\ntargets, direct local/key reads, and version-specific upvalue-table\ntiming. Yieldable setters preserve pending values on 5.2–5.5.\n- New fixtures: `AssignmentPreservesParallelTargetsAndValues` (all\nversions) and `AssignmentPreservesValuesAcrossYieldableSetter` (5.2+),\nplus paired coroutine-close regressions.\n- `AssignmentStatement`: 24/24. `ProcessorCoroutineClose`: 106/106. Full\nTUnit suite: 16240/16240.\n- Lua comparison 5.1, 5.2, 5.3, 5.5: zero unexpected mismatches and no\nratchet additions. Lua 5.4 has only the two pre-existing local\n5.4.4-vs-5.4.7 reference deltas; CI uses 5.4.7. Ten both-error entries\nwere refreshed because the new assignment prologue shifted the fallback\nbytecode instruction pointer in a main-chunk yield diagnostic; the error\nclassification is unchanged.\n- CSharpier and pre-commit completed successfully.\n\nProgress: `progress/session-225-lua-parallel-assignment.md`.",
+          "timestamp": "2026-11-26T23:53:28-08:00",
+          "tree_id": "fcccb17c568c73fb6c675c87eb1e3b454d6abcc5",
+          "url": "https://github.com/Ambiguous-Interactive/NovaSharp/commit/d9ef40af810e697421d92ad7052242b88cf0f6a9"
+        },
+        "date": 1795766334402,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 435.773,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 478.264,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 475.029,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 652.391,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 706.28,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 684.403,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 720.764,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 773.48,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 808.192,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 750.529,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 822.93,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 916.64,
             "unit": "ns",
             "extra": ""
           }
