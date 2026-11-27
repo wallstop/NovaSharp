@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2096,
+  "total_snippets": 2097,
   "novasharp_only": 510,
-  "comparable": 1586,
+  "comparable": 1587,
   "by_version": {
     "5.1": 1036,
     "5.2": 742,
     "5.3": 989,
-    "5.4": 1092,
-    "5.5": 1140
+    "5.4": 1093,
+    "5.5": 1141
   },
   "snippets": [
     {
@@ -9154,7 +9154,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseBeforeStartReturnsTrueAndMarksDead.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:24",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:25",
       "test": "ProcessorCoroutineCloseTUnitTests.CloseBeforeStartReturnsTrueAndMarksDead",
       "lua_versions": [
         "5.1"
@@ -9164,7 +9164,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseWhileSuspendedEndsCoroutine.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:43",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:44",
       "test": "ProcessorCoroutineCloseTUnitTests.CloseWhileSuspendedEndsCoroutine",
       "lua_versions": [
         "5.1"
@@ -9174,7 +9174,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseForceSuspendedCoroutineDrainsStack.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:77",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:78",
       "test": "ProcessorCoroutineCloseTUnitTests.CloseForceSuspendedCoroutineDrainsStack",
       "lua_versions": [
         "5.1"
@@ -9184,7 +9184,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseAfterExceptionReturnsFalseTuple.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:111",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:112",
       "test": "ProcessorCoroutineCloseTUnitTests.CloseAfterExceptionReturnsFalseTuple",
       "lua_versions": [
         "5.1"
@@ -9194,7 +9194,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseMainCoroutineThrows.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:176",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:278",
       "test": "ProcessorCoroutineCloseTUnitTests.CloseMainCoroutineThrows",
       "lua_versions": [
         "5.4",
@@ -9205,7 +9205,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseRunningCoroutineThrows.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:201",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:303",
       "test": "ProcessorCoroutineCloseTUnitTests.CloseRunningCoroutineThrows",
       "lua_versions": [
         "5.1"
@@ -9215,7 +9215,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseUnknownStateThrows.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:228",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:330",
       "test": "ProcessorCoroutineCloseTUnitTests.CloseUnknownStateThrows",
       "lua_versions": [
         "5.1"
@@ -9225,7 +9225,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseDeadCoroutineWithoutErrorsReturnsTrue.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:252",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:354",
       "test": "ProcessorCoroutineCloseTUnitTests.CloseDeadCoroutineWithoutErrorsReturnsTrue",
       "lua_versions": [
         "5.1"
@@ -9235,7 +9235,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseForceSuspendedCoroutineUnwindsSuccessfully.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:293",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:395",
       "test": "ProcessorCoroutineCloseTUnitTests.CloseForceSuspendedCoroutineUnwindsSuccessfully",
       "lua_versions": [
         "5.1"
@@ -9245,7 +9245,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/ClosePropagatesErrorsFromCloseMetamethod.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:327",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:431",
       "test": "ProcessorCoroutineCloseTUnitTests.ClosePropagatesErrorsFromCloseMetamethod",
       "lua_versions": [
         "5.4",
@@ -9256,7 +9256,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CoroutineCloseFlushesAllClosersEvenWhenOneRaises.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:365",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:469",
       "test": "ProcessorCoroutineCloseTUnitTests.CoroutineCloseFlushesAllClosersEvenWhenOneRaises",
       "lua_versions": [
         "5.4",
@@ -9267,7 +9267,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CoroutineCloseIsNilInPreLua54.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:428",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1460",
       "test": "ProcessorCoroutineCloseTUnitTests.CoroutineCloseIsNilInPreLua54",
       "lua_versions": [
         "5.1"
@@ -9277,7 +9277,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CoroutineCloseIsAvailableInLua54Plus.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:445",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1477",
       "test": "ProcessorCoroutineCloseTUnitTests.CoroutineCloseIsAvailableInLua54Plus",
       "lua_versions": [
         "5.3",
@@ -23040,7 +23040,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/DeferredCloseHandlerErrorReplacesActiveErrorAndClosesOnce.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:224",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:226",
       "test": "ProcessorCoroutineCloseTUnitTests.DeferredCloseHandlerErrorReplacesActiveErrorAndClosesOnce",
       "lua_versions": [
         "5.4",
@@ -23051,7 +23051,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/UncaughtErrorDefersCloseHandlersUntilClose.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:173",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:175",
       "test": "ProcessorCoroutineCloseTUnitTests.UncaughtErrorDefersCloseHandlersUntilClose",
       "lua_versions": [
         "5.4",
@@ -23062,7 +23062,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/SuspendedCloseContinuesThroughOuterCloseHandlers.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:523",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:525",
       "test": "ProcessorCoroutineCloseTUnitTests.SuspendedCloseContinuesThroughOuterCloseHandlers",
       "lua_versions": [
         "5.4",
@@ -23109,7 +23109,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseHandlerCannotReenterCloseOfItsOwnCoroutine.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:632",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1297",
       "test": "ProcessorCoroutineCloseTUnitTests.CloseHandlerCannotReenterCloseOfItsOwnCoroutine",
       "lua_versions": [
         "5.4"
@@ -23130,7 +23130,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseHandlerObservesRunningCoroutineState.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:670",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1376",
       "test": "ProcessorCoroutineCloseTUnitTests.CloseHandlerObservesRunningCoroutineState",
       "lua_versions": [
         "5.4",
@@ -23141,7 +23141,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/FailedResumeKeepsDeferredCloseError.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:705",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1411",
       "test": "ProcessorCoroutineCloseTUnitTests.FailedResumeKeepsDeferredCloseError",
       "lua_versions": [
         "5.4",
@@ -23163,7 +23163,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseHandlerCannotResumeItsOwnCoroutine.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:672",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1337",
       "test": "ProcessorCoroutineCloseTUnitTests.CloseHandlerCannotResumeItsOwnCoroutine",
       "lua_versions": [
         "5.4",
@@ -23185,7 +23185,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseHandlerSelfCloseAbortsHandlerAndContinuesInLua55.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:632",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1244",
       "test": "ProcessorCoroutineCloseTUnitTests.CloseHandlerSelfCloseAbortsHandlerAndContinuesInLua55",
       "lua_versions": [
         "5.5"
@@ -23205,7 +23205,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/OtherCoroutineCannotCloseCoroutineDuringHandlers.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:733",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1200",
       "test": "ProcessorCoroutineCloseTUnitTests.OtherCoroutineCannotCloseCoroutineDuringHandlers",
       "lua_versions": [
         "5.4",
@@ -23216,7 +23216,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/SelfCloseDuringDeferredCleanupKeepsInnerHandlerError.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:685",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1152",
       "test": "ProcessorCoroutineCloseTUnitTests.SelfCloseDuringDeferredCleanupKeepsInnerHandlerError",
       "lua_versions": [
         "5.5"
@@ -23237,7 +23237,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/SelfCloseClearsPriorHandlerErrorBeforeSiblings.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:733",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1106",
       "test": "ProcessorCoroutineCloseTUnitTests.SelfCloseClearsPriorHandlerErrorBeforeSiblings",
       "lua_versions": [
         "5.5"
@@ -23282,7 +23282,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/SelfCloseAfterPriorHandlerErrorResetsCloserError.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:839",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1041",
       "test": "ProcessorCoroutineCloseTUnitTests.SelfCloseAfterPriorHandlerErrorResetsCloserError",
       "lua_versions": [
         "5.4",
@@ -23304,7 +23304,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/SelfCloseDuringDrainClearsLaterError.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:837",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:974",
       "test": "ProcessorCoroutineCloseTUnitTests.SelfCloseDuringDrainClearsLaterError",
       "lua_versions": [
         "5.4",
@@ -23315,8 +23315,19 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/SelfCloseInsideNestedHandlerKeepsAncestorFrameAlive.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:839",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:912",
       "test": "ProcessorCoroutineCloseTUnitTests.SelfCloseInsideNestedHandlerKeepsAncestorFrameAlive",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ProcessorCoroutineCloseTUnitTests/SelfCloseInsideNestedCloserKeepsAncestorFailure.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:839",
+      "test": "ProcessorCoroutineCloseTUnitTests.SelfCloseInsideNestedCloserKeepsAncestorFailure",
       "lua_versions": [
         "5.4",
         "5.5"

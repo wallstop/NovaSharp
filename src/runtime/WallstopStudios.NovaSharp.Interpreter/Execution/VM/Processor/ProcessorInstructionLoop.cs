@@ -1437,6 +1437,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     );
                 }
 
+                if (!_selfCloseStarted)
+                {
+                    _selfCloseFailed = true;
+                }
+
                 activeError = closeException.GetCaughtErrorObject(
                     LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
                 );
