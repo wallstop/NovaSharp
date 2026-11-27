@@ -142,12 +142,12 @@ Found 213 undocumented public/internal type declarations.
   - line 169: missing XML docs for `GetStatistics()`
   - line 194: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs
-  - line 639: missing XML docs for `CallLibraryFunction()`
+  - line 640: missing XML docs for `CallLibraryFunction()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorCoroutines.cs
-  - line 199: missing XML docs for `EnterProtectedClrCall()`
-  - line 204: missing XML docs for `LeaveProtectedClrCall()`
-  - line 527: missing XML docs for `class CoroutineSelfCloseException`
-  - line 529: missing XML docs for `CloseError`
+  - line 200: missing XML docs for `EnterProtectedClrCall()`
+  - line 205: missing XML docs for `LeaveProtectedClrCall()`
+  - line 533: missing XML docs for `class CoroutineSelfCloseException`
+  - line 535: missing XML docs for `CloseError`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs
   - line 43: missing XML docs for `Options`
   - line 44: missing XML docs for `Limit`
@@ -164,7 +164,7 @@ Found 213 undocumented public/internal type declarations.
   - line 119: missing XML docs for `Dispose()`
   - line 128: missing XML docs for `ChargeSandboxInstruction()`
   - line 2224: missing XML docs for `Count`
-  - line 3464: missing XML docs for `TryCompareBuiltInLessThan()`
+  - line 3465: missing XML docs for `TryCompareBuiltInLessThan()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/BasicDescriptors/DispatchingUserDataDescriptor.cs
   - line 314: missing XML docs for `TryIndex()`
   - line 816: missing XML docs for `TryMetaIndex()`

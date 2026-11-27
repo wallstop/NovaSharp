@@ -2871,6 +2871,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 _resumeYieldWithSingleResult =
                     _canYield && (returnFlags & CallStackItemFlags.SingleOperatorResult) != 0;
+                _discardResumeResult = discardResult;
                 _savedInstructionPtr = instructionPtr;
                 return YieldSpecialTrap;
             }

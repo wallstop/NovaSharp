@@ -52,4 +52,20 @@ assert(
 )
 assert(pendingFirst == 'one' and pendingSecond == 'two' and pending.x == 'three')
 
+local nativeYield = coroutine.create(function()
+    local nativeProxy = setmetatable({}, { __newindex = coroutine.yield })
+    local value
+    value, nativeProxy.x = 'left', 1
+    return value, rawget(nativeProxy, 'x')
+end)
+
+local okNative, tableArgument, keyArgument, valueArgument = coroutine.resume(nativeYield)
+assert(okNative and type(tableArgument) == 'table', 'native setter must yield')
+assert(keyArgument == 'x' and valueArgument == 1, 'native setter arguments')
+
+local nativeValues = { coroutine.resume(nativeYield, 'resume1', 'resume2') }
+assert(nativeValues[1] == true, 'native setter must resume')
+assert(nativeValues[2] == 'left', 'native setter result must be discarded')
+assert(nativeValues[3] == nil, 'native setter must not store a value')
+
 print('yieldable setter preserved')

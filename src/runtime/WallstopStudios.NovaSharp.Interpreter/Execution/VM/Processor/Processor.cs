@@ -28,6 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private CoroutineState _state;
         private bool _canYield = true;
         private bool _resumeYieldWithSingleResult;
+        private bool _discardResumeResult;
         private int _savedInstructionPtr = -1;
         private readonly DebugContext _debug;
         private LuaValue _lastCloseError = LuaValue.Nil;

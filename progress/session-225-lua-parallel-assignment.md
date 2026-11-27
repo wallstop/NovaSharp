@@ -26,15 +26,16 @@ right-hand side, then perform the stores right to left, matching PUC Lua
 5.1–5.5. Target operands keep the reference compiler's read timing: direct
 locals stay register-like, unconflicted local keys are read at store time,
 Lua 5.1 upvalues are snapshotted, and Lua 5.4–5.5 snapshot upvalue tables
-unless the key is a constant string. A later direct assignment to a local or
-upvalue emits the reference compiler's conflict copy at that point, after any
-intervening target expressions have run, and copies only the conflicting table
-or index operand.
+unless the key is a constant short string of at most 40 UTF-8 bytes. A later
+direct assignment to a local or upvalue emits the reference compiler's conflict
+copy at that point, after any intervening target expressions have run, and
+copies only the conflicting table or index operand.
 
 Stores leave prepared target operands and pending right-hand values on the VM
 stack. A table setter result is discarded without pushing it or replacing a
 pending right-hand slot, so a shared multi-return tuple stays intact and a
-yieldable setter cannot lose values needed by later stores.
+yieldable setter cannot lose values needed by later stores. Native setter yields
+also discard the resume arguments before assigning the remaining targets.
 
 ## Evidence
 
@@ -53,8 +54,9 @@ yieldable setter cannot lose values needed by later stores.
   and `AssignmentPreservesValuesAcrossYieldableSetter` (5.2+), plus paired
   coroutine-close regressions generated into the corpus. The assignment fixture
   covers the reviewer reproductions for a shared RHS tuple, copying only the
-  conflicting operand, copying at the later target, and string-only constant
-  upvalue keys.
+  conflicting operand, copying at the later target, short-string constant keys,
+  and long-string key snapshots. The yield fixture covers a native setter yield
+  as well as Lua setters with pending stores after resumption.
 - `AssignmentStatement` and `ProcessorCoroutineClose` filters: 24/24 and
   106/106. Full TUnit suite: 16240/16240.
 - Lua comparison 5.1, 5.2, 5.3, and 5.5: zero unexpected mismatches and no

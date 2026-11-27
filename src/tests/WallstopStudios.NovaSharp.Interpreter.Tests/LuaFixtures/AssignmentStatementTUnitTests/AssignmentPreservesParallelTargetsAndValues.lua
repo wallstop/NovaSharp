@@ -121,6 +121,23 @@ else
     assert(stringTarget.x == 'v', 'string literal keys keep deferred upvalue tables')
 end
 
+local longKey = 'ccccccccccccccccccccccccccccccccccccccccc'
+local longStringTarget
+local function replaceLongStringTarget()
+    longStringTarget = {}
+    return 'v'
+end
+local function assignLongStringLiteralTarget()
+    longStringTarget = { old = true }
+    longStringTarget['ccccccccccccccccccccccccccccccccccccccccc'] = replaceLongStringTarget()
+end
+assignLongStringLiteralTarget()
+if _VERSION == 'Lua 5.2' or _VERSION == 'Lua 5.3' then
+    assert(longStringTarget[longKey] == 'v', 'Lua 5.2-5.3 defer dynamic string keys')
+else
+    assert(longStringTarget[longKey] == nil, 'long string keys snapshot upvalue tables')
+end
+
 local live = {}
 local replacement = {}
 local function changeLive()

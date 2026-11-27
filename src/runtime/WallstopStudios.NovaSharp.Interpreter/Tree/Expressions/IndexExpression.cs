@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
+    using System.Text;
     using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -16,6 +17,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
     /// </remarks>
     internal class IndexExpression : Expression, IVariable
     {
+        private const int MaxShortStringKeyLength = 40;
+
         private readonly Expression _baseExp;
         private readonly Expression _indexExp;
         private readonly string _name;
@@ -95,10 +98,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         {
             string baseName = GetBaseVariableDescription();
             bool hasConstantIndex =
-                _name != null
+                IsShortStringKey(_name)
                 || (
                     _indexExp is LiteralExpression literalIndex
                     && literalIndex.Value.Type == DataType.String
+                    && IsShortStringKey(literalIndex.Value.String)
                 );
             AssignmentOperand baseOperand = PrepareAssignmentOperand(
                 _baseExp,
@@ -135,6 +139,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 isExpList,
                 baseName
             );
+        }
+
+        private static bool IsShortStringKey(string value)
+        {
+            return value != null && Encoding.UTF8.GetByteCount(value) <= MaxShortStringKeyLength;
         }
 
         private static AssignmentOperand PrepareAssignmentOperand(
