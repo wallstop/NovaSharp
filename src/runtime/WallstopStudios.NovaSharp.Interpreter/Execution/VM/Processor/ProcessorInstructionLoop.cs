@@ -1308,7 +1308,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         // its error with the abort instead of throwing it as a
                         // normal error that a protected call could catch.
                         closeException = selfCloseException.CloseError;
+                        if (closeException != null)
+                        {
+                            activeError = closeException.GetCaughtErrorObject(
+                                LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                            );
+                        }
+
                         continue;
+                    }
+
+                    // The self-close may have carried an error from a nested
+                    // drain; the remaining siblings must receive it.
+                    if (selfCloseException.CloseError != null)
+                    {
+                        closeException = selfCloseException.CloseError;
+                        activeError = closeException.GetCaughtErrorObject(
+                            LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                        );
                     }
 
                     // A Lua 5.5 self-close aborts the handler that requested it,
@@ -1325,10 +1342,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         drainSelfClose: true
                     );
 
-                    if (closeException != null)
-                    {
-                        selfCloseException.CloseError = closeException;
-                    }
+                    selfCloseException.CloseError = closeException;
 
                     throw;
                 }
@@ -1442,11 +1456,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     }
                 }
 
-                if (selfCloseException.CloseError != null)
-                {
-                    _selfCloseError = selfCloseException.CloseError;
-                    _selfCloseErrorSet = true;
-                }
+                _selfCloseError = selfCloseException.CloseError;
+                _selfCloseErrorSet = _selfCloseError != null;
 
                 activeError = LuaValue.Nil;
                 activeException = null;

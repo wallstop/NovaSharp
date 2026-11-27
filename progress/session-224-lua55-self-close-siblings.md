@@ -49,12 +49,13 @@ remaining closers.
   clearing a later error, a nested handler whose ancestor frame still owns detached
   closers, a nested closer whose self-close must preserve an ancestor failure, a
   close error caught by `pcall` that must not make the coroutine close fail, a
-  self-close inside `pcall` that must still abort the handler, and a suspended
-  `pcall` frame that must not absorb a close failure. The generated fixtures match
-  PUC Lua byte-for-byte, and stale fixture source locations for this test class were
-  refreshed.
-- `ProcessorCoroutineCloseTUnitTests`: 98/98.
-- `-c Coroutine` filter: 785/785. Full TUnit suite: 16223/16223.
+  self-close inside `pcall` that must still abort the handler, a suspended `pcall`
+  frame that must not absorb a close failure, a nested-closer error that must reach
+  outer siblings, and a later self-close that clears a carried nested error. The
+  generated fixtures match PUC Lua byte-for-byte, and stale fixture source locations
+  for this test class were refreshed.
+- `ProcessorCoroutineCloseTUnitTests`: 102/102.
+- `-c Coroutine` filter: 785/785. Full TUnit suite: 16227/16227.
 - Lua comparison 5.1, 5.2, 5.3, 5.5: zero unexpected mismatches and no both-error
   ratchet additions. Lua 5.4 has only the two pre-existing 5.4.4-vs-5.4.7 reference
   deltas (`OperationsUseVersionedIndexingAndLength` and
