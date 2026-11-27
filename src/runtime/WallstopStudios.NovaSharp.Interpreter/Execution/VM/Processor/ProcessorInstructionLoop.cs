@@ -718,6 +718,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// Lua keeps a failed coroutine's pending close handlers until <c>coroutine.close</c>.
         /// Protected calls still unwind immediately to their handler.
         /// </summary>
+        private bool IsInsideProtectedCall()
+        {
+            if (_protectedClrCallDepth > 0)
+            {
+                return true;
+            }
+
+            // Suspended protected calls below the frame being closed can never
+            // catch a close error raised above them.
+            int boundary = _closeUnwindBoundaryDepth >= 0 ? _closeUnwindBoundaryDepth : 0;
+            for (int index = _executionStack.Count - 1; index >= boundary; index--)
+            {
+                CallStackItem frame = _executionStack[index];
+                if (frame.ErrorHandler != null || frame.HasErrorHandlerBeforeUnwind)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private bool ShouldDeferCoroutineClose()
         {
             if (State == CoroutineState.Main || _isClosingCoroutine || _protectedClrCallDepth > 0)
@@ -1181,27 +1203,149 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             LuaValue activeError = error;
             ScriptRuntimeException closeException = null;
-            for (int idx = closers.Count - 1; idx >= 0; idx--)
+            try
             {
-                SymbolRef sym = closers[idx];
-                ref ValueSlot slot = ref stackframe.LocalScope[sym.IndexValue];
-
-                closeException = CloseValueAndTrackError(
-                    sym,
-                    ref slot,
-                    ref activeError,
-                    closeException,
+                CloseClosers(
+                    closers,
                     stackframe,
+                    ref activeError,
+                    ref closeException,
                     instructionPtr,
                     decorateCloseErrorsBeforeUnwind: true
                 );
             }
-
-            ListPool<SymbolRef>.Return(closers);
+            finally
+            {
+                ListPool<SymbolRef>.Return(closers);
+            }
 
             if (closeException != null)
             {
                 throw closeException;
+            }
+        }
+
+        private void CloseClosers(
+            List<SymbolRef> closers,
+            CallStackItem stackframe,
+            ref LuaValue activeError,
+            ref ScriptRuntimeException closeException,
+            int instructionPtr,
+            bool decorateCloseErrorsBeforeUnwind
+        )
+        {
+            CallStackItem previousCloseBlockFrame = _closeBlockFrame;
+            _closeBlockFrame = stackframe;
+            try
+            {
+                CloseClosersFrom(
+                    closers,
+                    closers.Count - 1,
+                    stackframe,
+                    ref activeError,
+                    ref closeException,
+                    instructionPtr,
+                    decorateCloseErrorsBeforeUnwind,
+                    drainSelfClose: false
+                );
+            }
+            finally
+            {
+                _closeBlockFrame = previousCloseBlockFrame;
+            }
+        }
+
+        private void CloseClosersFrom(
+            List<SymbolRef> closers,
+            int lastIndex,
+            CallStackItem stackframe,
+            ref LuaValue activeError,
+            ref ScriptRuntimeException closeException,
+            int instructionPtr,
+            bool decorateCloseErrorsBeforeUnwind,
+            bool drainSelfClose
+        )
+        {
+            for (int idx = lastIndex; idx >= 0; idx--)
+            {
+                SymbolRef sym = closers[idx];
+                ref ValueSlot slot = ref stackframe.LocalScope[sym.IndexValue];
+
+                try
+                {
+                    closeException = CloseValueAndTrackError(
+                        sym,
+                        ref slot,
+                        ref activeError,
+                        closeException,
+                        stackframe,
+                        instructionPtr,
+                        decorateCloseErrorsBeforeUnwind
+                    );
+                }
+                catch (CoroutineSelfCloseException selfCloseException)
+                {
+                    // The first self-close preserves a failure that happened
+                    // before it, but every self-close resets the error seen by
+                    // the closers it aborts. Later self-closes during the drain
+                    // therefore clear errors raised since the first one.
+                    if (!_selfCloseStarted)
+                    {
+                        _selfCloseStarted = true;
+                        if (closeException != null)
+                        {
+                            _selfCloseFailed = true;
+                        }
+                    }
+
+                    activeError = LuaValue.Nil;
+                    closeException = null;
+
+                    if (drainSelfClose)
+                    {
+                        // Another closer requested its own self-close; it must
+                        // not skip the closers that remain in this block. Carry
+                        // its error with the abort instead of throwing it as a
+                        // normal error that a protected call could catch.
+                        closeException = selfCloseException.CloseError;
+                        if (closeException != null)
+                        {
+                            activeError = closeException.GetCaughtErrorObject(
+                                LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                            );
+                        }
+
+                        continue;
+                    }
+
+                    // The self-close may have carried an error from a nested
+                    // drain; the remaining siblings must receive it.
+                    if (selfCloseException.CloseError != null)
+                    {
+                        closeException = selfCloseException.CloseError;
+                        activeError = closeException.GetCaughtErrorObject(
+                            LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                        );
+                    }
+
+                    // A Lua 5.5 self-close aborts the handler that requested it,
+                    // but the closers already detached with this block must
+                    // still run before the abort leaves the handler frame.
+                    CloseClosersFrom(
+                        closers,
+                        idx - 1,
+                        stackframe,
+                        ref activeError,
+                        ref closeException,
+                        instructionPtr,
+                        decorateCloseErrorsBeforeUnwind,
+                        drainSelfClose: true
+                    );
+
+                    selfCloseException.CloseError = closeException;
+
+                    throw;
+                }
             }
         }
 
@@ -1248,23 +1392,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     continue;
                 }
 
-                for (int idx = closers.Count - 1; idx >= 0; idx--)
+                try
                 {
-                    SymbolRef sym = closers[idx];
-                    ref ValueSlot slot = ref stackframe.LocalScope[sym.IndexValue];
-
-                    closeException = CloseValueAndTrackError(
-                        sym,
-                        ref slot,
-                        ref activeError,
-                        closeException,
+                    CloseClosers(
+                        closers,
                         stackframe,
+                        ref activeError,
+                        ref closeException,
                         instructionPtr,
                         decorateCloseErrorsBeforeUnwind
                     );
                 }
-
-                ListPool<SymbolRef>.Return(closers);
+                finally
+                {
+                    ListPool<SymbolRef>.Return(closers);
+                }
             }
 
             stackframe.ToBeClosedIndices?.Clear();
@@ -1298,12 +1440,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 CloseValue(symbol, previous, activeError, instructionPtr);
             }
-            catch (CoroutineSelfCloseException)
+            catch (CoroutineSelfCloseException selfCloseException)
             {
                 if (_closeHandlerDepth > 1)
                 {
                     throw;
                 }
+
+                if (!_selfCloseStarted)
+                {
+                    _selfCloseStarted = true;
+                    if (activeException != null)
+                    {
+                        _selfCloseFailed = true;
+                    }
+                }
+
+                _selfCloseError = selfCloseException.CloseError;
+                _selfCloseErrorSet = _selfCloseError != null;
 
                 activeError = LuaValue.Nil;
                 activeException = null;
@@ -1323,6 +1477,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         instructionPtr,
                         stackframe
                     );
+                }
+
+                if (!_selfCloseStarted && !IsInsideProtectedCall())
+                {
+                    _selfCloseFailed = true;
                 }
 
                 activeError = closeException.GetCaughtErrorObject(
