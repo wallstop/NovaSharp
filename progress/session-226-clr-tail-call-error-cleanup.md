@@ -1,6 +1,7 @@
 # Session 226 — CLR tail-call error-handler cleanup
 
 Issue: [#218](https://github.com/Ambiguous-Interactive/NovaSharp/issues/218).
+Pull request: [#233](https://github.com/Ambiguous-Interactive/NovaSharp/pull/233).
 
 ## Carry-forward inventory
 
