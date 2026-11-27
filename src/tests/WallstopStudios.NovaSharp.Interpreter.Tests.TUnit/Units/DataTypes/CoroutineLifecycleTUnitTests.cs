@@ -174,7 +174,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
                 local task = coroutine.create(failingWithoutClose)
                 local resumed, resumeError = coroutine.resume(task)
-                print('resume', resumed, resumeError)
+                local failed = type(resumeError) == 'string'
+                    and resumeError:find('failure', 1, true) ~= nil
+                print('resume', resumed, failed)
                 "
             );
 

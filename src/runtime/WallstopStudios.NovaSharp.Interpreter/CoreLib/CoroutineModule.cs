@@ -98,7 +98,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
             catch (ScriptRuntimeException)
             {
-                if (coroutine.State == CoroutineState.Running)
+                LuaCompatibilityVersion version = LuaVersionDefaults.CurrentDefault;
+                Script ownerScript = coroutine.OwnerScript;
+                if (ownerScript != null)
+                {
+                    version = ownerScript.CompatibilityVersion;
+                }
+
+                if (
+                    version < LuaCompatibilityVersion.Lua54
+                    || coroutine.State == CoroutineState.Running
+                )
                 {
                     throw;
                 }
@@ -121,13 +131,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 )
                 {
                     LuaValue closeError = closeResult.Tuple[1];
-                    LuaCompatibilityVersion version = LuaVersionDefaults.CurrentDefault;
-                    Script ownerScript = coroutine.OwnerScript;
-                    if (ownerScript != null)
-                    {
-                        version = ownerScript.CompatibilityVersion;
-                    }
-
                     ScriptRuntimeException closeException = new(closeError.ToPrintString(version));
                     closeException.SetErrorValue(closeError);
                     throw closeException;

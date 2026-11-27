@@ -23098,7 +23098,7 @@
     },
     {
       "path": "CoroutineModuleTUnitTests/WrapClosesFailedCoroutineAndUsesHandlerError.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:1228",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:1266",
       "test": "CoroutineModuleTUnitTests.WrapClosesFailedCoroutineAndUsesHandlerError",
       "lua_versions": [
         "5.4",
