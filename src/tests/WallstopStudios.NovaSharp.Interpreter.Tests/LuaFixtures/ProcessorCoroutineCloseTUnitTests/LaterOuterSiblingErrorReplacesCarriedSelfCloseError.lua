@@ -1,7 +1,7 @@
 -- @lua-versions: 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1850
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1851
 -- @test: ProcessorCoroutineCloseTUnitTests.LaterOuterSiblingErrorReplacesCarriedSelfCloseError
 -- Compatibility notes: Test targets Lua 5.4+; Lua 5.4+: close attribute
 local task
@@ -40,4 +40,5 @@ local task
 
                 local resumed = coroutine.resume(task)
                 local closed, closeError = coroutine.close(task)
+                print(resumed, closed, closeError)
                 return resumed, closed, closeError

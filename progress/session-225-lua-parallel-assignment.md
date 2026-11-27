@@ -25,14 +25,16 @@ Parallel assignments now evaluate indexed targets left to right before the
 right-hand side, then perform the stores right to left, matching PUC Lua
 5.1–5.5. Target operands keep the reference compiler's read timing: direct
 locals stay register-like, unconflicted local keys are read at store time,
-Lua 5.1 upvalues are snapshotted, and Lua 5.4–5.5 snapshot dynamic upvalue-table
-keys. A later direct assignment to a local or upvalue forces the reference
-compiler's conflict copy.
+Lua 5.1 upvalues are snapshotted, and Lua 5.4–5.5 snapshot upvalue tables
+unless the key is a constant string. A later direct assignment to a local or
+upvalue emits the reference compiler's conflict copy at that point, after any
+intervening target expressions have run, and copies only the conflicting table
+or index operand.
 
 Stores leave prepared target operands and pending right-hand values on the VM
-stack. A table setter result now replaces its assigned slot instead of being
-pushed at the top, so a discarded `__newindex` return cannot displace another
-assignment value or lose a yieldable setter's pending results.
+stack. A table setter result is discarded without pushing it or replacing a
+pending right-hand slot, so a shared multi-return tuple stays intact and a
+yieldable setter cannot lose values needed by later stores.
 
 ## Evidence
 
@@ -41,13 +43,18 @@ assignment value or lose a yieldable setter's pending results.
   the setter's return instead of `false`; conflicting table/key aliases and
   duplicate local targets also diverged from PUC Lua.
 - Green after the fix: all five reference interpreters and NovaSharp now agree
-  on target order, right-to-left store order, setter return discard, snapshot
-  conflicts, direct local/key reads, duplicate targets, and version-specific
-  upvalue-table timing. A yieldable setter preserves all pending values across
-  suspension on Lua 5.2–5.5.
+  on target order, right-to-left store order, setter return discard, shared
+  multi-return tuples, snapshot conflicts, conflict timing after intervening
+  target expressions, direct local/key reads, duplicate targets, and
+  version-specific upvalue-table timing. A yieldable setter preserves all
+  pending values across suspension on Lua 5.2–5.5, including stores that run
+  after the yielding target resumes.
 - Added fixtures `AssignmentPreservesParallelTargetsAndValues` (all versions)
   and `AssignmentPreservesValuesAcrossYieldableSetter` (5.2+), plus paired
-  coroutine-close regressions generated into the corpus.
+  coroutine-close regressions generated into the corpus. The assignment fixture
+  covers the reviewer reproductions for a shared RHS tuple, copying only the
+  conflicting operand, copying at the later target, and string-only constant
+  upvalue keys.
 - `AssignmentStatement` and `ProcessorCoroutineClose` filters: 24/24 and
   106/106. Full TUnit suite: 16240/16240.
 - Lua comparison 5.1, 5.2, 5.3, and 5.5: zero unexpected mismatches and no

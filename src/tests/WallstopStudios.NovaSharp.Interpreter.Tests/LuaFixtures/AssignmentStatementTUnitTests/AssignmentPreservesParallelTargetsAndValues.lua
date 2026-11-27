@@ -53,6 +53,74 @@ local duplicate
 duplicate, duplicate = 1, 2
 assert(duplicate == 1, 'later stores must not win')
 
+local sharedProxy = setmetatable({}, {
+    __newindex = function(table, key, value)
+        rawset(table, key, value)
+        return 99
+    end,
+})
+local sharedLocal
+local function twoValues()
+    return 10, 20
+end
+sharedLocal, sharedProxy.x = twoValues()
+assert(sharedLocal == 10 and sharedProxy.x == 20, 'setter must not replace the shared tuple')
+
+local conflictOld, conflictNew = {}, {}
+local conflictTarget = conflictOld
+local conflictKey = 'a'
+local function changeConflictTarget()
+    conflictTarget = conflictNew
+    return 'v'
+end
+conflictTarget[conflictKey], conflictKey = changeConflictTarget(), 'b'
+assert(conflictOld.a == nil, 'conflicting key copy must not snapshot the table')
+assert(conflictNew.a == 'v', 'unconflicted table must be read at store time')
+assert(conflictKey == 'b', 'conflicting key must still be assigned')
+
+local laterOld, laterNew = {}, {}
+local laterTarget = laterOld
+local function replaceLaterTarget()
+    laterTarget = laterNew
+    return laterNew
+end
+laterTarget.x, replaceLaterTarget().x, laterTarget = 1, 2, laterOld
+assert(laterOld.x == nil, 'conflict copy must happen after later target expressions')
+assert(laterNew.x == 1, 'earlier target must use the copied table')
+assert(laterTarget == laterOld, 'direct target must still be assigned')
+
+local numericTarget
+local function replaceNumericTarget()
+    numericTarget = {}
+    return 'v'
+end
+local function assignNumericLiteralTarget()
+    numericTarget = { old = true }
+    numericTarget[1] = replaceNumericTarget()
+end
+assignNumericLiteralTarget()
+if _VERSION == 'Lua 5.2' or _VERSION == 'Lua 5.3' then
+    assert(numericTarget[1] == 'v', 'dynamic upvalue tables are deferred before Lua 5.4')
+else
+    assert(numericTarget[1] == nil, 'non-string literal keys snapshot upvalue tables')
+end
+
+local stringTarget
+local function replaceStringTarget()
+    stringTarget = {}
+    return 'v'
+end
+local function assignStringLiteralTarget()
+    stringTarget = { old = true }
+    stringTarget['x'] = replaceStringTarget()
+end
+assignStringLiteralTarget()
+if _VERSION == 'Lua 5.1' then
+    assert(stringTarget.x == nil, 'Lua 5.1 snapshots upvalue tables')
+else
+    assert(stringTarget.x == 'v', 'string literal keys keep deferred upvalue tables')
+end
+
 local live = {}
 local replacement = {}
 local function changeLive()

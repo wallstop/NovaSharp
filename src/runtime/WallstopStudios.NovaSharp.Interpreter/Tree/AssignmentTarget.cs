@@ -152,6 +152,49 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         }
 
         /// <summary>
+        /// Determines whether a later direct assignment must copy the supplied symbol for this
+        /// target's still-deferred table or index operand.
+        /// </summary>
+        public bool NeedsConflictSnapshot(SymbolRef symbol)
+        {
+            if (DirectVariable != null)
+            {
+                return false;
+            }
+
+            return IsDeferredOperand(BaseOperand, symbol, BaseStackSlot)
+                || IsDeferredOperand(IndexOperand, symbol, IndexStackSlot);
+        }
+
+        /// <summary>
+        /// Points this target's deferred operands at a conflict copy emitted for a later direct
+        /// assignment.
+        /// </summary>
+        public void ApplyConflictSnapshot(SymbolRef symbol, int stackSlot)
+        {
+            if (IsDeferredOperand(BaseOperand, symbol, BaseStackSlot))
+            {
+                BaseStackSlot = stackSlot;
+            }
+
+            if (IsDeferredOperand(IndexOperand, symbol, IndexStackSlot))
+            {
+                IndexStackSlot = stackSlot;
+            }
+        }
+
+        private static bool IsDeferredOperand(
+            AssignmentOperand operand,
+            SymbolRef symbol,
+            int stackSlot
+        )
+        {
+            return operand.Kind == AssignmentOperandKind.Symbol
+                && stackSlot < 0
+                && IsSameSymbol(operand.Symbol, symbol);
+        }
+
+        /// <summary>
         /// Compares symbols by identity or by the upvalue slot they resolve to. Upvalue references
         /// are recreated per lookup, so reference equality alone misses assignment conflicts.
         /// </summary>

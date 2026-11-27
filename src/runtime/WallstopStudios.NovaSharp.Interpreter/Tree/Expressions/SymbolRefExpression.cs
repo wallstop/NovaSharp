@@ -97,23 +97,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         }
 
         /// <summary>
-        /// Determines whether a global target reads the supplied environment symbol.
-        /// </summary>
-        internal bool ReferencesGlobalEnvironment(SymbolRef symbol)
-        {
-            return _ref != null
-                && _ref.Type == SymbolRefType.Global
-                && AssignmentTarget.IsSameSymbol(_ref.EnvironmentRef, symbol);
-        }
-
-        /// <summary>
         /// Prepares a global target by deciding whether its environment is read before the
         /// right-hand side or when the store executes.
         /// </summary>
-        internal AssignmentTarget PrepareAssignmentTarget(
-            Execution.VM.ByteCode bc,
-            bool snapshotSymbols
-        )
+        internal AssignmentTarget PrepareAssignmentTarget(Execution.VM.ByteCode bc)
         {
             if (_ref == null || _ref.Type != SymbolRefType.Global)
             {
@@ -122,8 +109,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
             AssignmentOperand baseOperand;
             if (
-                !snapshotSymbols
-                && AssignmentTarget.CanDeferSymbolRead(
+                AssignmentTarget.CanDeferSymbolRead(
                     _ref.EnvironmentRef,
                     bc,
                     isIndexOperand: false,

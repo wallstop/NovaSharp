@@ -128,16 +128,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                 for (int i = 0; i < _lValues.Count; i++)
                 {
                     IVariable variable = _lValues[i];
-                    bool snapshotSymbols = HasLaterDirectSymbolConflict(i);
+                    if (
+                        variable is SymbolRefExpression directSymbol
+                        && directSymbol.TryGetDirectAssignmentSymbol(out SymbolRef symbol)
+                    )
+                    {
+                        SnapshotEarlierConflicts(bc, targets, symbol, ref targetStackSlots);
+                    }
+
                     AssignmentTarget target;
 
                     if (variable is IndexExpression indexExpression)
                     {
-                        target = indexExpression.PrepareAssignmentTarget(bc, snapshotSymbols);
+                        target = indexExpression.PrepareAssignmentTarget(bc);
                     }
                     else if (variable is SymbolRefExpression symbolExpression)
                     {
-                        target = symbolExpression.PrepareAssignmentTarget(bc, snapshotSymbols);
+                        target = symbolExpression.PrepareAssignmentTarget(bc);
                     }
                     else
                     {
@@ -167,22 +174,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                         continue;
                     }
 
-                    int baseDepth =
+                    bool baseOnStack =
                         target.BaseOperand.Kind == AssignmentOperandKind.Stack
-                            ? valuesOnStack + targetStackSlots - 1 - target.BaseStackSlot
-                            : -1;
-                    PushAssignmentOperand(bc, target.BaseOperand, baseDepth);
+                        || target.BaseStackSlot >= 0;
+                    int baseDepth = baseOnStack
+                        ? valuesOnStack + targetStackSlots - 1 - target.BaseStackSlot
+                        : -1;
+                    PushAssignmentOperand(bc, target.BaseOperand, baseOnStack, baseDepth);
 
                     if (
                         !target.IsNameIndex
                         && target.IndexOperand.Kind != AssignmentOperandKind.Literal
                     )
                     {
-                        int indexDepth =
+                        bool indexOnStack =
                             target.IndexOperand.Kind == AssignmentOperandKind.Stack
-                                ? valuesOnStack + targetStackSlots - 1 - target.IndexStackSlot + 1
-                                : -1;
-                        PushAssignmentOperand(bc, target.IndexOperand, indexDepth);
+                            || target.IndexStackSlot >= 0;
+                        int indexDepth = indexOnStack
+                            ? valuesOnStack + targetStackSlots - 1 - target.IndexStackSlot + 1
+                            : -1;
+                        PushAssignmentOperand(bc, target.IndexOperand, indexOnStack, indexDepth);
                     }
 
                     if (target.IsNameIndex)
@@ -220,61 +231,53 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             }
         }
 
-        private bool HasLaterDirectSymbolConflict(int targetIndex)
+        private static void SnapshotEarlierConflicts(
+            Execution.VM.ByteCode bc,
+            List<AssignmentTarget> targets,
+            SymbolRef symbol,
+            ref int targetStackSlots
+        )
         {
-            IVariable target = _lValues[targetIndex];
-            bool isIndexedTarget =
-                target is IndexExpression
-                || (
-                    target is SymbolRefExpression targetSymbol
-                    && targetSymbol.GetSymbolRef()?.Type == SymbolRefType.Global
-                );
-            if (!isIndexedTarget)
+            bool needsSnapshot = false;
+            for (int i = 0; i < targets.Count; i++)
             {
-                return false;
-            }
-
-            for (int i = targetIndex + 1; i < _lValues.Count; i++)
-            {
-                if (
-                    _lValues[i] is SymbolRefExpression directSymbol
-                    && directSymbol.TryGetDirectAssignmentSymbol(out SymbolRef symbol)
-                    && ReferencesAssignmentSymbol(target, symbol)
-                )
+                if (targets[i].NeedsConflictSnapshot(symbol))
                 {
-                    return true;
+                    needsSnapshot = true;
+                    break;
                 }
             }
 
-            return false;
-        }
-
-        private static bool ReferencesAssignmentSymbol(IVariable target, SymbolRef symbol)
-        {
-            return target switch
+            if (!needsSnapshot)
             {
-                IndexExpression indexExpression => indexExpression.ReferencesAssignmentSymbol(
-                    symbol
-                ),
-                SymbolRefExpression symbolExpression =>
-                    symbolExpression.ReferencesGlobalEnvironment(symbol),
-                _ => false,
-            };
+                return;
+            }
+
+            int stackSlot = targetStackSlots++;
+            bc.EmitLoad(symbol);
+            for (int i = 0; i < targets.Count; i++)
+            {
+                targets[i].ApplyConflictSnapshot(symbol, stackSlot);
+            }
         }
 
         private static void PushAssignmentOperand(
             Execution.VM.ByteCode bc,
             AssignmentOperand operand,
+            bool readFromStack,
             int stackDepth
         )
         {
+            if (readFromStack)
+            {
+                bc.EmitCopy(stackDepth);
+                return;
+            }
+
             switch (operand.Kind)
             {
                 case AssignmentOperandKind.Symbol:
                     bc.EmitLoad(operand.Symbol);
-                    break;
-                case AssignmentOperandKind.Stack:
-                    bc.EmitCopy(stackDepth);
                     break;
                 default:
                     throw new InternalErrorException(

@@ -91,14 +91,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// Evaluates the target operands that must run before the right-hand side and describes how
         /// the store will reach them later.
         /// </summary>
-        internal AssignmentTarget PrepareAssignmentTarget(ByteCode bc, bool snapshotSymbols)
+        internal AssignmentTarget PrepareAssignmentTarget(ByteCode bc)
         {
             string baseName = GetBaseVariableDescription();
-            bool hasConstantIndex = _name != null || _indexExp is LiteralExpression;
+            bool hasConstantIndex =
+                _name != null
+                || (
+                    _indexExp is LiteralExpression literalIndex
+                    && literalIndex.Value.Type == DataType.String
+                );
             AssignmentOperand baseOperand = PrepareAssignmentOperand(
                 _baseExp,
                 bc,
-                snapshotSymbols,
                 isIndexOperand: false,
                 hasConstantIndex
             );
@@ -118,7 +122,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 indexOperand = PrepareAssignmentOperand(
                     _indexExp,
                     bc,
-                    snapshotSymbols,
                     isIndexOperand: true,
                     hasConstantIndex
                 );
@@ -134,32 +137,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             );
         }
 
-        /// <summary>
-        /// Determines whether this target reads the supplied symbol as a table or index operand.
-        /// </summary>
-        internal bool ReferencesAssignmentSymbol(SymbolRef symbol)
-        {
-            if (
-                _baseExp is SymbolRefExpression baseSymbol
-                && AssignmentTarget.IsSameSymbol(baseSymbol.GetSymbolRef(), symbol)
-            )
-            {
-                return true;
-            }
-
-            return _indexExp is SymbolRefExpression indexSymbol
-                && AssignmentTarget.IsSameSymbol(indexSymbol.GetSymbolRef(), symbol);
-        }
-
         private static AssignmentOperand PrepareAssignmentOperand(
             Expression expression,
             ByteCode bc,
-            bool snapshotSymbols,
             bool isIndexOperand,
             bool hasConstantIndex
         )
         {
-            if (!snapshotSymbols && expression is SymbolRefExpression symbolExpression)
+            if (expression is SymbolRefExpression symbolExpression)
             {
                 SymbolRef symbol = symbolExpression.GetSymbolRef();
                 if (

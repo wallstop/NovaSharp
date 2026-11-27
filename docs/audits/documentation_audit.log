@@ -157,14 +157,14 @@ Found 213 undocumented public/internal type declarations.
   - line 73: missing XML docs for `Continuation`
   - line 75: missing XML docs for `ErrorHandlerBeforeUnwind`
   - line 77: missing XML docs for `HasErrorHandlerBeforeUnwind`
-  - line 78: missing XML docs for `ReturnFlags`
-  - line 89: missing XML docs for `HasActiveSandboxInstructionBudget`
-  - line 91: missing XML docs for `EnterNativeInstructionBudget()`
-  - line 109: missing XML docs for `struct NativeInstructionBudgetScope`
-  - line 118: missing XML docs for `Dispose()`
-  - line 127: missing XML docs for `ChargeSandboxInstruction()`
-  - line 2223: missing XML docs for `Count`
-  - line 3474: missing XML docs for `TryCompareBuiltInLessThan()`
+  - line 79: missing XML docs for `ReturnFlags`
+  - line 90: missing XML docs for `HasActiveSandboxInstructionBudget`
+  - line 92: missing XML docs for `EnterNativeInstructionBudget()`
+  - line 110: missing XML docs for `struct NativeInstructionBudgetScope`
+  - line 119: missing XML docs for `Dispose()`
+  - line 128: missing XML docs for `ChargeSandboxInstruction()`
+  - line 2224: missing XML docs for `Count`
+  - line 3464: missing XML docs for `TryCompareBuiltInLessThan()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/BasicDescriptors/DispatchingUserDataDescriptor.cs
   - line 314: missing XML docs for `TryIndex()`
   - line 816: missing XML docs for `TryMetaIndex()`

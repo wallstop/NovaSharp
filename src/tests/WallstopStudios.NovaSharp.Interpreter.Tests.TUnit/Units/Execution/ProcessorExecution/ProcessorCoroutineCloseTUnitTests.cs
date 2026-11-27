@@ -1829,6 +1829,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 local closedOnce, closeError = coroutine.close(task)
                 local closedTwice, secondError = coroutine.close(task)
 
+                print(resumed, closedOnce, closeError, closedTwice, secondError)
                 return resumed, closedOnce, closeError, closedTwice, secondError
                 "
             );
@@ -1885,6 +1886,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
                 local resumed = coroutine.resume(task)
                 local closed, closeError = coroutine.close(task)
+                print(resumed, closed, closeError)
                 return resumed, closed, closeError
                 "
             );

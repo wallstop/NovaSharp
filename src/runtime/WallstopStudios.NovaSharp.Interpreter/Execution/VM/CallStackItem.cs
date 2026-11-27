@@ -84,11 +84,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         public int ReturnAddress { get; set; }
 
         /// <summary>
-        /// When non-negative, the call result replaces this stack depth instead of being pushed.
-        /// Table setters use this so a discarded <c>__newindex</c> result cannot displace pending
-        /// assignment values.
+        /// When set, the call result is discarded instead of being pushed. Table setters use this
+        /// so a discarded <c>__newindex</c> result cannot displace pending assignment values.
         /// </summary>
-        internal int ResultReplacementDepth { get; set; } = -1;
+        internal bool DiscardResult { get; set; }
 
         /// <summary>
         /// Inline slots holding this frame's locals. Default entries are inactive until assigned or
@@ -132,7 +131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             ErrorHandlerBeforeUnwindInProgress = false;
             BasePointer = 0;
             ReturnAddress = 0;
-            ResultReplacementDepth = -1;
+            DiscardResult = false;
             if (LocalScope != null)
             {
                 SystemArrayPool<ValueSlot>.Return(LocalScope, clearArray: true);

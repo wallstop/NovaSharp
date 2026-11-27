@@ -9,4 +9,5 @@ local task = coroutine.create(function() error(nil) end)
                 local closedOnce, closeError = coroutine.close(task)
                 local closedTwice, secondError = coroutine.close(task)
 
+                print(resumed, closedOnce, closeError, closedTwice, secondError)
                 return resumed, closedOnce, closeError, closedTwice, secondError

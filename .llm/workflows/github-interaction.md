@@ -35,8 +35,9 @@ rather than fixing an outage.
 - Push only after local gates pass, and batch commits so one push triggers one
   CI run. Do not push to probe formatting.
 - Observe every run for the pushed head commit before reporting CI status. Start
-  one background watch per run, such as `gh run watch <run-id> --exit-status`, or
-  read the pull request's check rollup until no required check is pending.
+  one background watch per run, such as
+  `gh run watch <run-id> --interval 30 --exit-status`, or read the pull request's
+  check rollup until no required check is pending.
 - A pending rollup may be read again while required checks are still running.
   Stop once one complete rollup reports success or a named failure; a background
   watch is preferred over a foreground sleep loop.
