@@ -47,6 +47,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             // Clear the used parts of the stacks to prep for reuse
             _valueStack.ClearUsed();
             _executionStack.ClearUsed();
+            _discardResumeResult = false;
 
             // Create a new processor instance, recycling this one
             Processor p = new(mainProcessor, this);
@@ -238,7 +239,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else if (_state == CoroutineState.Suspended)
                 {
-                    if (_resumeYieldWithSingleResult)
+                    if (_discardResumeResult)
+                    {
+                        _discardResumeResult = false;
+                        _resumeYieldWithSingleResult = false;
+                    }
+                    else if (_resumeYieldWithSingleResult)
                     {
                         _resumeYieldWithSingleResult = false;
                         LuaValue first = args.Count == 0 ? LuaValue.Nil : args[0].ToScalar();

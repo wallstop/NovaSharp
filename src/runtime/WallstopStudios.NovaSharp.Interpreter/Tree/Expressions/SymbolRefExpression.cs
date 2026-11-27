@@ -79,6 +79,62 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         }
 
         /// <summary>
+        /// Gets the local or upvalue this expression writes directly, if it is a direct target.
+        /// </summary>
+        internal bool TryGetDirectAssignmentSymbol(out SymbolRef symbol)
+        {
+            if (
+                _ref != null
+                && (_ref.Type == SymbolRefType.Local || _ref.Type == SymbolRefType.UpValue)
+            )
+            {
+                symbol = _ref;
+                return true;
+            }
+
+            symbol = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Prepares a global target by deciding whether its environment is read before the
+        /// right-hand side or when the store executes.
+        /// </summary>
+        internal AssignmentTarget PrepareAssignmentTarget(Execution.VM.ByteCode bc)
+        {
+            if (_ref == null || _ref.Type != SymbolRefType.Global)
+            {
+                return AssignmentTarget.Direct(this);
+            }
+
+            AssignmentOperand baseOperand;
+            if (
+                AssignmentTarget.CanDeferSymbolRead(
+                    _ref.EnvironmentRef,
+                    bc,
+                    isIndexOperand: false,
+                    hasConstantIndex: true
+                )
+            )
+            {
+                baseOperand = AssignmentOperand.FromSymbol(_ref.EnvironmentRef);
+            }
+            else
+            {
+                bc.EmitLoad(_ref.EnvironmentRef);
+                baseOperand = AssignmentOperand.Stack();
+            }
+
+            return AssignmentTarget.Indexed(
+                baseOperand,
+                AssignmentOperand.FromLiteral(LuaValue.NewString(_ref.NameValue)),
+                isNameIndex: true,
+                isExpList: false,
+                baseName: null
+            );
+        }
+
+        /// <summary>
         /// Emits a store instruction targeting the resolved symbol.
         /// </summary>
         /// <param name="bc">Bytecode builder receiving the store opcode.</param>

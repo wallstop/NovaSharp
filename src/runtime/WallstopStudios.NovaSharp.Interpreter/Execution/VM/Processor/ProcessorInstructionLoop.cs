@@ -53,7 +53,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 CallbackFunction continuation,
                 LuaValue errorHandlerBeforeUnwind,
                 bool hasErrorHandlerBeforeUnwind,
-                CallStackItemFlags returnFlags
+                CallStackItemFlags returnFlags,
+                bool discardResult
             )
             {
                 ReturnAddress = returnAddress;
@@ -62,6 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 ErrorHandlerBeforeUnwind = errorHandlerBeforeUnwind;
                 HasErrorHandlerBeforeUnwind = hasErrorHandlerBeforeUnwind;
                 ReturnFlags = returnFlags;
+                DiscardResult = discardResult;
             }
 
             public int ReturnAddress { get; }
@@ -73,7 +75,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             public LuaValue ErrorHandlerBeforeUnwind { get; }
 
             public bool HasErrorHandlerBeforeUnwind { get; }
+
             public CallStackItemFlags ReturnFlags { get; }
+
+            /// <summary>Gets whether the call result must be discarded.</summary>
+            public bool DiscardResult { get; }
         }
 
         /// <summary>
@@ -2307,7 +2313,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             bool thisCall = false,
             string debugText = null,
             bool allowTailCallFrameReuse = false,
-            CallStackItemFlags returnFlags = default
+            CallStackItemFlags returnFlags = default,
+            bool discardResult = false
         )
         {
             return InternalExecCall(
@@ -2320,7 +2327,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 LuaValue.Nil,
                 hasUnwindHandler: false,
                 allowTailCallFrameReuse,
-                returnFlags
+                returnFlags,
+                discardResult
             );
         }
 
@@ -2334,7 +2342,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             LuaValue unwindHandler,
             bool hasUnwindHandler,
             bool allowTailCallFrameReuse,
-            CallStackItemFlags returnFlags
+            CallStackItemFlags returnFlags,
+            bool discardResult = false
         )
         {
             LuaValue fn = _valueStack.Peek(argsCount);
@@ -2372,6 +2381,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 frame.Continuation = Continuation;
                 frame.SetErrorHandlerBeforeUnwind(unwindHandler, hasUnwindHandler);
                 frame.Flags = Flags;
+                frame.DiscardResult = discardResult;
                 _executionStack.Push(frame);
 
                 LuaValue ret;
@@ -2415,14 +2425,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     ValidateCallYield(ret);
                 }
-                _valueStack.Push(ret);
+
+                if (
+                    !discardResult
+                    || ret.Type == DataType.YieldRequest
+                    || ret.Type == DataType.TailCallRequest
+                )
+                {
+                    _valueStack.Push(ret);
+                }
 
                 CallStackItemPool.Return(_executionStack.Pop());
 
                 return InternalCheckForTailRequests(
                     instructionPtr,
                     allowTailCallFrameReuse,
-                    returnFlags
+                    returnFlags,
+                    discardResult
                 );
             }
             else if (fn.Type == DataType.Function)
@@ -2431,6 +2450,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 CallbackFunction effectiveContinuation = Continuation;
                 LuaValue effectiveUnwindHandler = unwindHandler;
                 bool hasEffectiveUnwindHandler = hasUnwindHandler;
+                bool effectiveDiscardResult = discardResult;
 
                 if (canReuseLuaTailCallFrame)
                 {
@@ -2441,6 +2461,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     effectiveUnwindHandler = reuseState.ErrorHandlerBeforeUnwind;
                     hasEffectiveUnwindHandler = reuseState.HasErrorHandlerBeforeUnwind;
                     Flags |= CallStackItemFlags.TailCall | reuseState.ReturnFlags;
+                    effectiveDiscardResult |= reuseState.DiscardResult;
                 }
 
                 // Push arguments before renting so a value-stack overflow throws with nothing rented; the
@@ -2460,6 +2481,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     hasEffectiveUnwindHandler
                 );
                 frame.Flags = Flags;
+                frame.DiscardResult = effectiveDiscardResult;
                 _executionStack.Push(frame);
                 return fn.Function.EntryPointByteCodeLocation;
             }
@@ -2497,7 +2519,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     unwindHandler: unwindHandler,
                     hasUnwindHandler: hasUnwindHandler,
                     allowTailCallFrameReuse: allowTailCallFrameReuse,
-                    returnFlags: returnFlags
+                    returnFlags: returnFlags,
+                    discardResult: discardResult
                 );
             }
 
@@ -2689,7 +2712,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     csi.Continuation,
                     csi.ErrorHandlerBeforeUnwind,
                     csi.HasErrorHandlerBeforeUnwind,
-                    csi.Flags & OperatorCallFlags
+                    csi.Flags & OperatorCallFlags,
+                    csi.DiscardResult
                 );
                 int argscnt = (int)(_valueStack.Pop().Number);
                 _valueStack.RemoveLast(argscnt + 1);
@@ -2744,24 +2768,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             CallbackFunction continuation = csi.Continuation;
             CallStackItemFlags returnFlags = csi.Flags & OperatorCallFlags;
+            bool discardResult =
+                csi.DiscardResult
+                && continuation == null
+                && returnValue.Type is not DataType.TailCallRequest and not DataType.YieldRequest;
 
             try
             {
                 int argscnt = (int)(_valueStack.Pop().Number);
                 _valueStack.RemoveLast(argscnt + 1);
 
-                _valueStack.Push(returnValue);
-
-                if (
-                    continuation == null
-                    || returnValue.Type is DataType.TailCallRequest or DataType.YieldRequest
-                )
+                if (!discardResult)
                 {
-                    retpoint = InternalCheckForTailRequests(
-                        retpoint,
-                        allowTailCallFrameReuse: false,
-                        returnFlags
-                    );
+                    _valueStack.Push(returnValue);
+
+                    if (
+                        continuation == null
+                        || returnValue.Type is DataType.TailCallRequest or DataType.YieldRequest
+                    )
+                    {
+                        retpoint = InternalCheckForTailRequests(
+                            retpoint,
+                            allowTailCallFrameReuse: false,
+                            returnFlags,
+                            discardResult: csi.DiscardResult
+                        );
+                    }
                 }
             }
             finally
@@ -2801,7 +2833,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private int InternalCheckForTailRequests(
             int instructionPtr,
             bool allowTailCallFrameReuse,
-            CallStackItemFlags returnFlags
+            CallStackItemFlags returnFlags,
+            bool discardResult = false
         )
         {
             LuaValue tail = _valueStack.Peek(0);
@@ -2830,13 +2863,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     tcd.ErrorHandlerBeforeUnwindValue,
                     tcd.HasErrorHandlerBeforeUnwind,
                     allowTailCallFrameReuse,
-                    returnFlags
+                    returnFlags,
+                    discardResult
                 );
             }
             else if (tail.Type == DataType.YieldRequest)
             {
                 _resumeYieldWithSingleResult =
                     _canYield && (returnFlags & CallStackItemFlags.SingleOperatorResult) != 0;
+                _discardResumeResult = discardResult;
                 _savedInstructionPtr = instructionPtr;
                 return YieldSpecialTrap;
             }
@@ -3701,8 +3736,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         );
                     }
 
-                    _valueStack.Pop(); // burn extra value ?
-
                     _valueStack.Push(h);
                     _valueStack.Push(obj);
                     _valueStack.Push(idx);
@@ -3710,7 +3743,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     return InternalExecCall(
                         3,
                         instructionPtr,
-                        returnFlags: MetamethodYieldBoundary
+                        returnFlags: MetamethodYieldBoundary,
+                        discardResult: true
                     );
                 }
                 else

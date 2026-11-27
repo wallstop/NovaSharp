@@ -119,6 +119,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
             script.DoFile(fixture.GetFixturePath());
         }
 
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public void AssignmentPreservesParallelTargetsAndValues(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            LuaFixtureHelper fixture =
+                LuaFixtureHelper.ForCallingTest<AssignmentStatementTUnitTests>();
+            script.DoFile(fixture.GetFixturePath());
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua52, LuaCompatibilityVersion.Lua55)]
+        public void AssignmentPreservesValuesAcrossYieldableSetter(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            LuaFixtureHelper fixture =
+                LuaFixtureHelper.ForCallingTest<AssignmentStatementTUnitTests>();
+            script.DoFile(fixture.GetFixturePath());
+        }
+
         private static AssignmentStatement ParseLocalAssignment(string code, Script script = null)
         {
             ScriptLoadingContext context = CreateContext(code, script);

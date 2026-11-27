@@ -122,22 +122,167 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         {
             using (bc.EnterSource(_ref))
             {
+                List<AssignmentTarget> targets = new(_lValues.Count);
+                int targetStackSlots = 0;
+
+                for (int i = 0; i < _lValues.Count; i++)
+                {
+                    IVariable variable = _lValues[i];
+                    if (
+                        variable is SymbolRefExpression directSymbol
+                        && directSymbol.TryGetDirectAssignmentSymbol(out SymbolRef symbol)
+                    )
+                    {
+                        SnapshotEarlierConflicts(bc, targets, symbol, ref targetStackSlots);
+                    }
+
+                    AssignmentTarget target;
+
+                    if (variable is IndexExpression indexExpression)
+                    {
+                        target = indexExpression.PrepareAssignmentTarget(bc);
+                    }
+                    else if (variable is SymbolRefExpression symbolExpression)
+                    {
+                        target = symbolExpression.PrepareAssignmentTarget(bc);
+                    }
+                    else
+                    {
+                        target = AssignmentTarget.Direct(variable);
+                    }
+
+                    target.ReserveStackSlots(ref targetStackSlots);
+                    targets.Add(target);
+                }
+
                 foreach (Expression exp in _rValues)
                 {
                     exp.Compile(bc);
                 }
 
-                for (int i = 0; i < _lValues.Count; i++)
+                int valuesOnStack = _rValues.Count;
+
+                for (int i = targets.Count - 1; i >= 0; i--)
                 {
-                    _lValues[i]
-                        .CompileAssignment(
-                            bc,
-                            Math.Max(_rValues.Count - 1 - i, 0), // index of r-value
-                            i - Math.Min(i, _rValues.Count - 1)
-                        ); // index in last tuple
+                    AssignmentTarget target = targets[i];
+                    int stackofs = Math.Max(valuesOnStack - 1 - i, 0); // index of r-value
+                    int tupleidx = i - Math.Min(i, valuesOnStack - 1); // index in last tuple
+
+                    if (target.DirectVariable != null)
+                    {
+                        target.DirectVariable.CompileAssignment(bc, stackofs, tupleidx);
+                        continue;
+                    }
+
+                    bool baseOnStack =
+                        target.BaseOperand.Kind == AssignmentOperandKind.Stack
+                        || target.BaseStackSlot >= 0;
+                    int baseDepth = baseOnStack
+                        ? valuesOnStack + targetStackSlots - 1 - target.BaseStackSlot
+                        : -1;
+                    PushAssignmentOperand(bc, target.BaseOperand, baseOnStack, baseDepth);
+
+                    if (
+                        !target.IsNameIndex
+                        && target.IndexOperand.Kind != AssignmentOperandKind.Literal
+                    )
+                    {
+                        bool indexOnStack =
+                            target.IndexOperand.Kind == AssignmentOperandKind.Stack
+                            || target.IndexStackSlot >= 0;
+                        int indexDepth = indexOnStack
+                            ? valuesOnStack + targetStackSlots - 1 - target.IndexStackSlot + 1
+                            : -1;
+                        PushAssignmentOperand(bc, target.IndexOperand, indexOnStack, indexDepth);
+                    }
+
+                    if (target.IsNameIndex)
+                    {
+                        bc.EmitIndexSet(
+                            stackofs,
+                            tupleidx,
+                            target.IndexOperand.Literal,
+                            isNameIndex: true,
+                            baseName: target.BaseName
+                        );
+                    }
+                    else if (target.IndexOperand.Kind == AssignmentOperandKind.Literal)
+                    {
+                        bc.EmitIndexSet(
+                            stackofs,
+                            tupleidx,
+                            target.IndexOperand.Literal,
+                            isExpList: target.IsExpList,
+                            baseName: target.BaseName
+                        );
+                    }
+                    else
+                    {
+                        bc.EmitIndexSet(
+                            stackofs,
+                            tupleidx,
+                            isExpList: target.IsExpList,
+                            baseName: target.BaseName
+                        );
+                    }
                 }
 
-                bc.EmitPop(_rValues.Count);
+                bc.EmitPop(valuesOnStack + targetStackSlots);
+            }
+        }
+
+        private static void SnapshotEarlierConflicts(
+            Execution.VM.ByteCode bc,
+            List<AssignmentTarget> targets,
+            SymbolRef symbol,
+            ref int targetStackSlots
+        )
+        {
+            bool needsSnapshot = false;
+            for (int i = 0; i < targets.Count; i++)
+            {
+                if (targets[i].NeedsConflictSnapshot(symbol))
+                {
+                    needsSnapshot = true;
+                    break;
+                }
+            }
+
+            if (!needsSnapshot)
+            {
+                return;
+            }
+
+            int stackSlot = targetStackSlots++;
+            bc.EmitLoad(symbol);
+            for (int i = 0; i < targets.Count; i++)
+            {
+                targets[i].ApplyConflictSnapshot(symbol, stackSlot);
+            }
+        }
+
+        private static void PushAssignmentOperand(
+            Execution.VM.ByteCode bc,
+            AssignmentOperand operand,
+            bool readFromStack,
+            int stackDepth
+        )
+        {
+            if (readFromStack)
+            {
+                bc.EmitCopy(stackDepth);
+                return;
+            }
+
+            switch (operand.Kind)
+            {
+                case AssignmentOperandKind.Symbol:
+                    bc.EmitLoad(operand.Symbol);
+                    break;
+                default:
+                    throw new InternalErrorException(
+                        "Unexpected literal assignment operand at stack position."
+                    );
             }
         }
 

@@ -1674,9 +1674,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "9c366de535e64109f7e1d2c13d4be7286550c00b0256482bf72bacc9e4e2b489",
-      "nova_error_sha256": "bbed16c65e3c6593413997fdeefbba02d98d3d2e3f8c4c17e0df632d4f080d89",
+      "nova_error_sha256": "4fa6aba751df54de7cbee13b3a91a48cd1af48eaf5268d848046c79d7afb8684",
       "lua_error_excerpt": "lua: attempt to yield across metamethod/C-call boundary | stack traceback: | \t[C]: in function 'yield' | \t...Tests/YieldingFromMainChunkThrowsCannotYieldMain.lua:<line>: in main...",
-      "nova_error_excerpt": "bytecode:103: attempt to yield from outside a coroutine [compatibility: Lua 5.1]"
+      "nova_error_excerpt": "bytecode:105: attempt to yield from outside a coroutine [compatibility: Lua 5.1]"
     },
     {
       "file": "ProcessorCoroutineLifecycleTUnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua",
@@ -1685,9 +1685,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "9c366de535e64109f7e1d2c13d4be7286550c00b0256482bf72bacc9e4e2b489",
-      "nova_error_sha256": "bbed16c65e3c6593413997fdeefbba02d98d3d2e3f8c4c17e0df632d4f080d89",
+      "nova_error_sha256": "4fa6aba751df54de7cbee13b3a91a48cd1af48eaf5268d848046c79d7afb8684",
       "lua_error_excerpt": "lua: attempt to yield across metamethod/C-call boundary | stack traceback: | \t[C]: in function 'yield' | \t...Tests/YieldingFromMainChunkThrowsCannotYieldMain.lua:<line>: in main...",
-      "nova_error_excerpt": "bytecode:103: attempt to yield from outside a coroutine [compatibility: Lua 5.1]"
+      "nova_error_excerpt": "bytecode:105: attempt to yield from outside a coroutine [compatibility: Lua 5.1]"
     },
     {
       "file": "ProcessorDebuggerRuntimeTUnitTests/RuntimeExceptionRefreshesDebuggerWhenSignalRequestsPause.lua",
@@ -3756,9 +3756,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "555f64eb9458d4b5d250d4dd62624e23660d8e0dca01cb00d177c762b9e52296",
-      "nova_error_sha256": "e793c14afd61e9db35bd4d45bd587d77e0eb5a9b5dede7d7766e49eceacf98ec",
+      "nova_error_sha256": "7ad7972e87a7bd2a6bcec16d778eec53ed1230fe66dac3c56279e342796bc601",
       "lua_error_excerpt": "lua: attempt to yield from outside a coroutine | stack traceback: | \t[C]: in function 'yield' | \t...UnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua:<line>: in main chun...",
-      "nova_error_excerpt": "bytecode:103: attempt to yield from outside a coroutine [compatibility: Lua 5.2]"
+      "nova_error_excerpt": "bytecode:105: attempt to yield from outside a coroutine [compatibility: Lua 5.2]"
     },
     {
       "file": "ProcessorCoroutineLifecycleTUnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua",
@@ -3767,9 +3767,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "555f64eb9458d4b5d250d4dd62624e23660d8e0dca01cb00d177c762b9e52296",
-      "nova_error_sha256": "e793c14afd61e9db35bd4d45bd587d77e0eb5a9b5dede7d7766e49eceacf98ec",
+      "nova_error_sha256": "7ad7972e87a7bd2a6bcec16d778eec53ed1230fe66dac3c56279e342796bc601",
       "lua_error_excerpt": "lua: attempt to yield from outside a coroutine | stack traceback: | \t[C]: in function 'yield' | \t...UnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua:<line>: in main chun...",
-      "nova_error_excerpt": "bytecode:103: attempt to yield from outside a coroutine [compatibility: Lua 5.2]"
+      "nova_error_excerpt": "bytecode:105: attempt to yield from outside a coroutine [compatibility: Lua 5.2]"
     },
     {
       "file": "ProcessorDebuggerRuntimeTUnitTests/RuntimeExceptionRefreshesDebuggerWhenSignalRequestsPause.lua",
@@ -6278,9 +6278,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "70e6c1806f9b53bb59638d43a7c6226223233bf35283b3bded37ee9b9ce49a13",
-      "nova_error_sha256": "e802151a229e80dd4479b5b1699edbf56c245dea9955c02aae7d91f83b88debd",
+      "nova_error_sha256": "7ca5a332c47488cafc585306c687e5dbcd9910e57a980634e1f782c3558c8266",
       "lua_error_excerpt": "lua: attempt to yield from outside a coroutine | stack traceback: | \t[C]: in function 'coroutine.yield' | \t...UnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua:<line>: in...",
-      "nova_error_excerpt": "bytecode:103: attempt to yield from outside a coroutine [compatibility: Lua 5.3]"
+      "nova_error_excerpt": "bytecode:105: attempt to yield from outside a coroutine [compatibility: Lua 5.3]"
     },
     {
       "file": "ProcessorCoroutineLifecycleTUnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua",
@@ -6289,9 +6289,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "70e6c1806f9b53bb59638d43a7c6226223233bf35283b3bded37ee9b9ce49a13",
-      "nova_error_sha256": "e802151a229e80dd4479b5b1699edbf56c245dea9955c02aae7d91f83b88debd",
+      "nova_error_sha256": "7ca5a332c47488cafc585306c687e5dbcd9910e57a980634e1f782c3558c8266",
       "lua_error_excerpt": "lua: attempt to yield from outside a coroutine | stack traceback: | \t[C]: in function 'coroutine.yield' | \t...UnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua:<line>: in...",
-      "nova_error_excerpt": "bytecode:103: attempt to yield from outside a coroutine [compatibility: Lua 5.3]"
+      "nova_error_excerpt": "bytecode:105: attempt to yield from outside a coroutine [compatibility: Lua 5.3]"
     },
     {
       "file": "ProcessorDebuggerRuntimeTUnitTests/RuntimeExceptionRefreshesDebuggerWhenSignalRequestsPause.lua",
@@ -9594,9 +9594,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "70e6c1806f9b53bb59638d43a7c6226223233bf35283b3bded37ee9b9ce49a13",
-      "nova_error_sha256": "65fde90a8e3ea0f8787fe906d956bdf02f6aae45c979eccd905d9d3d66b20014",
+      "nova_error_sha256": "064560a8ca34007bbbcdd952b99d7d3a0558134a51a5595ca4d1535046026319",
       "lua_error_excerpt": "lua: attempt to yield from outside a coroutine | stack traceback: | \t[C]: in function 'coroutine.yield' | \t...UnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua:<line>: in...",
-      "nova_error_excerpt": "bytecode:103: attempt to yield from outside a coroutine [compatibility: Lua 5.4]"
+      "nova_error_excerpt": "bytecode:105: attempt to yield from outside a coroutine [compatibility: Lua 5.4]"
     },
     {
       "file": "ProcessorCoroutineLifecycleTUnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua",
@@ -9605,9 +9605,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "70e6c1806f9b53bb59638d43a7c6226223233bf35283b3bded37ee9b9ce49a13",
-      "nova_error_sha256": "65fde90a8e3ea0f8787fe906d956bdf02f6aae45c979eccd905d9d3d66b20014",
+      "nova_error_sha256": "064560a8ca34007bbbcdd952b99d7d3a0558134a51a5595ca4d1535046026319",
       "lua_error_excerpt": "lua: attempt to yield from outside a coroutine | stack traceback: | \t[C]: in function 'coroutine.yield' | \t...UnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua:<line>: in...",
-      "nova_error_excerpt": "bytecode:103: attempt to yield from outside a coroutine [compatibility: Lua 5.4]"
+      "nova_error_excerpt": "bytecode:105: attempt to yield from outside a coroutine [compatibility: Lua 5.4]"
     },
     {
       "file": "ProcessorDebuggerRuntimeTUnitTests/RuntimeExceptionRefreshesDebuggerWhenSignalRequestsPause.lua",
@@ -12976,9 +12976,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "4fe6bc83d801fe5eb4b6e2c03d23e29e2c478eeaf1884f72fb0071f95203d842",
-      "nova_error_sha256": "7f5b9caf05ba99f44c30a22e6e62dd8fa01cfbbf5b34803a4fcf15a158c4aeaf",
+      "nova_error_sha256": "bf02fce6b2ff18f90cca2fbf6134294c2e7845f952b151a4657c548b4d2be5df",
       "lua_error_excerpt": "lua: attempt to yield from outside a coroutine | stack traceback: | \t[C]: in field 'yield' | \t...UnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua:<line>: in main chunk |...",
-      "nova_error_excerpt": "bytecode:103: attempt to yield from outside a coroutine [compatibility: Lua 5.5]"
+      "nova_error_excerpt": "bytecode:105: attempt to yield from outside a coroutine [compatibility: Lua 5.5]"
     },
     {
       "file": "ProcessorCoroutineLifecycleTUnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua",
@@ -12987,9 +12987,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "4fe6bc83d801fe5eb4b6e2c03d23e29e2c478eeaf1884f72fb0071f95203d842",
-      "nova_error_sha256": "7f5b9caf05ba99f44c30a22e6e62dd8fa01cfbbf5b34803a4fcf15a158c4aeaf",
+      "nova_error_sha256": "bf02fce6b2ff18f90cca2fbf6134294c2e7845f952b151a4657c548b4d2be5df",
       "lua_error_excerpt": "lua: attempt to yield from outside a coroutine | stack traceback: | \t[C]: in field 'yield' | \t...UnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua:<line>: in main chunk |...",
-      "nova_error_excerpt": "bytecode:103: attempt to yield from outside a coroutine [compatibility: Lua 5.5]"
+      "nova_error_excerpt": "bytecode:105: attempt to yield from outside a coroutine [compatibility: Lua 5.5]"
     },
     {
       "file": "ProcessorDebuggerRuntimeTUnitTests/RuntimeExceptionRefreshesDebuggerWhenSignalRequestsPause.lua",

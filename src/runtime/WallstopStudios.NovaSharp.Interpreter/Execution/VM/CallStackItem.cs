@@ -84,6 +84,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         public int ReturnAddress { get; set; }
 
         /// <summary>
+        /// When set, the call result is discarded instead of being pushed. Table setters use this
+        /// so a discarded <c>__newindex</c> result cannot displace pending assignment values.
+        /// </summary>
+        internal bool DiscardResult { get; set; }
+
+        /// <summary>
         /// Inline slots holding this frame's locals. Default entries are inactive until assigned or
         /// captured; captured slots forward through a shared <see cref="UpvalueCell"/>.
         /// </summary>
@@ -125,6 +131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             ErrorHandlerBeforeUnwindInProgress = false;
             BasePointer = 0;
             ReturnAddress = 0;
+            DiscardResult = false;
             if (LocalScope != null)
             {
                 SystemArrayPool<ValueSlot>.Return(LocalScope, clearArray: true);

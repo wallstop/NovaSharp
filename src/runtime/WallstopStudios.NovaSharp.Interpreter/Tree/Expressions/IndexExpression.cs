@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
+    using System.Text;
     using global::NovaSharp;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -16,6 +17,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
     /// </remarks>
     internal class IndexExpression : Expression, IVariable
     {
+        private const int MaxShortStringKeyLength = 40;
+
         private readonly Expression _baseExp;
         private readonly Expression _indexExp;
         private readonly string _name;
@@ -85,6 +88,90 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 _indexExp.Compile(bc);
                 bc.EmitIndex(isExpList: (_indexExp is ExprListExpression), baseName: baseName);
             }
+        }
+
+        /// <summary>
+        /// Evaluates the target operands that must run before the right-hand side and describes how
+        /// the store will reach them later.
+        /// </summary>
+        internal AssignmentTarget PrepareAssignmentTarget(ByteCode bc)
+        {
+            string baseName = GetBaseVariableDescription();
+            bool hasConstantIndex =
+                IsShortStringKey(_name)
+                || (
+                    _indexExp is LiteralExpression literalIndex
+                    && literalIndex.Value.Type == DataType.String
+                    && IsShortStringKey(literalIndex.Value.String)
+                );
+            AssignmentOperand baseOperand = PrepareAssignmentOperand(
+                _baseExp,
+                bc,
+                isIndexOperand: false,
+                hasConstantIndex
+            );
+
+            AssignmentOperand indexOperand;
+            bool isExpList = false;
+            if (_name != null)
+            {
+                indexOperand = AssignmentOperand.FromLiteral(LuaValue.NewString(_name));
+            }
+            else if (_indexExp is LiteralExpression literal)
+            {
+                indexOperand = AssignmentOperand.FromLiteral(literal.Value);
+            }
+            else
+            {
+                indexOperand = PrepareAssignmentOperand(
+                    _indexExp,
+                    bc,
+                    isIndexOperand: true,
+                    hasConstantIndex
+                );
+                isExpList = _indexExp is ExprListExpression;
+            }
+
+            return AssignmentTarget.Indexed(
+                baseOperand,
+                indexOperand,
+                isNameIndex: _name != null,
+                isExpList,
+                baseName
+            );
+        }
+
+        private static bool IsShortStringKey(string value)
+        {
+            return value != null && Encoding.UTF8.GetByteCount(value) <= MaxShortStringKeyLength;
+        }
+
+        private static AssignmentOperand PrepareAssignmentOperand(
+            Expression expression,
+            ByteCode bc,
+            bool isIndexOperand,
+            bool hasConstantIndex
+        )
+        {
+            if (expression is SymbolRefExpression symbolExpression)
+            {
+                SymbolRef symbol = symbolExpression.GetSymbolRef();
+                if (
+                    symbol != null
+                    && AssignmentTarget.CanDeferSymbolRead(
+                        symbol,
+                        bc,
+                        isIndexOperand,
+                        hasConstantIndex
+                    )
+                )
+                {
+                    return AssignmentOperand.FromSymbol(symbol);
+                }
+            }
+
+            expression.Compile(bc);
+            return AssignmentOperand.Stack();
         }
 
         /// <summary>

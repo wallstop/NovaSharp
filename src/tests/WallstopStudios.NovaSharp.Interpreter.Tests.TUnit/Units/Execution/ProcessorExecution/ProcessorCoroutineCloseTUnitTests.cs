@@ -1816,6 +1816,86 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 );
         }
 
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClosingDeadCoroutineClearsSavedFailure(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local task = coroutine.create(function() error(nil) end)
+                local resumed = coroutine.resume(task)
+                local closedOnce, closeError = coroutine.close(task)
+                local closedTwice, secondError = coroutine.close(task)
+
+                print(resumed, closedOnce, closeError, closedTwice, secondError)
+                return resumed, closedOnce, closeError, closedTwice, secondError
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].Boolean).IsTrue();
+            await Assert.That(result.Tuple[4].IsNil).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LaterOuterSiblingErrorReplacesCarriedSelfCloseError(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local task
+                task = coroutine.create(function()
+                    local outer <close> = setmetatable({}, {
+                        __close = function()
+                            local y <close> = setmetatable({}, {
+                                __close = function()
+                                    error('yboom', 0)
+                                end
+                            })
+                            local x <close> = setmetatable({}, {
+                                __close = function()
+                                end
+                            })
+                            local b <close> = setmetatable({}, {
+                                __close = function()
+                                    do
+                                        local a <close> = setmetatable({}, {
+                                            __close = function()
+                                                error('aboom', 0)
+                                            end
+                                        })
+                                        local c <close> = setmetatable({}, {
+                                            __close = function()
+                                                coroutine.close(task)
+                                            end
+                                        })
+                                    end
+                                end
+                            })
+                        end
+                    })
+                    coroutine.yield('pause')
+                end)
+
+                local resumed = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+                print(resumed, closed, closeError)
+                return resumed, closed, closeError
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].Boolean).IsFalse();
+            await Assert.That(result.Tuple[2].String).IsEqualTo("yboom");
+        }
+
         private static TException ExpectException<TException>(Action action)
             where TException : Exception
         {
