@@ -47,11 +47,12 @@ remaining closers.
   prior-handler-error reset in the same block, a prior nested-block error that must
   still make the close report failure, a repeated self-close during the drain
   clearing a later error, a nested handler whose ancestor frame still owns detached
-  closers, and a nested closer whose self-close must preserve an ancestor failure.
-  The generated fixtures match PUC Lua byte-for-byte, and stale fixture source
-  locations for this test class were refreshed.
-- `ProcessorCoroutineCloseTUnitTests`: 92/92.
-- `-c Coroutine` filter: 785/785. Full TUnit suite: 16217/16217.
+  closers, a nested closer whose self-close must preserve an ancestor failure, and a
+  close error caught by `pcall` that must not make the coroutine close fail. The
+  generated fixtures match PUC Lua byte-for-byte, and stale fixture source locations
+  for this test class were refreshed.
+- `ProcessorCoroutineCloseTUnitTests`: 94/94.
+- `-c Coroutine` filter: 785/785. Full TUnit suite: 16219/16219.
 - Lua comparison 5.1, 5.2, 5.3, 5.5: zero unexpected mismatches and no both-error
   ratchet additions. Lua 5.4 has only the two pre-existing 5.4.4-vs-5.4.7 reference
   deltas (`OperationsUseVersionedIndexingAndLength` and

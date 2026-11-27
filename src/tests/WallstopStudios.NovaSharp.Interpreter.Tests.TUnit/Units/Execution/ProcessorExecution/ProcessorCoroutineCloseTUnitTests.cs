@@ -831,6 +831,56 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseErrorInsideProtectedCallDoesNotFailClose(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local task
+                task = coroutine.create(function()
+                    local outer <close> = setmetatable({}, {
+                        __close = function()
+                            log[#log + 1] = 'outer-start'
+                            local ok, err = pcall(function()
+                                local inner <close> = setmetatable({}, {
+                                    __close = function()
+                                        log[#log + 1] = 'inner'
+                                        error('innerboom', 0)
+                                    end
+                                })
+                            end)
+                            log[#log + 1] = 'pcall:' .. tostring(ok) .. ':' .. tostring(err)
+                        end
+                    })
+                    coroutine.yield('pause')
+                end)
+
+                local resumed, paused = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, paused)
+                print('close', closed, closeError == nil)
+                print('log', table.concat(log, ','))
+
+                return resumed, paused, closed, closeError == nil, table.concat(log, ',')
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsTrue();
+            await Assert.That(result.Tuple[3].Boolean).IsTrue();
+            await Assert
+                .That(result.Tuple[4].String)
+                .IsEqualTo("outer-start,inner,pcall:false:innerboom");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task SelfCloseInsideNestedCloserKeepsAncestorFailure(
             LuaCompatibilityVersion version
         )

@@ -718,6 +718,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// Lua keeps a failed coroutine's pending close handlers until <c>coroutine.close</c>.
         /// Protected calls still unwind immediately to their handler.
         /// </summary>
+        private bool IsInsideProtectedCall()
+        {
+            if (_protectedClrCallDepth > 0)
+            {
+                return true;
+            }
+
+            for (int index = _executionStack.Count - 1; index >= 0; index--)
+            {
+                CallStackItem frame = _executionStack[index];
+                if (frame.ErrorHandler != null || frame.HasErrorHandlerBeforeUnwind)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private bool ShouldDeferCoroutineClose()
         {
             if (State == CoroutineState.Main || _isClosingCoroutine || _protectedClrCallDepth > 0)
@@ -1437,7 +1456,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     );
                 }
 
-                if (!_selfCloseStarted)
+                if (!_selfCloseStarted && !IsInsideProtectedCall())
                 {
                     _selfCloseFailed = true;
                 }
