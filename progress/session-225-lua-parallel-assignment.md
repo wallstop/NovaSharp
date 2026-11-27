@@ -1,6 +1,7 @@
 # Session 225 — Lua parallel assignment order and review audit
 
 Issue: [#194](https://github.com/Ambiguous-Interactive/NovaSharp/issues/194).
+Pull request: [#230](https://github.com/Ambiguous-Interactive/NovaSharp/pull/230).
 
 ## Carry-forward inventory
 
