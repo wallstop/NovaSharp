@@ -382,9 +382,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             LuaValue secondClose = coroutineValue.Coroutine.Close();
 
-            await Assert.That(secondClose.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(secondClose.Tuple[0].Boolean).IsFalse();
-            await Assert.That(secondClose.Tuple[1].String).Contains("close-dead");
+            await Assert.That(secondClose.Type).IsEqualTo(DataType.Boolean);
+            await Assert.That(secondClose.Boolean).IsTrue();
             await Assert.That(coroutineValue.Coroutine.State).IsEqualTo(CoroutineState.Dead);
         }
 

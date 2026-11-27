@@ -35,9 +35,8 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
 
 ## Next
 
-1. Use the Lua error value now preserved by protected calls and unwinding to fix
-   [failed coroutine cleanup](https://github.com/Ambiguous-Interactive/NovaSharp/issues/174)
-   and [yieldable close handlers](https://github.com/Ambiguous-Interactive/NovaSharp/issues/169).
+1. Use the deferred coroutine close state and preserved Lua error values to fix
+   [yieldable close handlers](https://github.com/Ambiguous-Interactive/NovaSharp/issues/169).
 1. Fix evaluation order and preserve pending values in parallel indexed
    assignments in [#194](https://github.com/Ambiguous-Interactive/NovaSharp/issues/194).
 1. A1d: benchmark `LuaValue` copy/layout and measured inlining or `in`/`ref`

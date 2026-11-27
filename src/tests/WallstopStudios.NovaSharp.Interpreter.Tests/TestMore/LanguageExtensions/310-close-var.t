@@ -168,7 +168,7 @@ do
   local ok_second, err = coroutine.resume(failing)
   ok(ok_second == false, 'second resume fails when coroutine errors')
   like(err, 'boom', 'error message bubbles out of resume')
-  like(log[1], '^co_err:.*boom', '__close receives the propagated error value')
+  is(#log, 0, 'an uncaught coroutine error leaves __close pending')
 end
 
 -- coroutine.close closes suspended coroutines and flushes __close hooks (§6.2 + §3.3.8)
@@ -191,7 +191,7 @@ do
   is_deeply(log, {'co_pending:nil'}, 'coroutine.close flushes pending __close values')
 end
 
--- coroutine.close returns the original error when the coroutine died due to an exception (§6.2)
+-- coroutine.close runs deferred close handlers and reports the original error once (§6.2)
 do
   local log = {}
 
@@ -203,16 +203,16 @@ do
   local ok_resume, resume_err = coroutine.resume(co)
   ok(ok_resume == false, 'resume captures coroutine failure')
   like(resume_err, 'kapow', 'resume surfaces the thrown error')
-  is(#log, 1, '__close already ran during error unwinding')
-  like(log[1], '^co_failed:.*kapow', '__close recorded the propagated error')
+  is(#log, 0, '__close stays pending after an uncaught coroutine error')
 
   local close_ok, close_err = coroutine.close(co)
   ok(close_ok == false, 'coroutine.close returns false when coroutine died with error')
   like(close_err, 'kapow', 'coroutine.close surfaces the original error object')
+  like(log[1], '^co_failed:.*kapow', '__close receives the propagated error value')
 
   local close_again_ok, close_again_err = coroutine.close(co)
-  ok(close_again_ok == false, 'coroutine.close continues to report failure for errored coroutines')
-  like(close_again_err, 'kapow', 'repeated close calls surface the same error payload')
+  ok(close_again_ok, 'repeated close succeeds after deferred cleanup')
+  is(close_again_err, nil, 'repeated close reports no error')
 end
 
 -- Local Variables:

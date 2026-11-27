@@ -37,6 +37,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         public LuaValue RecycleCoroutine(Processor mainProcessor, Closure closure)
         {
+            if (HasPendingCloseHandlers())
+            {
+                throw new InvalidOperationException(
+                    "cannot recycle a coroutine with pending close handlers; call coroutine.close first"
+                );
+            }
+
             // Clear the used parts of the stacks to prep for reuse
             _valueStack.ClearUsed();
             _executionStack.ClearUsed();
@@ -52,12 +59,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return LuaValue.NewCoroutine(new Coroutine(p));
         }
 
+        private bool HasPendingCloseHandlers()
+        {
+            for (int index = 0; index < _executionStack.Count; index++)
+            {
+                CallStackItem frame = _executionStack[index];
+
+                if (frame.ToBeClosedIndices != null && frame.ToBeClosedIndices.Count > 0)
+                {
+                    return true;
+                }
+
+                if (frame.BlocksToClose == null)
+                {
+                    continue;
+                }
+
+                for (int blockIndex = 0; blockIndex < frame.BlocksToClose.Count; blockIndex++)
+                {
+                    if (frame.BlocksToClose[blockIndex].Count > 0)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>
         /// Gets the current coroutine state.
         /// </summary>
         public CoroutineState State
         {
-            get { return _state; }
+            get { return _isClosingCoroutine ? CoroutineState.Running : _state; }
         }
 
         /// <summary>
@@ -161,13 +196,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return ResumeCoroutine(new ClrCallArguments(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
         }
 
+        internal void EnterProtectedClrCall()
+        {
+            _protectedClrCallDepth++;
+        }
+
+        internal void LeaveProtectedClrCall()
+        {
+            _protectedClrCallDepth--;
+        }
+
         private LuaValue ResumeCoroutine(ClrCallArguments args)
         {
             EnterProcessor();
+            bool executionStarted = false;
 
             try
             {
                 int entrypoint = 0;
+
+                if (_isClosingCoroutine)
+                {
+                    throw ScriptRuntimeException.CannotResumeNotSuspended(CoroutineState.Running);
+                }
 
                 if (
                     _state != CoroutineState.NotStarted
@@ -213,6 +264,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
 
                 _state = CoroutineState.Running;
+                executionStarted = true;
                 LuaValue retVal = ProcessingLoop(entrypoint);
 
                 if (retVal.Type == DataType.YieldRequest)
@@ -241,10 +293,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             catch (ScriptRuntimeException ex)
             {
                 _state = CoroutineState.Dead;
-                _lastCloseError = ex.GetCaughtErrorObject(
-                    LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
-                );
-                _lastCloseFailed = true;
+
+                if (executionStarted)
+                {
+                    _lastCloseError = ex.GetCaughtErrorObject(
+                        LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                    );
+                    _lastCloseFailed = true;
+                }
+
                 throw;
             }
             catch (Exception)
@@ -264,6 +321,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         public LuaValue CloseCoroutine()
         {
+            Processor caller = ActiveProcessor;
             EnterProcessor();
 
             try
@@ -273,6 +331,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     throw ScriptRuntimeException.CannotCloseCoroutine(_state);
                 }
 
+                if (_isClosingCoroutine)
+                {
+                    LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                        _script.CompatibilityVersion
+                    );
+                    if (caller != this)
+                    {
+                        throw new ScriptRuntimeException("cannot close a normal coroutine");
+                    }
+
+                    if (version >= LuaCompatibilityVersion.Lua55 && _closeUnwindBoundaryDepth >= 0)
+                    {
+                        _lastCloseError = LuaValue.Nil;
+                        _selfCloseResetRequested = true;
+                        while (_executionStack.Count > _closeUnwindBoundaryDepth)
+                        {
+                            CallStackItem frame = PopToBasePointer();
+                            try
+                            {
+                                CloseAllPendingBlocks(frame, LuaValue.Nil);
+                            }
+                            finally
+                            {
+                                CallStackItemPool.Return(frame);
+                            }
+                        }
+
+                        throw new CoroutineSelfCloseException();
+                    }
+
+                    throw ScriptRuntimeException.CannotCloseCoroutine(CoroutineState.Running);
+                }
+
                 if (_state == CoroutineState.Running)
                 {
                     throw ScriptRuntimeException.CannotCloseCoroutine(_state);
@@ -280,6 +371,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 if (_state == CoroutineState.Dead)
                 {
+                    if (_lastCloseFailed && _executionStack.Count > 0)
+                    {
+                        return CloseDeferredCoroutineFrames();
+                    }
+
                     return BuildCloseResultFromLastError();
                 }
 
@@ -296,37 +392,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     throw ScriptRuntimeException.CannotCloseCoroutine(_state);
                 }
 
+                _isClosingCoroutine = true;
+                bool failed;
+                LuaValue closeError;
                 try
                 {
-                    while (_executionStack.Count > 0)
-                    {
-                        CallStackItem frame = PopToBasePointer();
-                        try
-                        {
-                            CloseAllPendingBlocks(frame, LuaValue.Nil);
-                        }
-                        finally
-                        {
-                            CallStackItemPool.Return(frame);
-                        }
-                    }
-
-                    _valueStack.Clear();
-                    _lastCloseError = LuaValue.Nil;
-                    _lastCloseFailed = false;
-                    _state = CoroutineState.Dead;
-                    return LuaValue.True;
+                    failed = UnwindFramesForClose(LuaValue.Nil, out closeError);
                 }
-                catch (ScriptRuntimeException ex)
+                finally
                 {
-                    LuaValue error = ex.GetCaughtErrorObject(
-                        LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
-                    );
-                    _lastCloseError = error;
-                    _lastCloseFailed = true;
-                    _state = CoroutineState.Dead;
-                    return LuaValue.NewTuple(LuaValue.False, error);
+                    _isClosingCoroutine = false;
                 }
+
+                _lastCloseError = LuaValue.Nil;
+                _lastCloseFailed = false;
+                _state = CoroutineState.Dead;
+                return failed ? LuaValue.NewTuple(LuaValue.False, closeError) : LuaValue.True;
             }
             finally
             {
@@ -335,16 +416,96 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
+        /// Runs the close handlers a failed coroutine kept past its uncaught error.
+        /// </summary>
+        private LuaValue CloseDeferredCoroutineFrames()
+        {
+            try
+            {
+                _isClosingCoroutine = true;
+                UnwindFramesForClose(_lastCloseError, out LuaValue closeError);
+                return LuaValue.NewTuple(LuaValue.False, closeError);
+            }
+            finally
+            {
+                _isClosingCoroutine = false;
+                _lastCloseError = LuaValue.Nil;
+                _lastCloseFailed = false;
+                _state = CoroutineState.Dead;
+            }
+        }
+
+        /// <summary>
+        /// Closes every pending block in stack order, continuing after a handler fails.
+        /// </summary>
+        private bool UnwindFramesForClose(LuaValue initialError, out LuaValue closeError)
+        {
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                _script.CompatibilityVersion
+            );
+            LuaValue activeError = initialError;
+            bool failed = false;
+
+            while (_executionStack.Count > 0)
+            {
+                CallStackItem frame = PopToBasePointer();
+                int previousBoundaryDepth = _closeUnwindBoundaryDepth;
+                _closeUnwindBoundaryDepth = _executionStack.Count;
+                try
+                {
+                    CloseAllPendingBlocks(frame, activeError);
+                }
+                catch (ScriptRuntimeException closeException)
+                {
+                    activeError = closeException.GetCaughtErrorObject(version);
+                    failed = true;
+                    _selfCloseResetRequested = false;
+                }
+                finally
+                {
+                    if (_selfCloseResetRequested)
+                    {
+                        activeError = LuaValue.Nil;
+                        _selfCloseResetRequested = false;
+                    }
+
+                    _closeUnwindBoundaryDepth = previousBoundaryDepth;
+                    CallStackItemPool.Return(frame);
+                }
+            }
+
+            _valueStack.Clear();
+            closeError = activeError;
+            return failed;
+        }
+
+        /// <summary>
         /// Builds the result tuple returned by <see cref="CloseCoroutine"/> based on the last error.
         /// </summary>
         private LuaValue BuildCloseResultFromLastError()
         {
-            if (_lastCloseFailed)
+            LuaValue error = _lastCloseError;
+            bool failed = _lastCloseFailed;
+            _lastCloseError = LuaValue.Nil;
+            _lastCloseFailed = false;
+
+            if (failed)
             {
-                return LuaValue.NewTuple(LuaValue.False, _lastCloseError);
+                return LuaValue.NewTuple(LuaValue.False, error);
             }
 
             return LuaValue.True;
+        }
+
+        public sealed class CoroutineSelfCloseException : Exception
+        {
+            public CoroutineSelfCloseException() { }
+
+            public CoroutineSelfCloseException(string message)
+                : base(message) { }
+
+            public CoroutineSelfCloseException(string message, Exception innerException)
+                : base(message, innerException) { }
         }
     }
 }

@@ -136,7 +136,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task CloseDeadCoroutineWithStoredErrorReturnsFalseTuple(
+        public async Task CloseDeadCoroutineWithStoredErrorReportsItOnce(
             LuaCompatibilityVersion version
         )
         {
@@ -157,11 +157,112 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             LuaValue initialClose = coroutineValue.Coroutine.Close();
             await Assert.That(initialClose.Tuple[0].Boolean).IsFalse();
+            await Assert.That(initialClose.Tuple[1].String).Contains("kaboom");
 
             LuaValue subsequentClose = coroutineValue.Coroutine.Close();
-            await Assert.That(subsequentClose.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(subsequentClose.Tuple[0].Boolean).IsFalse();
-            await Assert.That(subsequentClose.Tuple[1].String).Contains("kaboom");
+            await Assert.That(subsequentClose.Type).IsEqualTo(DataType.Boolean);
+            await Assert.That(subsequentClose.Boolean).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UncaughtErrorDefersCloseHandlersUntilClose(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local seen = {}
+                local function make(name)
+                    return setmetatable({}, {
+                        __close = function(_, err)
+                            seen[#seen + 1] = name .. ':' .. tostring(err)
+                        end
+                    })
+                end
+
+                local task = coroutine.create(function()
+                    local explicit <close> = make('explicit')
+                    for _ in function() error('boom', 0) end, nil, nil, make('generic') do end
+                end)
+
+                local ok, err = coroutine.resume(task)
+                local before = #seen
+                local closed, closeError = coroutine.close(task)
+                local closedAgain, closeErrorAgain = coroutine.close(task)
+
+                print('resume', ok, err, before)
+                print('close', closed, closeError, #seen, seen[1], seen[2])
+                print('close2', closedAgain, closeErrorAgain, #seen)
+
+                return ok, err, before,
+                    closed, closeError, #seen, seen[1], seen[2],
+                    closedAgain, closeErrorAgain
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("boom");
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(0);
+            await Assert.That(result.Tuple[3].Boolean).IsFalse();
+            await Assert.That(result.Tuple[4].String).IsEqualTo("boom");
+            await Assert.That(result.Tuple[5].Number).IsEqualTo(2);
+            await Assert.That(result.Tuple[6].String).IsEqualTo("generic:boom");
+            await Assert.That(result.Tuple[7].String).IsEqualTo("explicit:boom");
+            await Assert.That(result.Tuple[8].Boolean).IsTrue();
+            await Assert.That(result.Tuple[9].IsNil).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DeferredCloseHandlerErrorReplacesActiveErrorAndClosesOnce(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local task = coroutine.create(function()
+                    local outer <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'outer:' .. tostring(err)
+                        end
+                    })
+                    local inner <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'inner:' .. tostring(err)
+                            error('closeboom', 0)
+                        end
+                    })
+                    error('original', 0)
+                end)
+
+                local ok, err = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+                local closedAgain, closeErrorAgain = coroutine.close(task)
+
+                print('resume', ok, err)
+                print('close', closed, closeError, #log, log[1], log[2])
+                print('close2', closedAgain, closeErrorAgain)
+
+                return ok, err, closed, closeError,
+                    #log, log[1], log[2], closedAgain, closeErrorAgain
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("original");
+            await Assert.That(result.Tuple[2].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].String).IsEqualTo("closeboom");
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(2);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("inner:original");
+            await Assert.That(result.Tuple[6].String).IsEqualTo("outer:closeboom");
+            await Assert.That(result.Tuple[7].Boolean).IsTrue();
+            await Assert.That(result.Tuple[8].IsNil).IsTrue();
         }
 
         /// <summary>
@@ -411,6 +512,561 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(log.Length).IsEqualTo(2);
             await Assert.That(log.Get(1).String).IsEqualTo("second:nil");
             await Assert.That(log.Get(2).String).IsEqualTo("first:nil");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SuspendedCloseContinuesThroughOuterCloseHandlers(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local function make(name, shouldError)
+                    return setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = name .. ':' .. tostring(err)
+                            if shouldError then
+                                error('close:' .. name, 0)
+                            end
+                        end
+                    })
+                end
+
+                local function inner()
+                    local pending <close> = make('inner', true)
+                    coroutine.yield('pause')
+                end
+
+                local task = coroutine.create(function()
+                    local outer <close> = make('outer', false)
+                    inner()
+                end)
+
+                local resumed, paused = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+                local closedAgain, closeErrorAgain = coroutine.close(task)
+
+                print('resume', resumed, paused)
+                print('close', closed, closeError, #log, log[1], log[2])
+                print('close2', closedAgain, closeErrorAgain, #log)
+
+                return resumed, paused, closed, closeError,
+                    #log, log[1], log[2], closedAgain, closeErrorAgain
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].String).IsEqualTo("close:inner");
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(2);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("inner:nil");
+            await Assert.That(result.Tuple[6].String).IsEqualTo("outer:close:inner");
+            await Assert.That(result.Tuple[7].Boolean).IsTrue();
+            await Assert.That(result.Tuple[8].IsNil).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseHandlerErrorUnwindsItsOwnScopeBeforeSiblings(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local function make(name)
+                    return setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = name .. ':' .. tostring(err)
+                        end
+                    })
+                end
+
+                local task = coroutine.create(function()
+                    local sibling <close> = make('sibling')
+                    local failing <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'failing:' .. tostring(err)
+                            local inner <close> = make('inner')
+                            error('handlerboom', 0)
+                        end
+                    })
+                    error('original', 0)
+                end)
+
+                local resumed, resumeError = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, resumeError)
+                print('close', closed, closeError, #log, log[1], log[2], log[3])
+
+                return resumed, resumeError, closed, closeError,
+                    #log, log[1], log[2], log[3]
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("original");
+            await Assert.That(result.Tuple[2].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].String).IsEqualTo("handlerboom");
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(3);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("failing:original");
+            await Assert.That(result.Tuple[6].String).IsEqualTo("inner:handlerboom");
+            await Assert.That(result.Tuple[7].String).IsEqualTo("sibling:handlerboom");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelfCloseDuringDeferredCleanupResetsActiveError(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local task
+                task = coroutine.create(function()
+                    local sibling <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'sibling:' .. tostring(err)
+                        end
+                    })
+                    local failing <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'failing:' .. tostring(err)
+                            local inner <close> = setmetatable({}, {
+                                __close = function(_, innerError)
+                                    log[#log + 1] = 'inner:' .. tostring(innerError)
+                                end
+                            })
+                            coroutine.close(task)
+                            log[#log + 1] = 'after'
+                        end
+                    })
+                    error('original', 0)
+                end)
+
+                local resumed, resumeError = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, resumeError)
+                print('close', closed, closeError, #log, log[1], log[2], log[3])
+
+                return resumed, resumeError, closed, closeError,
+                    #log, log[1], log[2], log[3]
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("original");
+            await Assert.That(result.Tuple[2].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].IsNil).IsTrue();
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(3);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("failing:original");
+            await Assert.That(result.Tuple[6].String).IsEqualTo("inner:nil");
+            await Assert.That(result.Tuple[7].String).IsEqualTo("sibling:nil");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelfCloseInsideNestedBlockDoesNotResumeRemovedFrame(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local task
+                task = coroutine.create(function()
+                    local outer <close> = setmetatable({}, {
+                        __close = function()
+                            log[#log + 1] = 'outer-start'
+                            do
+                                local inner <close> = setmetatable({}, {
+                                    __close = function()
+                                        log[#log + 1] = 'inner'
+                                        coroutine.close(task)
+                                    end
+                                })
+                            end
+                            log[#log + 1] = 'outer-after'
+                        end
+                    })
+                    coroutine.yield('pause')
+                end)
+
+                local resumed, paused = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, paused)
+                print('close', closed, closeError, #log, log[1], log[2])
+
+                return resumed, paused, closed, closeError, #log, log[1], log[2]
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsTrue();
+            await Assert.That(result.Tuple[3].IsNil).IsTrue();
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(2);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("outer-start");
+            await Assert.That(result.Tuple[6].String).IsEqualTo("inner");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelfCloseClearsPriorHandlerErrorBeforeSiblings(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local task
+                task = coroutine.create(function()
+                    local first <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'first:' .. tostring(err)
+                            error('firstboom', 0)
+                        end
+                    })
+                    local second <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'second:' .. tostring(err)
+                            coroutine.close(task)
+                        end
+                    })
+                    coroutine.yield('pause')
+                end)
+
+                local resumed, paused = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, paused)
+                print('close', closed, closeError, #log, log[1], log[2])
+
+                return resumed, paused, closed, closeError, #log, log[1], log[2]
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].String).IsEqualTo("firstboom");
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(2);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("second:nil");
+            await Assert.That(result.Tuple[6].String).IsEqualTo("first:nil");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelfCloseDuringDeferredCleanupKeepsInnerHandlerError(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local task
+                task = coroutine.create(function()
+                    local failing <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'failing:' .. tostring(err)
+                            local inner <close> = setmetatable({}, {
+                                __close = function(_, innerError)
+                                    log[#log + 1] = 'inner:' .. tostring(innerError)
+                                    error('innerboom', 0)
+                                end
+                            })
+                            coroutine.close(task)
+                        end
+                    })
+                    error('original', 0)
+                end)
+
+                local resumed, resumeError = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, resumeError)
+                print('close', closed, closeError, #log, log[1], log[2])
+
+                return resumed, resumeError, closed, closeError,
+                    #log, log[1], log[2]
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("original");
+            await Assert.That(result.Tuple[2].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].String).IsEqualTo("innerboom");
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(2);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("failing:original");
+            await Assert.That(result.Tuple[6].String).IsEqualTo("inner:nil");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OtherCoroutineCannotCloseCoroutineDuringHandlers(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local first, second
+                local rejected = false
+                second = coroutine.create(function()
+                    local ok, err = pcall(function() return coroutine.close(first) end)
+                    rejected = ok == false
+                        and type(err) == 'string'
+                        and err:find('cannot close a normal coroutine', 1, true) ~= nil
+                end)
+
+                first = coroutine.create(function()
+                    local pending <close> = setmetatable({}, {
+                        __close = function()
+                            coroutine.resume(second)
+                        end
+                    })
+                    coroutine.yield('pause')
+                end)
+
+                local resumed, paused = coroutine.resume(first)
+                local closed, closeError = coroutine.close(first)
+
+                print('resume', resumed, paused)
+                print('close', closed, closeError, rejected)
+
+                return resumed, paused, closed, closeError, rejected
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsTrue();
+            await Assert.That(result.Tuple[3].IsNil).IsTrue();
+            await Assert.That(result.Tuple[4].Boolean).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseHandlerSelfCloseAbortsHandlerAndContinuesInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local task
+                task = coroutine.create(function()
+                    local first <close> = setmetatable({}, {
+                        __close = function()
+                            log[#log + 1] = 'first'
+                            local inner <close> = setmetatable({}, {
+                                __close = function(_, err)
+                                    log[#log + 1] = 'inner:' .. tostring(err)
+                                end
+                            })
+                            coroutine.close(task)
+                            log[#log + 1] = 'after'
+                        end
+                    })
+                    local second <close> = setmetatable({}, {
+                        __close = function()
+                            log[#log + 1] = 'second'
+                        end
+                    })
+                    coroutine.yield('pause')
+                end)
+
+                local resumed, paused = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, paused)
+                print('close', closed, closeError, #log, log[1], log[2], log[3])
+
+                return resumed, paused, closed, closeError,
+                    #log, log[1], log[2], log[3]
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsTrue();
+            await Assert.That(result.Tuple[3].IsNil).IsTrue();
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(3);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("second");
+            await Assert.That(result.Tuple[6].String).IsEqualTo("first");
+            await Assert.That(result.Tuple[7].String).IsEqualTo("inner:nil");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        public async Task CloseHandlerCannotReenterCloseOfItsOwnCoroutine(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local task
+                task = coroutine.create(function()
+                    local pending <close> = setmetatable({}, {
+                        __close = function()
+                            coroutine.close(task)
+                        end
+                    })
+                    coroutine.yield('pause')
+                end)
+
+                local resumed, paused = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+                local rejected = type(closeError) == 'string'
+                    and closeError:find('cannot close a running coroutine', 1, true) ~= nil
+                local closedAgain, closeErrorAgain = coroutine.close(task)
+
+                print('resume', resumed, paused)
+                print('close', closed, rejected)
+                print('close2', closedAgain, closeErrorAgain)
+
+                return resumed, paused, closed, rejected, closedAgain, closeErrorAgain
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].Boolean).IsTrue();
+            await Assert.That(result.Tuple[4].Boolean).IsTrue();
+            await Assert.That(result.Tuple[5].IsNil).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseHandlerCannotResumeItsOwnCoroutine(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local observed
+                local task
+                task = coroutine.create(function()
+                    local pending <close> = setmetatable({}, {
+                        __close = function()
+                            local resumed, value, message = pcall(coroutine.resume, task)
+                            observed = tostring(resumed) .. ':' .. tostring(value) .. ':' .. tostring(message)
+                        end
+                    })
+                    coroutine.yield('pause')
+                end)
+
+                local resumed, paused = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, paused)
+                print('close', closed, closeError, observed)
+
+                return resumed, paused, closed, closeError, observed
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsTrue();
+            await Assert.That(result.Tuple[3].IsNil).IsTrue();
+            await Assert
+                .That(result.Tuple[4].String)
+                .IsEqualTo("true:false:cannot resume non-suspended coroutine");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseHandlerObservesRunningCoroutineState(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local observedStatus, observedYieldable
+                local task
+                task = coroutine.create(function()
+                    local pending <close> = setmetatable({}, {
+                        __close = function()
+                            observedStatus = coroutine.status(task)
+                            observedYieldable = coroutine.isyieldable()
+                        end
+                    })
+                    error('boom', 0)
+                end)
+
+                local resumed = coroutine.resume(task)
+                local closed = coroutine.close(task)
+
+                print('states', resumed, closed, observedStatus, observedYieldable)
+
+                return resumed, closed, observedStatus, observedYieldable
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].Boolean).IsFalse();
+            await Assert.That(result.Tuple[2].String).IsEqualTo("running");
+            await Assert.That(result.Tuple[3].Boolean).IsFalse();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FailedResumeKeepsDeferredCloseError(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local original = {}
+                local seen
+                local task = coroutine.create(function()
+                    local pending <close> = setmetatable({}, {
+                        __close = function(_, err) seen = err end
+                    })
+                    error(original)
+                end)
+
+                local resumed, resumeError = coroutine.resume(task)
+                local resumedAgain, resumeErrorAgain = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, rawequal(original, resumeError))
+                print('retry', resumedAgain, type(resumeErrorAgain))
+                print('close', closed, rawequal(original, seen), rawequal(original, closeError))
+
+                return resumed, rawequal(original, resumeError),
+                    resumedAgain, type(resumeErrorAgain),
+                    closed, rawequal(original, seen), rawequal(original, closeError)
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].Boolean).IsTrue();
+            await Assert.That(result.Tuple[2].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].String).IsEqualTo("string");
+            await Assert.That(result.Tuple[4].Boolean).IsFalse();
+            await Assert.That(result.Tuple[5].Boolean).IsTrue();
+            await Assert.That(result.Tuple[6].Boolean).IsTrue();
         }
 
         // =====================================================

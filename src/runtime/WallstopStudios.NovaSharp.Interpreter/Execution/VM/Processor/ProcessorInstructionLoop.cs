@@ -602,12 +602,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 DecorateNearestErrorHandlerBeforeUnwind(exception, instructionPtr);
 
+                if (ShouldDeferCoroutineClose())
+                {
+                    exception.Rethrow();
+                    throw;
+                }
+
                 LuaCompatibilityVersion errorVersion = LuaVersionDefaults.Resolve(
                     _script.CompatibilityVersion
                 );
                 ScriptRuntimeException activeException = exception;
                 while (_executionStack.Count > 0)
                 {
+                    if (
+                        _isClosingCoroutine
+                        && _closeUnwindBoundaryDepth >= 0
+                        && _executionStack.Count <= _closeUnwindBoundaryDepth
+                    )
+                    {
+                        break;
+                    }
+
                     CallStackItem csi = PopToBasePointer();
                     bool returnedToPool = false;
 
@@ -697,6 +712,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             return_to_native_code:
             return _valueStack.Pop();
+        }
+
+        /// <summary>
+        /// Lua keeps a failed coroutine's pending close handlers until <c>coroutine.close</c>.
+        /// Protected calls still unwind immediately to their handler.
+        /// </summary>
+        private bool ShouldDeferCoroutineClose()
+        {
+            if (State == CoroutineState.Main || _isClosingCoroutine || _protectedClrCallDepth > 0)
+            {
+                return false;
+            }
+
+            for (int index = _executionStack.Count - 1; index >= 0; index--)
+            {
+                CallStackItem frame = _executionStack[index];
+
+                if (frame.ErrorHandler != null)
+                {
+                    return false;
+                }
+
+                if ((frame.Flags & CallStackItemFlags.ResumeEntryPointBit) != 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void DecorateNearestErrorHandlerBeforeUnwind(
@@ -1249,9 +1293,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             LuaValue previous = slot.Value;
             int previousBoundaryDepth = _errorHandlerBeforeUnwindScanBoundaryDepth;
             _errorHandlerBeforeUnwindScanBoundaryDepth = _executionStack.Count;
+            _closeHandlerDepth++;
             try
             {
                 CloseValue(symbol, previous, activeError, instructionPtr);
+            }
+            catch (CoroutineSelfCloseException)
+            {
+                if (_closeHandlerDepth > 1)
+                {
+                    throw;
+                }
+
+                activeError = LuaValue.Nil;
+                activeException = null;
+                return null;
             }
             catch (ScriptRuntimeException closeException)
             {
@@ -1273,9 +1329,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
                 );
                 activeException = closeException;
+                _selfCloseResetRequested = false;
             }
             finally
             {
+                _closeHandlerDepth--;
                 _errorHandlerBeforeUnwindScanBoundaryDepth = previousBoundaryDepth;
                 slot.Deactivate();
             }

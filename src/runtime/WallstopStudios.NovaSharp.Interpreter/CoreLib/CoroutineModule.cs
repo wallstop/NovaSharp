@@ -83,8 +83,61 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             LuaValue handle = Create(executionContext, args);
             return LuaValue.NewCallbackView(executionContext.Script, callArgs =>
-                ResumeCoroutineWithArguments(handle.Coroutine, callArgs, 0)
+                ResumeWrappedCoroutine(handle.Coroutine, callArgs)
             );
+        }
+
+        private static LuaValue ResumeWrappedCoroutine(
+            Coroutine coroutine,
+            CallbackArgumentsView args
+        )
+        {
+            try
+            {
+                return ResumeCoroutineWithArguments(coroutine, args, 0);
+            }
+            catch (ScriptRuntimeException)
+            {
+                LuaCompatibilityVersion version = LuaVersionDefaults.CurrentDefault;
+                Script ownerScript = coroutine.OwnerScript;
+                if (ownerScript != null)
+                {
+                    version = ownerScript.CompatibilityVersion;
+                }
+
+                if (
+                    version < LuaCompatibilityVersion.Lua54
+                    || coroutine.State == CoroutineState.Running
+                )
+                {
+                    throw;
+                }
+
+                LuaValue closeResult;
+                try
+                {
+                    closeResult = coroutine.Close();
+                }
+                catch (ScriptRuntimeException)
+                {
+                    throw;
+                }
+
+                if (
+                    closeResult.Type == DataType.Tuple
+                    && closeResult.Tuple.Length > 1
+                    && closeResult.Tuple[0].Type == DataType.Boolean
+                    && !closeResult.Tuple[0].Boolean
+                )
+                {
+                    LuaValue closeError = closeResult.Tuple[1];
+                    ScriptRuntimeException closeException = new(closeError.ToPrintString(version));
+                    closeException.SetErrorValue(closeError);
+                    throw closeException;
+                }
+
+                throw;
+            }
         }
 
         /// <summary>

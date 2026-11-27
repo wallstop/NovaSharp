@@ -119,6 +119,83 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task RecycleCoroutineThrowsWhileCloseHandlersArePending(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            script.DoString(
+                @"
+                function failing()
+                    local pending <close> = setmetatable({}, {
+                        __close = function() error('close failure') end
+                    })
+                    error('failure')
+                end
+
+                function replacement()
+                    return 'recycled'
+                end
+                "
+            );
+
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("failing"));
+            ScriptRuntimeException resumeException = Assert.Throws<ScriptRuntimeException>(() =>
+                coroutineValue.Coroutine.Resume()
+            );
+            await Assert.That(resumeException.Message).Contains("failure").ConfigureAwait(false);
+
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+                script.RecycleCoroutine(coroutineValue.Coroutine, script.Globals.Get("replacement"))
+            );
+            await Assert
+                .That(exception.Message)
+                .Contains("pending close handlers")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task RecycleCoroutineAllowsFailedCoroutineWithoutCloseHandlers(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            script.DoString(
+                @"
+                function failingWithoutClose()
+                    error('failure')
+                end
+
+                function replacement()
+                    return 'recycled'
+                end
+
+                local task = coroutine.create(failingWithoutClose)
+                local resumed, resumeError = coroutine.resume(task)
+                local failed = type(resumeError) == 'string'
+                    and resumeError:find('failure', 1, true) ~= nil
+                print('resume', resumed, failed)
+                "
+            );
+
+            LuaValue coroutineValue = script.CreateCoroutineValue(
+                script.Globals.Get("failingWithoutClose")
+            );
+            Assert.Throws<ScriptRuntimeException>(() => coroutineValue.Coroutine.Resume());
+
+            LuaValue recycled = script.RecycleCoroutine(
+                coroutineValue.Coroutine,
+                script.Globals.Get("replacement")
+            );
+            await Assert
+                .That(recycled.Coroutine.Resume().String)
+                .IsEqualTo("recycled")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task AutoYieldCounterForcesYieldAndResumesCleanly(
             LuaCompatibilityVersion version
@@ -398,12 +475,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             LuaValue secondClose = coroutineValue.Coroutine.Close();
 
-            await Assert.That(secondClose.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
-            await Assert.That(secondClose.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
-            await Assert
-                .That(secondClose.Tuple[1].String)
-                .Contains("close-dead")
-                .ConfigureAwait(false);
+            await Assert.That(secondClose.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(secondClose.Boolean).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(coroutineValue.Coroutine.State)
                 .IsEqualTo(CoroutineState.Dead)
