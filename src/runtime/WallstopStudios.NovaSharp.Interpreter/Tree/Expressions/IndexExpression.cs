@@ -88,6 +88,99 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         }
 
         /// <summary>
+        /// Evaluates the target operands that must run before the right-hand side and describes how
+        /// the store will reach them later.
+        /// </summary>
+        internal AssignmentTarget PrepareAssignmentTarget(ByteCode bc, bool snapshotSymbols)
+        {
+            string baseName = GetBaseVariableDescription();
+            bool hasConstantIndex = _name != null || _indexExp is LiteralExpression;
+            AssignmentOperand baseOperand = PrepareAssignmentOperand(
+                _baseExp,
+                bc,
+                snapshotSymbols,
+                isIndexOperand: false,
+                hasConstantIndex
+            );
+
+            AssignmentOperand indexOperand;
+            bool isExpList = false;
+            if (_name != null)
+            {
+                indexOperand = AssignmentOperand.FromLiteral(LuaValue.NewString(_name));
+            }
+            else if (_indexExp is LiteralExpression literal)
+            {
+                indexOperand = AssignmentOperand.FromLiteral(literal.Value);
+            }
+            else
+            {
+                indexOperand = PrepareAssignmentOperand(
+                    _indexExp,
+                    bc,
+                    snapshotSymbols,
+                    isIndexOperand: true,
+                    hasConstantIndex
+                );
+                isExpList = _indexExp is ExprListExpression;
+            }
+
+            return AssignmentTarget.Indexed(
+                baseOperand,
+                indexOperand,
+                isNameIndex: _name != null,
+                isExpList,
+                baseName
+            );
+        }
+
+        /// <summary>
+        /// Determines whether this target reads the supplied symbol as a table or index operand.
+        /// </summary>
+        internal bool ReferencesAssignmentSymbol(SymbolRef symbol)
+        {
+            if (
+                _baseExp is SymbolRefExpression baseSymbol
+                && AssignmentTarget.IsSameSymbol(baseSymbol.GetSymbolRef(), symbol)
+            )
+            {
+                return true;
+            }
+
+            return _indexExp is SymbolRefExpression indexSymbol
+                && AssignmentTarget.IsSameSymbol(indexSymbol.GetSymbolRef(), symbol);
+        }
+
+        private static AssignmentOperand PrepareAssignmentOperand(
+            Expression expression,
+            ByteCode bc,
+            bool snapshotSymbols,
+            bool isIndexOperand,
+            bool hasConstantIndex
+        )
+        {
+            if (!snapshotSymbols && expression is SymbolRefExpression symbolExpression)
+            {
+                SymbolRef symbol = symbolExpression.GetSymbolRef();
+                if (
+                    symbol != null
+                    && AssignmentTarget.CanDeferSymbolRead(
+                        symbol,
+                        bc,
+                        isIndexOperand,
+                        hasConstantIndex
+                    )
+                )
+                {
+                    return AssignmentOperand.FromSymbol(symbol);
+                }
+            }
+
+            expression.Compile(bc);
+            return AssignmentOperand.Stack();
+        }
+
+        /// <summary>
         /// Emits bytecode for assigning into the indexed value found by this expression.
         /// </summary>
         /// <param name="bc">Bytecode builder receiving the emitted opcodes.</param>

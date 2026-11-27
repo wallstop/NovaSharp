@@ -37,10 +37,13 @@ rather than fixing an outage.
 - Observe every run for the pushed head commit before reporting CI status. Start
   one background watch per run, such as `gh run watch <run-id> --exit-status`, or
   read the pull request's check rollup until no required check is pending.
+- A pending rollup may be read again while required checks are still running.
+  Stop once one complete rollup reports success or a named failure; a background
+  watch is preferred over a foreground sleep loop.
 - Do not loop over `gh pr checks`, `gh run list`, or the API on a timer. Each
   poll is a request; a foreground sleep loop also occupies the session.
-- Re-read checks only after a new push or a named failed job. Read the failing
-  job log before naming a cause.
+- Re-read checks after a new push or to inspect a named failed job. Read the
+  failing job log before naming a cause.
 
 ## Mutations
 

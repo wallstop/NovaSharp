@@ -53,7 +53,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 CallbackFunction continuation,
                 LuaValue errorHandlerBeforeUnwind,
                 bool hasErrorHandlerBeforeUnwind,
-                CallStackItemFlags returnFlags
+                CallStackItemFlags returnFlags,
+                int resultReplacementDepth
             )
             {
                 ReturnAddress = returnAddress;
@@ -62,6 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 ErrorHandlerBeforeUnwind = errorHandlerBeforeUnwind;
                 HasErrorHandlerBeforeUnwind = hasErrorHandlerBeforeUnwind;
                 ReturnFlags = returnFlags;
+                ResultReplacementDepth = resultReplacementDepth;
             }
 
             public int ReturnAddress { get; }
@@ -74,6 +76,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             public bool HasErrorHandlerBeforeUnwind { get; }
             public CallStackItemFlags ReturnFlags { get; }
+
+            /// <summary>Gets the stack depth whose value receives the call result.</summary>
+            public int ResultReplacementDepth { get; }
         }
 
         /// <summary>
@@ -2307,7 +2312,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             bool thisCall = false,
             string debugText = null,
             bool allowTailCallFrameReuse = false,
-            CallStackItemFlags returnFlags = default
+            CallStackItemFlags returnFlags = default,
+            int resultReplacementDepth = -1
         )
         {
             return InternalExecCall(
@@ -2320,7 +2326,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 LuaValue.Nil,
                 hasUnwindHandler: false,
                 allowTailCallFrameReuse,
-                returnFlags
+                returnFlags,
+                resultReplacementDepth
             );
         }
 
@@ -2334,7 +2341,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             LuaValue unwindHandler,
             bool hasUnwindHandler,
             bool allowTailCallFrameReuse,
-            CallStackItemFlags returnFlags
+            CallStackItemFlags returnFlags,
+            int resultReplacementDepth = -1
         )
         {
             LuaValue fn = _valueStack.Peek(argsCount);
@@ -2372,6 +2380,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 frame.Continuation = Continuation;
                 frame.SetErrorHandlerBeforeUnwind(unwindHandler, hasUnwindHandler);
                 frame.Flags = Flags;
+                frame.ResultReplacementDepth = resultReplacementDepth;
                 _executionStack.Push(frame);
 
                 LuaValue ret;
@@ -2415,7 +2424,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     ValidateCallYield(ret);
                 }
-                _valueStack.Push(ret);
+
+                if (
+                    resultReplacementDepth >= 0
+                    && ret.Type != DataType.YieldRequest
+                    && ret.Type != DataType.TailCallRequest
+                )
+                {
+                    _valueStack.Set(resultReplacementDepth, ret);
+                }
+                else
+                {
+                    _valueStack.Push(ret);
+                }
 
                 CallStackItemPool.Return(_executionStack.Pop());
 
@@ -2431,6 +2452,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 CallbackFunction effectiveContinuation = Continuation;
                 LuaValue effectiveUnwindHandler = unwindHandler;
                 bool hasEffectiveUnwindHandler = hasUnwindHandler;
+                int effectiveResultReplacementDepth = resultReplacementDepth;
 
                 if (canReuseLuaTailCallFrame)
                 {
@@ -2441,6 +2463,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     effectiveUnwindHandler = reuseState.ErrorHandlerBeforeUnwind;
                     hasEffectiveUnwindHandler = reuseState.HasErrorHandlerBeforeUnwind;
                     Flags |= CallStackItemFlags.TailCall | reuseState.ReturnFlags;
+                    if (effectiveResultReplacementDepth < 0)
+                    {
+                        effectiveResultReplacementDepth = reuseState.ResultReplacementDepth;
+                    }
                 }
 
                 // Push arguments before renting so a value-stack overflow throws with nothing rented; the
@@ -2460,6 +2486,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     hasEffectiveUnwindHandler
                 );
                 frame.Flags = Flags;
+                frame.ResultReplacementDepth = effectiveResultReplacementDepth;
                 _executionStack.Push(frame);
                 return fn.Function.EntryPointByteCodeLocation;
             }
@@ -2497,7 +2524,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     unwindHandler: unwindHandler,
                     hasUnwindHandler: hasUnwindHandler,
                     allowTailCallFrameReuse: allowTailCallFrameReuse,
-                    returnFlags: returnFlags
+                    returnFlags: returnFlags,
+                    resultReplacementDepth: resultReplacementDepth
                 );
             }
 
@@ -2689,7 +2717,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     csi.Continuation,
                     csi.ErrorHandlerBeforeUnwind,
                     csi.HasErrorHandlerBeforeUnwind,
-                    csi.Flags & OperatorCallFlags
+                    csi.Flags & OperatorCallFlags,
+                    csi.ResultReplacementDepth
                 );
                 int argscnt = (int)(_valueStack.Pop().Number);
                 _valueStack.RemoveLast(argscnt + 1);
@@ -2744,17 +2773,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             CallbackFunction continuation = csi.Continuation;
             CallStackItemFlags returnFlags = csi.Flags & OperatorCallFlags;
+            int resultReplacementDepth = csi.ResultReplacementDepth;
+            bool replaceResult =
+                resultReplacementDepth >= 0
+                && continuation == null
+                && returnValue.Type is not DataType.TailCallRequest and not DataType.YieldRequest;
 
             try
             {
                 int argscnt = (int)(_valueStack.Pop().Number);
                 _valueStack.RemoveLast(argscnt + 1);
 
-                _valueStack.Push(returnValue);
+                if (replaceResult)
+                {
+                    _valueStack.Set(resultReplacementDepth, returnValue);
+                }
+                else
+                {
+                    _valueStack.Push(returnValue);
+                }
 
                 if (
-                    continuation == null
-                    || returnValue.Type is DataType.TailCallRequest or DataType.YieldRequest
+                    !replaceResult
+                    && (
+                        continuation == null
+                        || returnValue.Type is DataType.TailCallRequest or DataType.YieldRequest
+                    )
                 )
                 {
                     retpoint = InternalCheckForTailRequests(
@@ -3701,8 +3745,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         );
                     }
 
-                    _valueStack.Pop(); // burn extra value ?
-
                     _valueStack.Push(h);
                     _valueStack.Push(obj);
                     _valueStack.Push(idx);
@@ -3710,7 +3752,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     return InternalExecCall(
                         3,
                         instructionPtr,
-                        returnFlags: MetamethodYieldBoundary
+                        returnFlags: MetamethodYieldBoundary,
+                        resultReplacementDepth: i.NumVal
                     );
                 }
                 else
