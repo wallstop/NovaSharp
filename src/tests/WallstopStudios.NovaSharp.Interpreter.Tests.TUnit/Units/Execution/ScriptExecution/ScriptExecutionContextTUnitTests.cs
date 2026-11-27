@@ -3075,6 +3075,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             return context.EmulateClassicCall(argumentView, "classic", callback);
         }
 
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task CallableResolvesToLuaFunctionStopsAtChainLimit(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            LuaValue target = script.LoadString("return function() return 'ok' end");
+
+            LuaValue chain = target;
+            for (int i = 0; i < 9; i++)
+            {
+                chain = WrapCallable(script, chain);
+            }
+
+            await Assert
+                .That(script.CallableResolvesToLuaFunction(chain))
+                .IsTrue()
+                .ConfigureAwait(false);
+
+            chain = WrapCallable(script, chain);
+            await Assert
+                .That(script.CallableResolvesToLuaFunction(chain))
+                .IsFalse()
+                .ConfigureAwait(false);
+        }
+
+        private static LuaValue WrapCallable(Script script, LuaValue target)
+        {
+            Table callable = new(script) { MetaTable = new Table(script) { ["__call"] = target } };
+            return LuaValue.NewTable(callable);
+        }
+
         private static int ReturnClassicArgumentCount(LuaState state)
         {
             state.Push(LuaValue.FromNumber(state.Count));

@@ -255,7 +255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     {
                         while (true)
                         {
-                            LuaValue ret = executionContext.Script.CallValues(ld).ToScalar();
+                            LuaValue ret = executionContext.Script.CallLibraryValues(ld).ToScalar();
                             if (ret.Type == DataType.String)
                             {
                                 string fragment = ret.String;

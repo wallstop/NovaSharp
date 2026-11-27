@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2104,
-  "novasharp_only": 510,
-  "comparable": 1594,
+  "total_snippets": 2114,
+  "novasharp_only": 511,
+  "comparable": 1603,
   "by_version": {
     "5.1": 1036,
-    "5.2": 742,
-    "5.3": 989,
-    "5.4": 1100,
-    "5.5": 1148
+    "5.2": 747,
+    "5.3": 994,
+    "5.4": 1109,
+    "5.5": 1157
   },
   "snippets": [
     {
@@ -23410,6 +23410,123 @@
         "5.5"
       ],
       "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ProcessorCoroutineCloseTUnitTests/TailCallErrorDefersCloseHandlersUntilCoroutineClose.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:1907",
+      "test": "ProcessorCoroutineCloseTUnitTests.TailCallErrorDefersCloseHandlersUntilCoroutineClose",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "CoroutineModuleTUnitTests/CallableTablePrintMetamethodErrorDefersLocalCloseUntilCoroutineClose.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:1573",
+      "test": "CoroutineModuleTUnitTests.CallableTablePrintMetamethodErrorDefersLocalCloseUntilCoroutineClose",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "CoroutineModuleTUnitTests/SortComparatorErrorDefersLocalCloseUntilCoroutineClose.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:1535",
+      "test": "CoroutineModuleTUnitTests.SortComparatorErrorDefersLocalCloseUntilCoroutineClose",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "CoroutineModuleTUnitTests/FormatCallableTableMetamethodErrorDefersLocalCloseUntilCoroutineClose.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:1612",
+      "test": "CoroutineModuleTUnitTests.FormatCallableTableMetamethodErrorDefersLocalCloseUntilCoroutineClose",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringModuleTUnitTests/FormatPercentSAcceptsNumericTostringResult.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:861",
+      "test": "StringModuleTUnitTests.FormatPercentSAcceptsNumericTostringResult",
+      "lua_versions": [
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringModuleTUnitTests/FormatPercentSPreservesSpecificationDuringNestedFormat.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:917",
+      "test": "StringModuleTUnitTests.FormatPercentSPreservesSpecificationDuringNestedFormat",
+      "lua_versions": [
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringModuleTUnitTests/FormatPercentSUsesFirstTostringResult.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:896",
+      "test": "StringModuleTUnitTests.FormatPercentSUsesFirstTostringResult",
+      "lua_versions": [
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringModuleTUnitTests/FormatPercentSUsesTostringMetaOnStrings.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:878",
+      "test": "StringModuleTUnitTests.FormatPercentSUsesTostringMetaOnStrings",
+      "lua_versions": [
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringModuleTUnitTests/FormatPercentSUsesTostringMetamethod.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:842",
+      "test": "StringModuleTUnitTests.FormatPercentSUsesTostringMetamethod",
+      "lua_versions": [
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ProcessorCoroutineCloseTUnitTests/CloseHandlerHostCatchDoesNotRunOuterMessageHandler.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:2134",
+      "test": "ProcessorCoroutineCloseTUnitTests.CloseHandlerHostCatchDoesNotRunOuterMessageHandler",
+      "lua_versions": [],
+      "novasharp_only": true,
       "expects_error": false
     }
   ]

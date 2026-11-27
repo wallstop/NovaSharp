@@ -367,7 +367,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
             LuaValue func = l.Pop();
 
-            LuaValue ret = l.ExecutionContext.Call(func, args);
+            LuaValue ret = l.ExecutionContext.CallLibrary(func, args);
 
             if (nresults != 0)
             {

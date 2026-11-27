@@ -43,6 +43,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private bool _selfCloseErrorSet;
         private int _closeHandlerDepth;
         private int _protectedClrCallDepth;
+        private bool _libraryEntryPending;
+        private bool _vmCloseEntryPending;
         private int _errorHandlerBeforeUnwindScanBoundaryDepth = -1;
 
         private readonly ref struct ClrCallArguments
@@ -650,7 +652,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     ? new ClrCallArguments(first, second, third.GetValueOrDefault(), fourth.Value)
                 : third.HasValue ? new ClrCallArguments(first, second, third.Value)
                 : new ClrCallArguments(first, second);
-            return Call(function, args, reuseInstructionBudget: true);
+            if (!_script.CallableResolvesToLuaFunction(function))
+            {
+                return Call(function, args, reuseInstructionBudget: true);
+            }
+
+            using (ActiveProcessor.EnterLibraryCallBoundary())
+            {
+                return Call(function, args, reuseInstructionBudget: true);
+            }
         }
 
         private LuaValue Call(
@@ -764,7 +774,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 frame.ClosureScope = function.Function.ClosureContext;
                 frame.Function = function;
                 frame.CallingSourceRef = SourceRef.GetClrLocation();
-                frame.Flags = Flags;
+                frame.Flags = Flags | ConsumeCallEntryOrigin();
                 _executionStack.Push(frame);
 
                 return function.Function.EntryPointByteCodeLocation;
@@ -800,7 +810,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 frame.ClosureScope = closureScope;
                 frame.Function = hasFunction ? function : LuaValue.Nil;
                 frame.CallingSourceRef = SourceRef.GetClrLocation();
-                frame.Flags = CallStackItemFlagsPresets.CallEntryPoint;
+                frame.Flags = CallStackItemFlagsPresets.CallEntryPoint | ConsumeCallEntryOrigin();
                 _executionStack.Push(frame);
             }
             catch (ScriptRuntimeException)

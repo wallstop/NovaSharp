@@ -1141,6 +1141,60 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             return Script.CallDirectLuaFunction(func, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         }
 
+        /// <summary>
+        /// Calls a Lua function from a classic-library callback using an argument array.
+        /// </summary>
+        internal LuaValue CallLibrary(LuaValue func, LuaValue[] args)
+        {
+            if (Script.CallableResolvesToLuaFunction(func))
+            {
+                using (ActiveProcessor.EnterLibraryCallBoundary())
+                {
+                    return Script.CallValues(func, args);
+                }
+            }
+
+            return Call(func, args);
+        }
+
+        /// <summary>
+        /// Calls a Lua function from a classic-library callback with two arguments.
+        /// </summary>
+        internal LuaValue CallLibrary(LuaValue func, LuaValue arg1, LuaValue arg2)
+        {
+            if (Script.CallableResolvesToLuaFunction(func))
+            {
+                using (ActiveProcessor.EnterLibraryCallBoundary())
+                {
+                    return Script.CallValues(func, arg1, arg2);
+                }
+            }
+
+            return Call(func, arg1, arg2);
+        }
+
+        /// <summary>
+        /// Calls a Lua function from a classic-library callback with four arguments.
+        /// </summary>
+        internal LuaValue CallLibrary(
+            LuaValue func,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3,
+            LuaValue arg4
+        )
+        {
+            if (Script.CallableResolvesToLuaFunction(func))
+            {
+                using (ActiveProcessor.EnterLibraryCallBoundary())
+                {
+                    return Script.CallValues(func, arg1, arg2, arg3, arg4);
+                }
+            }
+
+            return Call(func, arg1, arg2, arg3, arg4);
+        }
+
         private LuaValue CallNonFunction(LuaValue func)
         {
             LuaValue metafunction = GetCallableMetamethodOrThrow(func);

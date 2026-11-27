@@ -182,7 +182,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 )
                 {
                     // Call the other operand's metamethod with the original arguments
-                    return ctx.Script.CallValues(otherMetamethod, left, right);
+                    return ctx.Script.CallLibraryValues(otherMetamethod, left, right);
                 }
             }
 

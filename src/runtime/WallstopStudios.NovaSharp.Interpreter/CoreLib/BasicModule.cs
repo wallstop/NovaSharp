@@ -926,7 +926,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 if (useLua54HardwiredTostring)
                 {
                     // Lua 5.4+: Use __tostring metamethod directly (current behavior)
-                    sb.Append(args.AsStringUsingMeta(executionContext, i, "print"));
+                    sb.Append(
+                        CallbackArguments.AsStringUsingMetaLibrary(
+                            executionContext,
+                            args[i],
+                            "print"
+                        )
+                    );
                 }
                 else
                 {
@@ -960,7 +966,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             if (tostringFunc.Type == DataType.Function || tostringFunc.Type == DataType.ClrFunction)
             {
                 // Call the global tostring function (user-overridable, including CLR callbacks)
-                LuaValue result = script.CallValues(tostringFunc, value);
+                LuaValue result = script.CallLibraryValues(tostringFunc, value);
 
                 if (result.Type == DataType.String)
                 {
@@ -1406,7 +1412,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (warnHandler.Type == DataType.Function || warnHandler.Type == DataType.ClrFunction)
             {
-                script.CallValues(warnHandler, LuaValue.NewString(payload));
+                script.CallLibraryValues(warnHandler, LuaValue.NewString(payload));
             }
             else if (script.Options.Stderr != null)
             {

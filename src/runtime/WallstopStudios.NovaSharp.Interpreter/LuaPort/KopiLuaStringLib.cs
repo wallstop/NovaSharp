@@ -57,6 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
     using global::NovaSharp;
     using LuaPort.LuaStateInterop;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Utilities;
@@ -1936,14 +1937,49 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                             // Lua 5.1 requires string type
                             LuaValue argValue = GetArgument(l, arg);
                             string s;
-                            if (argValue.Type == DataType.String)
+                            if (version >= LuaCompatibilityVersion.Lua52)
+                            {
+                                // Lua 5.2+ coerces to string via luaL_tolstring, which honors
+                                // the __tostring metamethod. Plain strings without a string
+                                // __tostring skip the conversion and its buffer copy.
+                                bool needsConversion = argValue.Type != DataType.String;
+                                if (!needsConversion)
+                                {
+                                    Table stringMetatable =
+                                        l.ExecutionContext.Script.GetTypeMetatable(DataType.String);
+                                    needsConversion =
+                                        stringMetatable != null
+                                        && stringMetatable.TryRawGet(
+                                            Metamethods.ToStringMeta,
+                                            out LuaValue stringMeta
+                                        )
+                                        && stringMeta.IsNotNil();
+                                }
+
+                                if (!needsConversion)
+                                {
+                                    s = argValue.String;
+                                }
+                                else
+                                {
+                                    // A nested string.format call can reuse the shared
+                                    // format buffer, so save and restore it.
+                                    string savedForm = form.ToString();
+                                    s = CallbackArguments.AsStringUsingMetaLibrary(
+                                        l.ExecutionContext,
+                                        argValue,
+                                        "format"
+                                    );
+                                    for (int i = 0; i < savedForm.Length; i++)
+                                    {
+                                        form[i] = savedForm[i];
+                                    }
+                                    form[savedForm.Length] = '\0';
+                                }
+                            }
+                            else if (argValue.Type == DataType.String)
                             {
                                 s = argValue.String;
-                            }
-                            else if (version >= LuaCompatibilityVersion.Lua52)
-                            {
-                                // Lua 5.2+ coerces to string via tostring()
-                                s = argValue.ToPrintString(version);
                             }
                             else
                             {

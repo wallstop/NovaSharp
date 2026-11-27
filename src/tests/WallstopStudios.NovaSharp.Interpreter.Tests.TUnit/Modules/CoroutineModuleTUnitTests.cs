@@ -1525,6 +1525,131 @@ return first, second
             await Assert.That(result.Tuple[5].String).IsEqualTo("rep").ConfigureAwait(false);
         }
 
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task SortComparatorErrorDefersLocalCloseUntilCoroutineClose(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local seen
+                local task = coroutine.create(function()
+                    table.sort({ 3, 1, 2 }, function()
+                        local pending <close> = setmetatable({}, {
+                            __close = function(_, closeError) seen = closeError end
+                        })
+                        error('cmp', 0)
+                    end)
+                end)
+
+                local resumed, resumeError = coroutine.resume(task)
+                local before = seen
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, resumeError, before)
+                print('close', closed, closeError, seen)
+
+                return resumed, resumeError, before, closed, closeError, seen
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("cmp").ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].String).IsEqualTo("cmp").ConfigureAwait(false);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("cmp").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task CallableTablePrintMetamethodErrorDefersLocalCloseUntilCoroutineClose(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local seen
+                local callable = setmetatable({}, {
+                    __call = function()
+                        local pending <close> = setmetatable({}, {
+                            __close = function(_, closeError) seen = closeError end
+                        })
+                        error('print-call', 0)
+                    end
+                })
+                local value = setmetatable({}, { __tostring = callable })
+                local task = coroutine.create(function()
+                    print(value)
+                end)
+
+                local resumed, resumeError = coroutine.resume(task)
+                local before = seen
+                local closed, closeError = coroutine.close(task)
+
+                return resumed, resumeError, before, closed, closeError, seen
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("print-call").ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].String).IsEqualTo("print-call").ConfigureAwait(false);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("print-call").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task FormatCallableTableMetamethodErrorDefersLocalCloseUntilCoroutineClose(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local seen
+                local callable = setmetatable({}, {
+                    __call = function()
+                        local pending <close> = setmetatable({}, {
+                            __close = function(_, closeError) seen = closeError end
+                        })
+                        error('format-call', 0)
+                    end
+                })
+                local value = setmetatable({}, { __tostring = callable })
+                local task = coroutine.create(function()
+                    return string.format('%s', value)
+                end)
+
+                local resumed, resumeError = coroutine.resume(task)
+                local before = seen
+                local closed, closeError = coroutine.close(task)
+
+                return resumed, resumeError, before, closed, closeError, seen
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].String)
+                .IsEqualTo("format-call")
+                .ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].IsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[4].String)
+                .IsEqualTo("format-call")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[5].String)
+                .IsEqualTo("format-call")
+                .ConfigureAwait(false);
+        }
+
         // =====================================================
         // pcall/xpcall with Coroutines Tests (All versions, except isyieldable tests)
         // =====================================================

@@ -835,6 +835,100 @@ return iterator, upper, substring, formatted
         }
 
         [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task FormatPercentSUsesTostringMetamethod(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local value = setmetatable({}, { __tostring = function() return 'meta' end })
+                local formatted = string.format('[%s]', value)
+                print(formatted)
+                return formatted
+                "
+            );
+
+            await Assert.That(result.String).IsEqualTo("[meta]").ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task FormatPercentSAcceptsNumericTostringResult(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local value = setmetatable({}, { __tostring = function() return 42 end })
+                local formatted = string.format('[%s]', value)
+                print(formatted)
+                return formatted
+                "
+            );
+
+            await Assert.That(result.String).IsEqualTo("[42]").ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task FormatPercentSUsesTostringMetaOnStrings(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                debug.setmetatable('', { __tostring = function() return 'META' end })
+                local formatted = string.format('[%s]', 'abc')
+                debug.setmetatable('', nil)
+                print(formatted)
+                return formatted
+                "
+            );
+
+            await Assert.That(result.String).IsEqualTo("[META]").ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task FormatPercentSUsesFirstTostringResult(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local value = setmetatable({}, {
+                    __tostring = function() return 'ok', 'ignored' end
+                })
+                local formatted = string.format('[%s]', value)
+                print(formatted)
+                return formatted
+                "
+            );
+
+            await Assert.That(result.String).IsEqualTo("[ok]").ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task FormatPercentSPreservesSpecificationDuringNestedFormat(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local value = setmetatable({}, {
+                    __tostring = function() return string.format('%s', 'x') end
+                })
+                local formatted = string.format('[%10s]', value)
+                print(formatted)
+                return formatted
+                "
+            );
+
+            await Assert.That(result.String).IsEqualTo("[         x]").ConfigureAwait(false);
+        }
+
+        [Test]
         [AllLuaVersions]
         public async Task StartsWithEndsWithContainsTreatNilAsFalse(LuaCompatibilityVersion version)
         {
