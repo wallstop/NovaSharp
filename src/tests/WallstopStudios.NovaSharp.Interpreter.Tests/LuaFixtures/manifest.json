@@ -23105,7 +23105,7 @@
         "5.5"
       ],
       "novasharp_only": false,
-      "expects_error": true
+      "expects_error": false
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/CloseHandlerCannotReenterCloseOfItsOwnCoroutine.lua",
