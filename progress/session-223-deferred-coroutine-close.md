@@ -45,11 +45,14 @@ Review hardening added the remaining boundary rules:
 - Red on the base revision: the reproduction printed `resume false boom 2` and
   `close2 false boom`; reference Lua 5.4/5.5 print `resume false boom 0` and
   `close2 true nil`.
-- Green TUnit: `ProcessorCoroutineCloseTUnitTests` 75/75,
-  `CoroutineModuleTUnitTests` 348/348, full suite `16193/16193`.
+- Green TUnit: `ProcessorCoroutineCloseTUnitTests` 78/78,
+  `CoroutineModuleTUnitTests` 348/348, full suite `16198/16198`.
 - Reference Lua 5.4 and 5.5 outputs match for the new deferred-close,
-  suspended-close, reentrant-close, self-close, self-resume, status, wrap,
-  protected CLR callback, and unprotected CLR callback fixtures.
+  suspended-close, reentrant-close, self-close, cross-coroutine close,
+  self-resume, status, wrap, protected CLR callback, and unprotected CLR
+  callback fixtures.
+- Recycling a failed coroutine with pending close handlers now fails with a
+  diagnostic instead of silently dropping them.
 - Lua comparison 5.1, 5.2, 5.3, and 5.5: zero unexpected mismatches and no
   ratchet changes. Lua 5.4 has the two pre-existing 5.4.4-vs-5.4.7 reference
   deltas (`OperationsUseVersionedIndexingAndLength` and

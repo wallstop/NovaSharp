@@ -1322,6 +1322,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
                 );
                 activeException = closeException;
+                _selfCloseResetRequested = false;
             }
             finally
             {

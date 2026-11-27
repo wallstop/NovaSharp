@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2085,
+  "total_snippets": 2088,
   "novasharp_only": 510,
-  "comparable": 1575,
+  "comparable": 1578,
   "by_version": {
     "5.1": 1035,
     "5.2": 741,
     "5.3": 988,
-    "5.4": 1084,
-    "5.5": 1129
+    "5.4": 1086,
+    "5.5": 1132
   },
   "snippets": [
     {
@@ -23202,6 +23202,38 @@
       ],
       "novasharp_only": false,
       "expects_error": false
+    },
+    {
+      "path": "ProcessorCoroutineCloseTUnitTests/OtherCoroutineCannotCloseCoroutineDuringHandlers.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:733",
+      "test": "ProcessorCoroutineCloseTUnitTests.OtherCoroutineCannotCloseCoroutineDuringHandlers",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ProcessorCoroutineCloseTUnitTests/SelfCloseDuringDeferredCleanupKeepsInnerHandlerError.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:685",
+      "test": "ProcessorCoroutineCloseTUnitTests.SelfCloseDuringDeferredCleanupKeepsInnerHandlerError",
+      "lua_versions": [
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "CoroutineLifecycleTUnitTests/RecycleCoroutineThrowsWhileCloseHandlersArePending.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/CoroutineLifecycleTUnitTests.cs:128",
+      "test": "CoroutineLifecycleTUnitTests.RecycleCoroutineThrowsWhileCloseHandlersArePending",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
     }
   ]
 }

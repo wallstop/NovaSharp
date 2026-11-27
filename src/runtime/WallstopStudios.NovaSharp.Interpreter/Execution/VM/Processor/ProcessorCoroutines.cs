@@ -37,6 +37,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         public LuaValue RecycleCoroutine(Processor mainProcessor, Closure closure)
         {
+            if (_lastCloseFailed && _executionStack.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    "cannot recycle a coroutine with pending close handlers; call coroutine.close first"
+                );
+            }
+
             // Clear the used parts of the stacks to prep for reuse
             _valueStack.ClearUsed();
             _executionStack.ClearUsed();
@@ -286,6 +293,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         public LuaValue CloseCoroutine()
         {
+            Processor caller = ActiveProcessor;
             EnterProcessor();
 
             try
@@ -300,6 +308,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                         _script.CompatibilityVersion
                     );
+                    if (caller != this)
+                    {
+                        throw new ScriptRuntimeException("cannot close a normal coroutine");
+                    }
+
                     if (version >= LuaCompatibilityVersion.Lua55 && _closeUnwindBoundaryDepth >= 0)
                     {
                         _lastCloseError = LuaValue.Nil;
@@ -418,6 +431,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     activeError = closeException.GetCaughtErrorObject(version);
                     failed = true;
+                    _selfCloseResetRequested = false;
                 }
                 finally
                 {

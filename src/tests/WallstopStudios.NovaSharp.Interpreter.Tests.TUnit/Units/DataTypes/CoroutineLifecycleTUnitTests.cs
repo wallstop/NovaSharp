@@ -119,6 +119,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task RecycleCoroutineThrowsWhileCloseHandlersArePending(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            script.DoString(
+                @"
+                function failing()
+                    local pending <close> = setmetatable({}, {
+                        __close = function() error('close failure') end
+                    })
+                    error('failure')
+                end
+
+                function replacement()
+                    return 'recycled'
+                end
+                "
+            );
+
+            LuaValue coroutineValue = script.CreateCoroutineValue(script.Globals.Get("failing"));
+            ScriptRuntimeException resumeException = Assert.Throws<ScriptRuntimeException>(() =>
+                coroutineValue.Coroutine.Resume()
+            );
+            await Assert.That(resumeException.Message).Contains("failure").ConfigureAwait(false);
+
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+                script.RecycleCoroutine(coroutineValue.Coroutine, script.Globals.Get("replacement"))
+            );
+            await Assert
+                .That(exception.Message)
+                .Contains("pending close handlers")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task AutoYieldCounterForcesYieldAndResumesCleanly(
             LuaCompatibilityVersion version
