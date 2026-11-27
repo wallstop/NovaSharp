@@ -658,6 +658,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                                 int argscnt = (int)(_valueStack.Pop().Number);
                                 _valueStack.RemoveLast(argscnt + 1);
                             }
+                            else if (!csi.CallInputsConsumed)
+                            {
+                                // CLR frames keep their function and argument inputs on the value
+                                // stack until the callback returns normally. An error handler resumes
+                                // at the call site, so consume those inputs now to mirror that path.
+                                _valueStack.RemoveLast(csi.ArgumentCount + 1);
+                            }
 
                             CallbackFunction errorHandler = csi.ErrorHandler;
                             SourceRef sourceRef = GetCurrentSourceRef(instructionPtr);
@@ -2377,6 +2384,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 frame.ReturnAddress = instructionPtr;
                 frame.CallingSourceRef = callingSourceRef;
                 frame.BasePointer = -1;
+                frame.ArgumentCount = argsCount;
                 frame.ErrorHandler = handler;
                 frame.Continuation = Continuation;
                 frame.SetErrorHandlerBeforeUnwind(unwindHandler, hasUnwindHandler);
@@ -2420,6 +2428,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
 
                 _valueStack.RemoveLast(argsCount + 1);
+                frame.CallInputsConsumed = true;
                 // The CLR frame still owns the protected handler after its call inputs are consumed.
                 if (ret.Type == DataType.YieldRequest)
                 {

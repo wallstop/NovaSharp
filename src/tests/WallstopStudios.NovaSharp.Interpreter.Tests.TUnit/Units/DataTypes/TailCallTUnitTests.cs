@@ -10,6 +10,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.LuaFixtures;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class TailCallTUnitTests
@@ -769,6 +770,113 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("ciao").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ClrTailTargetErrorHandlerCleansUpCallInputs(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            int calls = 0;
+            int recoveries = 0;
+            int maxTargetArguments = 0;
+
+            LuaValue failing = LuaValue.NewCallback(
+                (_, args) =>
+                {
+                    calls++;
+                    maxTargetArguments = Math.Max(maxTargetArguments, args.Count);
+                    throw new ScriptRuntimeException("tail target failed");
+                }
+            );
+            LuaValue bridge = NewTailCallBridge(
+                failing,
+                new CallbackFunction(
+                    (_, _) =>
+                    {
+                        recoveries++;
+                        return LuaValue.NewString("recovered");
+                    }
+                )
+            );
+            LuaValue zeroBridge = NewTailCallBridge(
+                failing,
+                new CallbackFunction(
+                    (_, _) =>
+                    {
+                        recoveries++;
+                        return LuaValue.Void;
+                    }
+                )
+            );
+            LuaValue argsBridge = LuaValue.NewCallback(
+                (_, _) =>
+                    LuaValue.NewTailCallReq(
+                        new TailCallData
+                        {
+                            Function = failing,
+                            Args = new[] { LuaValue.NewString("a"), LuaValue.NewString("b") },
+                            ErrorHandler = new CallbackFunction(
+                                (_, _) =>
+                                {
+                                    recoveries++;
+                                    return LuaValue.NewString("recovered");
+                                }
+                            ),
+                        }
+                    )
+            );
+            Table callable = new(script);
+            Table callableMeta = new(script)
+            {
+                ["__call"] = LuaValue.NewCallback(
+                    (_, _) =>
+                    {
+                        calls++;
+                        throw new ScriptRuntimeException("tail target failed");
+                    }
+                ),
+            };
+            callable.MetaTable = callableMeta;
+            LuaValue callBridge = NewTailCallBridge(
+                LuaValue.NewTable(callable),
+                new CallbackFunction(
+                    (_, _) =>
+                    {
+                        recoveries++;
+                        return LuaValue.NewString("recovered");
+                    }
+                )
+            );
+
+            script.Globals.Set("bridge", bridge);
+            script.Globals.Set("zeroBridge", zeroBridge);
+            script.Globals.Set("argsBridge", argsBridge);
+            script.Globals.Set("callBridge", callBridge);
+
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<TailCallTUnitTests>()
+                .RunFixture(script);
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("recovered|recovered|0")
+                .ConfigureAwait(false);
+            await Assert.That(calls).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(recoveries).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(maxTargetArguments).IsEqualTo(2).ConfigureAwait(false);
+        }
+
+        private static LuaValue NewTailCallBridge(LuaValue target, CallbackFunction errorHandler)
+        {
+            return LuaValue.NewCallback(
+                (_, _) =>
+                    LuaValue.NewTailCallReq(
+                        new TailCallData { Function = target, ErrorHandler = errorHandler }
+                    )
+            );
         }
     }
 }

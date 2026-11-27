@@ -90,7 +90,6 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
    [NUL handling in numeric callback arguments](https://github.com/Ambiguous-Interactive/NovaSharp/issues/192),
    [native file userdata metatables](https://github.com/Ambiguous-Interactive/NovaSharp/issues/212),
    [protected calls to coroutine.yield](https://github.com/Ambiguous-Interactive/NovaSharp/issues/217),
-   [CLR tail-call error cleanup](https://github.com/Ambiguous-Interactive/NovaSharp/issues/218),
    [legacy sort comparator side effects](https://github.com/Ambiguous-Interactive/NovaSharp/issues/207),
    [plain integer sort throughput](https://github.com/Ambiguous-Interactive/NovaSharp/issues/208),
    other error formats, `__gc`, Lua 5.4 garbage collector options,

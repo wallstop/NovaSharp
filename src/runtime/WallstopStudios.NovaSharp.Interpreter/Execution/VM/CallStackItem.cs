@@ -79,6 +79,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         public int BasePointer { get; set; }
 
         /// <summary>
+        /// Number of arguments supplied to a CLR callback frame. CLR frames keep their call inputs
+        /// on the value stack until the callback returns, so error unwinding needs the count to
+        /// mirror the normal-return cleanup.
+        /// </summary>
+        internal int ArgumentCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether the CLR callback's function and argument inputs have already been
+        /// removed from the value stack. A forced-yield validation failure happens after that
+        /// cleanup, so unwinding must not remove the slots a second time.
+        /// </summary>
+        internal bool CallInputsConsumed { get; set; }
+
+        /// <summary>
         /// Instruction pointer used when returning to the caller.
         /// </summary>
         public int ReturnAddress { get; set; }
@@ -130,6 +144,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             SetErrorHandlerBeforeUnwind(LuaValue.Nil, hasHandler: false);
             ErrorHandlerBeforeUnwindInProgress = false;
             BasePointer = 0;
+            ArgumentCount = 0;
+            CallInputsConsumed = false;
             ReturnAddress = 0;
             DiscardResult = false;
             if (LocalScope != null)
