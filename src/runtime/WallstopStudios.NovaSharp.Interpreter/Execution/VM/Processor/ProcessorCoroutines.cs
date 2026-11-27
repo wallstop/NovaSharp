@@ -454,6 +454,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             );
             LuaValue activeError = initialError;
             bool failed = false;
+            _selfCloseStarted = false;
             _selfCloseFailed = false;
 
             while (_executionStack.Count > 0)

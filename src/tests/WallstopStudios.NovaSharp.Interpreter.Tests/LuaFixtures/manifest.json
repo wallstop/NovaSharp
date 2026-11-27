@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2094,
+  "total_snippets": 2096,
   "novasharp_only": 510,
-  "comparable": 1584,
+  "comparable": 1586,
   "by_version": {
     "5.1": 1036,
     "5.2": 742,
     "5.3": 989,
-    "5.4": 1090,
-    "5.5": 1138
+    "5.4": 1092,
+    "5.5": 1140
   },
   "snippets": [
     {
@@ -23282,7 +23282,7 @@
     },
     {
       "path": "ProcessorCoroutineCloseTUnitTests/SelfCloseAfterPriorHandlerErrorResetsCloserError.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:790",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:839",
       "test": "ProcessorCoroutineCloseTUnitTests.SelfCloseAfterPriorHandlerErrorResetsCloserError",
       "lua_versions": [
         "5.4",
@@ -23295,6 +23295,28 @@
       "path": "ProcessorCoroutineCloseTUnitTests/SelfCloseAfterNestedBlockErrorPreservesCloseFailure.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:790",
       "test": "ProcessorCoroutineCloseTUnitTests.SelfCloseAfterNestedBlockErrorPreservesCloseFailure",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ProcessorCoroutineCloseTUnitTests/SelfCloseDuringDrainClearsLaterError.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:837",
+      "test": "ProcessorCoroutineCloseTUnitTests.SelfCloseDuringDrainClearsLaterError",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ProcessorCoroutineCloseTUnitTests/SelfCloseInsideNestedHandlerKeepsAncestorFrameAlive.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:839",
+      "test": "ProcessorCoroutineCloseTUnitTests.SelfCloseInsideNestedHandlerKeepsAncestorFrameAlive",
       "lua_versions": [
         "5.4",
         "5.5"

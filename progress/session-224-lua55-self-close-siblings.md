@@ -28,10 +28,11 @@ leaves the frame. The active close-block frame is kept alive until the siblings 
 the self-close unwind no longer returns it to the call-stack pool while its local
 slots are still in use.
 
-The self-close also resets the error passed to the aborted closers, matching Lua 5.5,
-while preserving the fact that an earlier handler failure still makes
-`coroutine.close` report failure. A later sibling error replaces the reset error.
-Lua 5.4 continues to report the running-coroutine error and to pass that error to the
+The self-close also resets the error passed to the aborted closers, matching Lua 5.5.
+The first self-close preserves a failure that happened before it, while a later
+self-close during the sibling drain clears errors raised since the first one. A
+sibling error that remains after the last self-close replaces the reset error. Lua
+5.4 continues to report the running-coroutine error and to pass that error to the
 remaining closers.
 
 ## Evidence
@@ -43,11 +44,12 @@ remaining closers.
   still prints `false <cannot close a running coroutine>` with the same
   `outer-start,b,a` log.
 - Paired regression tests (Lua 5.4 and 5.5) cover the reported sibling drain, a
-  prior-handler-error reset in the same block, and a prior nested-block error that
-  must still make the close report failure; the generated fixtures match PUC Lua
-  byte-for-byte.
-- `ProcessorCoroutineCloseTUnitTests`: 86/86.
-- `-c Coroutine` filter: 785/785. Full TUnit suite: 16211/16211.
+  prior-handler-error reset in the same block, a prior nested-block error that must
+  still make the close report failure, a repeated self-close during the drain
+  clearing a later error, and a nested handler whose ancestor frame still owns
+  detached closers. The generated fixtures match PUC Lua byte-for-byte.
+- `ProcessorCoroutineCloseTUnitTests`: 90/90.
+- `-c Coroutine` filter: 785/785. Full TUnit suite: 16215/16215.
 - Lua comparison 5.1, 5.2, 5.3, 5.5: zero unexpected mismatches and no both-error
   ratchet additions. Lua 5.4 has only the two pre-existing 5.4.4-vs-5.4.7 reference
   deltas (`OperationsUseVersionedIndexingAndLength` and

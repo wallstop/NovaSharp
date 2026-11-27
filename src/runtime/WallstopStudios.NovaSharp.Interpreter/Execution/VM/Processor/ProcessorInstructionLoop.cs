@@ -1263,23 +1263,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 catch (CoroutineSelfCloseException)
                 {
+                    // The first self-close preserves a failure that happened
+                    // before it, but every self-close resets the error seen by
+                    // the closers it aborts. Later self-closes during the drain
+                    // therefore clear errors raised since the first one.
+                    if (!_selfCloseStarted)
+                    {
+                        _selfCloseStarted = true;
+                        if (closeException != null)
+                        {
+                            _selfCloseFailed = true;
+                        }
+                    }
+
+                    activeError = LuaValue.Nil;
+                    closeException = null;
+
                     if (drainSelfClose)
                     {
                         // Another closer requested its own self-close; it must
                         // not skip the closers that remain in this block.
                         continue;
                     }
-
-                    // The self-close resets the error passed to the closers it
-                    // aborts, but it does not erase an earlier handler failure
-                    // from the close result.
-                    if (closeException != null)
-                    {
-                        _selfCloseFailed = true;
-                    }
-
-                    activeError = LuaValue.Nil;
-                    closeException = null;
 
                     // A Lua 5.5 self-close aborts the handler that requested it,
                     // but the closers already detached with this block must
@@ -1403,9 +1408,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     throw;
                 }
 
-                if (activeException != null)
+                if (!_selfCloseStarted)
                 {
-                    _selfCloseFailed = true;
+                    _selfCloseStarted = true;
+                    if (activeException != null)
+                    {
+                        _selfCloseFailed = true;
+                    }
                 }
 
                 activeError = LuaValue.Nil;
