@@ -724,6 +724,177 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelfCloseInsideNestedBlockDrainsRemainingSiblings(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local task
+                task = coroutine.create(function()
+                    local outer <close> = setmetatable({}, {
+                        __close = function()
+                            log[#log + 1] = 'outer-start'
+                            do
+                                local a <close> = setmetatable({}, {
+                                    __close = function(_, err)
+                                        log[#log + 1] = 'a:' .. (err == nil and 'nil' or 'error')
+                                    end
+                                })
+                                local b <close> = setmetatable({}, {
+                                    __close = function()
+                                        log[#log + 1] = 'b'
+                                        coroutine.close(task)
+                                    end
+                                })
+                            end
+                            log[#log + 1] = 'outer-after'
+                        end
+                    })
+                    coroutine.yield('pause')
+                end)
+
+                local resumed, paused = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, paused)
+                print('close', closed, closeError ~= nil)
+                print('log', table.concat(log, ','))
+
+                return resumed, paused, closed, closeError ~= nil, table.concat(log, ',')
+                "
+            );
+
+            bool isLua55 = version == LuaCompatibilityVersion.Lua55;
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsEqualTo(isLua55);
+            await Assert.That(result.Tuple[3].Boolean).IsEqualTo(!isLua55);
+            await Assert
+                .That(result.Tuple[4].String)
+                .IsEqualTo(isLua55 ? "outer-start,b,a:nil" : "outer-start,b,a:error");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelfCloseAfterNestedBlockErrorPreservesCloseFailure(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local task
+                task = coroutine.create(function()
+                    local outer <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'outer:' .. (err == nil and 'nil' or 'error')
+                            coroutine.close(task)
+                        end
+                    })
+                    do
+                        local inner <close> = setmetatable({}, {
+                            __close = function(_, err)
+                                log[#log + 1] = 'inner:' .. (err == nil and 'nil' or 'error')
+                                error('innerboom', 0)
+                            end
+                        })
+                        coroutine.yield('pause')
+                    end
+                end)
+
+                local resumed, paused = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, paused)
+                print('close', closed, closeError == nil)
+                print('log', table.concat(log, ','))
+
+                return resumed, paused, closed, closeError == nil, table.concat(log, ',')
+                "
+            );
+
+            bool isLua55 = version == LuaCompatibilityVersion.Lua55;
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].Boolean).IsEqualTo(isLua55);
+            await Assert.That(result.Tuple[4].String).IsEqualTo("inner:nil,outer:error");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelfCloseAfterPriorHandlerErrorResetsCloserError(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local task
+                task = coroutine.create(function()
+                    local outer <close> = setmetatable({}, {
+                        __close = function()
+                            log[#log + 1] = 'outer-start'
+                            do
+                                local a <close> = setmetatable({}, {
+                                    __close = function(_, err)
+                                        log[#log + 1] = 'a:' .. (err == nil and 'nil' or 'error')
+                                    end
+                                })
+                                local b <close> = setmetatable({}, {
+                                    __close = function(_, err)
+                                        log[#log + 1] = 'b:' .. (err == nil and 'nil' or 'error')
+                                        coroutine.close(task)
+                                    end
+                                })
+                                local c <close> = setmetatable({}, {
+                                    __close = function(_, err)
+                                        log[#log + 1] = 'c:' .. (err == nil and 'nil' or 'error')
+                                        error('cboom', 0)
+                                    end
+                                })
+                            end
+                            log[#log + 1] = 'outer-after'
+                        end
+                    })
+                    coroutine.yield('pause')
+                end)
+
+                local resumed, paused = coroutine.resume(task)
+                local closed, closeError = coroutine.close(task)
+
+                print('resume', resumed, paused)
+                print('close', closed, closeError == nil)
+                print('log', table.concat(log, ','))
+
+                return resumed, paused, closed, closeError == nil, table.concat(log, ',')
+                "
+            );
+
+            bool isLua55 = version == LuaCompatibilityVersion.Lua55;
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("pause");
+            await Assert.That(result.Tuple[2].Boolean).IsFalse();
+            await Assert.That(result.Tuple[3].Boolean).IsEqualTo(isLua55);
+            await Assert
+                .That(result.Tuple[4].String)
+                .IsEqualTo(
+                    isLua55
+                        ? "outer-start,c:nil,b:error,a:nil"
+                        : "outer-start,c:nil,b:error,a:error"
+                );
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task SelfCloseClearsPriorHandlerErrorBeforeSiblings(
             LuaCompatibilityVersion version

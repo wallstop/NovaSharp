@@ -347,7 +347,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         _selfCloseResetRequested = true;
                         while (_executionStack.Count > _closeUnwindBoundaryDepth)
                         {
-                            CallStackItem frame = PopToBasePointer();
+                            CallStackItem frame = _executionStack.Peek();
+                            if (object.ReferenceEquals(frame, _closeBlockFrame))
+                            {
+                                // The active close block still has detached
+                                // siblings to drain; the outer unwind closes
+                                // this frame after they finish.
+                                break;
+                            }
+
+                            PopToBasePointer();
                             try
                             {
                                 CloseAllPendingBlocks(frame, LuaValue.Nil);
@@ -445,6 +454,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             );
             LuaValue activeError = initialError;
             bool failed = false;
+            _selfCloseFailed = false;
 
             while (_executionStack.Count > 0)
             {
@@ -467,6 +477,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     {
                         activeError = LuaValue.Nil;
                         _selfCloseResetRequested = false;
+                    }
+
+                    if (_selfCloseFailed)
+                    {
+                        failed = true;
+                        _selfCloseFailed = false;
                     }
 
                     _closeUnwindBoundaryDepth = previousBoundaryDepth;
