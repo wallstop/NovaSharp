@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795766334756,
+  "lastUpdate": 1795807990462,
   "repoUrl": "https://github.com/Ambiguous-Interactive/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -5470,6 +5470,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 916.64,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "285e6a20b0e810e597c50ee251e422c8ebcafa7d",
+          "message": "Clean up CLR tail-call inputs before error-handler results (#233)\n\n## Summary\n\nFixes\n[#218](https://github.com/Ambiguous-Interactive/NovaSharp/issues/218): a\nCLR callback frame that fails before its normal return left the target\nfunction and arguments on the VM value stack. The error handler resumed\nat the call site, so the next Lua call could treat the stale target as\nits callee (issue reproduction reported `calls=2` and a second `tail\ntarget failed`).\n\n- Record the argument count on CLR frames and consume `function +\narguments` when an error handler resumes at the call site.\n- Track whether the normal-return path already consumed those inputs. A\nforced-yield validation failure happens after that cleanup, and\nunwinding must not remove the slots a second time.\n- Add a NovaSharp-only host fixture and TUnit coverage across all five\nLua profiles for:\n  - a thrown CLR tail target recovered by its error handler,\n  - a zero-result recovery,\n  - a target called with forwarded arguments,\n  - a callable-table `__call` tail target,\n  - an operator metamethod tail call,\n- surrounding caller arguments and a surrounding-expression result\ncount.\n\n## Validation\n\n- Red before the fix: the new host fixture threw `tail target failed`\nfor both a direct `bridge()` call and an `object + object` metamethod\ncall.\n- With only the input cleanup, the existing\n`UnaryMetamethodTUnitTests.CallbackCannotForwardChildAutoYield` cases\nfailed with `attempt to call a number value`, proving the forced-yield\npath needed the consumed-input guard; those cases now pass.\n- Full TUnit suite: 16245/16245.\n- Focused suites: `TailCallTUnitTests` 117/117,\n`UnaryMetamethodTUnitTests` 23/23, `ErrorHandlingModuleTUnitTests`\n183/183, `CoroutineModuleTUnitTests` 348/348,\n`ProcessorCoroutineCloseTUnitTests` 106/106.\n- Lua comparison: zero unexpected mismatches on Lua 5.1, 5.2, 5.3, 5.5,\nand a locally built Lua 5.4.7. The host `lua5.4` is 5.4.4 and shows only\nthe two pre-existing 5.4.4-vs-5.4.7 deltas recorded in session 224.\n- Corpus extraction reports 2104 snippets and leaves `manifest.json`\nunchanged; the host fixture is intentionally NovaSharp-only and runs\nthrough the TUnit test.\n- `bash ./scripts/dev/pre-commit.sh` completed successfully.\n\n## Follow-up\n\nAdversarial review found a pre-existing reentrancy bug outside this\nslice: a protected CLR tail target that calls back into Lua and fails\ncan resume the outer frame inside the nested `ProcessingLoop`, then the\nouter normal-return path removes the inputs again. It reproduces an\n`IndexOutOfRangeException` on `main` and on this branch. Exact\nreproduction and acceptance criteria are tracked in\n[#232](https://github.com/Ambiguous-Interactive/NovaSharp/issues/232).\n\nProgress: `progress/session-226-clr-tail-call-error-cleanup.md`.\n\nFixes #218.",
+          "timestamp": "2026-11-27T11:27:54-08:00",
+          "tree_id": "e220fd98e794b007a7488ac498efbb789255c276",
+          "url": "https://github.com/Ambiguous-Interactive/NovaSharp/commit/285e6a20b0e810e597c50ee251e422c8ebcafa7d"
+        },
+        "date": 1795807990138,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 392.702,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 425.538,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 420.827,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 613.416,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 672.405,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 638.334,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 647.845,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 743.127,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 718.582,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 687.492,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 761.872,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 762.403,
             "unit": "ns",
             "extra": ""
           }
