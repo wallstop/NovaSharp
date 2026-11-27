@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795723834641,
+  "lastUpdate": 1795744330395,
   "repoUrl": "https://github.com/Ambiguous-Interactive/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -5182,6 +5182,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 637.743,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7a0d96a3c4803fa235fd2ac187f1cf42b1383c32",
+          "message": "Defer coroutine close handlers until coroutine.close (#224)\n\n## Summary\n\n- Preserve a failed coroutine's pending `<close>` handlers until\n`coroutine.close`, matching Lua 5.4–5.5.\n- Run deferred handlers with the original error object, continue through\nouter frames after a handler raises, and report the replacement error.\n- Drain every pending frame when closing a suspended coroutine and make\na repeated close report success instead of replaying the earlier\nfailure.\n- Add the `github-interaction` workflow adopted from the sibling\nDoxReloaded and IshoBoy repositories: connector/MCP first, one paginated\ninventory, one CI watch, read-after-ambiguous-write, and no credential\noutput.\n- Advance `PLAN.md` by removing the completed #174 cleanup item.\n\n## Verification\n\n- Red on base: reproduction printed `resume false boom 2` and `close2\nfalse boom`; reference Lua 5.4/5.5 print `resume false boom 0` and\n`close2 true nil`.\n- `ProcessorCoroutineCloseTUnitTests`: 64/64.\n- Full TUnit suite: 16169/16169.\n- New Lua fixtures match reference Lua 5.4 and 5.5.\n- Lua comparison 5.1, 5.2, 5.3, 5.5: zero unexpected mismatches and no\nboth-error ratchet changes.\n- Lua comparison 5.4: only the two pre-existing 5.4.4-vs-5.4.7 reference\ndeltas (`OperationsUseVersionedIndexingAndLength`,\n`GenericForClosingValueFollowsLexicalExitOrder`).\n- `bash ./scripts/dev/pre-commit.sh`: passed.\n- Pre-push was bypassed after its repository-wide Markdown check failed\nonly on pre-existing untracked `.opencode/node_modules` and `scratch/`\nfiles; staged Markdown passed the commit hook.\n\nFixes #174.",
+          "timestamp": "2026-11-26T17:46:53-08:00",
+          "tree_id": "3189567287e49f8e3bcfe783b0ebdf2008a25e35",
+          "url": "https://github.com/Ambiguous-Interactive/NovaSharp/commit/7a0d96a3c4803fa235fd2ac187f1cf42b1383c32"
+        },
+        "date": 1795744329935,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 331.131,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 355.274,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 355.539,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 492.639,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 543.287,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 538.664,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 547.963,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 604.282,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 587.823,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 566.517,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 689.559,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 655.021,
             "unit": "ns",
             "extra": ""
           }
