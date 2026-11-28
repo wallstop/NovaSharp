@@ -567,6 +567,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseDuringUnwindRunsPoppedFrameBlocksInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(values[6].String).IsEqualTo("b:boom,a:nil").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseDuringUnwindResetsPriorFailureInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert
+                .That(values[6].String)
+                .IsEqualTo("b:boom,a:nil,c:a-boom")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task NormalCoroutineCloseIsRejected(LuaCompatibilityVersion version)

@@ -55,6 +55,10 @@ be nil when the error object was already consumed).
   later close result, but the pending resume error still wins. A nested
   self-close during that drain resets the error and keeps closing remaining
   blocks, matching Lua's repeat-until-clean close loop.
+- When error unwinding has already popped a frame, `CloseAllPendingBlocks`
+  continues through that frame's remaining blocks before letting the abort
+  escape, because the popped frame is no longer reachable from the execution
+  stack. A later self-close in one of those blocks resets the carried failure.
 - Closing a running ancestor coroutine (`caller != this`) now reports Lua's
   "cannot close a normal coroutine" instead of the running-coroutine error.
 
@@ -79,19 +83,25 @@ be nil when the error object was already consumed).
   `RunningCoroutineSelfCloseAgainDuringHandlerDrainResetsErrorInLua55` (a second
   self-close discards the error raised while draining),
   `RunningCoroutineSelfCloseAgainDuringHandlerDrainKeepsLaterFailureInLua55`
-  (a failure raised after that reset still surfaces), and
+  (a failure raised after that reset still surfaces),
+  `RunningCoroutineSelfCloseDuringUnwindRunsPoppedFrameBlocksInLua55` (every
+  block of a popped frame closes before the abort escapes), and
+  `RunningCoroutineSelfCloseDuringUnwindResetsPriorFailureInLua55` (a later
+  self-close in the popped frame resets the carried failure), plus
   `RunningCoroutineSelfCloseHandlerFrameErrorReachesOuterHandlersInLua55`
   (drained-frame error propagation to outer handlers).
 - Lua 5.4 counterpart: `CloseRunningCoroutineThrows` now runs only under 5.4
   and asserts the rejected self-close plus the deferred final handler.
   `NormalCoroutineCloseIsRejected` covers 5.4/5.5.
-- Focused suites: `ProcessorCoroutineCloseTUnitTests` 131/131,
+- Focused suites: `ProcessorCoroutineCloseTUnitTests` 133/133,
   corpus classes containing `Coroutine` 838/838, `TailCall` 127/127.
 - Corpus extraction reports 2113 registered snippets; the hand-authored
   fixtures are intentionally outside the manifest. The stale auto-generated
   `CloseRunningCoroutineThrows.lua` entry (which inferred 5.1) was removed.
-- Lua comparison for the changed fixtures: 11/11 matches on 5.5 and 2/2 on 5.4,
+- Lua comparison for the changed fixtures: 13/13 matches on 5.5 and 2/2 on 5.4,
   with no mismatches, Lua-only, Nova-only, or unexpected error entries.
-- Full 5.5 corpus through the CI batch runner: 1168 matches, 0 mismatches,
+- Full 5.5 corpus through the CI batch runner: 1170 matches, 0 mismatches,
   314 unchanged both-error entries, 1 removed, 0 new/changed/missing.
-- Full TUnit suite: 16308/16308.
+- Full 5.4 corpus against Lua 5.4.7: 1121 matches, 0 mismatches with an
+  unchanged both-error ratchet (1 removed, 0 new/changed/missing).
+- Full TUnit suite: 16310/16310.

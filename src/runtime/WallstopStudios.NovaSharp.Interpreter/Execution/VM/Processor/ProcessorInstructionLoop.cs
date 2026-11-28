@@ -1447,6 +1447,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             LuaValue activeError = error;
             ScriptRuntimeException closeException = null;
+            CoroutineSelfCloseException abort = null;
             while (stackframe.BlocksToClose.Count > 0)
             {
                 List<SymbolRef> closers = stackframe.BlocksToClose[^1];
@@ -1477,6 +1478,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         decorateCloseErrorsBeforeUnwind
                     );
                 }
+                catch (CoroutineSelfCloseException selfCloseException)
+                    when (selfCloseException.AbortResume)
+                {
+                    // The frame is already popped from the execution stack, so this is the
+                    // last chance to run its remaining blocks. Lua resets the error seen by
+                    // the handlers the self-close aborts, then keeps closing.
+                    abort = selfCloseException;
+                    closeException = null;
+                    activeError =
+                        selfCloseException.CloseError != null
+                            ? selfCloseException.CloseError.GetCaughtErrorObject(
+                                LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                            )
+                            : LuaValue.Nil;
+                }
                 finally
                 {
                     ListPool<SymbolRef>.Return(closers);
@@ -1484,6 +1500,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             stackframe.ToBeClosedIndices?.Clear();
+
+            if (abort != null)
+            {
+                if (closeException != null)
+                {
+                    abort.CloseError = closeException;
+                }
+
+                throw abort;
+            }
 
             if (closeException != null)
             {
