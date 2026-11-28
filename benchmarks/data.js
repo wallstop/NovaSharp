@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795850110869,
+  "lastUpdate": 1795853748870,
   "repoUrl": "https://github.com/Ambiguous-Interactive/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -5758,6 +5758,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 534.089,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c25548ae54b256ac86155ce7a61568b3b4d160cd",
+          "message": "Use stack-only arguments for table iterators (#238)\n\n## Summary\n\nMigrate `TableIteratorsModule` (`next`, `pairs`, `ipairs`, and the\ninternal `!!next_i!!` array iterator) to stack-only\n`CallbackArgumentsView` entry points. The reflection binder selects the\nview overload for `next`, and the custom iterator callbacks are created\nwith `NewCallbackView`, so no legacy `CallbackArguments` wrapper is\nmaterialized per call. Public legacy overloads remain as thin wrappers;\nno new public surface was added and no behavior changed.\n\nMeasured on Lua 5.5 over 200,000 `next` calls: **400.144 B/call before,\n136.144 B/call after (-66%)**.\n\n## Testing\n\n- `dotnet build src/NovaSharp.sln -c Release -nologo` — succeeded, 0\nwarnings, 0 errors.\n- `./scripts/test/quick.sh -c TableIteratorsModule --full` — 11/11\npassed.\n- `./scripts/test/quick.sh` — 16325/16325 passed.\n- Allocation regression test\n`NextCallsUseStackOnlyArgumentsWithoutWrapperAllocations`: fails at\n400.144 B/call on the legacy path, passes at 136.144 B/call with the\nchange.\n- `RegisteredTableIteratorsUseArgumentViews` asserts `next`, `pairs`,\n`ipairs`, and the iterator returned by `pairs`/`ipairs` all carry\n`HasArgumentViewCallback` across Lua 5.1–5.5.\n- Full Lua 5.5 corpus against PUC Lua 5.5.0: 1174 matches, 0 mismatches,\n0 Lua-only, 0 Nova-only, 314 unchanged both-error entries, 1 removed.\n- Full Lua 5.4 corpus against the host `/usr/bin/lua5.4` (5.4.4): 1120\nmatches and the same 2 pre-existing mismatches with and without this\nchange (`OperationsUseVersionedIndexingAndLength`,\n`GenericForClosingValueFollowsLexicalExitOrder`); the project reference\nis Lua 5.4.7, so this is host-version variance.\n- Corpus extraction regenerated 2115 snippets; the two new generated\nfixtures are listed in `manifest.json` and `python3\ntools/test_lua_fixture_metadata.py` passes 6/6.\n- `bash ./scripts/dev/pre-commit.sh` — passed (CSharpier, markdown,\naudits, PLAN hygiene, skill index).\n- PR CI is pending on this commit.\n\n## Analyzer Coverage\n\n- [x] Ran `dotnet build src/NovaSharp.sln -c Release -nologo` —\nsucceeded with 0 warnings and 0 errors.\n- Additional analyzer/build/test commands: `./scripts/build/quick.sh`,\n`./scripts/test/quick.sh`, `./scripts/dev/pre-commit.sh`, and the Lua\ncomparison harness listed above.\n\n## Checklist\n\n- [x] Updated `PLAN.md` (removed `TableIterators` from the remaining A5\nCoreLib migration list) and added\n`progress/session-229-table-iterator-argument-views.md`.\n- [x] No helper scripts were added or modified.\n- [x] Exact local verification commands and results are listed above.\n- [x] PR CI was not run before opening; it is the next gate. Benchmark\nand Lua comparison sticky comments will be reviewed when available.\n- [ ] Benchmark comparison/Lua comparison PR comments reviewed after CI\nupdates.",
+          "timestamp": "2026-11-28T00:10:21-08:00",
+          "tree_id": "dec4d11676513ce5388cb2dda727519c9811fae4",
+          "url": "https://github.com/Ambiguous-Interactive/NovaSharp/commit/c25548ae54b256ac86155ce7a61568b3b4d160cd"
+        },
+        "date": 1795853748392,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 342.593,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 379.739,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 376.856,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 553.948,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 544.145,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 537.24,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 545.698,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 600.692,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 592.503,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 595.735,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 625.181,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 652.221,
             "unit": "ns",
             "extra": ""
           }
