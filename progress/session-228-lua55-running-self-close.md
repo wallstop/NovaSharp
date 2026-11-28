@@ -92,6 +92,9 @@ be nil when the error object was already consumed).
   failure wins over later ones), and
   `RunningCoroutineSelfCloseHandlerFrameErrorReachesOuterHandlersInLua55`
   (drained-frame error propagation to outer handlers).
+- Host catch guard: `HostCaughtRunningSelfCloseStillAborts` (NovaSharp-only)
+  injects a host callback that catches the internal abort exception and then
+  verifies the coroutine still aborts with empty stacks.
 - Lua 5.4 counterpart: `CloseRunningCoroutineThrows` now runs only under 5.4
   and asserts the rejected self-close plus the deferred final handler.
   `CloseWithoutArgumentRequiresCoroutineInLua54` keeps the 5.4 argument
@@ -99,7 +102,14 @@ be nil when the error object was already consumed).
 - Lua 5.5 accepts an omitted `coroutine.close` argument as the running
   coroutine (`RunningCoroutineCloseWithoutArgumentSelfClosesInLua55`);
   `CoroutineModule.Close` only applies that default under 5.5.
-- Focused suites: `ProcessorCoroutineCloseTUnitTests` 136/136,
+- Host catch guard: `Processor.Call`/`CallChunkCore` mark a pending abort only
+  at host boundaries, `InternalExecCall` and `CompleteDirectClrCall` rethrow it
+  after the host callback returns, and the marker is cleared before the rethrow
+  so close-handler callbacks cannot re-fire it.
+  `HostCaughtRunningSelfCloseStillAborts` injects a host callback that catches
+  `CoroutineSelfCloseException`, then asserts the abort still completes with
+  empty execution and value stacks.
+- Focused suites: `ProcessorCoroutineCloseTUnitTests` 137/137,
   corpus classes containing `Coroutine` 838/838, `TailCall` 127/127.
 - Corpus extraction reports 2113 registered snippets; the hand-authored
   fixtures are intentionally outside the manifest. The stale auto-generated
@@ -110,7 +120,6 @@ be nil when the error object was already consumed).
   314 unchanged both-error entries, 1 removed, 0 new/changed/missing.
 - Full 5.4 corpus against Lua 5.4.7: 1122 matches, 0 mismatches with an
   unchanged both-error ratchet (1 removed, 0 new/changed/missing).
-- Full TUnit suite: 16313/16313.
 
 ## Review follow-ups
 
@@ -130,8 +139,9 @@ be nil when the error object was already consumed).
   latest rather than first close-handler failure was retained (fixed by
   tracking the first failure in the `CloseClosersFrom` pass).
 - The remaining adversarial finding — host callbacks can catch the internal
-  abort exception and leave nested frames on the execution stack — is tracked
-  in [#237](https://github.com/Ambiguous-Interactive/NovaSharp/issues/237) and
-  listed in `PLAN.md`. A first attempt to guard the CLR callback boundary was
-  reverted because it re-fired the stale abort during the close drain and broke
-  the fixture suite; the issue records the proposed pending-abort design.
+  abort exception and leave nested frames on the execution stack — is fixed by
+  marking pending aborts only at host boundaries and rethrowing them after the
+  callback returns. `HostCaughtRunningSelfCloseStillAborts` covers the catch
+  case and asserts both stacks are empty; a stale marker is cleared before the
+  rethrow so close-handler callbacks cannot re-fire it.
+- Full TUnit suite: 16314/16314.

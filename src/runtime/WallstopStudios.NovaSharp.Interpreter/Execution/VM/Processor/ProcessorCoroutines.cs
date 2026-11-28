@@ -49,6 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             _executionStack.ClearUsed();
             _discardResumeResult = false;
             _abortResetDuringUnwind = false;
+            _pendingResumeAbort = null;
 
             // Create a new processor instance, recycling this one
             Processor p = new(mainProcessor, this);
@@ -398,6 +399,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             catch (CoroutineSelfCloseException selfCloseException)
                 when (selfCloseException.AbortResume)
             {
+                _pendingResumeAbort = null;
                 LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                     _script.CompatibilityVersion
                 );

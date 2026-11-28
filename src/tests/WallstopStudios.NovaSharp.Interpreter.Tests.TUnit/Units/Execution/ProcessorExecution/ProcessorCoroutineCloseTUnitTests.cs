@@ -670,6 +670,86 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task HostCaughtRunningSelfCloseStillAborts(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            int caught = 0;
+            script.Globals.Set(
+                "hostcall",
+                LuaValue.NewCallback(
+                    (_, args) =>
+                    {
+                        try
+                        {
+                            return script.Call(args[0]);
+                        }
+                        catch (Processor.CoroutineSelfCloseException)
+                        {
+                            caught++;
+                            return LuaValue.Nil;
+                        }
+                    }
+                )
+            );
+            script.Globals.Set(
+                "hostclose",
+                LuaValue.NewCallback(
+                    (_, _) =>
+                    {
+                        try
+                        {
+                            script.Call(script.Globals.Get("closeSelf3"));
+                        }
+                        catch (Processor.CoroutineSelfCloseException)
+                        {
+                            caught++;
+                        }
+
+                        try
+                        {
+                            script.Call(script.Globals.Get("afterClose3"));
+                        }
+                        catch (Processor.CoroutineSelfCloseException)
+                        {
+                            caught++;
+                        }
+
+                        return LuaValue.Nil;
+                    }
+                )
+            );
+
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            for (int index = 0; index < 9; index += 4)
+            {
+                await Assert.That(values[index].Boolean).IsTrue().ConfigureAwait(false);
+                await Assert.That(values[index + 1].IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(values[index + 2].Boolean).IsTrue().ConfigureAwait(false);
+                await Assert.That(values[index + 3].IsNil).IsTrue().ConfigureAwait(false);
+            }
+
+            await Assert.That(values[12].String).IsEqualTo("close1,close2").ConfigureAwait(false);
+            await Assert.That(caught).IsEqualTo(5).ConfigureAwait(false);
+            for (int index = 13; index < 16; index++)
+            {
+                Processor processor = values[index].Coroutine.GetProcessorForTests();
+                await Assert
+                    .That(processor.GetExecutionStackForTests().Count)
+                    .IsEqualTo(0)
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(processor.GetValueStackForTests().Count)
+                    .IsEqualTo(0)
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task NormalCoroutineCloseIsRejected(LuaCompatibilityVersion version)

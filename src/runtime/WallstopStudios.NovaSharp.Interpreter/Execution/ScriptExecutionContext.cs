@@ -1446,6 +1446,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         {
             while (true)
             {
+                // A host callback may have caught a self-close abort and returned; rethrow it
+                // before this direct CLR call result is accepted.
+                _processor.ThrowPendingResumeAbort();
+
                 if (ret.Type == DataType.YieldRequest)
                 {
                     throw ScriptRuntimeException.CannotYield();
