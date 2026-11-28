@@ -15,8 +15,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public static class TableIteratorsModule
     {
-        private static readonly LuaValue PairsFunction = LuaValue.NewCallback(Pairs, "pairs");
-        private static readonly LuaValue IpairsFunction = LuaValue.NewCallback(Ipairs, "ipairs");
+        private static readonly LuaValue PairsFunction = LuaValue.NewCallbackView(
+            static (executionContext, args) => Pairs(executionContext, args),
+            "pairs"
+        );
+
+        private static readonly LuaValue IpairsFunction = LuaValue.NewCallbackView(
+            static (executionContext, args) => Ipairs(executionContext, args),
+            "ipairs"
+        );
 
         private static readonly ConditionalWeakTable<Script, IteratorCallbacks> CallbackCache =
             new();
@@ -61,8 +68,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             internal IteratorCallbacks(Script script)
             {
-                NextArray = LuaValue.NewCallback(script, TableIteratorsModule.NextArray);
-                Next = LuaValue.NewCallback(script, TableIteratorsModule.Next);
+                NextArray = LuaValue.NewCallbackView(script, TableIteratorsModule.NextArray);
+                Next = LuaValue.NewCallbackView(script, TableIteratorsModule.Next);
             }
 
             internal LuaValue NextArray { get; }
@@ -95,6 +102,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Ipairs(executionContext, new CallbackArgumentsView(args));
+        }
+
+        private static LuaValue Ipairs(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue table = args[0];
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                 executionContext.Script.CompatibilityVersion
@@ -157,6 +172,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Pairs(executionContext, new CallbackArgumentsView(args));
+        }
+
+        private static LuaValue Pairs(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue table = args[0];
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                 executionContext.Script.CompatibilityVersion
@@ -264,6 +287,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return Next(executionContext, new CallbackArgumentsView(args));
+        }
+
+        [NovaSharpModuleMethod(Name = "next")]
+        private static LuaValue Next(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue table = args.AsType(0, "next", DataType.Table);
             LuaValue index = args[1];
 
@@ -297,6 +329,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            return NextArray(executionContext, new CallbackArgumentsView(args));
+        }
+
+        private static LuaValue NextArray(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
             LuaValue table = args.AsType(0, "!!next_i!!", DataType.Table);
             LuaValue index = args.AsType(1, "!!next_i!!", DataType.Number);
 

@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2113,
+  "total_snippets": 2115,
   "novasharp_only": 511,
-  "comparable": 1602,
+  "comparable": 1604,
   "by_version": {
-    "5.1": 1035,
-    "5.2": 747,
-    "5.3": 994,
-    "5.4": 1109,
-    "5.5": 1157
+    "5.1": 1036,
+    "5.2": 748,
+    "5.3": 995,
+    "5.4": 1110,
+    "5.5": 1159
   },
   "snippets": [
     {
@@ -23517,6 +23517,30 @@
       "test": "ProcessorCoroutineCloseTUnitTests.CloseHandlerHostCatchDoesNotRunOuterMessageHandler",
       "lua_versions": [],
       "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "TableIteratorsModuleTUnitTests/NextCallsUseStackOnlyArgumentsWithoutWrapperAllocations.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableIteratorsModuleTUnitTests.cs:55",
+      "test": "TableIteratorsModuleTUnitTests.NextCallsUseStackOnlyArgumentsWithoutWrapperAllocations",
+      "lua_versions": [
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableIteratorsModuleTUnitTests/NextReturnsKeyValuePairsAndRejectsInvalidKeys.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableIteratorsModuleTUnitTests.cs:102",
+      "test": "TableIteratorsModuleTUnitTests.NextReturnsKeyValuePairsAndRejectsInvalidKeys",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
       "expects_error": false
     }
   ]
