@@ -29,7 +29,9 @@ module callback shape used by `math`, `table`, and other migrated modules.
   and the iterator returned by `pairs`/`ipairs` all carry
   `HasArgumentViewCallback` across Lua 5.1–5.5.
 - Full TUnit suite: 16325/16325.
-- Full Lua 5.5 corpus against PUC Lua 5.5.0: 1172 matches, 0 mismatches, 0
+- Corpus extraction reports 2115 registered snippets; the two generated
+  fixtures under `TableIteratorsModuleTUnitTests/` are listed in the manifest.
+- Full Lua 5.5 corpus against PUC Lua 5.5.0: 1174 matches, 0 mismatches, 0
   Lua-only, 0 Nova-only, 314 unchanged both-error entries, 1 removed.
 - Full Lua 5.4 corpus against the host `/usr/bin/lua5.4` (5.4.4): 1120 matches
   and the same 2 pre-existing mismatches with and without this change
@@ -41,4 +43,6 @@ module callback shape used by `math`, `table`, and other migrated modules.
 
 - `src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableIteratorsModule.cs`
 - `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableIteratorsModuleTUnitTests.cs`
+- `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures/TableIteratorsModuleTUnitTests/`
+  and `LuaFixtures/manifest.json` (generated corpus)
 - `PLAN.md` (remaining A5 CoreLib migration list)
