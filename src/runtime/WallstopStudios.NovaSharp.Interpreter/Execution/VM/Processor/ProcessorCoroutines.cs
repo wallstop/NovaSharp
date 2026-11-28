@@ -48,6 +48,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             _valueStack.ClearUsed();
             _executionStack.ClearUsed();
             _discardResumeResult = false;
+            _abortResetDuringUnwind = false;
 
             // Create a new processor instance, recycling this one
             Processor p = new(mainProcessor, this);
@@ -408,17 +409,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         : LuaValue.Nil;
 
                 _isClosingCoroutine = true;
+                bool previousAbortingToResume = _abortingToResume;
+                _abortingToResume = true;
+                _abortResetDuringUnwind = false;
+                bool unwindFailed;
+                LuaValue unwindError;
                 try
                 {
-                    if (UnwindFramesForClose(closeError, out LuaValue unwindError))
-                    {
-                        closeError = unwindError;
-                        failed = true;
-                    }
+                    unwindFailed = UnwindFramesForClose(closeError, out unwindError);
                 }
                 finally
                 {
+                    _abortingToResume = previousAbortingToResume;
                     _isClosingCoroutine = false;
+                }
+
+                if (_abortResetDuringUnwind)
+                {
+                    _abortResetDuringUnwind = false;
+                    pendingError = null;
+                    closeError = unwindFailed ? unwindError : LuaValue.Nil;
+                    failed = unwindFailed;
+                }
+                else if (unwindFailed)
+                {
+                    closeError = unwindError;
+                    failed = true;
                 }
 
                 _state = CoroutineState.Dead;
@@ -643,6 +659,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     {
                         activeError = LuaValue.Nil;
                         _selfCloseResetRequested = false;
+
+                        if (_abortingToResume)
+                        {
+                            // A later self-close resets the abort: discard earlier failures
+                            // so the resume boundary can report success.
+                            failed = false;
+                            _selfCloseFailed = false;
+                            _abortResetDuringUnwind = true;
+                        }
                     }
 
                     if (_selfCloseFailed)

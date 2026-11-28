@@ -87,21 +87,51 @@ be nil when the error object was already consumed).
   `RunningCoroutineSelfCloseDuringUnwindRunsPoppedFrameBlocksInLua55` (every
   block of a popped frame closes before the abort escapes), and
   `RunningCoroutineSelfCloseDuringUnwindResetsPriorFailureInLua55` (a later
-  self-close in the popped frame resets the carried failure), plus
+  self-close in the popped frame resets the carried failure),
+  `RunningCoroutineSelfCloseKeepsFirstHandlerFailureInLua55` (the first handler
+  failure wins over later ones), and
   `RunningCoroutineSelfCloseHandlerFrameErrorReachesOuterHandlersInLua55`
   (drained-frame error propagation to outer handlers).
 - Lua 5.4 counterpart: `CloseRunningCoroutineThrows` now runs only under 5.4
   and asserts the rejected self-close plus the deferred final handler.
-  `NormalCoroutineCloseIsRejected` covers 5.4/5.5.
-- Focused suites: `ProcessorCoroutineCloseTUnitTests` 133/133,
+  `CloseWithoutArgumentRequiresCoroutineInLua54` keeps the 5.4 argument
+  requirement. `NormalCoroutineCloseIsRejected` covers 5.4/5.5.
+- Lua 5.5 accepts an omitted `coroutine.close` argument as the running
+  coroutine (`RunningCoroutineCloseWithoutArgumentSelfClosesInLua55`);
+  `CoroutineModule.Close` only applies that default under 5.5.
+- Focused suites: `ProcessorCoroutineCloseTUnitTests` 136/136,
   corpus classes containing `Coroutine` 838/838, `TailCall` 127/127.
 - Corpus extraction reports 2113 registered snippets; the hand-authored
   fixtures are intentionally outside the manifest. The stale auto-generated
   `CloseRunningCoroutineThrows.lua` entry (which inferred 5.1) was removed.
-- Lua comparison for the changed fixtures: 13/13 matches on 5.5 and 2/2 on 5.4,
-  with no mismatches, Lua-only, Nova-only, or unexpected error entries.
-- Full 5.5 corpus through the CI batch runner: 1170 matches, 0 mismatches,
+- Lua comparison for the changed fixtures: 15/15 matches on 5.5 and 3/3 on
+  5.4, with no mismatches, Lua-only, Nova-only, or unexpected error entries.
+- Full 5.5 corpus through the CI batch runner: 1172 matches, 0 mismatches,
   314 unchanged both-error entries, 1 removed, 0 new/changed/missing.
-- Full 5.4 corpus against Lua 5.4.7: 1121 matches, 0 mismatches with an
+- Full 5.4 corpus against Lua 5.4.7: 1122 matches, 0 mismatches with an
   unchanged both-error ratchet (1 removed, 0 new/changed/missing).
-- Full TUnit suite: 16310/16310.
+- Full TUnit suite: 16313/16313.
+
+## Review follow-ups
+
+- CodeRabbit found that the first self-close catch discarded a failure raised
+  by remaining handlers; fixed by carrying `CloseError` out of
+  `DrainHandlerFramesBeforeSelfClose`.
+- CodeRabbit's `PendingError`/`activeError` suggestion was not applied: PUC
+  Lua 5.5 resets an ordinary execution error that is still unwinding when a
+  closer self-closes. Verified with direct and pcall-protected repros plus the
+  cross-frame variant, and documented in the `PendingError` comment.
+- CodeRabbit found that `CloseAllPendingBlocks` skipped outer blocks when error
+  unwinding had already popped the frame; fixed by continuing through the
+  remaining blocks and rethrowing the abort with later failures.
+- The independent adversarial review found the same popped-frame gap, plus:
+  a later self-close during the abort drain incorrectly left `failed=true`
+  (fixed by resetting abort failures when no later error exists), and the
+  latest rather than first close-handler failure was retained (fixed by
+  tracking the first failure in the `CloseClosersFrom` pass).
+- The remaining adversarial finding — host callbacks can catch the internal
+  abort exception and leave nested frames on the execution stack — is tracked
+  in [#237](https://github.com/Ambiguous-Interactive/NovaSharp/issues/237) and
+  listed in `PLAN.md`. A first attempt to guard the CLR callback boundary was
+  reverted because it re-fired the stale abort during the close drain and broke
+  the fixture suite; the issue records the proposed pending-abort design.

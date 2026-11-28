@@ -1328,6 +1328,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             bool drainSelfClose
         )
         {
+            ScriptRuntimeException inheritedFailure = closeException;
+            ScriptRuntimeException firstFailure = null;
             for (int idx = lastIndex; idx >= 0; idx--)
             {
                 SymbolRef sym = closers[idx];
@@ -1344,6 +1346,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         instructionPtr,
                         decorateCloseErrorsBeforeUnwind
                     );
+                    if (
+                        firstFailure == null
+                        && closeException != null
+                        && !ReferenceEquals(closeException, inheritedFailure)
+                    )
+                    {
+                        firstFailure = closeException;
+                    }
                 }
                 catch (CoroutineSelfCloseException selfCloseException)
                 {
@@ -1366,10 +1376,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         && selfCloseException.PendingError == null
                     )
                     {
-                        // Lua 5.5 reports the close-handler failure that was active when the
-                        // coroutine aborted, even if the remaining handlers succeed. An ordinary
-                        // execution error still unwinding is reset by the self-close.
-                        selfCloseException.PendingError = closeException;
+                        // Lua 5.5 reports the first close-handler failure raised before the
+                        // self-close, even if later handlers also fail. An ordinary execution
+                        // error still unwinding is reset by the self-close.
+                        selfCloseException.PendingError = firstFailure;
                     }
 
                     activeError = LuaValue.Nil;

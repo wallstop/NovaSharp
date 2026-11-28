@@ -34,6 +34,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private LuaValue _lastCloseError = LuaValue.Nil;
         private bool _lastCloseFailed;
         private bool _isClosingCoroutine;
+        private bool _abortingToResume;
+        private bool _abortResetDuringUnwind;
         private int _closeUnwindBoundaryDepth = -1;
         private CallStackItem _closeBlockFrame;
         private int _closeBlockFrameDepth = -1;

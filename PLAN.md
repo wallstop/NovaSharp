@@ -38,7 +38,8 @@ backlog in [GitHub issues](https://github.com/Ambiguous-Interactive/NovaSharp/is
 1. Use the deferred coroutine close state and preserved Lua error values to fix
    [yieldable close handlers](https://github.com/Ambiguous-Interactive/NovaSharp/issues/169),
    then close the remaining
-   [coroutine-close audit cases](https://github.com/Ambiguous-Interactive/NovaSharp/issues/229).
+   [coroutine-close audit cases](https://github.com/Ambiguous-Interactive/NovaSharp/issues/229)
+   and the [host-callback self-close interception](https://github.com/Ambiguous-Interactive/NovaSharp/issues/237) gap.
 1. A1d: benchmark `LuaValue` copy/layout and measured inlining or `in`/`ref`
    changes; retain only demonstrated wins.
 1. A2: pack instructions and constants into contiguous chunk storage, version the
