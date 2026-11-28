@@ -294,31 +294,477 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         /// <summary>
-        /// Tests that coroutine.close() on a running coroutine throws an error.
-        /// Note: coroutine.close() is a Lua 5.4+ function.
+        /// Tests that Lua 5.4 rejects closing the running coroutine and defers the remaining
+        /// close handlers to the later close call.
         /// </summary>
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CloseRunningCoroutineThrows(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
-            script.DoString(
-                @"
-                function close_running()
-                    local worker = coroutine.create(function()
-                        local current = coroutine.running()
-                        coroutine.close(current)
-                    end)
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
 
-                    return coroutine.resume(worker)
-                end
-            "
+            await Assert.That(values[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[4].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert
+                .That(values[6].String)
+                .IsEqualTo("body-end,b:false,a:true")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseAbortsToResumeInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[5].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[6].Number).IsEqualTo(4).ConfigureAwait(false);
+            await Assert
+                .That(values[7].String)
+                .IsEqualTo("trigger:nil,handler-local:nil,inner:nil,outer:nil")
+                .ConfigureAwait(false);
+            Processor processor = values[8].Coroutine.GetProcessorForTests();
+            await Assert
+                .That(processor.GetExecutionStackForTests().Count)
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+            await Assert
+                .That(processor.GetValueStackForTests().Count)
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseRunsGenericForCloserInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(values[6].String).IsEqualTo("for:nil").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseHandlerErrorFailsResumeInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("b-boom").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("b-boom").ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(4).ConfigureAwait(false);
+            await Assert
+                .That(values[6].String)
+                .IsEqualTo("body-end,c:nil,b:nil,a:b-boom")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseAgainDuringDrainAbortsHandlerInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert
+                .That(values[6].String)
+                .IsEqualTo("b:nil,a:nil,outer:nil")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseKeepsPendingErrorInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("c-boom").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("d-boom").ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(5).ConfigureAwait(false);
+            await Assert
+                .That(values[6].String)
+                .IsEqualTo("body-end,c:nil,b:c-boom,d:nil,a:d-boom")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseHandlerFrameErrorKeepsPendingErrorInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("c-boom").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("e-boom").ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(5).ConfigureAwait(false);
+            await Assert
+                .That(values[6].String)
+                .IsEqualTo("body-end,c:nil,b:c-boom,inner:nil,a:e-boom")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseAgainInHandlerDrainsLocalsInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(5).ConfigureAwait(false);
+            await Assert
+                .That(values[6].String)
+                .IsEqualTo("body-end,b:nil,i2:nil,i1:nil,a:nil")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseHandlerFrameErrorReachesOuterHandlersInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("i-boom").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("i-boom").ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(6).ConfigureAwait(false);
+            await Assert
+                .That(values[6].String)
+                .IsEqualTo("body-end,b:nil,dLocal:nil,iLocal:nil,bLocal:i-boom,outer:i-boom")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseAgainDuringHandlerDrainResetsErrorInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(5).ConfigureAwait(false);
+            await Assert
+                .That(values[6].String)
+                .IsEqualTo("body-end,b:nil,i2:nil,i1:i2-boom,a:nil")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseAgainDuringHandlerDrainKeepsLaterFailureInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("a-boom").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("a-boom").ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(5).ConfigureAwait(false);
+            await Assert
+                .That(values[6].String)
+                .IsEqualTo("body-end,b:nil,c:nil,a:nil,outer:a-boom")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseDuringUnwindRunsPoppedFrameBlocksInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(values[6].String).IsEqualTo("b:boom,a:nil").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseDuringUnwindResetsPriorFailureInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[5].Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert
+                .That(values[6].String)
+                .IsEqualTo("b:boom,a:nil,c:a-boom")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineCloseWithoutArgumentSelfClosesInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[3].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[4].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(values[5].String).IsEqualTo("a:nil").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        public async Task CloseWithoutArgumentRequiresCoroutineInLua54(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[3].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(values[4].Number).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(values[5].String).IsEqualTo("pcall:true,a:nil").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningCoroutineSelfCloseKeepsFirstHandlerFailureInLua55(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("c-boom").ConfigureAwait(false);
+            await Assert.That(values[2].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[3].String).IsEqualTo("nil").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task HostCaughtRunningSelfCloseStillAborts(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            int caught = 0;
+            script.Globals.Set(
+                "hostcall",
+                LuaValue.NewCallback(
+                    (_, args) =>
+                    {
+                        try
+                        {
+                            return script.Call(args[0]);
+                        }
+                        catch (Processor.CoroutineSelfCloseException)
+                        {
+                            caught++;
+                            return LuaValue.Nil;
+                        }
+                    }
+                )
+            );
+            script.Globals.Set(
+                "hostclose",
+                LuaValue.NewCallback(
+                    (_, _) =>
+                    {
+                        try
+                        {
+                            script.Call(script.Globals.Get("closeSelf3"));
+                        }
+                        catch (Processor.CoroutineSelfCloseException)
+                        {
+                            caught++;
+                        }
+
+                        try
+                        {
+                            script.Call(script.Globals.Get("afterClose3"));
+                        }
+                        catch (Processor.CoroutineSelfCloseException)
+                        {
+                            caught++;
+                        }
+
+                        return LuaValue.Nil;
+                    }
+                )
             );
 
-            LuaValue result = script.Call(script.Globals.Get("close_running"));
-            await Assert.That(result.Tuple[0].Boolean).IsFalse();
-            await Assert.That(result.Tuple[1].String).Contains("cannot close a running coroutine");
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            for (int index = 0; index < 9; index += 4)
+            {
+                await Assert.That(values[index].Boolean).IsTrue().ConfigureAwait(false);
+                await Assert.That(values[index + 1].IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(values[index + 2].Boolean).IsTrue().ConfigureAwait(false);
+                await Assert.That(values[index + 3].IsNil).IsTrue().ConfigureAwait(false);
+            }
+
+            await Assert.That(values[12].String).IsEqualTo("close1,close2").ConfigureAwait(false);
+            await Assert.That(caught).IsEqualTo(5).ConfigureAwait(false);
+            for (int index = 13; index < 16; index++)
+            {
+                Processor processor = values[index].Coroutine.GetProcessorForTests();
+                await Assert
+                    .That(processor.GetExecutionStackForTests().Count)
+                    .IsEqualTo(0)
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(processor.GetValueStackForTests().Count)
+                    .IsEqualTo(0)
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task NormalCoroutineCloseIsRejected(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(values[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[3].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("dead").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

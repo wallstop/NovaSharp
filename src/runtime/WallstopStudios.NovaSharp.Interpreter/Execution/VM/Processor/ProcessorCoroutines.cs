@@ -48,6 +48,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             _valueStack.ClearUsed();
             _executionStack.ClearUsed();
             _discardResumeResult = false;
+            _abortResetDuringUnwind = false;
+            _pendingResumeAbort = null;
 
             // Create a new processor instance, recycling this one
             Processor p = new(mainProcessor, this);
@@ -394,6 +396,67 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 throw;
             }
+            catch (CoroutineSelfCloseException selfCloseException)
+                when (selfCloseException.AbortResume)
+            {
+                _pendingResumeAbort = null;
+                LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                    _script.CompatibilityVersion
+                );
+                ScriptRuntimeException pendingError = selfCloseException.PendingError;
+                bool failed = pendingError != null || selfCloseException.CloseError != null;
+                LuaValue closeError =
+                    selfCloseException.CloseError != null
+                        ? selfCloseException.CloseError.GetCaughtErrorObject(version)
+                        : LuaValue.Nil;
+
+                _isClosingCoroutine = true;
+                bool previousAbortingToResume = _abortingToResume;
+                _abortingToResume = true;
+                _abortResetDuringUnwind = false;
+                bool unwindFailed;
+                LuaValue unwindError;
+                try
+                {
+                    unwindFailed = UnwindFramesForClose(closeError, out unwindError);
+                }
+                finally
+                {
+                    _abortingToResume = previousAbortingToResume;
+                    _isClosingCoroutine = false;
+                }
+
+                if (_abortResetDuringUnwind)
+                {
+                    _abortResetDuringUnwind = false;
+                    pendingError = null;
+                    closeError = unwindFailed ? unwindError : LuaValue.Nil;
+                    failed = unwindFailed;
+                }
+                else if (unwindFailed)
+                {
+                    closeError = unwindError;
+                    failed = true;
+                }
+
+                _state = CoroutineState.Dead;
+                _lastCloseError = closeError;
+                _lastCloseFailed = failed;
+
+                if (failed)
+                {
+                    ScriptRuntimeException resumeError = pendingError;
+                    if (resumeError == null)
+                    {
+                        resumeError = new ScriptRuntimeException(closeError.ToPrintString(version));
+                        resumeError.SetErrorValue(closeError);
+                    }
+
+                    throw resumeError;
+                }
+
+                return LuaValue.Void;
+            }
             catch (Exception)
             {
                 // Unhandled exception - move to dead
@@ -465,6 +528,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 if (_state == CoroutineState.Running)
                 {
+                    if (caller != this)
+                    {
+                        // A running coroutine other than the active one is an ancestor of the
+                        // active coroutine, so Lua reports it as "normal".
+                        throw new ScriptRuntimeException("cannot close a normal coroutine");
+                    }
+
+                    LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                        _script.CompatibilityVersion
+                    );
+                    if (version >= LuaCompatibilityVersion.Lua55)
+                    {
+                        // Lua 5.5 closes the running coroutine from its own execution: the
+                        // call aborts to the resume boundary after every pending close handler
+                        // has run. Handlers belonging to the aborting frame run before the
+                        // remaining siblings of the enclosing block; ResumeCoroutine drains
+                        // the rest once the CLR stack unwinds.
+                        ScriptRuntimeException frameCloseError = DrainHandlerFramesBeforeSelfClose(
+                            version
+                        );
+
+                        throw new CoroutineSelfCloseException
+                        {
+                            AbortResume = true,
+                            CloseError = frameCloseError,
+                        };
+                    }
+
                     throw ScriptRuntimeException.CannotCloseCoroutine(_state);
                 }
 
@@ -570,6 +661,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     {
                         activeError = LuaValue.Nil;
                         _selfCloseResetRequested = false;
+
+                        if (_abortingToResume)
+                        {
+                            // A later self-close resets the abort: discard earlier failures
+                            // so the resume boundary can report success.
+                            failed = false;
+                            _selfCloseFailed = false;
+                            _abortResetDuringUnwind = true;
+                        }
                     }
 
                     if (_selfCloseFailed)
@@ -614,9 +714,95 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return LuaValue.True;
         }
 
+        /// <summary>
+        /// Drains the coroutine frames that belong to the close handler requesting a Lua 5.5
+        /// self-close. Lua closes those nested frames before the siblings of the enclosing block.
+        /// </summary>
+        /// <returns>The last close failure raised while draining, if any.</returns>
+        private ScriptRuntimeException DrainHandlerFramesBeforeSelfClose(
+            LuaCompatibilityVersion version
+        )
+        {
+            if (_closeHandlerDepth == 0 || _closeBlockFrame == null)
+            {
+                return null;
+            }
+
+            int boundary =
+                _closeBlockFrameDepth >= 0 ? _closeBlockFrameDepth : _executionStack.Count;
+            bool previousIsClosing = _isClosingCoroutine;
+            int previousUnwindBoundary = _closeUnwindBoundaryDepth;
+            _isClosingCoroutine = true;
+            _closeUnwindBoundaryDepth = boundary;
+            ScriptRuntimeException closeError = null;
+            LuaValue frameError = LuaValue.Nil;
+            try
+            {
+                while (_executionStack.Count > boundary)
+                {
+                    CallStackItem frame = PopToBasePointer();
+                    try
+                    {
+                        while (true)
+                        {
+                            try
+                            {
+                                CloseAllPendingBlocks(frame, frameError);
+                                break;
+                            }
+                            catch (CoroutineSelfCloseException nestedSelfClose)
+                            {
+                                // A closer requested its own close while the coroutine already
+                                // aborts: Lua resets the error seen by the handlers it aborts and
+                                // keeps closing the remaining blocks. Failures raised by those
+                                // remaining handlers must still surface.
+                                closeError = nestedSelfClose.CloseError;
+                                frameError =
+                                    closeError != null
+                                        ? closeError.GetCaughtErrorObject(version)
+                                        : LuaValue.Nil;
+                                _selfCloseResetRequested = false;
+                            }
+                            catch (ScriptRuntimeException frameException)
+                            {
+                                closeError = frameException;
+                                frameError = frameException.GetCaughtErrorObject(version);
+                                break;
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        CallStackItemPool.Return(frame);
+                    }
+                }
+            }
+            finally
+            {
+                _isClosingCoroutine = previousIsClosing;
+                _closeUnwindBoundaryDepth = previousUnwindBoundary;
+            }
+
+            return closeError;
+        }
+
         public sealed class CoroutineSelfCloseException : Exception
         {
             public ScriptRuntimeException CloseError { get; set; }
+
+            /// <summary>
+            /// Gets or sets the close-handler failure that was active when the coroutine
+            /// requested its own close. Lua 5.5 reports this failure to the resume boundary even
+            /// when later handlers run successfully; an ordinary execution error that is still
+            /// unwinding is reset by the self-close instead.
+            /// </summary>
+            public ScriptRuntimeException PendingError { get; set; }
+
+            /// <summary>
+            /// Gets or sets whether the self-close originated in ordinary coroutine execution and
+            /// must abort the resume boundary after pending close handlers are drained.
+            /// </summary>
+            public bool AbortResume { get; set; }
 
             public CoroutineSelfCloseException() { }
 

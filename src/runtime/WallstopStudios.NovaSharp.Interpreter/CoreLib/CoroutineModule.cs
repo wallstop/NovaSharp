@@ -271,14 +271,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            return Close(new CallbackArgumentsView(args));
+            return Close(executionContext, new CallbackArgumentsView(args));
         }
 
         [LuaCompatibility(LuaCompatibilityVersion.Lua54)]
         [NovaSharpModuleMethod(Name = "close")]
-        private static LuaValue Close(CallbackArgumentsView args)
+        private static LuaValue Close(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
         {
-            LuaValue handle = args.AsType(0, "close", DataType.Thread);
+            LuaValue handle;
+            if (
+                args.Count == 0
+                && LuaVersionDefaults.Resolve(executionContext.Script.CompatibilityVersion)
+                    >= LuaCompatibilityVersion.Lua55
+            )
+            {
+                // Lua 5.5 treats a missing argument as the running coroutine, allowing a
+                // coroutine to close itself.
+                handle = LuaValue.NewCoroutine(executionContext.CallingCoroutine);
+            }
+            else
+            {
+                handle = args.AsType(0, "close", DataType.Thread);
+            }
+
             return handle.Coroutine.Close();
         }
 

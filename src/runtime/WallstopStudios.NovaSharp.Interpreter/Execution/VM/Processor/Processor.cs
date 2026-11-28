@@ -34,8 +34,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private LuaValue _lastCloseError = LuaValue.Nil;
         private bool _lastCloseFailed;
         private bool _isClosingCoroutine;
+        private bool _abortingToResume;
+        private bool _abortResetDuringUnwind;
+        private CoroutineSelfCloseException _pendingResumeAbort;
         private int _closeUnwindBoundaryDepth = -1;
         private CallStackItem _closeBlockFrame;
+        private int _closeBlockFrameDepth = -1;
         private bool _selfCloseResetRequested;
         private bool _selfCloseStarted;
         private bool _selfCloseFailed;
@@ -509,6 +513,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             try
             {
+                ThrowPendingResumeAbort();
+
                 IDisposable stopwatch = _script.PerformanceStats.StartStopwatch(
                     Diagnostics.PerformanceCounter.Execution
                 );
@@ -535,6 +541,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         stopwatch.Dispose();
                     }
                 }
+            }
+            catch (CoroutineSelfCloseException selfCloseException)
+                when (selfCloseException.AbortResume)
+            {
+                _pendingResumeAbort = selfCloseException;
+                throw;
             }
             finally
             {
@@ -680,6 +692,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             try
             {
+                ThrowPendingResumeAbort();
+
                 IDisposable stopwatch = _script.PerformanceStats.StartStopwatch(
                     Diagnostics.PerformanceCounter.Execution
                 );
@@ -710,9 +724,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     }
                 }
             }
+            catch (CoroutineSelfCloseException selfCloseException)
+                when (selfCloseException.AbortResume
+                    && callingSource == null
+                    && !reuseInstructionBudget
+                )
+            {
+                _pendingResumeAbort = selfCloseException;
+                throw;
+            }
             finally
             {
                 LeaveProcessor();
+            }
+        }
+
+        /// <summary>
+        /// Rethrows a Lua 5.5 self-close abort that a host callback swallowed. The marker stays
+        /// set until the abort reaches the resume boundary or the processor is reset, so a host
+        /// boundary that swallows it again cannot let the coroutine continue.
+        /// </summary>
+        internal void ThrowPendingResumeAbort()
+        {
+            CoroutineSelfCloseException abort = _pendingResumeAbort;
+            if (abort != null)
+            {
+                throw abort;
             }
         }
 

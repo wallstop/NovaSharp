@@ -1104,32 +1104,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 CallbackFunction callback = metamethod.Callback;
                 LuaValue result;
-                if (callback.HasArgumentViewNoContextCallback)
+                try
                 {
-                    result = passError
-                        ? callback.InvokeArgumentViewFixed(_script, scalar, error)
-                        : callback.InvokeArgumentViewFixed(_script, scalar);
-                }
-                else
-                {
-                    ScriptExecutionContext context = new(
-                        this,
-                        callback,
-                        GetCurrentSourceRef(instructionPtr - 1)
-                    );
-                    if (callback.HasArgumentViewCallback)
+                    if (callback.HasArgumentViewNoContextCallback)
                     {
                         result = passError
-                            ? callback.InvokeArgumentViewFixed(context, scalar, error)
-                            : callback.InvokeArgumentViewFixed(context, scalar);
+                            ? callback.InvokeArgumentViewFixed(_script, scalar, error)
+                            : callback.InvokeArgumentViewFixed(_script, scalar);
                     }
                     else
                     {
-                        result = passError
-                            ? callback.InvokeLegacyFixed(context, scalar, error)
-                            : callback.InvokeLegacyFixed(context, scalar);
+                        ScriptExecutionContext context = new(
+                            this,
+                            callback,
+                            GetCurrentSourceRef(instructionPtr - 1)
+                        );
+                        if (callback.HasArgumentViewCallback)
+                        {
+                            result = passError
+                                ? callback.InvokeArgumentViewFixed(context, scalar, error)
+                                : callback.InvokeArgumentViewFixed(context, scalar);
+                        }
+                        else
+                        {
+                            result = passError
+                                ? callback.InvokeLegacyFixed(context, scalar, error)
+                                : callback.InvokeLegacyFixed(context, scalar);
+                        }
                     }
                 }
+                catch
+                {
+                    // A host close handler can catch a Lua 5.5 self-close abort raised by a
+                    // nested call; the abort must still unwind the coroutine.
+                    ThrowPendingResumeAbort();
+                    throw;
+                }
+
+                ThrowPendingResumeAbort();
 
                 if (result.Type is DataType.TailCallRequest or DataType.YieldRequest)
                 {
@@ -1294,7 +1306,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         )
         {
             CallStackItem previousCloseBlockFrame = _closeBlockFrame;
+            int previousCloseBlockFrameDepth = _closeBlockFrameDepth;
             _closeBlockFrame = stackframe;
+            _closeBlockFrameDepth = _executionStack.Count;
             try
             {
                 CloseClosersFrom(
@@ -1311,6 +1325,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             finally
             {
                 _closeBlockFrame = previousCloseBlockFrame;
+                _closeBlockFrameDepth = previousCloseBlockFrameDepth;
             }
         }
 
@@ -1325,6 +1340,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             bool drainSelfClose
         )
         {
+            ScriptRuntimeException inheritedFailure = closeException;
+            ScriptRuntimeException firstFailure = null;
             for (int idx = lastIndex; idx >= 0; idx--)
             {
                 SymbolRef sym = closers[idx];
@@ -1341,6 +1358,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         instructionPtr,
                         decorateCloseErrorsBeforeUnwind
                     );
+                    if (
+                        firstFailure == null
+                        && closeException != null
+                        && !ReferenceEquals(closeException, inheritedFailure)
+                    )
+                    {
+                        firstFailure = closeException;
+                    }
                 }
                 catch (CoroutineSelfCloseException selfCloseException)
                 {
@@ -1355,6 +1380,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         {
                             _selfCloseFailed = true;
                         }
+                    }
+
+                    if (
+                        !drainSelfClose
+                        && selfCloseException.AbortResume
+                        && selfCloseException.PendingError == null
+                    )
+                    {
+                        // Lua 5.5 reports the first close-handler failure raised before the
+                        // self-close, even if later handlers also fail. An ordinary execution
+                        // error still unwinding is reset by the self-close.
+                        selfCloseException.PendingError = firstFailure;
                     }
 
                     activeError = LuaValue.Nil;
@@ -1432,6 +1469,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             LuaValue activeError = error;
             ScriptRuntimeException closeException = null;
+            CoroutineSelfCloseException abort = null;
             while (stackframe.BlocksToClose.Count > 0)
             {
                 List<SymbolRef> closers = stackframe.BlocksToClose[^1];
@@ -1462,6 +1500,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         decorateCloseErrorsBeforeUnwind
                     );
                 }
+                catch (CoroutineSelfCloseException selfCloseException)
+                    when (selfCloseException.AbortResume)
+                {
+                    // The frame is already popped from the execution stack, so this is the
+                    // last chance to run its remaining blocks. Lua resets the error seen by
+                    // the handlers the self-close aborts, then keeps closing.
+                    abort = selfCloseException;
+                    closeException = null;
+                    activeError =
+                        selfCloseException.CloseError != null
+                            ? selfCloseException.CloseError.GetCaughtErrorObject(
+                                LuaVersionDefaults.Resolve(_script.CompatibilityVersion)
+                            )
+                            : LuaValue.Nil;
+                }
                 finally
                 {
                     ListPool<SymbolRef>.Return(closers);
@@ -1469,6 +1522,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             stackframe.ToBeClosedIndices?.Clear();
+
+            if (abort != null)
+            {
+                if (closeException != null)
+                {
+                    abort.CloseError = closeException;
+                }
+
+                throw abort;
+            }
 
             if (closeException != null)
             {
@@ -1501,8 +1564,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             catch (CoroutineSelfCloseException selfCloseException)
             {
-                if (_closeHandlerDepth > 1)
+                if (selfCloseException.AbortResume || _closeHandlerDepth > 1)
                 {
+                    // The first handler's self-close from ordinary execution aborts the resume
+                    // boundary after the remaining siblings are drained by CloseClosersFrom.
                     throw;
                 }
 
@@ -2439,23 +2504,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _executionStack.Push(frame);
 
                 LuaValue ret;
-                if (callback.HasArgumentViewNoContextCallback)
+                try
                 {
-                    ret = callback.InvokeArgumentViewStack(
-                        _script,
-                        _valueStack,
-                        _valueStack.Count - argsCount,
-                        argsCount,
-                        isMethodCall: thisCall
-                    );
-                }
-                else
-                {
-                    ScriptExecutionContext context = new(this, callback, callingSourceRef);
-                    if (callback.HasArgumentViewCallback)
+                    if (callback.HasArgumentViewNoContextCallback)
                     {
                         ret = callback.InvokeArgumentViewStack(
-                            context,
+                            _script,
                             _valueStack,
                             _valueStack.Count - argsCount,
                             argsCount,
@@ -2464,14 +2518,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     }
                     else
                     {
-                        ret = InvokeLegacyCallbackFromStack(
-                            callback,
-                            context,
-                            argsCount,
-                            isMethodCall: thisCall
-                        );
+                        ScriptExecutionContext context = new(this, callback, callingSourceRef);
+                        if (callback.HasArgumentViewCallback)
+                        {
+                            ret = callback.InvokeArgumentViewStack(
+                                context,
+                                _valueStack,
+                                _valueStack.Count - argsCount,
+                                argsCount,
+                                isMethodCall: thisCall
+                            );
+                        }
+                        else
+                        {
+                            ret = InvokeLegacyCallbackFromStack(
+                                callback,
+                                context,
+                                argsCount,
+                                isMethodCall: thisCall
+                            );
+                        }
                     }
                 }
+                catch
+                {
+                    // A Lua 5.5 self-close aborts to the resume boundary with a longjmp that
+                    // host code cannot intercept. If the callback caught the internal abort and
+                    // raised a different exception, the abort still wins.
+                    ThrowPendingResumeAbort();
+                    throw;
+                }
+
+                ThrowPendingResumeAbort();
 
                 _valueStack.RemoveLast(argsCount + 1);
                 frame.CallInputsConsumed = true;
