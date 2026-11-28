@@ -35,9 +35,9 @@ Found 213 undocumented public/internal type declarations.
   - line 210: missing XML docs for `TryMetaIndex()`
   - line 221: missing XML docs for `IsTypeCompatible()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableIteratorsModule.cs
-  - line 68: missing XML docs for `NextArray`
-  - line 70: missing XML docs for `Next`
-  - line 72: missing XML docs for `GetMetamethodDispatcher()`
+  - line 75: missing XML docs for `NextArray`
+  - line 77: missing XML docs for `Next`
+  - line 79: missing XML docs for `GetMetamethodDispatcher()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableModule.cs
   - line 39: missing XML docs for `Compare()`
   - line 709: missing XML docs for `Get()`
