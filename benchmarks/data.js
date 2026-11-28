@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795807990462,
+  "lastUpdate": 1795834146241,
   "repoUrl": "https://github.com/Ambiguous-Interactive/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -5566,6 +5566,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 762.403,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "10cd3ae13a17a36efee3939acebff1885f0ddf3f",
+          "message": "Keep entry-point flags across tail-call frame reuse (#234)\n\n## Summary\n\nFixes #232. A protected CLR tail target that called back into Lua\nthrough `Script.Call` and failed threw `IndexOutOfRangeException` from\n`InternalExecCall`'s normal-return cleanup.\n\n`PerformTco` copied only operator flags onto the reused tail-call frame.\nWhen the chunk's final call was a tail call, the reused `EntryPoint`\nframe lost `EntryPoint`, `ResumeEntryPointBit`, and `CallEntryPointBit`.\nThe nested processing loop then unwound past its own CLR boundary,\nresumed the outer CLR frame's error handler in place, and the outer\ncleanup removed the same call inputs a second time.\n\n- Preserve entry-point and operator flags across tail-call frame reuse\nwith `TailCallReuseFlags`.\n- Coroutine close deferral distinguishes host CLR-to-script calls from\nclassic-library callbacks. `ScriptExecutionContext.CallLibrary`,\n`Script.CallLibraryValues`, and `Processor.CallLibraryFunction` set a\none-shot marker that tags only their immediate entry frame with\n`LibraryCallEntryBit`. The marker is consumed by that frame and never\npropagates to nested host calls; `ScriptExecutionContext.Call` and\n`CallbackArguments.AsStringUsingMeta` remain host boundaries.\nCallable-table `__call` chains that resolve to a Lua function are marked\ntoo, aligned with the actual nine-link call-chain limit.\n- A host `Script.Call` inside a coroutine is a catchable boundary. Error\nunwinding restores the execution and value stacks before rethrowing\ninstead of retaining the nested entry frame.\n- Pre-unwind message decoration stops at the same host boundary, so an\nouter handler cannot run when the host recovers the error.\n- The same flag loss made Lua 5.4+ coroutines with a tail-call body run\npending `<close>` handlers during `coroutine.resume` instead of\ndeferring them until `coroutine.close`. Both now match PUC Lua 5.4.7 and\n5.5.0.\n- Lua 5.2+ `string.format('%s', value)` now invokes `__tostring` through\nthe library conversion path, scalarizes multi-result `__tostring` calls,\naccepts numeric results, honors string type metatables, and preserves\nthe outer format specification across nested `string.format` calls.\n\n## Tests\n\n-\n`TailCallTUnitTests.ClrTailTargetNestedCallErrorHandlerRecoversAtCallSite`\ncovers direct, repeated, argument-surrounded, and non-tail nested calls\nacross Lua 5.1-5.5, with a NovaSharp-only fixture for the injected host\ncallbacks.\n-\n`TailCallTUnitTests.ClrTailTargetNestedCallDecorationStopsAtHostBoundary`\nproves pre-unwind decoration does not cross a host boundary.\n-\n`ProcessorCoroutineCloseTUnitTests.TailCallErrorDefersCloseHandlersUntilCoroutineClose`\ncovers the deferred close path under Lua 5.4/5.5, with a generated\ncomparison fixture.\n-\n`ProcessorCoroutineCloseTUnitTests.HostCaughtNestedCallErrorRestoresCoroutineStacks`\nasserts both stacks return to their pre-call counts for tail and\nnon-tail coroutine bodies across Lua 5.1-5.5.\n-\n`ProcessorCoroutineCloseTUnitTests.HostCaughtNestedCallInsideLibraryCallbackRestoresStacks`\nruns a host `Script.Call` from a `string.gsub` replacement and verifies\nthe one-shot library marker does not leak into the nested host call.\n-\n`CoroutineModuleTUnitTests.SortComparatorErrorDefersLocalCloseUntilCoroutineClose`,\n`CallableTablePrintMetamethodErrorDefersLocalCloseUntilCoroutineClose`,\nand\n`FormatCallableTableMetamethodErrorDefersLocalCloseUntilCoroutineClose`\ncover the synthetic library callback frame, callable-table `__call`\nresolution, and the LuaBase library bridge.\n- `StringModuleTUnitTests.FormatPercentSUsesTostringMetamethod`,\n`FormatPercentSAcceptsNumericTostringResult`, and\n`FormatPercentSPreservesSpecificationDuringNestedFormat` cover the Lua\n5.2+ `%s` conversion regressions.\n- Existing\n`CoroutineModuleTUnitTests.ClrCallbackErrorDefersLocalCloseUntilCoroutineClose`\nstill passes, preserving classic-library close deferral.\n\n## Verification\n\n- Red on `main`: the reproduction threw `IndexOutOfRangeException` under\nLua 5.1-5.5; the coroutine probe ran the closer during resume\n(`beforeClose = 1`) instead of on close (`0`); host-caught nested calls\nleft three execution frames and seven value slots and then crashed;\ncomparator, callable-table, format, numeric-result, and nested-format\nprobes failed as described.\n- Full TUnit: 16295/16295.\n- Focused suites: `TailCallTUnitTests` 127/127,\n`ProcessorCoroutineCloseTUnitTests` 118/118, `CoroutineModuleTUnitTests`\n354/354, `FormatPercentS` 20/20, callable chain limit 2/2.\n- Lua comparison vs 5.1.5, 5.2.4, 5.3.6, 5.4.7, and 5.5.0: zero\nmismatches, zero Lua-only/NovaSharp-only outputs, no new ratchet\nentries.\n- Corpus extraction: 2111 snippets with the new generated fixtures;\n`manifest.json` regenerated.",
+          "timestamp": "2026-11-27T18:43:40-08:00",
+          "tree_id": "7c6333b0178d6d6a6b3a75384a3712ac3cda9942",
+          "url": "https://github.com/Ambiguous-Interactive/NovaSharp/commit/10cd3ae13a17a36efee3939acebff1885f0ddf3f"
+        },
+        "date": 1795834145762,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 393.273,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 434.797,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 430.017,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 661.197,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 669.841,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 651.945,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 647.446,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 713.588,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 709.768,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 690.619,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 770.848,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 773.222,
             "unit": "ns",
             "extra": ""
           }
