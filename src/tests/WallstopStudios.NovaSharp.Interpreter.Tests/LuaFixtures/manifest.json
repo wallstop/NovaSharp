@@ -1,10 +1,10 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 2114,
+  "total_snippets": 2113,
   "novasharp_only": 511,
-  "comparable": 1603,
+  "comparable": 1602,
   "by_version": {
-    "5.1": 1036,
+    "5.1": 1035,
     "5.2": 747,
     "5.3": 994,
     "5.4": 1109,
@@ -9199,16 +9199,6 @@
       "lua_versions": [
         "5.4",
         "5.5"
-      ],
-      "novasharp_only": false,
-      "expects_error": false
-    },
-    {
-      "path": "ProcessorCoroutineCloseTUnitTests/CloseRunningCoroutineThrows.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:303",
-      "test": "ProcessorCoroutineCloseTUnitTests.CloseRunningCoroutineThrows",
-      "lua_versions": [
-        "5.1"
       ],
       "novasharp_only": false,
       "expects_error": false

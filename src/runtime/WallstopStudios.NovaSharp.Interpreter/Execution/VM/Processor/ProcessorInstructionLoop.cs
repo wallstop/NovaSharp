@@ -1294,7 +1294,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         )
         {
             CallStackItem previousCloseBlockFrame = _closeBlockFrame;
+            int previousCloseBlockFrameDepth = _closeBlockFrameDepth;
             _closeBlockFrame = stackframe;
+            _closeBlockFrameDepth = _executionStack.Count;
             try
             {
                 CloseClosersFrom(
@@ -1311,6 +1313,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             finally
             {
                 _closeBlockFrame = previousCloseBlockFrame;
+                _closeBlockFrameDepth = previousCloseBlockFrameDepth;
             }
         }
 
@@ -1355,6 +1358,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         {
                             _selfCloseFailed = true;
                         }
+                    }
+
+                    if (
+                        !drainSelfClose
+                        && selfCloseException.AbortResume
+                        && selfCloseException.PendingError == null
+                    )
+                    {
+                        // Lua 5.5 reports the error that was already unwinding when the
+                        // coroutine aborted, even if the remaining handlers succeed.
+                        selfCloseException.PendingError = closeException;
                     }
 
                     activeError = LuaValue.Nil;
@@ -1501,8 +1515,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             catch (CoroutineSelfCloseException selfCloseException)
             {
-                if (_closeHandlerDepth > 1)
+                if (selfCloseException.AbortResume || _closeHandlerDepth > 1)
                 {
+                    // The first handler's self-close from ordinary execution aborts the resume
+                    // boundary after the remaining siblings are drained by CloseClosersFrom.
                     throw;
                 }
 

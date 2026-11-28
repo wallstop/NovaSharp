@@ -36,6 +36,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private bool _isClosingCoroutine;
         private int _closeUnwindBoundaryDepth = -1;
         private CallStackItem _closeBlockFrame;
+        private int _closeBlockFrameDepth = -1;
         private bool _selfCloseResetRequested;
         private bool _selfCloseStarted;
         private bool _selfCloseFailed;
