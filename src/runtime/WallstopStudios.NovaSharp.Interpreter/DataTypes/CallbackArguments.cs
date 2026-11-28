@@ -580,7 +580,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(executionContext));
             }
 
-            return AsStringUsingMeta(executionContext, this[argNum], funcName);
+            return AsStringUsingMetaCore(
+                executionContext,
+                this[argNum],
+                funcName,
+                libraryCall: false
+            );
+        }
+
+        /// <summary>
+        /// Converts a value to a string with library callback close semantics.
+        /// </summary>
+        internal static string AsStringUsingMetaLibrary(
+            ScriptExecutionContext executionContext,
+            LuaValue argument,
+            string funcName
+        )
+        {
+            return AsStringUsingMetaCore(executionContext, argument, funcName, libraryCall: true);
         }
 
         /// <summary>
@@ -598,37 +615,58 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             string funcName
         )
         {
+            return AsStringUsingMetaCore(executionContext, argument, funcName, libraryCall: false);
+        }
+
+        private static string AsStringUsingMetaCore(
+            ScriptExecutionContext executionContext,
+            LuaValue argument,
+            string funcName,
+            bool libraryCall
+        )
+        {
             // Get the Lua version for version-aware number formatting
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
-            if ((argument.Type == DataType.Table) && (argument.Table.MetaTable != null))
+            if (argument.Type == DataType.String)
             {
+                Table stringMetatable = executionContext.Script.GetTypeMetatable(DataType.String);
                 if (
-                    !argument.Table.MetaTable.TryRawGet(
+                    stringMetatable == null
+                    || !stringMetatable.TryRawGet(
                         Metamethods.ToStringMeta,
-                        out LuaValue stringMeta
-                    ) || stringMeta.IsNil
+                        out LuaValue stringMetaValue
+                    )
+                    || stringMetaValue.IsNil
                 )
                 {
-                    return argument.ToPrintString(version);
+                    return argument.String;
                 }
-
-                LuaValue v = executionContext.Script.CallValues(stringMeta, argument);
-
-                if (v.Type != DataType.String)
-                {
-                    throw new ScriptRuntimeException(
-                        "'tostring' must return a string to '{0}'",
-                        funcName
-                    );
-                }
-
-                return v.ToPrintString(version);
             }
-            else
+
+            LuaValue stringMeta = executionContext.GetMetamethod(
+                argument,
+                Metamethods.ToStringMeta
+            );
+            if (stringMeta.IsNil)
             {
                 return argument.ToPrintString(version);
             }
+
+            LuaValue v = libraryCall
+                ? executionContext.Script.CallLibraryValues(stringMeta, argument)
+                : executionContext.Script.CallValues(stringMeta, argument);
+            v = v.ToScalar();
+
+            if (v.Type != DataType.String && v.Type != DataType.Number)
+            {
+                throw new ScriptRuntimeException(
+                    "'tostring' must return a string to '{0}'",
+                    funcName
+                );
+            }
+
+            return v.ToPrintString(version);
         }
 
         /// <summary>

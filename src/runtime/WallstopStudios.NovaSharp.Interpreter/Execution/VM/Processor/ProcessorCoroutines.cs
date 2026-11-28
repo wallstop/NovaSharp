@@ -207,6 +207,90 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             _protectedClrCallDepth--;
         }
 
+        /// <summary>
+        /// Marks a classic-library callback that is calling back into Lua on behalf of a running
+        /// script. Errors from such calls follow Lua callback semantics instead of host boundary
+        /// semantics. The marker applies only to the entry frame this call pushes.
+        /// </summary>
+        internal LibraryCallBoundaryScope EnterLibraryCallBoundary()
+        {
+            return new LibraryCallBoundaryScope(this, _libraryEntryPending);
+        }
+
+        /// <summary>
+        /// Scope that marks the next entry frame pushed by a classic-library callback.
+        /// </summary>
+        internal readonly struct LibraryCallBoundaryScope : IDisposable
+        {
+            private readonly Processor _processor;
+            private readonly bool _previousPending;
+
+            public LibraryCallBoundaryScope(Processor processor, bool previousPending)
+            {
+                _processor = processor;
+                _previousPending = previousPending;
+                _processor._libraryEntryPending = true;
+            }
+
+            /// <summary>
+            /// Ends the classic-library call scope.
+            /// </summary>
+            public void Dispose()
+            {
+                _processor._libraryEntryPending = _previousPending;
+            }
+        }
+
+        private CallStackItemFlags ConsumeCallEntryOrigin()
+        {
+            CallStackItemFlags flags = default;
+            if (_libraryEntryPending)
+            {
+                _libraryEntryPending = false;
+                flags |= CallStackItemFlags.LibraryCallEntryBit;
+            }
+
+            if (_vmCloseEntryPending)
+            {
+                _vmCloseEntryPending = false;
+                flags |= CallStackItemFlags.VmCloseCallEntryBit;
+            }
+
+            return flags;
+        }
+
+        /// <summary>
+        /// Marks the next entry frame as the VM-owned invocation of a Lua close handler.
+        /// </summary>
+        internal VmCloseCallBoundaryScope EnterVmCloseCallBoundary()
+        {
+            return new VmCloseCallBoundaryScope(this, _vmCloseEntryPending);
+        }
+
+        /// <summary>
+        /// Scope that marks the next entry frame pushed for a Lua close handler.
+        /// </summary>
+        internal readonly struct VmCloseCallBoundaryScope : IDisposable
+        {
+            private readonly Processor _processor;
+            private readonly bool _previousPending;
+
+            public VmCloseCallBoundaryScope(Processor processor, bool previousPending)
+            {
+                _processor = processor;
+                _previousPending = previousPending;
+                _processor._vmCloseEntryPending = true;
+            }
+
+            /// <summary>
+            /// Ends the VM close-handler call scope.
+            /// </summary>
+            public void Dispose()
+            {
+                _processor._vmCloseEntryPending = _previousPending;
+            }
+        }
+
         private LuaValue ResumeCoroutine(ClrCallArguments args)
         {
             EnterProcessor();

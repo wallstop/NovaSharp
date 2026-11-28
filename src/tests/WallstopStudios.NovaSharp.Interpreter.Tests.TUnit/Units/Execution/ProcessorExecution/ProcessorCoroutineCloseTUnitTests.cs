@@ -9,7 +9,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.LuaFixtures;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ProcessorCoroutineCloseTUnitTests
     {
@@ -1894,6 +1897,256 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(result.Tuple[0].Boolean).IsTrue();
             await Assert.That(result.Tuple[1].Boolean).IsFalse();
             await Assert.That(result.Tuple[2].String).IsEqualTo("yboom");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TailCallErrorDefersCloseHandlersUntilCoroutineClose(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            LuaValue result = script.DoString(
+                @"
+                local log = {}
+                local function fail()
+                    local pending <close> = setmetatable({}, {
+                        __close = function(_, err)
+                            log[#log + 1] = 'closed:' .. tostring(err)
+                        end
+                    })
+                    error('boom', 0)
+                end
+
+                local task = coroutine.create(function()
+                    return fail()
+                end)
+
+                local resumed, resumeError = coroutine.resume(task)
+                local beforeClose = #log
+                local closed, closeError = coroutine.close(task)
+
+                print(resumed, resumeError, beforeClose, closed, closeError, #log, log[1])
+                return resumed, resumeError, beforeClose, closed, closeError, #log, log[1]
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].String).IsEqualTo("boom");
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(0);
+            await Assert.That(result.Tuple[3].Boolean).IsFalse();
+            await Assert.That(result.Tuple[4].String).IsEqualTo("boom");
+            await Assert.That(result.Tuple[5].Number).IsEqualTo(1);
+            await Assert.That(result.Tuple[6].String).IsEqualTo("closed:boom");
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task HostCaughtNestedCallErrorRestoresCoroutineStacks(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.Globals.Set("notcallable", LuaValue.NewNumber(42));
+            LuaValue nested = script.LoadString(
+                @"
+                local function inner(a, b)
+                    return notcallable()
+                end
+                return inner(...)
+                "
+            );
+            int calls = 0;
+            int caught = 0;
+            bool stacksRestored = true;
+
+            script.Globals.Set(
+                "worker",
+                LuaValue.NewCallback(
+                    (_, _) =>
+                    {
+                        calls++;
+                        Processor active = script.GetMainProcessorForTests().ActiveProcessor;
+                        int execBefore = active.GetExecutionStackForTests().Count;
+                        int valuesBefore = active.GetValueStackForTests().Count;
+                        try
+                        {
+                            script.Call(nested, LuaValue.FromNumber(42), LuaValue.FromNumber(43));
+                            return LuaValue.NewString("unexpected");
+                        }
+                        catch (ScriptRuntimeException)
+                        {
+                            caught++;
+                            stacksRestored &=
+                                active.GetExecutionStackForTests().Count == execBefore
+                                && active.GetValueStackForTests().Count == valuesBefore;
+                            return LuaValue.NewString("caught");
+                        }
+                    }
+                )
+            );
+
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("caught").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            await Assert.That(values[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[4].String).IsEqualTo("caught").ConfigureAwait(false);
+            await Assert.That(values[5].String).IsEqualTo("dead").ConfigureAwait(false);
+            if (version >= LuaCompatibilityVersion.Lua54)
+            {
+                await Assert.That(values[6].Boolean).IsTrue().ConfigureAwait(false);
+                await Assert.That(values[7].IsNil).IsTrue().ConfigureAwait(false);
+                await Assert.That(values[8].Boolean).IsTrue().ConfigureAwait(false);
+                await Assert.That(values[9].IsNil).IsTrue().ConfigureAwait(false);
+            }
+
+            await Assert.That(calls).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(caught).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(stacksRestored).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(values[10].Coroutine.GetProcessorForTests().GetExecutionStackForTests().Count)
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+            await Assert
+                .That(values[10].Coroutine.GetProcessorForTests().GetValueStackForTests().Count)
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+            await Assert
+                .That(values[11].Coroutine.GetProcessorForTests().GetExecutionStackForTests().Count)
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+            await Assert
+                .That(values[11].Coroutine.GetProcessorForTests().GetValueStackForTests().Count)
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task HostCaughtNestedCallInsideLibraryCallbackRestoresStacks(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.Globals.Set("notcallable", LuaValue.NewNumber(42));
+            LuaValue nested = script.LoadString("return notcallable()");
+            bool stacksRestored = true;
+            int caught = 0;
+
+            script.Globals.Set(
+                "replacement",
+                LuaValue.NewCallback(
+                    (_, _) =>
+                    {
+                        Processor active = script.GetMainProcessorForTests().ActiveProcessor;
+                        int execBefore = active.GetExecutionStackForTests().Count;
+                        int valuesBefore = active.GetValueStackForTests().Count;
+                        try
+                        {
+                            script.Call(nested);
+                        }
+                        catch (ScriptRuntimeException)
+                        {
+                            caught++;
+                            stacksRestored &=
+                                active.GetExecutionStackForTests().Count == execBefore
+                                && active.GetValueStackForTests().Count == valuesBefore;
+                        }
+
+                        return LuaValue.NewString("x");
+                    }
+                )
+            );
+
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<ProcessorCoroutineCloseTUnitTests>()
+                .RunFixture(script);
+            LuaValue[] values = result.Tuple;
+
+            await Assert.That(values[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(values[1].String).IsEqualTo("axc").ConfigureAwait(false);
+            await Assert.That(values[2].String).IsEqualTo("dead").ConfigureAwait(false);
+            if (version >= LuaCompatibilityVersion.Lua54)
+            {
+                await Assert.That(values[3].Boolean).IsTrue().ConfigureAwait(false);
+                await Assert.That(values[4].IsNil).IsTrue().ConfigureAwait(false);
+            }
+
+            await Assert.That(caught).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(stacksRestored).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(values[5].Coroutine.GetProcessorForTests().GetExecutionStackForTests().Count)
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+            await Assert
+                .That(values[5].Coroutine.GetProcessorForTests().GetValueStackForTests().Count)
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task CloseHandlerHostCatchDoesNotRunOuterMessageHandler(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.Globals.Set("notcallable", LuaValue.NewNumber(42));
+            LuaValue nested = script.LoadString("return notcallable()");
+            int caught = 0;
+            int messageHandlerCalls = 0;
+
+            script.Globals.Set(
+                "worker",
+                LuaValue.NewCallback(
+                    (_, _) =>
+                    {
+                        try
+                        {
+                            script.Call(nested);
+                        }
+                        catch (ScriptRuntimeException)
+                        {
+                            caught++;
+                        }
+
+                        return LuaValue.Void;
+                    }
+                )
+            );
+            script.Globals.Set(
+                "messageHandler",
+                LuaValue.NewCallback(
+                    (_, _) =>
+                    {
+                        messageHandlerCalls++;
+                        return LuaValue.NewString("decorated");
+                    }
+                )
+            );
+
+            LuaValue result = script.DoString(
+                @"
+                local resource = setmetatable({}, {
+                    __close = function() worker() end
+                })
+                local ok, err = xpcall(function()
+                    local pending <close> = resource
+                end, messageHandler)
+
+                return ok, tostring(err)
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(caught).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(messageHandlerCalls).IsEqualTo(0).ConfigureAwait(false);
         }
 
         private static TException ExpectException<TException>(Action action)

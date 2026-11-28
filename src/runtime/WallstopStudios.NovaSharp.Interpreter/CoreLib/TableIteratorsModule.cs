@@ -219,7 +219,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             LuaValue origin = iteratorFunction.BindCallbackToScript(script);
             return allowYield
                 ? LuaValue.NewTailCallReq(dispatcher, metamethod, subject, normalize, origin)
-                : executionContext.Call(dispatcher, metamethod, subject, normalize, origin);
+                : executionContext.CallLibrary(dispatcher, metamethod, subject, normalize, origin);
         }
 
         private static LuaValue AdjustIteratorResults(
@@ -373,7 +373,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     )
                     {
                         // __index is a function: call it with (table, key)
-                        return executionContext.Call(indexMeta, current, keyValue);
+                        return executionContext.CallLibrary(indexMeta, current, keyValue);
                     }
                     else
                     {

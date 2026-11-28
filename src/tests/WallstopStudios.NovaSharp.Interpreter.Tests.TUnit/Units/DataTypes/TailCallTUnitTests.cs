@@ -869,6 +869,139 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(maxTargetArguments).IsEqualTo(2).ConfigureAwait(false);
         }
 
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ClrTailTargetNestedCallErrorHandlerRecoversAtCallSite(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            int calls = 0;
+            int recoveries = 0;
+
+            script.Globals.Set("notcallable", LuaValue.NewNumber(42));
+            LuaValue tailNested = script.LoadString(
+                @"
+                local function inner()
+                    return notcallable()
+                end
+                return inner()
+                "
+            );
+            LuaValue nonTailNested = script.LoadString(
+                @"
+                local function inner()
+                    local value = notcallable()
+                    return value
+                end
+                return inner()
+                "
+            );
+
+            CallbackFunction errorHandler = new(
+                (_, _) =>
+                {
+                    recoveries++;
+                    return LuaValue.NewString("recovered");
+                }
+            );
+            script.Globals.Set(
+                "bridge",
+                NewTailCallBridge(
+                    LuaValue.NewCallback(
+                        (_, _) =>
+                        {
+                            calls++;
+                            return script.Call(tailNested);
+                        }
+                    ),
+                    errorHandler
+                )
+            );
+            script.Globals.Set(
+                "nonTailBridge",
+                NewTailCallBridge(
+                    LuaValue.NewCallback(
+                        (_, _) =>
+                        {
+                            calls++;
+                            return script.Call(nonTailNested);
+                        }
+                    ),
+                    errorHandler
+                )
+            );
+
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<TailCallTUnitTests>()
+                .RunFixture(script);
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("recovered;recovered;recovered;recovered|recovered;recovered|recovered")
+                .ConfigureAwait(false);
+            await Assert.That(calls).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(recoveries).IsEqualTo(7).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ClrTailTargetNestedCallDecorationStopsAtHostBoundary(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            int caught = 0;
+            int decorations = 0;
+
+            script.Globals.Set("notcallable", LuaValue.NewNumber(42));
+            LuaValue nested = script.LoadString("return notcallable()");
+            LuaValue target = LuaValue.NewCallback(
+                (_, _) =>
+                {
+                    try
+                    {
+                        return script.Call(nested);
+                    }
+                    catch (ScriptRuntimeException)
+                    {
+                        caught++;
+                        return LuaValue.NewString("caught");
+                    }
+                }
+            );
+            script.Globals.Set(
+                "decoratedBridge",
+                LuaValue.NewCallback(
+                    (_, _) =>
+                        LuaValue.NewTailCallReq(
+                            new TailCallData
+                            {
+                                Function = target,
+                                ErrorHandlerBeforeUnwind = LuaValue.NewCallback(
+                                    (_, _) =>
+                                    {
+                                        decorations++;
+                                        return LuaValue.NewString("decorated");
+                                    }
+                                ),
+                                ErrorHandler = new CallbackFunction(
+                                    (_, _) => LuaValue.NewString("error-handler")
+                                ),
+                            }
+                        )
+                )
+            );
+
+            LuaValue result = LuaFixtureHelper
+                .ForCallingTest<TailCallTUnitTests>()
+                .RunFixture(script);
+
+            await Assert.That(result.String).IsEqualTo("caught").ConfigureAwait(false);
+            await Assert.That(caught).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(decorations).IsEqualTo(0).ConfigureAwait(false);
+        }
+
         private static LuaValue NewTailCallBridge(LuaValue target, CallbackFunction errorHandler)
         {
             return LuaValue.NewCallback(

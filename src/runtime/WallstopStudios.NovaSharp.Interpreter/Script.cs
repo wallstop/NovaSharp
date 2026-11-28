@@ -2637,6 +2637,116 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Calls the specified function.
         /// </summary>
+        /// <summary>
+        /// Calls a function from a classic-library callback. Errors from the call stay inside the
+        /// running Lua callback chain, so coroutine close handlers remain deferred.
+        /// </summary>
+        internal LuaValue CallLibraryValues(LuaValue function)
+        {
+            if (!CallableResolvesToLuaFunction(function))
+            {
+                return CallValues(function);
+            }
+
+            using (_mainProcessor.ActiveProcessor.EnterLibraryCallBoundary())
+            {
+                return CallValues(function);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether a value resolves to a Lua function through its <c>__call</c> chain.
+        /// </summary>
+        internal bool CallableResolvesToLuaFunction(LuaValue function)
+        {
+            // Match CallChainedNonFunction: at most nine non-direct __call links.
+            for (int links = 0; links < 9; links++)
+            {
+                if (function.Type == DataType.Function)
+                {
+                    return true;
+                }
+
+                if (function.Type == DataType.ClrFunction)
+                {
+                    return false;
+                }
+
+                if (
+                    !_mainProcessor.TryGetMetamethod(
+                        function,
+                        Metamethods.Call,
+                        out LuaValue metamethod
+                    )
+                    || metamethod.IsNil
+                    || !CanCallMetamethod(metamethod)
+                )
+                {
+                    return false;
+                }
+
+                function = metamethod;
+            }
+
+            return function.Type == DataType.Function;
+        }
+
+        /// <summary>
+        /// Calls a one-argument function from a classic-library callback.
+        /// </summary>
+        internal LuaValue CallLibraryValues(LuaValue function, LuaValue arg)
+        {
+            if (!CallableResolvesToLuaFunction(function))
+            {
+                return CallValues(function, arg);
+            }
+
+            using (_mainProcessor.ActiveProcessor.EnterLibraryCallBoundary())
+            {
+                return CallValues(function, arg);
+            }
+        }
+
+        /// <summary>
+        /// Calls a two-argument function from a classic-library callback.
+        /// </summary>
+        internal LuaValue CallLibraryValues(LuaValue function, LuaValue arg1, LuaValue arg2)
+        {
+            if (!CallableResolvesToLuaFunction(function))
+            {
+                return CallValues(function, arg1, arg2);
+            }
+
+            using (_mainProcessor.ActiveProcessor.EnterLibraryCallBoundary())
+            {
+                return CallValues(function, arg1, arg2);
+            }
+        }
+
+        /// <summary>
+        /// Calls a three-argument function from a classic-library callback.
+        /// </summary>
+        internal LuaValue CallLibraryValues(
+            LuaValue function,
+            LuaValue arg1,
+            LuaValue arg2,
+            LuaValue arg3
+        )
+        {
+            if (!CallableResolvesToLuaFunction(function))
+            {
+                return CallValues(function, arg1, arg2, arg3);
+            }
+
+            using (_mainProcessor.ActiveProcessor.EnterLibraryCallBoundary())
+            {
+                return CallValues(function, arg1, arg2, arg3);
+            }
+        }
+
+        /// <summary>
+        /// Calls the specified function.
+        /// </summary>
         /// <param name="function">The Lua/NovaSharp function to be called</param>
         /// <returns>
         /// The return value(s) of the function call.
@@ -2650,7 +2760,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
             {
                 return ExecuteLuaFunctionWithoutArguments(function);
             }
-
             if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
             {
                 return function.Callback.InvokeArgumentViewFixed(this);

@@ -26,6 +26,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private const CallStackItemFlags OperatorCallFlags =
             CallStackItemFlags.SingleOperatorResult | CallStackItemFlags.Lua51OperatorYieldBoundary;
 
+        /// <summary>
+        /// Frame flags that survive a tail-call frame reuse. Entry-point markers delimit a CLR or
+        /// coroutine boundary, so error unwinding must still stop there after the frame is reused
+        /// for a tail call.
+        /// </summary>
+        private const CallStackItemFlags TailCallReuseFlags =
+            OperatorCallFlags
+            | CallStackItemFlags.EntryPoint
+            | CallStackItemFlags.ResumeEntryPointBit
+            | CallStackItemFlags.CallEntryPointBit
+            | CallStackItemFlags.LibraryCallEntryBit
+            | CallStackItemFlags.VmCloseCallEntryBit;
+
         private static readonly LuaValue ReplayCloseResult = LuaValue.NewCallbackView(static args =>
             args[0]
         );
@@ -773,6 +786,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     return true;
                 }
+
+                CallStackItemFlags entryFlags =
+                    frame.Flags
+                    & (
+                        CallStackItemFlags.CallEntryPointBit
+                        | CallStackItemFlags.LibraryCallEntryBit
+                        | CallStackItemFlags.VmCloseCallEntryBit
+                    );
+                if (entryFlags == CallStackItemFlags.CallEntryPointBit)
+                {
+                    // A host CLR-to-script call inside the coroutine is a boundary its caller
+                    // can catch. Unwind to it instead of retaining the coroutine frames.
+                    // Library and VM-owned close entries keep Lua callback semantics.
+                    return false;
+                }
             }
 
             return false;
@@ -814,6 +842,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             for (int i = 0; i < framesToScan; i++)
             {
                 CallStackItem frame = _executionStack.Peek(i);
+                CallStackItemFlags entryFlags =
+                    frame.Flags
+                    & (
+                        CallStackItemFlags.CallEntryPointBit
+                        | CallStackItemFlags.LibraryCallEntryBit
+                        | CallStackItemFlags.VmCloseCallEntryBit
+                    );
+                if (entryFlags == CallStackItemFlags.CallEntryPointBit)
+                {
+                    // Host CLR-to-script boundaries may catch the error. Decorate only if the
+                    // error escapes the boundary and reaches the owning VM loop. VM-owned
+                    // close handlers keep their failing frame visible for message handlers.
+                    return;
+                }
+
                 if (TryDecorateErrorHandlerBeforeUnwind(frame, exception, instructionPtr))
                 {
                     return;
@@ -1050,7 +1093,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 ClrCallArguments arguments = passError
                     ? new ClrCallArguments(scalar, error)
                     : new ClrCallArguments(scalar);
-                Call(metamethod, arguments, GetCurrentSourceRef(instructionPtr - 1));
+                using (EnterVmCloseCallBoundary())
+                {
+                    Call(metamethod, arguments, GetCurrentSourceRef(instructionPtr - 1));
+                }
                 return;
             }
 
@@ -1657,7 +1703,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     if (meta.Type != DataType.Tuple)
                     {
-                        v = GetScript().CallValues(meta, f, s, var);
+                        v = GetScript().CallLibraryValues(meta, f, s, var);
                     }
                     else
                     {
@@ -2721,7 +2767,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     csi.Continuation,
                     csi.ErrorHandlerBeforeUnwind,
                     csi.HasErrorHandlerBeforeUnwind,
-                    csi.Flags & OperatorCallFlags,
+                    csi.Flags & TailCallReuseFlags,
                     csi.DiscardResult
                 );
                 int argscnt = (int)(_valueStack.Pop().Number);

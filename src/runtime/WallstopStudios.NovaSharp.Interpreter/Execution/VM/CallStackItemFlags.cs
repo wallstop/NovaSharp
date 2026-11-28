@@ -30,6 +30,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         CallEntryPointBit = 1 << 2,
 
         /// <summary>
+        /// Marks a CLR call entry that the classic library initiated on behalf of Lua code
+        /// (bit 3). Errors from these calls follow Lua callback semantics and stay deferred
+        /// with the coroutine until <c>coroutine.close</c>.
+        /// </summary>
+        LibraryCallEntryBit = 1 << 3,
+
+        /// <summary>
+        /// Marks a CLR call entry that the VM created to run a Lua close handler (bit 8).
+        /// These entries are not catchable host boundaries for error decoration.
+        /// </summary>
+        VmCloseCallEntryBit = 1 << 8,
+
+        /// <summary>
         /// Indicates that the call was compiled as a tail call.
         /// </summary>
         TailCall = 1 << 4,
