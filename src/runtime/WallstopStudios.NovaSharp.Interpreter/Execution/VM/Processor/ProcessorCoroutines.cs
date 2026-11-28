@@ -723,13 +723,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                                 CloseAllPendingBlocks(frame, frameError);
                                 break;
                             }
-                            catch (CoroutineSelfCloseException)
+                            catch (CoroutineSelfCloseException nestedSelfClose)
                             {
                                 // A closer requested its own close while the coroutine already
                                 // aborts: Lua resets the error seen by the handlers it aborts and
-                                // keeps closing the remaining blocks.
-                                closeError = null;
-                                frameError = LuaValue.Nil;
+                                // keeps closing the remaining blocks. Failures raised by those
+                                // remaining handlers must still surface.
+                                closeError = nestedSelfClose.CloseError;
+                                frameError =
+                                    closeError != null
+                                        ? closeError.GetCaughtErrorObject(version)
+                                        : LuaValue.Nil;
                                 _selfCloseResetRequested = false;
                             }
                             catch (ScriptRuntimeException frameException)
@@ -760,9 +764,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             public ScriptRuntimeException CloseError { get; set; }
 
             /// <summary>
-            /// Gets or sets the error that was already unwinding when the coroutine requested its
-            /// own close. Lua 5.5 reports this error to the resume boundary even when later
-            /// handlers run successfully.
+            /// Gets or sets the close-handler failure that was active when the coroutine
+            /// requested its own close. Lua 5.5 reports this failure to the resume boundary even
+            /// when later handlers run successfully; an ordinary execution error that is still
+            /// unwinding is reset by the self-close instead.
             /// </summary>
             public ScriptRuntimeException PendingError { get; set; }
 

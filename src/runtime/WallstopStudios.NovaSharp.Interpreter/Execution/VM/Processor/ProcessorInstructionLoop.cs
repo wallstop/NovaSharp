@@ -1366,8 +1366,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         && selfCloseException.PendingError == null
                     )
                     {
-                        // Lua 5.5 reports the error that was already unwinding when the
-                        // coroutine aborted, even if the remaining handlers succeed.
+                        // Lua 5.5 reports the close-handler failure that was active when the
+                        // coroutine aborted, even if the remaining handlers succeed. An ordinary
+                        // execution error still unwinding is reset by the self-close.
                         selfCloseException.PendingError = closeException;
                     }
 

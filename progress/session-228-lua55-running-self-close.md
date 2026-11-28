@@ -41,10 +41,12 @@ be nil when the error object was already consumed).
   handlers observe `coroutine.status == "running"` and cannot yield), then
   returns a void result so `coroutine.resume` yields exactly `true` and
   `coroutine.wrap` yields zero values.
-- Close-handler error state is split: `PendingError` preserves the error that
-  was already unwinding when the coroutine aborted (Lua 5.5 reports it from
+- Close-handler error state is split: `PendingError` preserves the close-handler
+  failure that was active when the coroutine aborted (Lua 5.5 reports it from
   resume even when remaining handlers succeed), while `CloseError` tracks the
-  latest handler failure reported by a later `coroutine.close`.
+  latest handler failure reported by a later `coroutine.close`. An ordinary
+  execution error that is still unwinding is reset by the self-close, matching
+  PUC Lua 5.5's `L->status` behavior.
 - `CloseValueAndTrackError` rethrows the tagged abort so the remaining siblings
   in the active block and outer frames are drained in stack order exactly once.
 - Before the abort throws, handlers belonging to the requesting handler's own
@@ -75,19 +77,21 @@ be nil when the error object was already consumed).
   `RunningCoroutineSelfCloseAgainInHandlerDrainsLocalsInLua55` (nested
   self-close while draining the handler's own locals),
   `RunningCoroutineSelfCloseAgainDuringHandlerDrainResetsErrorInLua55` (a second
-  self-close discards the error raised while draining), and
+  self-close discards the error raised while draining),
+  `RunningCoroutineSelfCloseAgainDuringHandlerDrainKeepsLaterFailureInLua55`
+  (a failure raised after that reset still surfaces), and
   `RunningCoroutineSelfCloseHandlerFrameErrorReachesOuterHandlersInLua55`
   (drained-frame error propagation to outer handlers).
 - Lua 5.4 counterpart: `CloseRunningCoroutineThrows` now runs only under 5.4
   and asserts the rejected self-close plus the deferred final handler.
   `NormalCoroutineCloseIsRejected` covers 5.4/5.5.
-- Focused suites: `ProcessorCoroutineCloseTUnitTests` 130/130,
+- Focused suites: `ProcessorCoroutineCloseTUnitTests` 131/131,
   corpus classes containing `Coroutine` 838/838, `TailCall` 127/127.
 - Corpus extraction reports 2113 registered snippets; the hand-authored
   fixtures are intentionally outside the manifest. The stale auto-generated
   `CloseRunningCoroutineThrows.lua` entry (which inferred 5.1) was removed.
-- Lua comparison for the changed fixtures: 10/10 matches on 5.5 and 2/2 on 5.4,
+- Lua comparison for the changed fixtures: 11/11 matches on 5.5 and 2/2 on 5.4,
   with no mismatches, Lua-only, Nova-only, or unexpected error entries.
-- Full 5.5 corpus through the CI batch runner: 1167 matches, 0 mismatches,
+- Full 5.5 corpus through the CI batch runner: 1168 matches, 0 mismatches,
   314 unchanged both-error entries, 1 removed, 0 new/changed/missing.
-- Full TUnit suite: 16307/16307.
+- Full TUnit suite: 16308/16308.
